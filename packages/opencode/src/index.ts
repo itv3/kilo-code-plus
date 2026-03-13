@@ -8,6 +8,7 @@ import { AgentCommand } from "./cli/cmd/agent"
 import { UpgradeCommand } from "./cli/cmd/upgrade"
 import { UninstallCommand } from "./cli/cmd/uninstall"
 import { ModelsCommand } from "./cli/cmd/models"
+import { RollCallCommand } from "./cli/cmd/roll-call" // kilocode_change
 import { UI } from "./cli/ui"
 import { Installation } from "./installation"
 import { NamedError } from "@opencode-ai/util/error"
@@ -187,6 +188,7 @@ let cli = yargs(hideBin(process.argv))
   .command(ServeCommand)
   // .command(WebCommand) // kilocode_change (Disabled unsupported opencode web UI)
   .command(ModelsCommand)
+  .command(RollCallCommand) // kilocode_change
   .command(StatsCommand)
   .command(ExportCommand)
   .command(ImportCommand)
