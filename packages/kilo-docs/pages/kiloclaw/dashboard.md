@@ -76,7 +76,7 @@ Gateway process info is only available when the machine is running.
 
 ## Instance Specs
 
-The specs of your instance, including number of CPUs, memory, and storage, are visibile at the top right of the instance controls section.
+The specs of your instance, including number of CPUs, memory, and storage, are visible at the top right of the instance controls section.
 
 ## Settings
 
