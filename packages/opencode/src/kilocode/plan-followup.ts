@@ -2,6 +2,8 @@ import { Telemetry } from "@kilocode/kilo-telemetry"
 import { Agent } from "@/agent/agent"
 import { Bus } from "@/bus"
 import { TuiEvent } from "@/cli/cmd/tui/event"
+import { Flag } from "@/flag/flag"
+import { Global } from "@/global"
 import { Identifier } from "@/id/id"
 import { Provider } from "@/provider/provider"
 import { Question } from "@/question"
@@ -10,6 +12,8 @@ import { LLM } from "@/session/llm"
 import { MessageV2 } from "@/session/message-v2"
 import { Todo } from "@/session/todo"
 import { Log } from "@/util/log"
+import fs from "fs/promises"
+import path from "path"
 
 function toText(item: MessageV2.WithParts): string {
   return item.parts
@@ -111,6 +115,41 @@ export namespace PlanFollowup {
   export const ANSWER_NEW_SESSION = "Start new session"
   export const ANSWER_CONTINUE = "Continue here"
 
+  async function resolveCodeModel(model: MessageV2.User["model"]) {
+    const saved =
+      Flag.KILO_CLIENT === "cli"
+        ? await fs
+            .readFile(path.join(Global.Path.state, "model.json"), "utf-8")
+            .then(
+              (item) =>
+                JSON.parse(item) as {
+                  model?: Record<
+                    string,
+                    {
+                      providerID: string
+                      modelID: string
+                    }
+                  >
+                },
+            )
+            .then((item) => item.model?.code)
+            .catch(() => undefined)
+        : undefined
+    if (saved) {
+      const match = await Provider.getModel(saved.providerID, saved.modelID).catch(() => undefined)
+      if (match) {
+        return {
+          providerID: saved.providerID,
+          modelID: saved.modelID,
+        }
+      }
+    }
+
+    const agent = await Agent.get("code")
+    if (agent?.model) return agent.model
+    return model
+  }
+
   async function resolvePlan(input: {
     assistant?: MessageV2.WithParts
     messages: MessageV2.WithParts[]
@@ -211,6 +250,7 @@ export namespace PlanFollowup {
     model: MessageV2.User["model"]
     abort?: AbortSignal
   }) {
+    const model = await resolveCodeModel(input.model)
     const [handover, todos] = await Promise.all([
       generateHandover({ messages: input.messages, model: input.model, abort: input.abort }),
       Todo.get(input.sessionID),
@@ -231,7 +271,7 @@ export namespace PlanFollowup {
     await inject({
       sessionID: next.id,
       agent: "code",
-      model: input.model,
+      model,
       text: sections.join("\n\n"),
       synthetic: false,
     })
@@ -289,10 +329,11 @@ export namespace PlanFollowup {
 
     if (answer === ANSWER_CONTINUE) {
       Telemetry.trackPlanFollowup(input.sessionID, "continue")
+      const model = await resolveCodeModel(user.model)
       await inject({
         sessionID: input.sessionID,
         agent: "code",
-        model: user.model,
+        model,
         text: "Implement the plan above.",
       })
       return "continue"
