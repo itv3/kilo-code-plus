@@ -147,6 +147,7 @@ export async function rollCallHandler(args: any) {
             UI.error(`Invalid filter regex: ${filter}`)
             return
           }
+          if (!model.capabilities.output.text) continue
           modelsToTest.push({ providerID, modelID, model })
         }
       }
