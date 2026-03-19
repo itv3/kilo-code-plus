@@ -91,6 +91,9 @@ export const MessageList: Component<MessageListProps> = (props) => {
 
   return (
     <div class="message-list-container">
+      <Show when={isEmpty()}>
+        <AccountSwitcher class="account-switcher-welcome" />
+      </Show>
       <div
         ref={autoScroll.scrollRef}
         onScroll={autoScroll.handleScroll}
@@ -107,7 +110,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
           </Show>
           <Show when={isEmpty()}>
             <div class="message-list-empty">
-              <AccountSwitcher class="account-switcher-welcome" />
               <KiloLogo />
               <p class="kilo-about-text">{language.t("session.messages.welcome")}</p>
               <Show when={recent().length > 0 && props.onSelectSession}>
