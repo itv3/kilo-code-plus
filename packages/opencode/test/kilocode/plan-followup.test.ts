@@ -51,7 +51,11 @@ async function withInstance(fn: () => Promise<void>) {
     directory: tmp.path,
     fn: async () => {
       await fs.rm(statePath, { force: true }).catch(() => {})
-      await fn()
+      try {
+        await fn()
+      } finally {
+        await fs.rm(statePath, { force: true }).catch(() => {})
+      }
     },
   })
 }

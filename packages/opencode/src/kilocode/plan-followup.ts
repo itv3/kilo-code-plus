@@ -152,15 +152,17 @@ export namespace PlanFollowup {
 
     const agent = await Agent.get("code")
     if (agent?.model) {
-      const full = agent.variant
-        ? await Provider.getModel(agent.model.providerID, agent.model.modelID).catch(() => undefined)
-        : undefined
-      return {
-        model: agent.model,
-        variant: resolveVariant({
-          value: agent.variant,
-          model: full,
-        }),
+      const full = await Provider.getModel(agent.model.providerID, agent.model.modelID).catch(() => undefined)
+      if (full) {
+        return {
+          model: agent.model,
+          variant: agent.variant
+            ? resolveVariant({
+                value: agent.variant,
+                model: full,
+              })
+            : undefined,
+        }
       }
     }
     return input
