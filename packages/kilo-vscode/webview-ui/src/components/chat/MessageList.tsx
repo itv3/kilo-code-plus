@@ -21,6 +21,7 @@ import { CloudImportDialog } from "./CloudImportDialog"
 import { FeedbackDialog } from "./FeedbackDialog"
 import { VscodeSessionTurn } from "./VscodeSessionTurn"
 import { RevertBanner } from "./RevertBanner"
+import { AccountSwitcher } from "../shared/AccountSwitcher"
 import { WorkingIndicator } from "../shared/WorkingIndicator"
 import { activeUserMessageID as getActiveUserMessageID } from "../../context/session-queue"
 
@@ -105,6 +106,9 @@ export const MessageList: Component<MessageListProps> = (props) => {
             </div>
           </Show>
           <Show when={isEmpty()}>
+            <div class="message-list-empty-header">
+              <AccountSwitcher class="account-switcher-welcome" />
+            </div>
             <div class="message-list-empty">
               <KiloLogo />
               <p class="kilo-about-text">{language.t("session.messages.welcome")}</p>
