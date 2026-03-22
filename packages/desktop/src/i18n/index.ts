@@ -66,6 +66,7 @@ const LOCALES: readonly Locale[] = [
   "pl",
   "ru",
   "bs",
+  "nl",
   "ar",
   "no",
   "br",
