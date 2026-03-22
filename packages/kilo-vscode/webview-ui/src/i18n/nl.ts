@@ -309,7 +309,8 @@ export const dict = {
   "dialog.project.edit.color": "Kleur",
   "dialog.project.edit.color.select": "Selecteer {{color}} kleur",
   "dialog.project.edit.worktree.startup": "Werkruimte opstartscript",
-  "dialog.project.edit.worktree.startup.description": "Wordt uitgevoerd na het aanmaken van een nieuwe werkruimte (worktree).",
+  "dialog.project.edit.worktree.startup.description":
+    "Wordt uitgevoerd na het aanmaken van een nieuwe werkruimte (worktree).",
   "dialog.project.edit.worktree.startup.placeholder": "bijv. bun install",
 
   "context.breakdown.title": "Contextspecificatie",
@@ -537,8 +538,7 @@ export const dict = {
   "status.popover.action.manageServers": "Beheer servers",
 
   "session.share.popover.title": "Publiceer op web",
-  "session.share.popover.description.shared":
-    "Deze sessie is openbaar op het web. Iedereen met de link heeft toegang.",
+  "session.share.popover.description.shared": "Deze sessie is openbaar op het web. Iedereen met de link heeft toegang.",
   "session.share.popover.description.unshared":
     "Deel de sessie openbaar op het web. Iedereen met de link heeft toegang.",
   "session.share.action.share": "Delen",
@@ -786,7 +786,8 @@ export const dict = {
   "settings.permissions.tool.read.title": "Lezen",
   "settings.permissions.tool.read.description": "Een bestand lezen (komt overeen met het bestandspad)",
   "settings.permissions.tool.edit.title": "Bewerken",
-  "settings.permissions.tool.edit.description": "Bestanden wijzigen, inclusief bewerkingen, schrijven, patchen en meervoudige bewerkingen",
+  "settings.permissions.tool.edit.description":
+    "Bestanden wijzigen, inclusief bewerkingen, schrijven, patchen en meervoudige bewerkingen",
   "settings.permissions.tool.glob.title": "Glob",
   "settings.permissions.tool.glob.description": "Overeenkomende bestanden zoeken met glob-patronen",
   "settings.permissions.tool.grep.title": "Grep",
@@ -951,7 +952,8 @@ export const dict = {
   "settings.aboutKiloCode.community": "Community & Ondersteuning",
   "settings.aboutKiloCode.feedback.prefix": "Als je vragen of feedback hebt, voel je vrij om een issue aan te maken op",
   "settings.aboutKiloCode.feedback.or": "of",
-  "settings.aboutKiloCode.support.prefix": "Voor vragen over facturering of je account, neem contact op met Klantenservice op",
+  "settings.aboutKiloCode.support.prefix":
+    "Voor vragen over facturering of je account, neem contact op met Klantenservice op",
   "settings.aboutKiloCode.resetSettings.title": "Instellingen resetten",
   "settings.aboutKiloCode.resetSettings.description":
     "Reset alle instellingen van de Kilo Code extensie naar hun standaardwaarden. Dit heeft geen invloed op CLI of backend configuratie.",
@@ -974,8 +976,7 @@ export const dict = {
   "settings.browser.headless.title": "Headless Modus",
   "settings.browser.headless.description": "Draai in headless modus (geen zichtbaar browservenster).",
 
-  "settings.language.description":
-    'Kies de taal voor de Kilo Code UI. "Auto" gebruikt je VS Code schermtaal.',
+  "settings.language.description": 'Kies de taal voor de Kilo Code UI. "Auto" gebruikt je VS Code schermtaal.',
   "settings.language.auto": "Auto (VS Code taal)",
   "settings.language.current": "Huidig:",
 
@@ -987,11 +988,14 @@ export const dict = {
     "Het zal configuratie-opties en verklarende tekst bevatten gerelateerd aan de geselecteerde instellingencategorie. Gebruik deze ruimte tijdens het opnieuw implementeren om lay-out, spatiëring, scrollgedrag en navigatiestatus te valideren voordat de daadwerkelijke besturingselementen worden gekoppeld.",
 
   "settings.autocomplete.autoTrigger.title": "Automatische inline aanvullingen inschakelen",
-  "settings.autocomplete.autoTrigger.description": "Toon automatisch suggesties voor inline aanvullingen tijdens het typen",
+  "settings.autocomplete.autoTrigger.description":
+    "Toon automatisch suggesties voor inline aanvullingen tijdens het typen",
   "settings.autocomplete.smartKeybinding.title": "Slimme inline taak-sneltoets inschakelen",
-  "settings.autocomplete.smartKeybinding.description": "Gebruik een slimme sneltoets voor het activeren van inline taken",
+  "settings.autocomplete.smartKeybinding.description":
+    "Gebruik een slimme sneltoets voor het activeren van inline taken",
   "settings.autocomplete.chatAutocomplete.title": "Chat tekstveld automatisch aanvullen inschakelen",
-  "settings.autocomplete.chatAutocomplete.description": "Toon suggesties voor automatisch aanvullen in het chat tekstveld",
+  "settings.autocomplete.chatAutocomplete.description":
+    "Toon suggesties voor automatisch aanvullen in het chat tekstveld",
 
   "settings.notifications.agent.title": "Agent Voltooiing",
   "settings.notifications.agent.description": "Toon melding wanneer agent een taak voltooit",
@@ -1023,9 +1027,11 @@ export const dict = {
   "settings.experimental.batch.title": "Batch Tool",
   "settings.experimental.batch.description": "Schakel batching van meerdere tool calls in",
   "settings.experimental.codebaseSearch.title": "Codebase Zoeken",
-  "settings.experimental.codebaseSearch.description": "Schakel AI-aangedreven zoeken in natuurlijke taal door je codebase in",
+  "settings.experimental.codebaseSearch.description":
+    "Schakel AI-aangedreven zoeken in natuurlijke taal door je codebase in",
   "settings.experimental.continueOnDeny.title": "Doorgaan bij weigering",
-  "settings.experimental.continueOnDeny.description": "Ga door met de agent loop wanneer een toestemming wordt geweigerd",
+  "settings.experimental.continueOnDeny.description":
+    "Ga door met de agent loop wanneer een toestemming wordt geweigerd",
   "settings.experimental.mcpTimeout.title": "MCP Timeout (ms)",
   "settings.experimental.mcpTimeout.description": "Timeout voor MCP-serververzoeken in milliseconden",
   "settings.experimental.toolToggles": "Tool Schakelaars",
@@ -1058,15 +1064,18 @@ export const dict = {
   "settings.agentBehaviour.skillPaths": "Skill Mappaden",
   "settings.agentBehaviour.skillUrls": "Skill URL's",
   "settings.agentBehaviour.removeSkill.title": "Verwijder skill",
-  "settings.agentBehaviour.removeSkill.confirm": 'Skill "{{name}}" verwijderen? Dit verwijdert de skill bestanden van schijf.',
+  "settings.agentBehaviour.removeSkill.confirm":
+    'Skill "{{name}}" verwijderen? Dit verwijdert de skill bestanden van schijf.',
   "settings.agentBehaviour.removeSkill.button": "Verwijderen",
   "settings.agentBehaviour.instructionFiles": "Aanvullende Instructiebestanden",
   "settings.agentBehaviour.instructionFiles.description":
     "Paden naar aanvullende instructiebestanden die zijn opgenomen in de systeem prompt",
   "settings.agentBehaviour.removeMcp.title": "Verwijder MCP-server",
-  "settings.agentBehaviour.removeMcp.confirm": 'MCP-server "{{name}}" verwijderen? Dit zal deze uit je configuratie verwijderen.',
+  "settings.agentBehaviour.removeMcp.confirm":
+    'MCP-server "{{name}}" verwijderen? Dit zal deze uit je configuratie verwijderen.',
   "settings.agentBehaviour.removeMcp.button": "Verwijderen",
-  "settings.agentBehaviour.mcpEmpty": "Geen MCP-servers geconfigureerd. Bewerk het opencode configuratiebestand om MCP-servers toe te voegen.",
+  "settings.agentBehaviour.mcpEmpty":
+    "Geen MCP-servers geconfigureerd. Bewerk het opencode configuratiebestand om MCP-servers toe te voegen.",
   "settings.agentBehaviour.workflowsPlaceholder": "Workflows worden beheerd via workflowbestanden in je workspace.",
   "settings.agentBehaviour.notImplemented": "Nog niet geïmplementeerd.",
 
@@ -1084,19 +1093,24 @@ export const dict = {
   "settings.autoApprove.placeholder.path": "bijv. *.env",
   "settings.autoApprove.tool.external_directory":
     "Toegang tot bestanden buiten workspace. Geactiveerd bij toegang tot bestanden buiten de huidige projectmap.",
-  "settings.autoApprove.tool.bash": "Voer terminal commando's uit. Staat uitvoering van shell commando's toe (bijv. git status).",
-  "settings.autoApprove.tool.read": "Bestanden lezen. Staat de agent toe om bestanden te lezen die overeenkomen met het opgegeven pad.",
+  "settings.autoApprove.tool.bash":
+    "Voer terminal commando's uit. Staat uitvoering van shell commando's toe (bijv. git status).",
+  "settings.autoApprove.tool.read":
+    "Bestanden lezen. Staat de agent toe om bestanden te lezen die overeenkomen met het opgegeven pad.",
   "settings.autoApprove.tool.edit":
     "Bestanden wijzigen. Staat de agent toe om bestanden te maken of te bewerken, inclusief patches en multi-file updates.",
   "settings.autoApprove.tool.glob":
     "Bestanden matchen op patroon. Staat bestandsmatching toe met behulp van glob-patronen (bijv. src/**/*.ts).",
   "settings.autoApprove.tool.grep": "Bestandsinhoud zoeken. Staat regex-gebaseerd zoeken in bestanden toe.",
-  "settings.autoApprove.tool.list": "Mapinhoud weergeven. Staat het bekijken van bestanden en mappen binnen een map toe.",
-  "settings.autoApprove.tool.task": "Sub-agents starten. Staat het starten van gespecialiseerde sub-agents toe voor specifieke taken.",
+  "settings.autoApprove.tool.list":
+    "Mapinhoud weergeven. Staat het bekijken van bestanden en mappen binnen een map toe.",
+  "settings.autoApprove.tool.task":
+    "Sub-agents starten. Staat het starten van gespecialiseerde sub-agents toe voor specifieke taken.",
   "settings.autoApprove.tool.skill": "Skills laden. Staat het laden van vooraf gedefinieerde skills op naam toe.",
   "settings.autoApprove.tool.lsp":
     "Language server raadplegen. Staat het uitvoeren van language server queries toe voor code-intelligentie.",
-  "settings.autoApprove.tool.todoreadwrite": "Takenlijst beheren. Staat het lezen en bijwerken van de interne takenlijst toe.",
+  "settings.autoApprove.tool.todoreadwrite":
+    "Takenlijst beheren. Staat het lezen en bijwerken van de interne takenlijst toe.",
   "settings.autoApprove.tool.webfetch": "Een URL ophalen. Staat het ophalen van inhoud van een specifieke URL toe.",
   "settings.autoApprove.tool.websearchcodesearch":
     "Zoek op web of in code. Staat het uitvoeren van externe web- of code-zoekopdrachten toe.",
@@ -1104,7 +1118,8 @@ export const dict = {
     "Voorkom herhaalde identieke acties. Geactiveerd wanneer dezelfde tool call herhaald wordt met identieke invoer.",
 
   "settings.checkpoints.enable.title": "Snapshots inschakelen",
-  "settings.checkpoints.enable.description": "Maak checkpoints aan voor het bewerken van bestanden zodat je eerdere staten kunt herstellen",
+  "settings.checkpoints.enable.description":
+    "Maak checkpoints aan voor het bewerken van bestanden zodat je eerdere staten kunt herstellen",
 
   "settings.context.autoCompaction.title": "Automatische Compactie",
   "settings.context.autoCompaction.description": "Context automatisch compacteren wanneer deze vol is",
@@ -1123,14 +1138,16 @@ export const dict = {
   "settings.providers.defaultModel.title": "Standaard Model",
   "settings.providers.defaultModel.description": "Primair model voor gesprekken",
   "settings.providers.smallModel.title": "Klein Model",
-  "settings.providers.smallModel.description": "Lichtgewicht model voor het genereren van titels en andere snelle taken",
+  "settings.providers.smallModel.description":
+    "Lichtgewicht model voor het genereren van titels en andere snelle taken",
   "settings.providers.modeModels": "Model per Modus",
   "settings.providers.modeModels.description":
     "Overschrijf het standaard model voor specifieke modi. Indien niet ingesteld, wordt het globale standaard model gebruikt.",
   "settings.providers.disabled": "Uitgeschakelde Providers",
   "settings.providers.disabled.description": "Providers om te verbergen in de providerlijst",
   "settings.providers.enabled": "Ingeschakelde Providers (Allowlist)",
-  "settings.providers.enabled.description": "Indien ingesteld, zijn alleen deze providers beschikbaar (exclusieve allowlist)",
+  "settings.providers.enabled.description":
+    "Indien ingesteld, zijn alleen deze providers beschikbaar (exclusieve allowlist)",
   "settings.providers.notSet": "Niet ingesteld (gebruik server standaard)",
   "settings.providers.custom.note": "Voeg een OpenAI-compatibele provider toe via base URL.",
   "settings.providers.search.placeholder": "Zoek providers",
@@ -1171,7 +1188,8 @@ export const dict = {
 
   // Screen 2 — Migrate Settings
   "migration.migrate.title": "Migreer Je Instellingen",
-  "migration.migrate.subtitle": "We hebben instellingen gevonden van je vorige installatie. Hier is wat we kunnen overzetten.",
+  "migration.migrate.subtitle":
+    "We hebben instellingen gevonden van je vorige installatie. Hier is wat we kunnen overzetten.",
   "migration.migrate.selectLabel": "Selecteer wat je wilt migreren",
   "migration.migrate.cannotMigrate": "Kan niet worden gemigreerd",
   "migration.migrate.chatHistory": "Chatsessies & Geschiedenis",
@@ -1196,7 +1214,8 @@ export const dict = {
   // Migrate — completion
   "migration.complete.summary": "{{success}} van de {{total}} items succesvol gemigreerd.",
   "migration.complete.cleanup": "Verwijder oude instellingendata",
-  "migration.complete.cleanupDescription":    "Dit verwijdert de oude instellingen uit de VS Code-opslag. U zult deze migratie niet opnieuw kunnen uitvoeren.",
+  "migration.complete.cleanupDescription":
+    "Dit verwijdert de oude instellingen uit de VS Code-opslag. U zult deze migratie niet opnieuw kunnen uitvoeren.",
   "migration.complete.done": "Klaar",
   // legacy-migration end
 
