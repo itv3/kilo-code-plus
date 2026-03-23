@@ -365,6 +365,7 @@ export const dict = {
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
   "language.th": "ไทย",
+  "language.tr": "Türkçe",
 
   "toast.theme.title": "Tema cambiado",
   "toast.scheme.title": "Esquema de color",

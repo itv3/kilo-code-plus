@@ -10,6 +10,7 @@ type SSEEventListener = (event: Event) => void
 type StateListener = (state: ConnectionState) => void
 type SSEEventFilter = (event: Event) => boolean
 type NotificationDismissListener = (notificationId: string) => void
+type LanguageChangeListener = (locale: string) => void
 type ProfileChangeListener = (data: unknown) => void
 
 // Poll /global/health at the same interval as packages/app/src/context/server.tsx.
@@ -33,6 +34,7 @@ export class KiloConnectionService {
   private readonly eventListeners: Set<SSEEventListener> = new Set()
   private readonly stateListeners: Set<StateListener> = new Set()
   private readonly notificationDismissListeners: Set<NotificationDismissListener> = new Set()
+  private readonly languageChangeListeners: Set<LanguageChangeListener> = new Set()
   private readonly profileChangeListeners: Set<ProfileChangeListener> = new Set()
 
   /**
@@ -164,6 +166,25 @@ export class KiloConnectionService {
   notifyNotificationDismissed(notificationId: string): void {
     for (const listener of this.notificationDismissListeners) {
       listener(notificationId)
+    }
+  }
+
+  /**
+   * Subscribe to language change events broadcast from any KiloProvider. Returns unsubscribe function.
+   */
+  onLanguageChanged(listener: LanguageChangeListener): () => void {
+    this.languageChangeListeners.add(listener)
+    return () => {
+      this.languageChangeListeners.delete(listener)
+    }
+  }
+
+  /**
+   * Broadcast a language change event to all subscribed KiloProvider instances.
+   */
+  notifyLanguageChanged(locale: string): void {
+    for (const listener of this.languageChangeListeners) {
+      listener(locale)
     }
   }
 

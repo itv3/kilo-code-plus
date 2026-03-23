@@ -131,6 +131,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   /** Guard to prevent checkAndShowMigrationWizard running concurrently. */ // legacy-migration
   private migrationCheckInFlight = false // legacy-migration
   private unsubscribeNotificationDismiss: (() => void) | null = null
+  private unsubscribeLanguageChange: (() => void) | null = null
   private unsubscribeProfileChange: (() => void) | null = null
   private initConnectionPromise: Promise<void> | null = null
   private webviewMessageDisposable: vscode.Disposable | null = null
@@ -605,6 +606,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           await vscode.workspace
             .getConfiguration("kilo-code.new")
             .update("language", message.locale || undefined, vscode.ConfigurationTarget.Global)
+          this.connectionService.notifyLanguageChanged(message.locale as string)
           break
         case "requestAutocompleteSettings":
           this.sendAutocompleteSettings()
@@ -864,6 +866,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.unsubscribeEvent?.()
     this.unsubscribeState?.()
     this.unsubscribeNotificationDismiss?.()
+    this.unsubscribeLanguageChange?.()
     this.unsubscribeProfileChange?.()
 
     try {
@@ -924,6 +927,11 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       // Subscribe to notification dismiss broadcast from other KiloProvider instances
       this.unsubscribeNotificationDismiss = this.connectionService.onNotificationDismissed(() => {
         this.fetchAndSendNotifications()
+      })
+
+      // Subscribe to language change broadcast from other KiloProvider instances
+      this.unsubscribeLanguageChange = this.connectionService.onLanguageChanged((locale) => {
+        this.postMessage({ type: "languageChanged", locale })
       })
 
       // Subscribe to profile change broadcast from other KiloProvider instances
@@ -2589,6 +2597,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.unsubscribeEvent?.()
     this.unsubscribeState?.()
     this.unsubscribeNotificationDismiss?.()
+    this.unsubscribeLanguageChange?.()
     this.unsubscribeProfileChange?.()
     this.webviewMessageDisposable?.dispose()
     this.trackedSessionIds.clear()

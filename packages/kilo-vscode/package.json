@@ -647,6 +647,7 @@
             "br",
             "th",
             "bs",
+            "tr",
             "nl"
           ],
           "enumDescriptions": [
@@ -667,6 +668,7 @@
             "Português (Brasil)",
             "ภาษาไทย",
             "Bosanski",
+            "Türkçe",
             "Nederlands"
           ]
         },
