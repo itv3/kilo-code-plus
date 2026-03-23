@@ -830,6 +830,8 @@
   font-family: var(--vscode-font-family);
   font-size: 13px;
   line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
   resize: none;
   outline: none;
   scrollbar-gutter: stable;
@@ -875,7 +877,7 @@
   font-size: 13px;
   line-height: 1.4;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
