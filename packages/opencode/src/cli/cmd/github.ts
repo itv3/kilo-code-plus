@@ -241,8 +241,6 @@ export const GithubInstallCommand = cmd({
                 step2,
                 "",
                 "    3. Go to a GitHub issue and comment `/kilo summarize` to see the agent in action", // kilocode_change
-                "",
-                "   Learn more about integrations - https://kilo.ai/docs/automate/integrations", // kilocode_change
               ].join("\n"),
             )
           }
