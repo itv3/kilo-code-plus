@@ -84,11 +84,15 @@ export class AutocompleteServiceManager {
       () => this.settings,
       workspacePath,
       new AutocompleteTelemetry(),
+      (status) => this.handleFatalAutocompleteError(status),
     )
 
     // Reload when CLI backend connection state changes so autocomplete
     // picks up the connected state even if it wasn't ready at startup.
+    // Also reset error backoff — a reconnect may mean the user re-authenticated
+    // or added credits, so we should give autocomplete a fresh chance.
     this.unsubscribeState = connectionService.onStateChange(() => {
+      this.inlineCompletionProvider.backoff.reset()
       void this.load()
     })
 
@@ -310,6 +314,27 @@ export class AutocompleteServiceManager {
 
   private hasNoUsableProvider(): boolean {
     return !this.model.hasValidCredentials()
+  }
+
+  /**
+   * Handle a fatal (non-retriable) autocomplete error such as 402 Payment Required.
+   * Shows a one-time notification to the user so they know autocomplete is paused.
+   */
+  private handleFatalAutocompleteError(status: number | null): void {
+    const msg =
+      status === 402
+        ? t("kilocode:autocomplete.creditsExhausted.message")
+        : t("kilocode:autocomplete.authError.message")
+
+    if (status === 402) {
+      vscode.window.showWarningMessage(msg, t("kilocode:autocomplete.creditsExhausted.addCredits")).then((choice) => {
+        if (choice === t("kilocode:autocomplete.creditsExhausted.addCredits")) {
+          vscode.env.openExternal(vscode.Uri.parse("https://kilo.ai/credits"))
+        }
+      })
+    } else {
+      vscode.window.showWarningMessage(msg)
+    }
   }
 
   private updateCostTracking(cost: number, _inputTokens: number, _outputTokens: number): void {
