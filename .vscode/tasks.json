@@ -69,7 +69,7 @@
       "label": "VSCode - Install",
       "type": "shell",
       "command": "bun",
-      "args": ["install"],
+      "args": ["install", "--frozen-lockfile"],
       "group": "build",
       "presentation": {
         "reveal": "silent"
