@@ -257,11 +257,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Start the CLI backend server eagerly so autocomplete works without opening a Kilo tab.
   // connectionService.connect() is idempotent — when a webview later calls connect(), it's a no-op.
-  // Only start eagerly if autocomplete is enabled to avoid spawning a server process unnecessarily.
+  // Only start eagerly if autocomplete is enabled and there's a real workspace folder — without
+  // workspace folders process.cwd() in the extension host is not meaningful.
   const autocompleteEnabled =
     vscode.workspace.getConfiguration("kilo-code.new.autocomplete").get<boolean>("enableAutoTrigger") ?? true
-  if (autocompleteEnabled) {
-    const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd()
+  const workspaceDir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+  if (autocompleteEnabled && workspaceDir) {
     connectionService.connect(workspaceDir).catch((error) => {
       console.error("[Kilo New] Extension: Failed to eagerly start CLI backend:", error)
     })
