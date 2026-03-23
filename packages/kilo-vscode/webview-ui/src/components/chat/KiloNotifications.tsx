@@ -35,21 +35,16 @@ export const KiloNotifications: Component = () => {
   }
 
   /**
-   * Resolve a suggestModelId string to a { providerID, modelID } pair.
-   * The suggestModelId may be a bare model ID (e.g. "anthropic/claude-sonnet-4-6")
-   * which is resolved against the kilo provider first, then all other providers.
+   * Resolve suggestModelId to a kilo-provider model selection.
+   * Only the kilo provider is supported — the model must be present in the
+   * catalog and reachable (isModelValid) before the button is shown.
    */
   const suggestedModel = createMemo(() => {
     const id = current()?.suggestModelId
     if (!id) return undefined
-    const models = provider.models()
-    // Try kilo provider first
-    const kiloMatch = models.find((m) => m.providerID === KILO_PROVIDER_ID && m.id === id)
-    if (kiloMatch) return { providerID: KILO_PROVIDER_ID, modelID: id }
-    // Fall back to any provider that has the model
-    const match = models.find((m) => m.id === id)
-    if (match) return { providerID: match.providerID, modelID: id }
-    return undefined
+    const sel = { providerID: KILO_PROVIDER_ID, modelID: id }
+    if (!provider.isModelValid(sel)) return undefined
+    return sel
   })
 
   const canSwitchModel = createMemo(() => {
