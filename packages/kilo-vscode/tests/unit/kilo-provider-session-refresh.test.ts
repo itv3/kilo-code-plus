@@ -79,6 +79,7 @@ function createConnection(client: ReturnType<typeof createClient>) {
     onStateChange: (_listener: (state: State) => void) => () => undefined,
     onNotificationDismissed: () => () => undefined,
     onLanguageChanged: () => () => undefined,
+    onProfileChanged: () => () => undefined,
     getServerInfo: () => ({ port: 12345 }),
     getConnectionState: () => "connected" as const,
     resolveEventSessionId: () => undefined,

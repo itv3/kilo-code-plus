@@ -1130,6 +1130,7 @@ export const dict = {
   "settings.providers.notSet": "Ikke angitt (bruk serverstandard)",
   "dialog.model.notSet": "Ikke angitt",
   "profile.personalAccount": "Personlig konto",
+  "profile.switchingAccount": "Bytter konto…",
   // Agent Manager strings live in webview-ui/agent-manager/i18n/no.ts
 
   "question.summary": "{{n}} av {{total}} spørsmål",

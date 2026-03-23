@@ -1114,6 +1114,7 @@ export const dict = {
   "settings.providers.notSet": "غير محدد (استخدام الافتراضي)",
   "dialog.model.notSet": "غير محدد",
   "profile.personalAccount": "حساب شخصي",
+  "profile.switchingAccount": "جارٍ تبديل الحساب…",
 
   // Agent Manager strings live in webview-ui/agent-manager/i18n/ar.ts
 

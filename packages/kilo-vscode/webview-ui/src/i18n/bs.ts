@@ -1136,6 +1136,7 @@ export const dict = {
   "settings.providers.notSet": "Nije postavljeno (koristi zadano servera)",
   "dialog.model.notSet": "Nije postavljeno",
   "profile.personalAccount": "Osobni račun",
+  "profile.switchingAccount": "Prebacivanje računa…",
 
   // Agent Manager strings live in webview-ui/agent-manager/i18n/bs.ts
 

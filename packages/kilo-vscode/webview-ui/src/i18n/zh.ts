@@ -1099,6 +1099,7 @@ export const dict = {
   "settings.providers.notSet": "未设置（使用服务器默认值）",
   "dialog.model.notSet": "未设置",
   "profile.personalAccount": "个人账户",
+  "profile.switchingAccount": "正在切换账户…",
   // Agent Manager strings live in webview-ui/agent-manager/i18n/zh.ts
 
   "question.summary": "第 {{n}} / {{total}} 个问题",
