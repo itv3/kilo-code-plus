@@ -302,11 +302,6 @@ export const UNSUPPORTED_PROVIDERS = new Set([
   "virtual-quota-fallback",
   "glama",
   "roo",
-  "nano-gpt",
-  "poe",
-  "aihubmix",
-  "zenmux",
-  "apertis",
 ])
 
 /** Built-in default mode slugs that should not be migrated */
