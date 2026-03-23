@@ -6,16 +6,13 @@ on:
       - "packages/kilo-vscode/src/**"
       - "packages/kilo-vscode/webview-ui/**"
       - "packages/opencode/src/**"
+      - "packages/kilo-docs/source-links.md"
       - "script/extract-source-links.ts"
-      - "script/source-links-lychee.toml"
       - ".github/workflows/source-check-links.yml"
-  schedule:
-    # Run weekly on Monday at 9am UTC
-    - cron: "0 9 * * 1"
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  source-link-checker:
+  source-links-freshness:
     if: github.repository == 'Kilo-Org/kilocode'
     runs-on: ubuntu-latest
     steps:
@@ -23,13 +20,5 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - name: Extract source links
-        run: bun run script/extract-source-links.ts
-
-      - name: Link Checker
-        uses: Kilo-Org/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411
-        with:
-          args: "--config script/source-links-lychee.toml source-links.md"
-          fail: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check source-links.md is up to date
+        run: bun run script/extract-source-links.ts --check
