@@ -18,7 +18,6 @@ export interface AutocompleteServiceSettings {
   provider?: string
   model?: string
   snoozeUntil?: number
-  hasKilocodeProfileWithNoBalance?: boolean
 }
 
 function readSettings(): AutocompleteServiceSettings {
@@ -59,6 +58,7 @@ export class AutocompleteServiceManager {
   public readonly codeActionProvider: AutocompleteCodeActionProvider
   public readonly inlineCompletionProvider: AutocompleteInlineCompletionProvider
   private inlineCompletionProviderDisposable: vscode.Disposable | null = null
+  private unsubscribeState: (() => void) | null = null
 
   constructor(context: vscode.ExtensionContext, connectionService: KiloConnectionService) {
     if (AutocompleteServiceManager._instance) {
@@ -86,6 +86,12 @@ export class AutocompleteServiceManager {
       new AutocompleteTelemetry(),
     )
 
+    // Reload when CLI backend connection state changes so autocomplete
+    // picks up the connected state even if it wasn't ready at startup.
+    this.unsubscribeState = connectionService.onStateChange(() => {
+      void this.load()
+    })
+
     void this.load()
   }
 
@@ -97,34 +103,40 @@ export class AutocompleteServiceManager {
   }
 
   public async load() {
-    await this.model.reload()
     this.settings = readSettings()
 
     await this.updateGlobalContext()
     this.updateStatusBar()
-    await this.updateInlineCompletionProviderRegistration()
+    await this.ensureInlineCompletionProviderRegistration()
     this.setupSnoozeTimerIfNeeded()
   }
 
-  private async updateInlineCompletionProviderRegistration() {
+  /**
+   * Ensure the inline completion provider registration matches the current settings.
+   * Only disposes/re-registers when the desired state actually changes, avoiding
+   * unnecessary churn that can break VS Code's provider tracking during startup races.
+   */
+  private async ensureInlineCompletionProviderRegistration() {
     const shouldBeRegistered = (this.settings?.enableAutoTrigger ?? false) && !this.isSnoozed()
+    const isRegistered = this.inlineCompletionProviderDisposable !== null
 
-    // First, dispose any existing registration
-    if (this.inlineCompletionProviderDisposable) {
-      this.inlineCompletionProviderDisposable.dispose()
-      this.inlineCompletionProviderDisposable = null
-    }
-
-    if (!shouldBeRegistered) {
+    // Already in the correct state — nothing to do
+    if (shouldBeRegistered === isRegistered) {
       return
     }
 
-    // Register classic provider
+    if (!shouldBeRegistered) {
+      this.inlineCompletionProviderDisposable!.dispose()
+      this.inlineCompletionProviderDisposable = null
+      return
+    }
+
+    // Register classic provider (tracked via this.inlineCompletionProviderDisposable,
+    // not context.subscriptions, so re-registration on reconnect doesn't leak)
     this.inlineCompletionProviderDisposable = vscode.languages.registerInlineCompletionItemProvider(
       { scheme: "file" },
       this.inlineCompletionProvider,
     )
-    this.context.subscriptions.push(this.inlineCompletionProviderDisposable)
   }
 
   public async disable() {
@@ -237,11 +249,6 @@ export class AutocompleteServiceManager {
 
     const document = editor.document
 
-    // Ensure model is loaded
-    if (!this.model.loaded) {
-      await this.load()
-    }
-
     // Call the inline completion provider directly with manual trigger context
     const position = editor.selection.active
     const context: vscode.InlineCompletionContext = {
@@ -293,22 +300,16 @@ export class AutocompleteServiceManager {
     })
   }
 
-  private getCurrentModelName(): string | undefined {
-    if (!this.model.loaded) {
-      return
-    }
+  private getCurrentModelName(): string {
     return this.model.getModelName()
   }
 
-  private getCurrentProviderName(): string | undefined {
-    if (!this.model.loaded) {
-      return
-    }
+  private getCurrentProviderName(): string {
     return this.model.getProviderDisplayName()
   }
 
   private hasNoUsableProvider(): boolean {
-    return this.model.loaded && !this.model.hasValidCredentials() && !this.model.hasKilocodeProfileWithNoBalance
+    return !this.model.hasValidCredentials()
   }
 
   private updateCostTracking(cost: number, _inputTokens: number, _outputTokens: number): void {
@@ -328,7 +329,6 @@ export class AutocompleteServiceManager {
       model: this.getCurrentModelName(),
       provider: this.getCurrentProviderName(),
       profileName: this.model.profileName,
-      hasKilocodeProfileWithNoBalance: this.model.hasKilocodeProfileWithNoBalance,
       hasNoUsableProvider: this.hasNoUsableProvider(),
       totalSessionCost: this.sessionCost,
       completionCount: this.completionCount,
@@ -359,6 +359,10 @@ export class AutocompleteServiceManager {
       clearTimeout(this.snoozeTimer)
       this.snoozeTimer = null
     }
+
+    // Unsubscribe from connection state changes
+    this.unsubscribeState?.()
+    this.unsubscribeState = null
 
     // Dispose inline completion provider registration
     if (this.inlineCompletionProviderDisposable) {

@@ -14,7 +14,7 @@ import { VSCodeProvider } from "../context/vscode"
 import { ServerProvider } from "../context/server"
 import { ProviderContext } from "../context/provider"
 import { flattenModels, findModel as _findModel } from "../context/provider-utils"
-import { ConfigProvider } from "../context/config"
+import { ConfigProvider, ConfigContext } from "../context/config"
 import { DataProvider } from "@kilocode/kilo-ui/context/data"
 import { DiffComponentProvider } from "@kilocode/kilo-ui/context/diff"
 import { CodeComponentProvider } from "@kilocode/kilo-ui/context/code"
@@ -32,7 +32,7 @@ import { dict as appEn } from "../i18n/en"
 import { dict as amEn } from "../../agent-manager/i18n/en"
 import { dict as kiloEn } from "@kilocode/kilo-i18n/en"
 import { resolveTemplate } from "../context/language-utils"
-import type { PermissionRequest, QuestionRequest } from "../types/messages"
+import type { Config, PermissionRequest, QuestionRequest } from "../types/messages"
 
 // Merged English dictionary (same merge order as the real LanguageProvider)
 const dict: Record<string, string> = { ...appEn, ...amEn, ...uiEn, ...kiloEn }
@@ -76,6 +76,9 @@ const MockProviderProvider: ParentComponent = (props) => {
     defaultSelection: () => ({ providerID: "kilo", modelID: "anthropic/claude-sonnet-4-6" }),
     models: () => MOCK_MODELS,
     findModel: (sel: any) => _findModel(MOCK_MODELS, sel),
+    authMethods: () => ({}),
+    authStates: () => ({}),
+    isModelValid: () => true,
   }
   return <ProviderContext.Provider value={value}>{props.children}</ProviderContext.Provider>
 }
@@ -131,6 +134,7 @@ export function mockSessionValue(overrides?: {
     allMessages: () => ({}),
     allParts: () => ({}),
     allStatusMap: () => ({}),
+    familyData: () => ({ messages: {}, parts: {}, status: {} }),
     getParts: () => [],
     todos: () => [],
     permissions: () => permissions,
@@ -152,6 +156,11 @@ export function mockSessionValue(overrides?: {
     getSessionModel: () => ({ providerID: "kilo", modelID: "anthropic/claude-sonnet-4-6" }),
     setSessionModel: noop,
     setSessionAgent: noop,
+    revert: () => undefined,
+    revertedCount: () => 0,
+    summary: () => undefined,
+    revertSession: noop,
+    unrevertSession: noop,
     variantList: () => [],
     currentVariant: () => undefined,
     selectVariant: noop,
@@ -183,8 +192,26 @@ interface StoryProvidersProps {
   questions?: QuestionRequest[]
   status?: string
   sessionID?: string
+  /** When provided, injects a mock ConfigContext with this config instead of the real ConfigProvider. */
+  config?: Config
   /** When true, renders children without the default 12px padding wrapper */
   noPadding?: boolean
+}
+
+/** Wraps children with either a mock ConfigContext (when config prop is given) or the real ConfigProvider. */
+const ConfigWrapper: ParentComponent<{ config?: Config }> = (props) => {
+  if (props.config) {
+    const value = {
+      config: () => props.config!,
+      loading: () => false,
+      isDirty: () => false,
+      updateConfig: noop,
+      saveConfig: noop,
+      discardConfig: noop,
+    }
+    return <ConfigContext.Provider value={value}>{props.children}</ConfigContext.Provider>
+  }
+  return <ConfigProvider>{props.children}</ConfigProvider>
 }
 
 export const StoryProviders: ParentComponent<StoryProvidersProps> = (props) => {
@@ -200,7 +227,7 @@ export const StoryProviders: ParentComponent<StoryProvidersProps> = (props) => {
   return (
     <VSCodeProvider>
       <ServerProvider>
-        <ConfigProvider>
+        <ConfigWrapper config={props.config}>
           <MockProviderProvider>
             <DialogProvider>
               <LanguageContext.Provider
@@ -233,7 +260,7 @@ export const StoryProviders: ParentComponent<StoryProvidersProps> = (props) => {
               </LanguageContext.Provider>
             </DialogProvider>
           </MockProviderProvider>
-        </ConfigProvider>
+        </ConfigWrapper>
       </ServerProvider>
     </VSCodeProvider>
   )
