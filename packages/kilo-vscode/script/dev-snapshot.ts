@@ -62,9 +62,8 @@ if (shouldInstall) {
   const execPath = process.env.VSCODE_EXEC_PATH ?? ""
   const isInsiders = execPath.toLowerCase().includes("insiders")
   const name = isInsiders ? "code-insiders" : "code"
-  const ext = process.platform === "win32" ? ".cmd" : ""
-  const binPath = execPath ? join(dirname(execPath), "bin", name + ext) : ""
-  const cli = binPath && existsSync(binPath) ? binPath : name
+  const winPath = process.platform === "win32" && execPath ? join(dirname(execPath), "bin", name + ".cmd") : ""
+  const cli = winPath && existsSync(winPath) ? winPath : name
   console.log(`\n🚀 Installing to ${cli}...`)
   await $`${cli} --force --install-extension ${vsixPath}`
 
