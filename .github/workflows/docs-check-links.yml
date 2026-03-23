@@ -7,10 +7,6 @@ on:
     paths:
       - "packages/kilo-docs/**"
       - ".github/workflows/docs-check-links.yml"
-      # Source-links.md is committed to kilo-docs; also trigger when source code changes
-      - "packages/kilo-vscode/src/**"
-      - "packages/kilo-vscode/webview-ui/**"
-      - "packages/opencode/src/**"
   schedule:
     # Run daily at 9am UTC
     - cron: "0 9 * * *"
