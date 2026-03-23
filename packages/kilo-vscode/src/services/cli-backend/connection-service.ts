@@ -34,11 +34,8 @@ export class KiloConnectionService {
   private readonly eventListeners: Set<SSEEventListener> = new Set()
   private readonly stateListeners: Set<StateListener> = new Set()
   private readonly notificationDismissListeners: Set<NotificationDismissListener> = new Set()
-<<<<<<< catrielmuller/turkish
   private readonly languageChangeListeners: Set<LanguageChangeListener> = new Set()
-=======
   private readonly profileChangeListeners: Set<ProfileChangeListener> = new Set()
->>>>>>> main
 
   /**
    * Shared mapping used to resolve session scope for events that don't reliably include a sessionID.
@@ -190,7 +187,7 @@ export class KiloConnectionService {
       listener(locale)
     }
   }
-    
+
   /**
    * Subscribe to profile change events broadcast from any KiloProvider. Returns unsubscribe function.
    */
