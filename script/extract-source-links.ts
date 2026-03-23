@@ -35,6 +35,7 @@ const EXCLUDE_PATTERNS = [
   // Localhost and internal
   /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)/,
   /^https?:\/\/kilo\.internal/,
+  /^https?:\/\/dev\.kilo\.ai/,
   /^https?:\/\/tauri\.localhost/,
   // Example/placeholder URLs
   /^https?:\/\/example\.com/,
