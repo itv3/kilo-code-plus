@@ -6,6 +6,7 @@
  */
 
 import { Component, createSignal, createMemo, createEffect, For, Show, onCleanup } from "solid-js"
+import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { useServer } from "../../context/server"
 import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
@@ -17,6 +18,7 @@ export const AccountSwitcher: Component<{ class?: string }> = (props) => {
   const vscode = useVSCode()
   const language = useLanguage()
   const [open, setOpen] = createSignal(false)
+  const [switching, setSwitching] = createSignal(false)
   let ref: HTMLDivElement | undefined
 
   const profile = () => server.profileData()
@@ -32,11 +34,18 @@ export const AccountSwitcher: Component<{ class?: string }> = (props) => {
 
   const label = createMemo(() => selected()?.name ?? language.t("profile.personalAccount"))
 
+  // Clear switching state when profile data changes (switch completed or failed)
+  createEffect(() => {
+    profile()
+    setSwitching(false)
+  })
+
   function pick(org: { id: string; name: string; role: string } | null) {
     if (org?.id === current() || (!org && current() === PERSONAL)) {
       setOpen(false)
       return
     }
+    setSwitching(true)
     vscode.postMessage({
       type: "setOrganization",
       organizationId: org?.id ?? null,
@@ -68,34 +77,45 @@ export const AccountSwitcher: Component<{ class?: string }> = (props) => {
       <div class={`account-switcher ${props.class ?? ""}`} ref={ref}>
         <button
           type="button"
-          class="account-switcher-trigger"
-          onClick={() => setOpen((v) => !v)}
+          class={`account-switcher-trigger ${switching() ? "account-switcher-switching" : ""}`}
+          onClick={() => !switching() && setOpen((v) => !v)}
+          disabled={switching()}
           aria-haspopup="listbox"
           aria-expanded={open()}
+          aria-busy={switching()}
           title={
-            selected()
-              ? `${selected()!.name} – ${selected()!.role.toUpperCase()}`
-              : language.t("profile.personalAccount")
+            switching()
+              ? language.t("profile.switchingAccount")
+              : selected()
+                ? `${selected()!.name} – ${selected()!.role.toUpperCase()}`
+                : language.t("profile.personalAccount")
           }
         >
           <span class="account-switcher-label">{label()}</span>
           <span class="account-switcher-badges">
-            <Show when={selected()}>
+            <Show when={selected() && !switching()}>
               <span class="account-switcher-role">{selected()!.role.toUpperCase()}</span>
             </Show>
-            <svg
-              class={`account-switcher-chevron ${open() ? "open" : ""}`}
-              viewBox="0 0 12 12"
-              fill="none"
-              stroke="rgb(156 163 175)"
-              aria-hidden="true"
+            <Show
+              when={switching()}
+              fallback={
+                <svg
+                  class={`account-switcher-chevron ${open() ? "open" : ""}`}
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="rgb(156 163 175)"
+                  aria-hidden="true"
+                >
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              }
             >
-              <path d="M3 4.5L6 7.5L9 4.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+              <Spinner style={{ width: "12px", height: "12px" }} />
+            </Show>
           </span>
         </button>
 
-        <Show when={open()}>
+        <Show when={open() && !switching()}>
           <div class="account-switcher-dropdown" role="listbox" aria-label="Account">
             <button
               type="button"

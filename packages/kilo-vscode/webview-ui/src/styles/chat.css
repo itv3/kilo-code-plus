@@ -1609,7 +1609,13 @@
     border-color 150ms;
 }
 
-.account-switcher-trigger:hover {
+.account-switcher-switching {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: default;
+}
+
+.account-switcher-trigger:hover:not(:disabled) {
   opacity: 1;
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.15);
