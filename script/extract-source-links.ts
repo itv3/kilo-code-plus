@@ -28,7 +28,9 @@ const EXTENSIONS = ["ts", "tsx", "js", "jsx"]
 // Matches http:// and https:// URLs in string literals or comments
 const URL_RE = /https?:\/\/[^\s"'`)\]},;*\\<>]+/g
 
-// URLs to exclude — API endpoints, localhost, examples, dynamic templates, namespaces
+// URLs to exclude — only genuinely non-checkable URLs (API endpoints, localhost,
+// examples, dynamic templates, namespaces). Real external URLs should be extracted
+// and validated by lychee; add lychee.toml exclusions for sites that block bots.
 const EXCLUDE_PATTERNS = [
   // Localhost and internal
   /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)/,
@@ -57,21 +59,15 @@ const EXCLUDE_PATTERNS = [
   /^https?:\/\/www\.w3\.org\//,
   // URLs that are templates with interpolation (contain ${ after stripping)
   /\$\{/,
-  // Schema/config JSON URLs
-  /\.json$/,
-  // Archive downloads (tarballs, zips — these are versioned and break often)
-  /\.(tar\.gz|zip|tgz)$/,
-  /\/archive\//,
-  /\/releases\/download\//,
-  /\/releases\/latest$/,
-  // GitHub URLs — excluded because they cause HTTP/2 protocol errors on GH Actions
-  /^https?:\/\/github\.com\//,
-  // URLs ending in common non-page extensions
-  /\.(png|jpg|jpeg|gif|svg|ico)$/,
   // Truncated/placeholder URLs (e.g., https://…) or bare protocols
   /^https?:\/\/[\W]*$/,
   // GHE example domains
   /^https?:\/\/company\.ghe\.com/,
+  // Example/placeholder GitHub URLs used in docs/comments
+  /^https?:\/\/github\.com\/owner\//,
+  /^https?:\/\/github\.com\/\.extraheader/,
+  /^https?:\/\/github\.com\/user-attachments\/assets\/xxxx/,
+  /^https?:\/\/github\.com\/user-attachments\/files\/\d+\/api\.json/,
   // Example/template session URLs with placeholders
   /\/s\/abc123$/,
   // Truncated URL paths (e.g., /s/ with no ID)

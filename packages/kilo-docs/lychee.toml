@@ -30,13 +30,4 @@ exclude = [
   'https://tbench.ai/',
   # GitHub URLs cause persistent HTTP/2 protocol errors when checked from GitHub Actions runners
   '^https?://github\.com/',
-  '^https?://docs\.github\.com/',
-  # Source-link exclusions (sites that block automated checks)
-  '^https?://platform\.openai\.com',
-  '^https?://cookbook\.openai\.com',
-  # Short-link services that may rate-limit
-  '^https?://vercel\.link/',
-  '^https?://opncd\.ai',
-  # Domain-only links (no path)
-  '^https?://gitlab\.com/?$',
 ]
