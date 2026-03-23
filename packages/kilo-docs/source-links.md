@@ -76,7 +76,7 @@
 - <https://kilo.ai/docs>
   <!-- packages/kilo-vscode/webview-ui/src/hooks/useSlashCommand.ts -->
   <!-- packages/opencode/src/cli/cmd/tui/app.tsx -->
-- <https://kilo.ai/docs/github/#usage-examples>
+- <https://kilo.ai/docs/automate/integrations>
   <!-- packages/opencode/src/cli/cmd/github.ts -->
 - <https://kilo.ai/docs/providers/#custom-provider>
   <!-- packages/kilo-vscode/webview-ui/src/components/settings/CustomProviderDialog.tsx -->
