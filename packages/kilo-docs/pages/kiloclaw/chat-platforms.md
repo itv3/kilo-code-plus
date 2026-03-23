@@ -7,7 +7,16 @@ description: "Connect your KiloClaw agent to Telegram, Discord, Slack, and more"
 
 KiloClaw supports connecting your AI agent to Telegram, Discord, and Slack. You can configure channels from the **Settings** tab on your [KiloClaw dashboard](/docs/kiloclaw/dashboard#channels), or from the OpenClaw Control UI after accessing your instance.
 
-## Supported Platforms
+While the exact steps vary for configuring a chat platform (called a _channel_ by OpenClaw), the steps are to:
+
+1. Configure the channel
+2. Redeploy the KiloClaw instance
+3. Initiate the pairing in the chat app
+4. Accept the pairing request in the [KiloClaw UI](https://app.kilo.ai/claw)
+
+Detailed instructions for supported chat apps are below.
+
+## Chat Apps (Channels)
 
 ### Telegram
 
@@ -18,6 +27,7 @@ KiloClaw supports connecting your AI agent to Telegram, Discord, and Slack. You 
 5. Paste the token into the **Telegram Bot Token** field
 6. Click **Save**
 7. Redeploy your KiloClaw instance
+8. Send a direct message to your bot in Telegram: `/start`
 
 {% image src="/docs/img/kiloclaw/telegram.png" alt="Connect account screen" width="800" caption="Telegram bot token entry" /%}
 
@@ -78,21 +88,12 @@ Enter the token in the Settings tab and click **Save**. You can remove or replac
 #### Start Chatting with the Bot
 
 1. Right-click on the Bot in Discord and click **Message**
-2. DM the bot `/start` or `/restart`
+2. DM the bot `/pair`
 3. You should get a response back with a pairing code
 4. Return to [app.kilocode.ai/claw](https://app.kilocode.ai/claw) and confirm the pairing code and approve
 5. You should now be able to chat with the bot from Discord
 
 ### Slack
-
-To connect Slack, you need **both** of the following tokens from [Slack App Management](https://api.slack.com/apps):
-
-- **Bot Token** — starts with `xoxb-`
-- **App Token** — starts with `xapp-`
-
-{% image src="/docs/img/kiloclaw/slack.png" alt="Connect account screen" width="800" caption="Slack bot and app token entry" /%}
-
-Both tokens are required — you cannot save with only one.
 
 #### Step 1: Create a Slack App from the OpenClaw Manifest
 
@@ -123,7 +124,7 @@ You need two tokens from Slack:
 
 #### Step 3: Connect Slack to KiloClaw
 
-1. In the KiloClaw UI, find the Slack integration section (may show "not configured")
+1. In the [KiloClaw UI](https://app.kilo.ai/claw), find the Slack integration section (may show "not configured")
 2. Enter both tokens:
    - The `xapp-` app-level token
    - The `xoxb-` bot user OAuth token
@@ -138,38 +139,8 @@ You need two tokens from Slack:
 > The slash command is whatever you defined in the manifest. Any text after the command will work to trigger pairing.
 
 2. The app will return a pairing code
-3. In the KiloClaw UI, go to **Gateway Processes** → **Settings**
-4. Find the pending pairing request and click **Approve** (verify the code matches)
-
-#### Step 5: Verify the Connection
-
-1. Go back to Slack and send a direct message to the app (plain text, no slash command)
-2. The app should respond — you're live!
-
-## Configuring a Channel
-
-1. Open your [KiloClaw dashboard](/docs/kiloclaw/dashboard)
-2. Go to the **Settings** tab
-3. Scroll to the **Channels** section
-4. Enter the required token(s) for your platform
-5. Click **Save**
-
-{% callout type="info" %}
-After saving channel tokens, you need to **Redeploy** or **Restart OpenClaw** for the changes to take effect.
-{% /callout %}
-
-To remove a channel, clear its token(s) in Settings and save. Redeploy or Restart OpenClaw afterward to apply the removal.
-
-## Pairing Requests
-
-After connecting a channel and starting your instance, new users and devices need to be approved before they can interact with your agent.
-
-- **Channel pairing** — When someone messages your bot on Telegram, Discord, or Slack for the first time, a pairing request appears on your dashboard. You need to click **Approve** to allow them to use the bot.
-- **Device pairing** — When a new browser or device connects to the OpenClaw Control UI, a similar request appears. Click **Approve** to authorize it.
-
-{% callout type="note" %}
-Pairing data is cached for about 2 minutes. Use the refresh button to check for new requests.
-{% /callout %}
+3. Return to [app.kilocode.ai/claw](https://app.kilocode.ai/claw) and confirm the pairing code and approve
+4. You should now be able to chat with the bot from Slack
 
 ## Future Support
 
