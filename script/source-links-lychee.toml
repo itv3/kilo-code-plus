@@ -1,0 +1,32 @@
+root_dir = "."
+
+format = "detailed"
+max_redirects = 5
+max_retries = 3
+retry_wait_time = 5
+
+accept = [
+  "200",
+  "403",
+  "429",
+  "301",
+  "307",
+]
+
+exclude = [
+  # GitHub URLs cause persistent HTTP/2 protocol errors when checked from GitHub Actions runners
+  '^https?://github\.com/',
+  '^https?://docs\.github\.com/',
+  # Sites that block automated checks
+  '^https?://([A-Za-z0-9-]+\.)?glama\.ai(/|$)',
+  '^https?://(api|console)\.mistral\.ai',
+  '^https?://(app|console)\.requesty\.ai',
+  '^https?://(cloud|console)\.google\.ai',
+  '^https?://platform\.openai\.com',
+  '^https?://cookbook\.openai\.com',
+  # Short-link services that may rate-limit
+  '^https?://vercel\.link/',
+  '^https?://opncd\.ai',
+  # Domain-only links (no path) — just checking if the domain resolves is noisy
+  '^https?://gitlab\.com/?$',
+]

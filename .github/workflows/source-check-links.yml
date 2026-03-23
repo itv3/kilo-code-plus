@@ -1,0 +1,35 @@
+name: Check Source Links
+
+on:
+  pull_request:
+    paths:
+      - "packages/kilo-vscode/src/**"
+      - "packages/kilo-vscode/webview-ui/**"
+      - "packages/opencode/src/**"
+      - "script/extract-source-links.ts"
+      - "script/source-links-lychee.toml"
+      - ".github/workflows/source-check-links.yml"
+  schedule:
+    # Run weekly on Monday at 9am UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  source-link-checker:
+    if: github.repository == 'Kilo-Org/kilocode'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Extract source links
+        run: bun run script/extract-source-links.ts
+
+      - name: Link Checker
+        uses: Kilo-Org/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411
+        with:
+          args: "--config script/source-links-lychee.toml source-links.md"
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
