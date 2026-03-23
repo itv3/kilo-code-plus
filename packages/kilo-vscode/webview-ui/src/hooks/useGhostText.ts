@@ -112,13 +112,6 @@ export function useGhostText(vscode: VSCodeContext, getText: () => string, conne
       return
     }
 
-    // Never show ghost text on an empty input — the native placeholder is
-    // visible and would overlap with the ghost text overlay.
-    if (!val) {
-      setGhost("")
-      return
-    }
-
     // Cursor must be at end (if textarea is available)
     if (textarea) {
       const atEnd = textarea.selectionStart === textarea.selectionEnd && textarea.selectionEnd === textarea.value.length
