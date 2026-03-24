@@ -933,6 +933,7 @@ export namespace Provider {
           recommendedIndex: model.recommendedIndex ?? existingModel?.recommendedIndex,
           prompt: model.prompt ?? existingModel?.prompt,
           isFree: model.isFree ?? existingModel?.isFree,
+          ai_sdk_provider: model.ai_sdk_provider ?? existingModel?.ai_sdk_provider,
           // kilocode_change end
         }
         const merged = mergeDeep(ProviderTransform.variants(parsedModel), model.variants ?? {})
