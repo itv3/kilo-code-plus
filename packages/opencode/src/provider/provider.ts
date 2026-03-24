@@ -616,10 +616,9 @@ export namespace Provider {
       return {
         autoload: Object.keys(input.models).length > 0,
         options,
-        async getModel(_sdk: any, modelID: string, opts?: Record<string, any>) {
+        async getModel(sdk: any, modelID: string) {
           const aiSdkProvider = input.models[modelID]?.ai_sdk_provider
-          const sdk = createKilo({ aiSdkProvider, ...opts })
-          return sdk.languageModel(modelID)
+          return sdk.languageModel(modelID, aiSdkProvider)
         },
       }
     },

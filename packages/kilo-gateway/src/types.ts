@@ -49,8 +49,6 @@ export interface PollResult<T> {
 // Provider Types
 // ============================================================================
 
-export type AiSdkProvider = "anthropic" | "openai" | "openai-compatible" | "openrouter"
-
 /**
  * Options for creating a Kilo provider instance
  */
@@ -106,8 +104,6 @@ export interface KiloProviderOptions {
    * Request timeout in milliseconds
    */
   timeout?: number | false
-
-  aiSdkProvider?: AiSdkProvider
 }
 
 /**
