@@ -176,6 +176,17 @@
   padding: 8px 12px 0;
 }
 
+.session-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.session-actions-row > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* ============================================
    Message List
    ============================================ */

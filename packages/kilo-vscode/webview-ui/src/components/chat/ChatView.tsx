@@ -150,38 +150,42 @@ export const ChatView: Component<ChatViewProps> = (props) => {
               >
                 {language.t("command.session.new.task")}
               </Button>
-              <Show when={isSidebar()}>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  data-full-width="true"
-                  onClick={() => vscode.postMessage({ type: "openChanges" })}
-                  aria-label={language.t("command.session.show.changes")}
-                >
-                  <Icon name="file-tree" size="small" />
-                  {language.t("command.session.show.changes")}
-                </Button>
-              </Show>
-              <Show when={canContinueInWorktree()}>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  data-full-width="true"
-                  disabled={transferring()}
-                  onClick={() => {
-                    const sid = id()
-                    if (!sid) return
-                    setTransferring(true)
-                    setTransferDetail("Capturing changes...")
-                    vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
-                  }}
-                  aria-label="Continue in Worktree"
-                >
-                  <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
-                    <Spinner class="chat-spinner-small" />
+              <Show when={isSidebar() || canContinueInWorktree()}>
+                <div class="session-actions-row">
+                  <Show when={isSidebar()}>
+                    <Button
+                      variant="ghost"
+                      size="small"
+                      data-full-width="true"
+                      onClick={() => vscode.postMessage({ type: "openChanges" })}
+                      aria-label={language.t("command.session.show.changes")}
+                    >
+                      <Icon name="file-tree" size="small" />
+                      {language.t("command.session.show.changes")}
+                    </Button>
                   </Show>
-                  {transferring() ? transferDetail() : "Continue in Worktree"}
-                </Button>
+                  <Show when={canContinueInWorktree()}>
+                    <Button
+                      variant="ghost"
+                      size="small"
+                      data-full-width="true"
+                      disabled={transferring()}
+                      onClick={() => {
+                        const sid = id()
+                        if (!sid) return
+                        setTransferring(true)
+                        setTransferDetail("Capturing changes...")
+                        vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
+                      }}
+                      aria-label="Continue in Worktree"
+                    >
+                      <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
+                        <Spinner class="chat-spinner-small" />
+                      </Show>
+                      {transferring() ? transferDetail() : "Continue in Worktree"}
+                    </Button>
+                  </Show>
+                </div>
               </Show>
             </div>
           </Show>
