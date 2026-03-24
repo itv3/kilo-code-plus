@@ -14,8 +14,8 @@ describe("extractStatus", () => {
     expect(extractStatus(new Error("FIM request failed: 429 Too Many Requests"))).toBe(429)
   })
 
-  it("extracts 500 from generic error", () => {
-    expect(extractStatus(new Error("Server returned 500 Internal Server Error"))).toBe(500)
+  it("extracts 500 from SSE error message", () => {
+    expect(extractStatus(new Error("SSE failed: 500 Internal Server Error"))).toBe(500)
   })
 
   it("returns null for message without status code", () => {
@@ -28,6 +28,10 @@ describe("extractStatus", () => {
 
   it("returns null for empty error", () => {
     expect(extractStatus(new Error(""))).toBeNull()
+  })
+
+  it("extracts 429 when message contains other numbers before the status", () => {
+    expect(extractStatus(new Error("after 128 retries: 429 Too Many Requests"))).toBe(429)
   })
 })
 

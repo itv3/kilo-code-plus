@@ -32,10 +32,11 @@ export type ErrorKind = "fatal" | "retriable" | "transient"
 /**
  * Extract an HTTP status code from an error message like "SSE failed: 402 Payment Required"
  * or "FIM request failed: 429 Too Many Requests".
+ * Matches the status code after a colon to avoid false positives from other numbers.
  */
 export function extractStatus(error: unknown): number | null {
   const msg = error instanceof Error ? error.message : String(error)
-  const match = msg.match(/\b([1-5]\d{2})\b/)
+  const match = msg.match(/:\s*([1-5]\d{2})\b/)
   return match ? Number(match[1]) : null
 }
 
