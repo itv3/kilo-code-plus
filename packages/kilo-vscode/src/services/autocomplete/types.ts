@@ -89,7 +89,7 @@ export interface PromptResult {
 }
 
 // ============================================================================
-// FIM/Hole Filler Completion Types
+// FIM Completion Types
 // ============================================================================
 
 export interface FillInAtCursorSuggestion {
@@ -107,10 +107,6 @@ export interface LLMRetrievalResult extends ResponseMetaData {
   suggestion: FillInAtCursorSuggestion
 }
 
-export interface ChatCompletionResult extends ResponseMetaData {
-  suggestion: FillInAtCursorSuggestion
-}
-
 export interface FimCompletionResult extends ResponseMetaData {
   suggestion: FillInAtCursorSuggestion
 }
@@ -122,14 +118,7 @@ export interface FimAutocompletePrompt {
   prunedSuffix: string
 }
 
-export interface HoleFillerAutocompletePrompt {
-  strategy: "hole_filler"
-  autocompleteInput: AutocompleteInput
-  systemPrompt: string
-  userPrompt: string
-}
-
-export type AutocompletePrompt = FimAutocompletePrompt | HoleFillerAutocompletePrompt
+export type AutocompletePrompt = FimAutocompletePrompt
 
 export interface AutocompleteStatusBarStateProps {
   enabled?: boolean
@@ -147,7 +136,7 @@ export interface AutocompleteContext {
   languageId: string
   modelId?: string
   provider?: string
-  strategy?: "fim" | "hole_filler"
+  strategy?: "fim"
 }
 
 export type CacheMatchType = "exact" | "partial_typing" | "backward_deletion"
