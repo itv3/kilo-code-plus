@@ -75,27 +75,29 @@ export function createKilo(options: KiloProviderOptions = {}): KiloProvider {
     fetch: wrappedFetch as typeof fetch,
   }
 
+  const openrouter = createOpenRouter(sdkOptions)
+  const anthropic = createAnthropic(sdkOptions)
+  const openai = createOpenAI(sdkOptions)
+  const openaiCompatible = createOpenAICompatible({ ...sdkOptions, name: "kilo.openai-compatible" })
+
   return {
     languageModel(modelId) {
-      return createOpenRouter(sdkOptions)(modelId)
+      return openrouter(modelId)
     },
     textEmbeddingModel(modelId) {
-      return createOpenRouter(sdkOptions).textEmbeddingModel(modelId)
+      return openrouter.textEmbeddingModel(modelId)
     },
     imageModel(modelId) {
-      return createOpenRouter(sdkOptions).imageModel(modelId)
+      return openrouter.imageModel(modelId)
     },
     anthropic(modelId) {
-      return createAnthropic(sdkOptions)(modelId)
+      return anthropic(modelId)
     },
     openai(modelId) {
-      return createOpenAI(sdkOptions)(modelId)
+      return openai(modelId)
     },
     openaiCompatible(modelId) {
-      return createOpenAICompatible({
-        ...sdkOptions,
-        name: "kilo.openai-compatible",
-      })(modelId)
+      return openaiCompatible(modelId)
     },
   }
 }
