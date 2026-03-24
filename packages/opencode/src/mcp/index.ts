@@ -3,6 +3,13 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+// kilocode_change start
+// The MCP SDK only sets windowsHide:true in Electron (checks `'type' in process`).
+// Set process.type so the SDK hides cmd.exe windows when spawning MCP servers on Windows.
+if (process.platform === "win32" && !("type" in process)) {
+  ;(process as NodeJS.Process & { type: string }).type = "browser"
+}
+// kilocode_change end
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js"
 import {
   CallToolResultSchema,
