@@ -64,6 +64,7 @@ export namespace Agent {
     const whitelistedDirs = [Truncate.GLOB, ...skillDirs.map((dir) => path.join(dir, "*"))]
     const defaults = PermissionNext.fromConfig({
       "*": "allow",
+      bash: "ask", // kilocode_change
       doom_loop: "ask",
       external_directory: {
         "*": "ask",
