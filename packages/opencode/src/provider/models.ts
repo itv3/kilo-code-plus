@@ -30,6 +30,8 @@ const normalizeKiloBaseURL = (baseURL: string | undefined, orgId: string | undef
 }
 
 export const Prompt = z.enum(["codex", "gemini", "beast", "anthropic", "trinity", "anthropic_without_todo"])
+
+export const AiSdkProvider = z.enum(["anthropic", "openai", "openai-compatible", "openrouter"])
 // kilocode_change end
 
 export namespace ModelsDev {
@@ -87,6 +89,7 @@ export namespace ModelsDev {
     recommendedIndex: z.number().optional(),
     prompt: Prompt.optional().catch(undefined),
     isFree: z.boolean().optional(),
+    ai_sdk_provider: AiSdkProvider.optional().catch(undefined),
     // kilocode_change end
 
     experimental: z.boolean().optional(),

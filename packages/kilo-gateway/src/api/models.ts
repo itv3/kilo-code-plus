@@ -39,6 +39,7 @@ const openRouterModelSchema = z.object({
         .optional()
         .catch(undefined),
       variants: z.record(z.string(), z.record(z.string(), z.any())).optional(),
+      ai_sdk_provider: z.enum(["anthropic", "openai", "openai-compatible", "openrouter"]).optional().catch(undefined),
     })
     .optional(),
 })
@@ -162,6 +163,7 @@ function transformToModelDevFormat(model: OpenRouterModel): any {
     recommendedIndex: model.preferredIndex,
     variants: model.opencode?.variants,
     prompt: model.opencode?.prompt,
+    ai_sdk_provider: model.opencode?.ai_sdk_provider,
     tool_call: supportsTools,
     isFree: model.isFree,
     ...(inputPrice !== undefined &&

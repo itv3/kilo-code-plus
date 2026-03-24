@@ -9,7 +9,7 @@ import { BunProc } from "../bun"
 import { Hash } from "../util/hash"
 import { Plugin } from "../plugin"
 import { NamedError } from "@opencode-ai/util/error"
-import { ModelsDev, Prompt } from "./models" // kilocode_change
+import { AiSdkProvider, ModelsDev, Prompt } from "./models" // kilocode_change
 import { Auth } from "../auth"
 import { Env } from "../env"
 import { Instance } from "../project/instance"
@@ -616,6 +616,11 @@ export namespace Provider {
       return {
         autoload: Object.keys(input.models).length > 0,
         options,
+        async getModel(_sdk: any, modelID: string, opts?: Record<string, any>) {
+          const aiSdkProvider = input.models[modelID]?.ai_sdk_provider
+          const sdk = createKilo({ aiSdkProvider, ...opts })
+          return sdk.languageModel(modelID)
+        },
       }
     },
     // kilocode_change end
@@ -691,6 +696,7 @@ export namespace Provider {
       recommendedIndex: z.number().optional(),
       prompt: Prompt.optional().catch(undefined),
       isFree: z.boolean().optional(),
+      ai_sdk_provider: AiSdkProvider.optional(),
       // kilocode_change end
     })
     .meta({
@@ -778,6 +784,7 @@ export namespace Provider {
       recommendedIndex: model.recommendedIndex,
       prompt: model.prompt,
       isFree: model.isFree,
+      ai_sdk_provider: model.ai_sdk_provider,
       // kilocode_change end
     }
 
