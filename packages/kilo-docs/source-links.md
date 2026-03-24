@@ -10,6 +10,8 @@
   <!-- packages/opencode/src/session/retry.ts -->
 - <https://app.kilo.ai/config.json>
   <!-- packages/opencode/src/config/config.ts -->
+- <https://app.kilo.ai/credits>
+  <!-- packages/kilo-vscode/src/services/autocomplete/AutocompleteServiceManager.ts -->
 - <https://app.kilo.ai/profile>
   <!-- packages/kilo-vscode/webview-ui/src/components/profile/ProfileView.tsx -->
 - <https://app.kilo.ai/usage>
@@ -70,8 +72,6 @@
   <!-- packages/opencode/src/mcp/oauth-provider.ts -->
 - <https://kilo.ai/>
   <!-- packages/opencode/src/cli/cmd/generate.ts -->
-- <https://kilo.ai/credits>
-  <!-- packages/kilo-vscode/src/services/autocomplete/AutocompleteServiceManager.ts -->
 - <https://kilo.ai/discord>
   <!-- packages/kilo-vscode/webview-ui/src/components/chat/FeedbackDialog.tsx -->
   <!-- packages/kilo-vscode/webview-ui/src/components/settings/AboutKiloCodeTab.tsx -->
