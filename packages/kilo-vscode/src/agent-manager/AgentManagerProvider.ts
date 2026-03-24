@@ -18,6 +18,7 @@ import { SessionTerminalManager } from "./SessionTerminalManager"
 import { createTerminalHost } from "./terminal-host"
 import { executeVscodeTask } from "./task-runner"
 import { forkSession } from "./fork-session"
+import { continueInWorktree } from "./continue-in-worktree"
 import { shouldStopDiffPolling } from "./delete-worktree"
 import { buildKeybindingMap } from "./format-keybinding"
 import { resolveVersionModels, buildInitialMessages, type CreatedVersion } from "./multi-version"
@@ -1809,6 +1810,42 @@ export class AgentManagerProvider implements Disposable {
   /** Expose worktree session→directory mappings for the auto-approve toggle. */
   public getSessionDirectories(): ReadonlyMap<string, string> {
     return this.panel?.sessions.getSessionDirectories() ?? new Map()
+  }
+
+  /**
+   * Continue a sidebar session in a new worktree.
+   * Captures git state, creates worktree, applies state, forks session.
+   * Called from KiloProvider when the sidebar sends "continueInWorktree".
+   */
+  public async continueFromSidebar(
+    sessionId: string,
+    progress: (status: string, detail?: string, error?: string) => void,
+  ): Promise<void> {
+    const root = this.getRoot()
+    if (!root) {
+      progress("error", undefined, "No workspace folder open")
+      return
+    }
+
+    this.openPanel()
+    await this.waitForStateReady("continueFromSidebar")
+
+    await continueInWorktree(
+      {
+        root,
+        getClient: () => this.connectionService.getClient(),
+        createWorktreeOnDisk: (opts) => this.createWorktreeOnDisk(opts),
+        runSetupScript: (p, b, id) => this.runSetupScriptForWorktree(p, b, id),
+        getStateManager: () => this.getStateManager(),
+        registerWorktreeSession: (sid, dir) => this.registerWorktreeSession(sid, dir),
+        registerSession: (session) => this.panel?.sessions.registerSession(session),
+        notifyReady: (sid, result, wid) => this.notifyWorktreeReady(sid, result, wid),
+        capture: (event, props) => this.host.capture(event, props),
+        log: (...args) => this.log(...args),
+      },
+      sessionId,
+      progress,
+    )
   }
 
   public postMessage(message: unknown): void {

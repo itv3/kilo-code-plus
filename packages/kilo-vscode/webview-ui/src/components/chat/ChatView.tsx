@@ -3,9 +3,10 @@
  * Main chat container that combines all chat components
  */
 
-import { Component, Show, createEffect, createMemo, on, onCleanup, onMount } from "solid-js"
+import { Component, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from "solid-js"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Icon } from "@kilocode/kilo-ui/icon"
+import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { TaskHeader } from "./TaskHeader"
 import { MessageList } from "./MessageList"
 import { PromptInput } from "./PromptInput"
@@ -31,10 +32,16 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const server = useServer()
   // Show "Show Changes" only in the standalone sidebar, not inside Agent Manager
   const isSidebar = () => worktreeMode === undefined
+  // Show "Continue in Worktree" in sidebar or local Agent Manager sessions (not already in a worktree)
+  const canContinueInWorktree = () => worktreeMode === undefined || worktreeMode.mode() === "local"
 
   const id = () => session.currentSessionID()
   const hasMessages = () => session.messages().length > 0
   const idle = () => session.status() !== "busy"
+
+  // "Continue in Worktree" state
+  const [transferring, setTransferring] = createSignal(false)
+  const [transferDetail, setTransferDetail] = createSignal("")
 
   // Permissions and questions scoped to this session's family (self + subagents).
   // Each ChatView only sees its own session tree — no cross-session leakage.
@@ -75,6 +82,28 @@ export const ChatView: Component<ChatViewProps> = (props) => {
     document.addEventListener("keydown", handler)
     onCleanup(() => document.removeEventListener("keydown", handler))
   })
+
+  // Listen for "Continue in Worktree" progress messages
+  {
+    const labels: Record<string, string> = {
+      capturing: "Capturing changes...",
+      creating: "Creating worktree...",
+      setup: "Running setup...",
+      transferring: "Transferring changes...",
+      forking: "Starting session...",
+    }
+    const cleanup = vscode.onMessage((msg) => {
+      if (msg.type !== "continueInWorktreeProgress") return
+      const status = (msg as { status: string }).status
+      if (status === "done" || status === "error") {
+        setTransferring(false)
+        setTransferDetail("")
+        return
+      }
+      setTransferDetail(labels[status] ?? "Working...")
+    })
+    onCleanup(cleanup)
+  }
 
   const decide = (response: "once" | "always" | "reject", approvedAlways: string[], deniedAlways: string[]) => {
     const perm = permissionRequest()
@@ -129,6 +158,27 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                 >
                   <Icon name="file-tree" size="small" />
                   {language.t("command.session.show.changes")}
+                </Button>
+              </Show>
+              <Show when={canContinueInWorktree()}>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  data-full-width="true"
+                  disabled={transferring()}
+                  onClick={() => {
+                    const sid = id()
+                    if (!sid) return
+                    setTransferring(true)
+                    setTransferDetail("Capturing changes...")
+                    vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
+                  }}
+                  aria-label="Continue in Worktree"
+                >
+                  <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
+                    <Spinner class="chat-spinner-small" />
+                  </Show>
+                  {transferring() ? transferDetail() : "Continue in Worktree"}
                 </Button>
               </Show>
             </div>
