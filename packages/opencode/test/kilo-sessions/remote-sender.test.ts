@@ -676,6 +676,48 @@ describe("RemoteSender", () => {
     expect(sent.filter((m: any) => m.event === "message.updated")).toHaveLength(0)
   })
 
+  test("unsubscribe parent cleans up grandchild tracking", () => {
+    const { conn, sent } = fakeConn()
+    const bus = fakeBus()
+    const sender = RemoteSender.create({
+      conn,
+      directory: "/tmp/test",
+      log: nolog,
+      subscribe: bus.subscribe,
+    })
+
+    sender.handle({ type: "subscribe", sessionId: "ses_root" })
+
+    bus.fire({
+      type: "session.created",
+      properties: { info: { id: "ses_child", parentID: "ses_root", title: "child" }, sessionID: "ses_child" },
+    })
+    bus.fire({
+      type: "session.created",
+      properties: {
+        info: { id: "ses_grandchild", parentID: "ses_child", title: "grandchild" },
+        sessionID: "ses_grandchild",
+      },
+    })
+
+    sender.handle({ type: "unsubscribe", sessionId: "ses_root" })
+    sender.handle({ type: "subscribe", sessionId: "ses_keep" })
+
+    // Clear events from subscribe/session.created
+    sent.length = 0
+
+    bus.fire({
+      type: "message.updated",
+      properties: { sessionID: "ses_child", text: "after unsub" },
+    })
+    bus.fire({
+      type: "message.updated",
+      properties: { sessionID: "ses_grandchild", text: "after unsub" },
+    })
+
+    expect(sent).toHaveLength(0)
+  })
+
   test("root session events do not include parentSessionId", () => {
     const { conn, sent } = fakeConn()
     const bus = fakeBus()
@@ -816,7 +858,14 @@ describe("RemoteSender", () => {
         metadata: {},
         always: [],
       } as any,
-      { id: "permission_2", sessionID: "ses_other", permission: "file.read", patterns: ["*"], metadata: {}, always: [] } as any,
+      {
+        id: "permission_2",
+        sessionID: "ses_other",
+        permission: "file.read",
+        patterns: ["*"],
+        metadata: {},
+        always: [],
+      } as any,
     ])
 
     const sender = RemoteSender.create({
@@ -851,11 +900,16 @@ describe("RemoteSender", () => {
     const { conn, sent } = fakeConn()
     const bus = fakeBus()
 
-    spyOn(Question, "list").mockResolvedValue([
-      { id: "question_1", sessionID: "ses_other", questions: [] } as any,
-    ])
+    spyOn(Question, "list").mockResolvedValue([{ id: "question_1", sessionID: "ses_other", questions: [] } as any])
     spyOn(PermissionNext, "list").mockResolvedValue([
-      { id: "permission_1", sessionID: "ses_other", permission: "file.write", patterns: [], metadata: {}, always: [] } as any,
+      {
+        id: "permission_1",
+        sessionID: "ses_other",
+        permission: "file.write",
+        patterns: [],
+        metadata: {},
+        always: [],
+      } as any,
     ])
 
     const sender = RemoteSender.create({

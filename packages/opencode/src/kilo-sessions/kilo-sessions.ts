@@ -268,6 +268,7 @@ export namespace KiloSessions {
           // the instance-scoped subscription map via Instance.state().
           void Instance.provide({ directory, fn: () => sender.handle(msg) })
         },
+        onClose: () => disableRemote(),
       })
 
       const sender = RemoteSender.create({
@@ -289,7 +290,7 @@ export namespace KiloSessions {
       remote = { conn, sender, heartbeat }
       log.info("remote connection enabled")
     })().finally(() => {
-      enabling = undefined
+      if (remoteSeq === seq) enabling = undefined
     })
 
     return enabling

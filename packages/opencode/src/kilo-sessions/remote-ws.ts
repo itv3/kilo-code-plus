@@ -16,6 +16,8 @@ export namespace RemoteWS {
     heartbeat?: number
     /** Wraps callbacks that need to run in a specific async context (e.g. Instance.provide) */
     withContext?: <R>(fn: () => R) => Promise<R> | R
+    /** Called when the server permanently closes the connection (e.g. auth failure, conflict) */
+    onClose?: (code: number, reason: string) => void
   }
 
   export type Connection = {
@@ -102,6 +104,7 @@ export namespace RemoteWS {
             code: event.code,
             reason: event.reason,
           })
+          options.onClose?.(event.code, event.reason)
           return
         }
         schedule()

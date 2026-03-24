@@ -191,6 +191,29 @@ describe("RemoteWS", () => {
     expect(server.clients.length).toBe(0)
   })
 
+  test("onClose callback fires on permanent close", async () => {
+    server = createServer()
+    const codes: number[] = []
+
+    conn = RemoteWS.connect({
+      url: server.url,
+      getToken: async () => "tok",
+      getSessions: () => [],
+      log: nolog(),
+      heartbeat: 60_000,
+      onClose: (code) => codes.push(code),
+    })
+
+    const ws1 = await server.waitForConnect()
+    await settled()
+
+    ws1.close(4401, "unauthorized")
+    await Bun.sleep(100)
+
+    expect(codes).toEqual([4401])
+    expect(conn.connected).toBe(false)
+  })
+
   test("incoming message delivered to onMessage", async () => {
     server = createServer()
     const received: unknown[] = []

@@ -61,9 +61,9 @@ export function registerKiloCommands(useSDK: () => UseSDK) {
           } else {
             const result = await sdk.client.remote.enable()
             if (result.error) {
-              dialog.replace(() => (
-                <DialogAlert title="Not authorized" message="Run `kilo auth login` to enable remote." />
-              ))
+              const err = result.error as { error?: string }
+              const msg = err?.error ?? "Failed to enable remote."
+              dialog.replace(() => <DialogAlert title="Error" message={msg} />)
               return
             }
             toast.show({ message: "Remote enabled", variant: "success" })

@@ -93,32 +93,34 @@ export namespace RemoteSender {
     // Replay pending questions/permissions so a newly-subscribed web client
     // sees state that was asked before it connected — analogous to the Cloud
     // Agent's `connected` event carrying pending question/permission fields.
+    async function replay(sessionId: string) {
+      const [questions, permissions] = await Promise.all([Question.list(), PermissionNext.list()])
+      for (const q of questions) {
+        if (q.sessionID !== sessionId) continue
+        options.conn.send({
+          type: "event",
+          sessionId,
+          event: "question.asked",
+          data: q,
+        })
+      }
+      for (const p of permissions) {
+        if (p.sessionID !== sessionId) continue
+        options.conn.send({
+          type: "event",
+          sessionId,
+          event: "permission.asked",
+          data: p,
+        })
+      }
+    }
+
     async function backfillPendingState(sessionId: string) {
       const provide = options.provide ?? Instance.provide
       try {
         await provide({
           directory: options.directory,
-          fn: async () => {
-            const [questions, permissions] = await Promise.all([Question.list(), PermissionNext.list()])
-            for (const q of questions) {
-              if (q.sessionID !== sessionId) continue
-              options.conn.send({
-                type: "event",
-                sessionId,
-                event: "question.asked",
-                data: q,
-              })
-            }
-            for (const p of permissions) {
-              if (p.sessionID !== sessionId) continue
-              options.conn.send({
-                type: "event",
-                sessionId,
-                event: "permission.asked",
-                data: p,
-              })
-            }
-          },
+          fn: () => replay(sessionId),
         })
       } catch (e) {
         options.log.error("backfill pending state failed", { sessionId, error: String(e) })
@@ -137,6 +139,7 @@ export namespace RemoteSender {
           event: "session.created",
           data: { info: child },
         })
+        await replay(child.id)
         await discoverChildren(child.id)
       }
     }
@@ -287,8 +290,15 @@ export namespace RemoteSender {
       }
       if (msg.type === "unsubscribe") {
         sessions.delete(msg.sessionId)
-        for (const [child, parent] of children) {
-          if (parent === msg.sessionId) children.delete(child)
+        const queue = [msg.sessionId]
+        while (queue.length) {
+          const id = queue.pop()!
+          for (const [child, parent] of children) {
+            if (parent === id) {
+              children.delete(child)
+              queue.push(child)
+            }
+          }
         }
         if (sessions.size === 0 && unsub) {
           unsub()
