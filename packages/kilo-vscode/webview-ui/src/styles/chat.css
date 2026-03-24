@@ -2125,6 +2125,10 @@
       margin-inline-end: 0;
     }
   }
+
+  .cloud-session-import-button {
+    margin-left: auto;
+  }
 }
 
 [data-component="input"][data-variant="normal"] [data-slot="input-wrapper"]:focus-within:not(:has([data-readonly])) {

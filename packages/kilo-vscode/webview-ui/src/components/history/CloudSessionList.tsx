@@ -130,12 +130,15 @@ const CloudSessionList: Component<CloudSessionListProps> = (props) => {
   return (
     <div class="session-list cloud-session-list">
       <div class="cloud-session-filters">
-        <Checkbox checked={repoOnly()} onChange={setRepoOnly}>
-          {language.t("session.cloud.repoOnly") ?? "Only this repository"}
-        </Checkbox>
+        <Show when={gitUrl() !== null}>
+          <Checkbox checked={repoOnly()} onChange={setRepoOnly}>
+            {language.t("session.cloud.repoOnly") ?? "Only this repository"}
+          </Checkbox>
+        </Show>
         <Button
           variant="secondary"
           size="small"
+          class="cloud-session-import-button"
           onClick={() =>
             dialog.show(() => (
               <CloudImportDialog
