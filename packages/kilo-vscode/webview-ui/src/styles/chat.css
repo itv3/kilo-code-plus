@@ -2109,12 +2109,17 @@
   min-height: 0;
 }
 
+.session-list-header {
+  flex-shrink: 0;
+  padding: 4px 8px;
+}
+
 .cloud-session-filters {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--vscode-panel-border);
 
   [data-component="checkbox"] {
@@ -2125,10 +2130,13 @@
       margin-inline-end: 0;
     }
   }
+}
 
-  .cloud-session-import-button {
-    margin-left: auto;
-  }
+.cloud-session-filters-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 [data-component="input"][data-variant="normal"] [data-slot="input-wrapper"]:focus-within:not(:has([data-readonly])) {

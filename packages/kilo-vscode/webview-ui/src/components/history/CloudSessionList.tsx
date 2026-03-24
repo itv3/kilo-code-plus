@@ -53,6 +53,7 @@ function toDisplay(s: CloudSessionInfo): DisplaySession {
 
 interface CloudSessionListProps {
   onSelectSession?: (id: string) => void
+  onBack?: () => void
 }
 
 const CloudSessionList: Component<CloudSessionListProps> = (props) => {
@@ -130,27 +131,31 @@ const CloudSessionList: Component<CloudSessionListProps> = (props) => {
   return (
     <div class="session-list cloud-session-list">
       <div class="cloud-session-filters">
-        <Show when={gitUrl() !== null}>
-          <Checkbox checked={repoOnly()} onChange={setRepoOnly}>
-            {language.t("session.cloud.repoOnly") ?? "Only this repository"}
-          </Checkbox>
-        </Show>
-        <Button
-          variant="secondary"
-          size="small"
-          class="cloud-session-import-button"
-          onClick={() =>
-            dialog.show(() => (
-              <CloudImportDialog
-                onImport={(id) => {
-                  props.onSelectSession?.(id)
-                }}
-              />
-            ))
-          }
-        >
-          {language.t("session.cloud.import")}
+        <Button variant="ghost" size="small" icon="arrow-left" onClick={() => props.onBack?.()}>
+          {language.t("common.goBack")}
         </Button>
+        <div class="cloud-session-filters-right">
+          <Show when={gitUrl() !== null}>
+            <Checkbox checked={repoOnly()} onChange={setRepoOnly}>
+              {language.t("session.cloud.repoOnly") ?? "Only this repository"}
+            </Checkbox>
+          </Show>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() =>
+              dialog.show(() => (
+                <CloudImportDialog
+                  onImport={(id) => {
+                    props.onSelectSession?.(id)
+                  }}
+                />
+              ))
+            }
+          >
+            {language.t("session.cloud.import")}
+          </Button>
+        </div>
       </div>
       <List<DisplaySession>
         items={sessions()}
