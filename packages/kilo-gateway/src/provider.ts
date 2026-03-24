@@ -2,17 +2,11 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
-import type { LanguageModel, Provider as SDK } from "ai"
-import type { KiloProviderOptions } from "./types.js"
+import type { KiloProvider, KiloProviderOptions } from "./types.js"
 import { getKiloUrlFromToken, getApiKey } from "./auth/token.js"
 import { buildKiloHeaders, DEFAULT_HEADERS } from "./headers.js"
 import { KILO_API_BASE, ANONYMOUS_API_KEY } from "./api/constants.js"
 
-export type KiloProvider = SDK & {
-  anthropic(modelId: string): LanguageModel
-  openai(modelId: string): LanguageModel
-  openaiCompatible(modelId: string): LanguageModel
-}
 
 /**
  * Create a KiloCode provider instance

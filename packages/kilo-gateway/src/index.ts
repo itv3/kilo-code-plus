@@ -6,7 +6,7 @@ export { KiloAuthPlugin, default } from "./plugin.js"
 // ============================================================================
 // Provider
 // ============================================================================
-export { createKilo, KiloProvider } from "./provider.js"
+export { createKilo } from "./provider.js"
 export { createKiloDebug } from "./provider-debug.js"
 export { kiloCustomLoader } from "./loader.js"
 export { buildKiloHeaders, getEditorNameHeader, getFeatureHeader, DEFAULT_HEADERS } from "./headers.js"
@@ -66,6 +66,7 @@ export type {
   PollOptions,
   PollResult,
   // Provider types
+  KiloProvider,
   KiloProviderOptions,
   KiloMetadata,
   CustomLoaderResult,
@@ -102,4 +103,6 @@ export {
   ENV_VERSION,
   TESTER_SUPPRESS_VALUE,
   ENV_FEATURE,
+  PROMPTS,
+  AI_SDK_PROVIDERS,
 } from "./api/constants.js"
