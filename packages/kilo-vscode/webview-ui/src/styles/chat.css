@@ -450,6 +450,10 @@
   transition: background-color 0.2s;
 }
 
+.scroll-to-bottom-button [data-component="icon"] {
+  --icon-base: var(--vscode-button-foreground);
+}
+
 .scroll-to-bottom-button:hover {
   background: var(--vscode-button-hoverBackground);
 }
