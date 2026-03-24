@@ -7,7 +7,6 @@ import { getKiloUrlFromToken, getApiKey } from "./auth/token.js"
 import { buildKiloHeaders, DEFAULT_HEADERS } from "./headers.js"
 import { KILO_API_BASE, ANONYMOUS_API_KEY } from "./api/constants.js"
 
-
 /**
  * Create a KiloCode provider instance
  *
