@@ -386,9 +386,6 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
 
       const { prompt, prefix: promptPrefix, suffix: promptSuffix } = await this.getPrompt(document, position)
 
-      // Update context with strategy now that we know it
-      telemetryContext.strategy = prompt.strategy
-
       await this.debouncedFetchAndCacheSuggestion(prompt, promptPrefix, promptSuffix, document.languageId)
 
       const cachedResult = applyFirstLineOnly(findMatchingSuggestion(prefix, suffix, this.suggestionsHistory), prefix)
@@ -522,7 +519,6 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
       languageId,
       modelId: this.model?.getModelName(),
       provider: this.model?.getProviderDisplayName(),
-      strategy: prompt.strategy,
     }
 
     // Defense-in-depth: credentials may become invalid between the provider gate and the actual

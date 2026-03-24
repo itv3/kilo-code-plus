@@ -112,7 +112,6 @@ export interface FimCompletionResult extends ResponseMetaData {
 }
 
 export interface FimAutocompletePrompt {
-  strategy: "fim"
   autocompleteInput: AutocompleteInput
   formattedPrefix: string
   prunedSuffix: string
@@ -136,7 +135,6 @@ export interface AutocompleteContext {
   languageId: string
   modelId?: string
   provider?: string
-  strategy?: "fim"
 }
 
 export type CacheMatchType = "exact" | "partial_typing" | "backward_deletion"
