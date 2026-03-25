@@ -1,5 +1,6 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic"
 import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai"
+import type { OpenAICompatibleProviderOptions } from "@ai-sdk/openai-compatible"
 import type { OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider"
 
 export function kiloProviderOptions(options: { [x: string]: any }) {
@@ -19,5 +20,10 @@ export function kiloProviderOptions(options: { [x: string]: any }) {
     thinking: { type: openrouter.reasoning?.enabled ? "adaptive" : "disabled" },
     effort: openrouter.verbosity,
   } satisfies AnthropicProviderOptions
+  result.openaiCompatible = {
+    reasoningEffort:
+      openrouter.reasoning && "effort" in openrouter.reasoning ? openrouter.reasoning?.effort : undefined,
+    textVerbosity: openrouter.verbosity,
+  } satisfies OpenAICompatibleProviderOptions
   return result
 }
