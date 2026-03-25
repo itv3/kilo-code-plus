@@ -31,21 +31,29 @@ const MAX_FILE = 10 * 1024 * 1024 // 10 MB
 
 function git(args: string[], cwd: string, stdin?: string): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
-    const child = cp.execFile(
-      "git",
-      args,
-      { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, windowsHide: true },
-      (error, stdout, stderr) => {
-        if (!error) {
-          resolve({ code: 0, stdout, stderr })
-          return
-        }
-        const exec = error as cp.ExecException
-        resolve({ code: typeof exec.code === "number" ? exec.code : 1, stdout: stdout ?? "", stderr: stderr ?? "" })
-      },
-    )
-    if (stdin !== undefined && child.stdin) {
+    if (stdin !== undefined) {
+      // Use spawn for stdin piping — execFile doesn't reliably create a stdin pipe
+      const child = cp.spawn("git", args, { cwd, windowsHide: true })
+      let stdout = ""
+      let stderr = ""
+      child.stdout.on("data", (d: Buffer) => (stdout += d.toString()))
+      child.stderr.on("data", (d: Buffer) => (stderr += d.toString()))
+      child.on("close", (code) => resolve({ code: code ?? 1, stdout, stderr }))
       child.stdin.end(stdin)
+    } else {
+      cp.execFile(
+        "git",
+        args,
+        { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, windowsHide: true },
+        (error, stdout, stderr) => {
+          if (!error) {
+            resolve({ code: 0, stdout, stderr })
+            return
+          }
+          const exec = error as cp.ExecException
+          resolve({ code: typeof exec.code === "number" ? exec.code : 1, stdout: stdout ?? "", stderr: stderr ?? "" })
+        },
+      )
     }
   })
 }
@@ -60,11 +68,17 @@ async function raw(args: string[], cwd: string): Promise<string> {
  * This is a read-only operation — the source directory is never modified.
  */
 export async function capture(cwd: string, log: (...args: unknown[]) => void): Promise<GitSnapshot> {
+  const patch = (args: string[]) =>
+    git(args, cwd).then((r) => {
+      const out = r.stdout
+      return out.trim() ? out : null
+    })
+
   const [branch, head, unstaged, staged, untrackedRaw] = await Promise.all([
     raw(["branch", "--show-current"], cwd),
     raw(["rev-parse", "HEAD"], cwd),
-    raw(["diff", "--binary"], cwd).then((s: string) => (s ? s : null)),
-    raw(["diff", "--cached", "--binary"], cwd).then((s: string) => (s ? s : null)),
+    patch(["diff", "--binary"]),
+    patch(["diff", "--cached", "--binary"]),
     raw(["ls-files", "--others", "--exclude-standard"], cwd).then((s: string) =>
       s.split("\n").filter((l: string) => l.length > 0),
     ),
