@@ -853,6 +853,32 @@ export namespace MessageV2 {
           },
           { cause: e },
         ).toObject()
+      case ["ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "ETIMEDOUT", "ENETUNREACH"].includes(
+        ((e as SystemError)?.code ?? "") as string,
+      ):
+        return new MessageV2.APIError(
+          {
+            message:
+              (e as SystemError).code === "ECONNRESET"
+                ? "Connection reset by server"
+                : (e as SystemError).code === "ECONNREFUSED"
+                  ? "Connection refused"
+                  : (e as SystemError).code === "ENOTFOUND"
+                    ? "Host not found"
+                    : (e as SystemError).code === "EAI_AGAIN"
+                      ? "DNS lookup failed"
+                      : (e as SystemError).code === "ETIMEDOUT"
+                        ? "Connection timed out"
+                        : "Network is unreachable",
+            isRetryable: true,
+            metadata: {
+              code: (e as SystemError).code ?? "",
+              syscall: (e as SystemError).syscall ?? "",
+              message: (e as SystemError).message ?? "",
+            },
+          },
+          { cause: e },
+        ).toObject()
       case (e as SystemError)?.code === "ECONNRESET":
         return new MessageV2.APIError(
           {

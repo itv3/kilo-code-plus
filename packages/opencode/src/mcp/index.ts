@@ -63,6 +63,29 @@ export namespace MCP {
     }),
   )
 
+  export async function reconnectRemote() {
+    const cfg = await Config.get()
+    const list = Object.entries(cfg.mcp ?? {})
+    const s = await state()
+    await Promise.all(
+      list.map(async ([key, mcp]) => {
+        if (!isMcpConfigured(mcp)) return
+        if (mcp.type !== "remote") return
+        const result = await create(key, mcp)
+        s.status[key] = result.status
+        if (result.mcpClient) {
+          const existing = s.clients[key]
+          if (existing) {
+            await existing.close().catch((error) => {
+              log.error("Failed to close existing MCP client", { name: key, error })
+            })
+          }
+          s.clients[key] = result.mcpClient
+        }
+      }),
+    )
+  }
+
   export const Failed = NamedError.create(
     "MCPFailed",
     z.object({

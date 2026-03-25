@@ -604,6 +604,11 @@ export type SessionStatus =
   | {
       type: "busy"
     }
+  | {
+      type: "offline"
+      requestID: string
+      message: string
+    }
 
 export type EventSessionStatus = {
   type: "session.status"
@@ -695,44 +700,6 @@ export type EventQuestionRejected = {
   }
 }
 
-export type EventSessionCompacted = {
-  type: "session.compacted"
-  properties: {
-    sessionID: string
-  }
-}
-
-export type EventFileWatcherUpdated = {
-  type: "file.watcher.updated"
-  properties: {
-    file: string
-    event: "add" | "change" | "unlink"
-  }
-}
-
-export type Todo = {
-  /**
-   * Brief description of the task
-   */
-  content: string
-  /**
-   * Current status of the task: pending, in_progress, completed, cancelled
-   */
-  status: string
-  /**
-   * Priority level of the task: high, medium, low
-   */
-  priority: string
-}
-
-export type EventTodoUpdated = {
-  type: "todo.updated"
-  properties: {
-    sessionID: string
-    todos: Array<Todo>
-  }
-}
-
 export type EventTuiPromptAppend = {
   type: "tui.prompt.append"
   properties: {
@@ -799,6 +766,74 @@ export type EventMcpBrowserOpenFailed = {
   properties: {
     mcpName: string
     url: string
+  }
+}
+
+export type SessionNetworkWait = {
+  id: string
+  sessionID: string
+  message: string
+  time: {
+    created: number
+  }
+}
+
+export type EventSessionNetworkAsked = {
+  type: "session.network.asked"
+  properties: SessionNetworkWait
+}
+
+export type EventSessionNetworkReplied = {
+  type: "session.network.replied"
+  properties: {
+    sessionID: string
+    requestID: string
+  }
+}
+
+export type EventSessionNetworkRejected = {
+  type: "session.network.rejected"
+  properties: {
+    sessionID: string
+    requestID: string
+  }
+}
+
+export type EventSessionCompacted = {
+  type: "session.compacted"
+  properties: {
+    sessionID: string
+  }
+}
+
+export type EventFileWatcherUpdated = {
+  type: "file.watcher.updated"
+  properties: {
+    file: string
+    event: "add" | "change" | "unlink"
+  }
+}
+
+export type Todo = {
+  /**
+   * Brief description of the task
+   */
+  content: string
+  /**
+   * Current status of the task: pending, in_progress, completed, cancelled
+   */
+  status: string
+  /**
+   * Priority level of the task: high, medium, low
+   */
+  priority: string
+}
+
+export type EventTodoUpdated = {
+  type: "todo.updated"
+  properties: {
+    sessionID: string
+    todos: Array<Todo>
   }
 }
 
@@ -1012,15 +1047,18 @@ export type Event =
   | EventQuestionAsked
   | EventQuestionReplied
   | EventQuestionRejected
-  | EventSessionCompacted
-  | EventFileWatcherUpdated
-  | EventTodoUpdated
   | EventTuiPromptAppend
   | EventTuiCommandExecute
   | EventTuiToastShow
   | EventTuiSessionSelect
   | EventMcpToolsChanged
   | EventMcpBrowserOpenFailed
+  | EventSessionNetworkAsked
+  | EventSessionNetworkReplied
+  | EventSessionNetworkRejected
+  | EventSessionCompacted
+  | EventFileWatcherUpdated
+  | EventTodoUpdated
   | EventCommandExecuted
   | EventSessionCreated
   | EventSessionUpdated
@@ -4128,6 +4166,93 @@ export type QuestionRejectResponses = {
 }
 
 export type QuestionRejectResponse = QuestionRejectResponses[keyof QuestionRejectResponses]
+
+export type NetworkListData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/network"
+}
+
+export type NetworkListResponses = {
+  /**
+   * List of pending network reconnect requests
+   */
+  200: Array<SessionNetworkWait>
+}
+
+export type NetworkListResponse = NetworkListResponses[keyof NetworkListResponses]
+
+export type NetworkReplyData = {
+  body?: never
+  path: {
+    requestID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/network/{requestID}/reply"
+}
+
+export type NetworkReplyErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type NetworkReplyError = NetworkReplyErrors[keyof NetworkReplyErrors]
+
+export type NetworkReplyResponses = {
+  /**
+   * Network wait resumed successfully
+   */
+  200: boolean
+}
+
+export type NetworkReplyResponse = NetworkReplyResponses[keyof NetworkReplyResponses]
+
+export type NetworkRejectData = {
+  body?: never
+  path: {
+    requestID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/network/{requestID}/reject"
+}
+
+export type NetworkRejectErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type NetworkRejectError = NetworkRejectErrors[keyof NetworkRejectErrors]
+
+export type NetworkRejectResponses = {
+  /**
+   * Network wait rejected successfully
+   */
+  200: boolean
+}
+
+export type NetworkRejectResponse = NetworkRejectResponses[keyof NetworkRejectResponses]
 
 export type ProviderListData = {
   body?: never

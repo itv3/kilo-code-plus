@@ -9,6 +9,7 @@ import type {
   Command,
   PermissionRequest,
   QuestionRequest,
+  SessionNetworkWait,
   LspStatus,
   McpStatus,
   McpResource,
@@ -46,6 +47,9 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       }
       question: {
         [sessionID: string]: QuestionRequest[]
+      }
+      network: {
+        [sessionID: string]: SessionNetworkWait[]
       }
       config: Config
       session: Session[]
@@ -87,6 +91,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       agent: [],
       permission: {},
       question: {},
+      network: {},
       command: [],
       provider: [],
       provider_default: {},
@@ -186,6 +191,44 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           }
           setStore(
             "question",
+            request.sessionID,
+            produce((draft) => {
+              draft.splice(match.index, 0, request)
+            }),
+          )
+          break
+        }
+
+        case "session.network.replied":
+        case "session.network.rejected": {
+          const requests = store.network[event.properties.sessionID]
+          if (!requests) break
+          const match = Binary.search(requests, event.properties.requestID, (r) => r.id)
+          if (!match.found) break
+          setStore(
+            "network",
+            event.properties.sessionID,
+            produce((draft) => {
+              draft.splice(match.index, 1)
+            }),
+          )
+          break
+        }
+
+        case "session.network.asked": {
+          const request = event.properties
+          const requests = store.network[request.sessionID]
+          if (!requests) {
+            setStore("network", request.sessionID, [request])
+            break
+          }
+          const match = Binary.search(requests, request.id, (r) => r.id)
+          if (match.found) {
+            setStore("network", request.sessionID, match.index, reconcile(request))
+            break
+          }
+          setStore(
+            "network",
             request.sessionID,
             produce((draft) => {
               draft.splice(match.index, 0, request)
@@ -416,6 +459,14 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
             sdk.client.mcp.status().then((x) => setStore("mcp", reconcile(x.data!))),
             sdk.client.experimental.resource.list().then((x) => setStore("mcp_resource", reconcile(x.data ?? {}))),
             sdk.client.formatter.status().then((x) => setStore("formatter", reconcile(x.data!))),
+            sdk.client.network.list().then((x) => {
+              const next: Record<string, SessionNetworkWait[]> = {}
+              for (const item of x.data ?? []) {
+                if (!next[item.sessionID]) next[item.sessionID] = []
+                next[item.sessionID].push(item)
+              }
+              setStore("network", reconcile(next))
+            }),
             sdk.client.session.status().then((x) => {
               setStore("session_status", reconcile(x.data!))
             }),

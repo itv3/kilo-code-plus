@@ -317,7 +317,7 @@ export const RunCommand = cmd({
           describe: "auto-approve all permissions (for autonomous/pipeline usage)",
           default: false,
         })
-        // kilocode_change end
+      // kilocode_change end
     )
   },
   handler: async (args) => {
@@ -599,6 +599,14 @@ export const RunCommand = cmd({
             await sdk.permission.reply({
               requestID: permission.id,
               reply: "reject",
+            })
+          }
+
+          if (event.type === "session.network.asked") {
+            const request = event.properties
+            if (request.sessionID !== sessionID) continue
+            await sdk.network.reply({
+              requestID: request.id,
             })
           }
         }

@@ -16,6 +16,7 @@ import { SessionCompaction } from "./compaction"
 import { PermissionNext } from "@/permission/next"
 import { Question } from "@/question"
 import { Telemetry } from "@kilocode/kilo-telemetry" // kilocode_change
+import { SessionNetwork } from "./network"
 
 export namespace SessionProcessor {
   const DOOM_LOOP_THRESHOLD = 3
@@ -388,6 +389,33 @@ export namespace SessionProcessor {
             } else {
               const retry = SessionRetry.retryable(error)
               if (retry !== undefined) {
+                if (await SessionNetwork.shouldPrompt({ err: e })) {
+                  const msg = SessionNetwork.message(e)
+                  const wait = SessionNetwork.ask({
+                    sessionID: input.sessionID,
+                    message: msg,
+                    abort: input.abort,
+                  })
+                  const list = await SessionNetwork.list()
+                  const match = list.findLast((item) => item.sessionID === input.sessionID)
+                  if (match) {
+                    SessionStatus.set(input.sessionID, {
+                      type: "offline",
+                      requestID: match.id,
+                      message: match.message,
+                    })
+                  }
+                  await wait.catch((err) => {
+                    if (err instanceof SessionNetwork.RejectedError) blocked = true
+                  })
+                  if (blocked) {
+                    input.assistantMessage.error = error
+                  } else {
+                    attempt = 0
+                    SessionStatus.set(input.sessionID, { type: "retry", attempt: 1, message: retry, next: Date.now() })
+                    continue
+                  }
+                }
                 attempt++
                 const delay = SessionRetry.delay(attempt, error.name === "APIError" ? error : undefined)
                 SessionStatus.set(input.sessionID, {

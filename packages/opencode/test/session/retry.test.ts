@@ -173,6 +173,21 @@ describe("session.message-v2.fromError", () => {
     expect(retryable).toBe("Connection reset by server")
   })
 
+  test("ECONNREFUSED socket error is retryable", () => {
+    const result = MessageV2.fromError(
+      {
+        code: "ECONNREFUSED",
+        syscall: "connect",
+        message: "connect ECONNREFUSED 127.0.0.1:3000",
+      },
+      { providerID: "test" },
+    ) as MessageV2.APIError
+
+    expect(result.data.isRetryable).toBe(true)
+    expect(result.data.message).toBe("Connection refused")
+    expect(result.data.metadata?.code).toBe("ECONNREFUSED")
+  })
+
   test("marks OpenAI 404 status codes as retryable", () => {
     const error = new APICallError({
       message: "boom",
