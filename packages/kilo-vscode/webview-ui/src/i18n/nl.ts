@@ -1097,6 +1097,11 @@ export const dict = {
   "settings.agentBehaviour.mcpDetail.args": "Argumenten",
   "settings.agentBehaviour.mcpDetail.env": "Omgeving",
   "settings.agentBehaviour.mcpDetail.disabled": "Deze server is uitgeschakeld.",
+  "settings.agentBehaviour.editMcp": "MCP-server bewerken",
+  "settings.agentBehaviour.editMcp.transportLocal": "Lokale server (stdio-transport)",
+  "settings.agentBehaviour.editMcp.transportRemote": "Externe server (SSE/HTTP-transport)",
+  "settings.agentBehaviour.editMcp.env": "Omgevingsvariabelen",
+  "settings.agentBehaviour.editMcp.env.help": "Variabelen die worden doorgegeven aan het MCP-serverproces.",
   "settings.agentBehaviour.mcpEmpty":
     "Geen MCP-servers geconfigureerd. Bewerk het opencode configuratiebestand om MCP-servers toe te voegen.",
   "settings.agentBehaviour.workflowsPlaceholder": "Workflows worden beheerd via workflowbestanden in je workspace.",

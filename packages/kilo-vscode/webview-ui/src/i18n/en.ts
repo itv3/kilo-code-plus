@@ -1083,6 +1083,11 @@ export const dict = {
   "settings.agentBehaviour.mcpDetail.args": "Arguments",
   "settings.agentBehaviour.mcpDetail.env": "Environment",
   "settings.agentBehaviour.mcpDetail.disabled": "This server is disabled.",
+  "settings.agentBehaviour.editMcp": "Edit MCP Server",
+  "settings.agentBehaviour.editMcp.transportLocal": "Local server (stdio transport)",
+  "settings.agentBehaviour.editMcp.transportRemote": "Remote server (SSE/HTTP transport)",
+  "settings.agentBehaviour.editMcp.env": "Environment Variables",
+  "settings.agentBehaviour.editMcp.env.help": "Variables passed to the MCP server process.",
   "settings.agentBehaviour.mcpEmpty": "No MCP servers configured. Edit the opencode config file to add MCP servers.",
   "settings.agentBehaviour.workflowsPlaceholder": "Workflows are managed via workflow files in your workspace.",
   "settings.agentBehaviour.workflows.description":

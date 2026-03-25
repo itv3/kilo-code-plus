@@ -1096,6 +1096,11 @@ export const dict = {
   "settings.agentBehaviour.mcpDetail.args": "Argümanlar",
   "settings.agentBehaviour.mcpDetail.env": "Ortam",
   "settings.agentBehaviour.mcpDetail.disabled": "Bu sunucu devre dışı.",
+  "settings.agentBehaviour.editMcp": "MCP Sunucusunu Düzenle",
+  "settings.agentBehaviour.editMcp.transportLocal": "Yerel sunucu (stdio taşıma)",
+  "settings.agentBehaviour.editMcp.transportRemote": "Uzak sunucu (SSE/HTTP taşıma)",
+  "settings.agentBehaviour.editMcp.env": "Ortam Değişkenleri",
+  "settings.agentBehaviour.editMcp.env.help": "MCP sunucu sürecine aktarılan değişkenler.",
   "settings.agentBehaviour.mcpEmpty":
     "Yapılandırılmış MCP sunucusu yok. MCP sunucuları eklemek için opencode yapılandırma dosyasını düzenleyin.",
   "settings.agentBehaviour.workflowsPlaceholder": "İş akışları çalışma alanınızdaki iş akışı dosyaları ile yönetilir.",
