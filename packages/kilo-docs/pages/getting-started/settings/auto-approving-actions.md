@@ -398,7 +398,7 @@ When a tool is set to `"ask"`, Kilo pauses and displays a permission prompt with
 | **Run**  | Allow this specific invocation |
 | **Deny** | Block this specific invocation |
 
-Expand **Manage Auto-Approve Rules** to add commands or patterns to your allowed or denied lists. These rules are saved to your `kilo.jsonc` config file.
+Expand **Manage Auto-Approve Rules** to add commands or patterns to your allowed or denied lists. These rules are then appended to the bottom of the approval rules in settings and the config file.
 
 ## Defaults
 
