@@ -15,6 +15,9 @@ export namespace ConfigProtection {
    */
   const CONFIG_ROOT_FILES = new Set(["kilo.json", "kilo.jsonc", "opencode.json", "opencode.jsonc", "AGENTS.md"])
 
+  /** Metadata key used to signal the UI to hide the "Allow always" option. */
+  export const DISABLE_ALWAYS_KEY = "disableAlways" as const
+
   function normalize(p: string): string {
     return p.replaceAll("\\", "/")
   }
@@ -56,9 +59,9 @@ export namespace ConfigProtection {
   }): boolean {
     if (request.permission !== "edit") return false
 
-    // Check relative patterns (edit tool, apply_patch)
+    // Check patterns — handle both relative and absolute (mirrors metadata.filepath logic)
     for (const pattern of request.patterns) {
-      if (isRelative(pattern)) return true
+      if (path.isAbsolute(pattern) ? isAbsolute(pattern) : isRelative(pattern)) return true
     }
 
     // Check metadata.filepath (absolute for edit, comma-joined relative for apply_patch)

@@ -206,7 +206,7 @@ export namespace PermissionNext {
               ...request,
               metadata: {
                 ...request.metadata,
-                ...(protected_ ? { disableAlways: true } : {}),
+                ...(protected_ ? { [ConfigProtection.DISABLE_ALWAYS_KEY]: true } : {}),
               },
             }
             // kilocode_change end

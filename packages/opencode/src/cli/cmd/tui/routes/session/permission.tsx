@@ -16,6 +16,7 @@ import { Locale } from "@/util/locale"
 import { Global } from "@/global"
 import { useDialog } from "../../ui/dialog"
 import { useTuiConfig } from "../../context/tui-config"
+import { ConfigProtection } from "@/kilocode/permission/config-paths" // kilocode_change
 
 type PermissionStage = "permission" | "always" | "reject"
 
@@ -429,7 +430,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
           )
 
           // kilocode_change start — hide "Always allow" for config file edits
-          const options: Record<string, string> = props.request.metadata?.disableAlways
+          const options: Record<string, string> = props.request.metadata?.[ConfigProtection.DISABLE_ALWAYS_KEY]
             ? { once: "Allow once", reject: "Reject" }
             : { once: "Allow once", always: "Allow always", reject: "Reject" }
           // kilocode_change end
