@@ -141,50 +141,47 @@ export const ChatView: Component<ChatViewProps> = (props) => {
           </Show>
           <Show when={!props.readonly && hasMessages() && idle() && !blocked()}>
             <div class="new-task-button-wrapper">
-              <Button
-                variant="secondary"
-                size="small"
-                data-full-width="true"
-                onClick={() => window.dispatchEvent(new CustomEvent("newTaskRequest"))}
-                aria-label={language.t("command.session.new.task")}
-              >
-                {language.t("command.session.new.task")}
-              </Button>
-              <Show when={isSidebar() || canContinueInWorktree()}>
-                <div class="session-actions-row">
-                  <Show when={isSidebar()}>
-                    <Button
-                      variant="ghost"
-                      size="small"
-                      onClick={() => vscode.postMessage({ type: "openChanges" })}
-                      aria-label={language.t("command.session.show.changes")}
-                    >
-                      <Icon name="file-tree" size="small" />
-                      {language.t("command.session.show.changes")}
-                    </Button>
-                  </Show>
-                  <Show when={canContinueInWorktree()}>
-                    <Button
-                      variant="ghost"
-                      size="small"
-                      disabled={transferring()}
-                      onClick={() => {
-                        const sid = id()
-                        if (!sid) return
-                        setTransferring(true)
-                        setTransferDetail("Capturing changes...")
-                        vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
-                      }}
-                      aria-label="Continue in Worktree"
-                    >
-                      <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
-                        <Spinner class="chat-spinner-small" />
-                      </Show>
-                      {transferring() ? transferDetail() : "Continue in Worktree"}
-                    </Button>
-                  </Show>
-                </div>
-              </Show>
+              <div class="session-actions-row">
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => window.dispatchEvent(new CustomEvent("newTaskRequest"))}
+                  aria-label={language.t("command.session.new.task")}
+                >
+                  {language.t("command.session.new.task")}
+                </Button>
+                <Show when={isSidebar()}>
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    onClick={() => vscode.postMessage({ type: "openChanges" })}
+                    aria-label={language.t("command.session.show.changes")}
+                  >
+                    <Icon name="file-tree" size="small" />
+                    {language.t("command.session.show.changes")}
+                  </Button>
+                </Show>
+                <Show when={canContinueInWorktree()}>
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    disabled={transferring()}
+                    onClick={() => {
+                      const sid = id()
+                      if (!sid) return
+                      setTransferring(true)
+                      setTransferDetail("Capturing changes...")
+                      vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
+                    }}
+                    aria-label="Continue in Worktree"
+                  >
+                    <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
+                      <Spinner class="chat-spinner-small" />
+                    </Show>
+                    {transferring() ? transferDetail() : "Continue in Worktree"}
+                  </Button>
+                </Show>
+              </div>
             </div>
           </Show>
           <Show when={!props.readonly}>
