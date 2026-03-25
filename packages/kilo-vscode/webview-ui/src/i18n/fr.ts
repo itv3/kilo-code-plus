@@ -839,6 +839,8 @@ export const dict = {
   "session.recent": "Récentes",
   "session.search.placeholder": "Rechercher des sessions...",
   "session.empty": "Aucune session pour l'instant. Cliquez + pour démarrer une nouvelle conversation.",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "Uniquement ce dépôt",
   "session.cloud.import": "Importer depuis le cloud",
   "feedback.button": "Commentaires & support",

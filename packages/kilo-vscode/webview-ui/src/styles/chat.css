@@ -2131,25 +2131,85 @@ body.vscode-light
   opacity: 1;
 }
 
-/* Cloud Session List */
-.cloud-session-list {
+/* History View (unified Local + Cloud tabs) */
+.history-view {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
 }
 
-.session-list-header,
-.cloud-session-filters {
+.history-view-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 4px 8px;
   min-height: 40px;
 }
 
-.cloud-session-filters {
+.history-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.history-tab-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  opacity: 0.6;
+  transition:
+    opacity 0.1s,
+    background 0.1s;
+  white-space: nowrap;
+}
+
+.history-tab-btn:hover {
+  opacity: 1;
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.1));
+}
+
+.history-tab-btn--active {
+  opacity: 1;
+  background: var(--vscode-toolbar-activeBackground, rgba(128, 128, 128, 0.2));
+  font-weight: 600;
+}
+
+.history-import-btn {
+  flex-shrink: 0;
+}
+
+.history-view-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cloud Session List (inside History View) */
+.cloud-session-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Make the list search wrapper wrap so the repo filter appears below search */
+.cloud-session-list [data-slot="list-search-wrapper"] {
+  flex-wrap: wrap;
+}
+
+.cloud-session-repo-filter {
+  width: 100%;
+  padding: 4px 10px 2px;
+
   [data-component="checkbox"] {
     gap: 8px;
 
@@ -2158,13 +2218,6 @@ body.vscode-light
       margin-inline-end: 0;
     }
   }
-}
-
-.cloud-session-filters-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
 }
 
 [data-component="input"][data-variant="normal"] [data-slot="input-wrapper"]:focus-within:not(:has([data-readonly])) {
@@ -2179,6 +2232,23 @@ body.vscode-light
   display: flex;
   justify-content: center;
   padding: 8px;
+}
+
+.cloud-session-load-more-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  opacity: 0.6;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.cloud-session-load-more-btn:hover {
+  opacity: 1;
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.1));
 }
 
 /* ============================================

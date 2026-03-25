@@ -826,6 +826,8 @@ export const dict = {
   "session.recent": "Seneste",
   "session.search.placeholder": "Søg sessioner...",
   "session.empty": "Ingen sessioner endnu. Klik + for at starte en ny samtale.",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "Kun dette repository",
   "session.cloud.import": "Importér fra skyen",
   "feedback.button": "Feedback & support",

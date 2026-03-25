@@ -816,6 +816,8 @@ export const dict = {
   "session.recent": "最近",
   "session.search.placeholder": "搜尋工作階段...",
   "session.empty": "尚無工作階段。點選 + 以開始新的對話。",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "僅此儲存庫",
   "session.cloud.import": "從雲端匯入",
   "feedback.button": "意見回饋與支援",

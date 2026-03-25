@@ -827,6 +827,8 @@ export const dict = {
   "session.recent": "Son",
   "session.search.placeholder": "Oturum ara...",
   "session.empty": "Henüz oturum yok. Yeni bir sohbet başlatmak için + tıklayın.",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "Yalnızca bu depo",
   "session.cloud.import": "Buluttan içe aktar",
   "feedback.button": "Geri Bildirim ve Destek",

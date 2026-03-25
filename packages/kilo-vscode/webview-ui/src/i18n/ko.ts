@@ -825,6 +825,8 @@ export const dict = {
   "session.recent": "최근",
   "session.search.placeholder": "세션 검색...",
   "session.empty": "아직 세션이 없습니다. +를 클릭하여 새 대화를 시작하세요.",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "이 저장소만",
   "session.cloud.import": "클라우드에서 가져오기",
   "feedback.button": "피드백 & 지원",

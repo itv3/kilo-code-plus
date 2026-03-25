@@ -820,6 +820,8 @@ export const dict = {
   "session.recent": "الأخيرة",
   "session.search.placeholder": "البحث في الجلسات...",
   "session.empty": "لا توجد جلسات بعد. انقر + لبدء محادثة جديدة.",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "هذا المستودع فقط",
   "session.cloud.import": "استيراد من السحابة",
   "feedback.button": "التغذية الراجعة والدعم",

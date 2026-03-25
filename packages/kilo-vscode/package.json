@@ -90,11 +90,6 @@
         "icon": "$(history)"
       },
       {
-        "command": "kilo-code.new.cloudHistoryButtonClicked",
-        "title": "Cloud History",
-        "icon": "$(cloud)"
-      },
-      {
         "command": "kilo-code.new.profileButtonClicked",
         "title": "Profile",
         "icon": "$(account)"
@@ -343,13 +338,8 @@
           "when": "view == kilo-code.SidebarProvider"
         },
         {
-          "command": "kilo-code.new.cloudHistoryButtonClicked",
-          "group": "navigation@3",
-          "when": "view == kilo-code.SidebarProvider"
-        },
-        {
           "command": "kilo-code.new.historyButtonClicked",
-          "group": "navigation@4",
+          "group": "navigation@3",
           "when": "view == kilo-code.SidebarProvider"
         },
         {

@@ -824,6 +824,8 @@ export const dict = {
   "session.recent": "最近",
   "session.search.placeholder": "セッションを検索...",
   "session.empty": "セッションがありません。+ をクリックして新しい会話を始めましょう。",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "このリポジトリのみ",
   "session.cloud.import": "クラウドからインポート",
   "feedback.button": "フィードバック & サポート",
