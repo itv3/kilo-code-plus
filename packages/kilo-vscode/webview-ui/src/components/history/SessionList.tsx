@@ -9,6 +9,7 @@ import { List } from "@kilocode/kilo-ui/list"
 import { ContextMenu } from "@kilocode/kilo-ui/context-menu"
 import { Dialog } from "@kilocode/kilo-ui/dialog"
 import { Button } from "@kilocode/kilo-ui/button"
+import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { InlineInput } from "@kilocode/kilo-ui/inline-input"
 import { useDialog } from "@kilocode/kilo-ui/context/dialog"
 import { useSession } from "../../context/session"
@@ -36,6 +37,7 @@ function dateGroupKey(iso: string): (typeof DATE_GROUP_KEYS)[number] {
 
 interface SessionListProps {
   onSelectSession: (id: string) => void
+  onBack?: () => void
 }
 
 const SessionList: Component<SessionListProps> = (props) => {
@@ -129,6 +131,11 @@ const SessionList: Component<SessionListProps> = (props) => {
 
   return (
     <div class="session-list">
+      <div class="session-list-header">
+        <Button variant="ghost" size="small" icon="arrow-left" onClick={() => props.onBack?.()}>
+          {language.t("common.goBack")}
+        </Button>
+      </div>
       <List<SessionInfo>
         items={session.sessions()}
         key={(s) => s.id}
@@ -155,6 +162,20 @@ const SessionList: Component<SessionListProps> = (props) => {
               <>
                 <span data-slot="list-item-title">{s.title || language.t("session.untitled")}</span>
                 <span data-slot="list-item-description">{formatRelativeDate(s.updatedAt)}</span>
+                <span
+                  data-slot="session-delete-button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    confirmDelete(s)
+                  }}
+                >
+                  <IconButton
+                    icon="trash"
+                    size="small"
+                    variant="ghost"
+                    aria-label={language.t("session.delete.title")}
+                  />
+                </span>
               </>
             }
           >

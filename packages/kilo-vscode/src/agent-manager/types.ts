@@ -68,6 +68,7 @@ interface StateMessage {
   sessions: ManagedSession[]
   staleWorktreeIds?: string[]
   tabOrder?: Record<string, string[]>
+  worktreeOrder?: string[]
   sessionsCollapsed?: boolean
   reviewDiffStyle?: "unified" | "split"
   isGitRepo?: boolean
@@ -298,6 +299,11 @@ interface SetTabOrderIn {
   order: string[]
 }
 
+interface SetWorktreeOrderIn {
+  type: "agentManager.setWorktreeOrder"
+  order: string[]
+}
+
 interface SetSessionsCollapsedIn {
   type: "agentManager.setSessionsCollapsed"
   collapsed: boolean
@@ -379,6 +385,12 @@ interface GenericOpenFileIn {
   column?: number
 }
 
+interface PreviewImageIn {
+  type: "previewImage"
+  dataUrl: string
+  filename: string
+}
+
 interface LoadMessagesIn {
   type: "loadMessages"
   sessionID: string
@@ -419,6 +431,7 @@ export type AgentManagerInMessage =
   | RequestStateIn
   | RequestBranchesIn
   | SetTabOrderIn
+  | SetWorktreeOrderIn
   | SetSessionsCollapsedIn
   | SetReviewDiffStyleIn
   | SetDefaultBaseBranchIn
@@ -434,6 +447,7 @@ export type AgentManagerInMessage =
   | StopDiffWatchIn
   | OpenFileIn
   | GenericOpenFileIn
+  | PreviewImageIn
   | LoadMessagesIn
   | ClearSessionIn
   | AbortIn
