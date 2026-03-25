@@ -391,13 +391,14 @@ The Auto Approve tab lists the following tool-specific permissions. Some tools a
 
 ## Runtime Permission Requests
 
-When a tool is set to `"ask"`, Kilo pauses and displays a permission prompt. You have three options:
+When a tool is set to `"ask"`, Kilo pauses and displays a permission prompt with two options:
 
-| Option           | Behavior                                                 |
-| ---------------- | -------------------------------------------------------- |
-| **Allow once**   | Allow this specific invocation only                      |
-| **Allow always** | Allow this tool (or pattern) for the rest of the session |
-| **Reject**       | Block this specific invocation                           |
+| Option   | Behavior                       |
+| -------- | ------------------------------ |
+| **Run**  | Allow this specific invocation |
+| **Deny** | Block this specific invocation |
+
+Expand **Manage Auto-Approve Rules** to add commands or patterns to your allowed or denied lists. These rules persist for the rest of the session.
 
 ## Defaults
 
