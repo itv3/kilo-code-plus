@@ -62,7 +62,8 @@ export namespace Agent {
 
     const skillDirs = await Skill.dirs()
     const whitelistedDirs = [Truncate.GLOB, ...skillDirs.map((dir) => path.join(dir, "*"))]
-    // kilocode_change start — safe bash commands that don't need user approval
+    // kilocode_change start — safe bash commands that don't need user approval.
+    // only commands that cannot execute arbitrary code or subprocesses.
     const bash: Record<string, "allow" | "ask" | "deny"> = {
       "*": "ask",
       // read-only / informational
@@ -75,7 +76,6 @@ export namespace Agent {
       "pwd *": "allow",
       "echo *": "allow",
       "wc *": "allow",
-      "find *": "allow",
       "which *": "allow",
       "type *": "allow",
       "file *": "allow",
@@ -85,7 +85,6 @@ export namespace Agent {
       "date *": "allow",
       "uname *": "allow",
       "whoami *": "allow",
-      "env *": "allow",
       "printenv *": "allow",
       "man *": "allow",
       // text processing
@@ -102,17 +101,9 @@ export namespace Agent {
       "mkdir *": "allow",
       "cp *": "allow",
       "mv *": "allow",
-      // version control
-      "git *": "allow",
-      // package managers (install/build, not arbitrary execution)
-      "npm *": "allow",
-      "yarn *": "allow",
-      "pnpm *": "allow",
-      "bun *": "allow",
-      // build tools (compilers, not script runners)
+      // compilers (no script execution)
       "tsc *": "allow",
       "tsgo *": "allow",
-      "make *": "allow",
       // archive
       "tar *": "allow",
       "unzip *": "allow",
