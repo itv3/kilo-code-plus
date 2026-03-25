@@ -151,15 +151,18 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                   {language.t("command.session.new.task")}
                 </Button>
                 <Show when={isSidebar()}>
-                  <Button
-                    variant="ghost"
-                    size="small"
+                  <button
+                    class="session-diff-badge"
                     onClick={() => vscode.postMessage({ type: "openChanges" })}
                     aria-label={language.t("command.session.show.changes")}
                   >
-                    <Icon name="file-tree" size="small" />
-                    {language.t("command.session.show.changes")}
-                  </Button>
+                    <Icon name="layers" size="small" />
+                    <Show when={session.summary()?.files} fallback={<span>0f</span>}>
+                      <span class="session-diff-files">{session.summary()!.files}f</span>
+                      <span class="session-diff-add">+{session.summary()!.additions}</span>
+                      <span class="session-diff-del">-{session.summary()!.deletions}</span>
+                    </Show>
+                  </button>
                 </Show>
                 <Show when={canContinueInWorktree()}>
                   <Button
@@ -178,7 +181,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                     <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
                       <Spinner class="chat-spinner-small" />
                     </Show>
-                    {transferring() ? transferDetail() : "Continue in Worktree"}
+                    {transferring() ? transferDetail() : "Worktree"}
                   </Button>
                 </Show>
               </div>
