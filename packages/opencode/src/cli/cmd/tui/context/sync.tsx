@@ -53,7 +53,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
         [sessionID: string]: SessionStatus
       }
       session_diff: {
-        [sessionID: string]: Snapshot.FileDiff[]
+        [sessionID: string]: Omit<Snapshot.FileDiff, "before" | "after">[]
       }
       todo: {
         [sessionID: string]: Todo[]
@@ -199,7 +199,11 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
 
         case "session.diff":
-          setStore("session_diff", event.properties.sessionID, event.properties.diff)
+          setStore(
+            "session_diff",
+            event.properties.sessionID,
+            event.properties.diff.map(({ before: _, after: __, ...rest }) => rest),
+          )
           break
 
         case "session.deleted": {
@@ -485,7 +489,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               for (const message of messages.data!) {
                 draft.part[message.info.id] = message.parts
               }
-              draft.session_diff[sessionID] = diff.data ?? []
+              draft.session_diff[sessionID] = (diff.data ?? []).map(({ before: _, after: __, ...rest }) => rest)
             }),
           )
           fullSyncedSessions.add(sessionID)
