@@ -176,7 +176,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                   </Tooltip>
                 </Show>
                 <Show when={isSidebar() && session.summary()?.files}>
-                  <Tooltip value="View file changes" placement="top">
+                  <Tooltip value="View file changes" placement="top" class="session-diff-wrapper">
                     <button
                       class="session-diff-badge"
                       onClick={() => vscode.postMessage({ type: "openChanges" })}
