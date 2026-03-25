@@ -435,8 +435,11 @@
   font-size: 12px;
   padding: 5px 10px;
   margin-top: 4px;
-  text-align: center;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .show-history-btn:hover {
