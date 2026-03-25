@@ -182,9 +182,9 @@
   gap: 4px;
 }
 
-.session-actions-row > * {
-  flex: 1 1 auto;
-  min-width: 0;
+.session-actions-row > [data-component="button"] {
+  flex: 1 1 0;
+  min-width: fit-content;
 }
 
 /* ============================================

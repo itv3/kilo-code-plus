@@ -156,7 +156,6 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                     <Button
                       variant="ghost"
                       size="small"
-                      data-full-width="true"
                       onClick={() => vscode.postMessage({ type: "openChanges" })}
                       aria-label={language.t("command.session.show.changes")}
                     >
@@ -168,7 +167,6 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                     <Button
                       variant="ghost"
                       size="small"
-                      data-full-width="true"
                       disabled={transferring()}
                       onClick={() => {
                         const sid = id()
