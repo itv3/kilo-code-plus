@@ -124,7 +124,7 @@ export namespace SessionSummary {
       const limit = 256 * 1024
       const next = diffs.map((item) => {
         const file = unquoteGitPath(item.file)
-        const oversized = item.before.length > limit || item.after.length > limit
+        const oversized = Buffer.byteLength(item.before) > limit || Buffer.byteLength(item.after) > limit
         if (file === item.file && !oversized) return item
         return {
           ...item,
