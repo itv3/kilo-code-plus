@@ -26,6 +26,13 @@ The "pre-release" label is a VS Code Marketplace distribution channel — the ex
 {% /callout %}
 
 {% /tab %}
+{% tab label="CLI" %}
+
+## Command Line Interface
+
+{% partial file="install-cli.md" /%}
+
+{% /tab %}
 {% tab label="VS Code (Legacy)" %}
 
 ## VS Code Legacy Extension
@@ -45,13 +52,6 @@ To install or switch back to the legacy version:
 ## JetBrains IDEs
 
 {% partial file="install-jetbrains.md" /%}
-
-{% /tab %}
-{% tab label="CLI" %}
-
-## Command Line Interface
-
-{% partial file="install-cli.md" /%}
 
 {% /tab %}
 {% tab label="Slack" %}

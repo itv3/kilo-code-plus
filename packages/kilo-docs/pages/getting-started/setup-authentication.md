@@ -10,17 +10,6 @@ When you install Kilo Code, you'll be prompted to sign in or create a free accou
 ## Quick Start with Kilo Account
 
 {% tabs %}
-{% tab label="VSCode (Legacy)" %}
-
-1. Click **"Try Kilo Code for Free"** in the extension
-2. Sign in with your Google account
-3. Allow VS Code to open the authorization URL
-
-{% image src="/docs/img/signupflow.gif" alt="Sign up and registration flow with Kilo Code" /%}
-
-That's it! You're ready to [start your first task](/docs/getting-started/quickstart).
-
-{% /tab %}
 {% tab label="VSCode" %}
 
 The extension prompts you to sign in when you first open the sidebar. Click **Sign In** and complete the browser-based flow. The extension communicates with the CLI backend, so authentication is shared between the CLI and extension.
@@ -41,6 +30,17 @@ To verify your auth status:
 ```bash
 kilo auth list
 ```
+
+{% /tab %}
+{% tab label="VSCode (Legacy)" %}
+
+1. Click **"Try Kilo Code for Free"** in the extension
+2. Sign in with your Google account
+3. Allow VS Code to open the authorization URL
+
+{% image src="/docs/img/signupflow.gif" alt="Sign up and registration flow with Kilo Code" /%}
+
+That's it! You're ready to [start your first task](/docs/getting-started/quickstart).
 
 {% /tab %}
 {% /tabs %}
@@ -104,15 +104,6 @@ Already have a ChatGPT subscription? You can use it with Kilo Code through the [
 ### Configuring Your Provider
 
 {% tabs %}
-{% tab label="VSCode (Legacy)" %}
-
-1. Click the {% kilo-code-icon /%} icon in the VS Code sidebar
-2. Select your API provider from the dropdown
-3. Paste your API key
-4. Choose your model
-5. Click **"Let's go!"**
-
-{% /tab %}
 {% tab label="VSCode" %}
 
 1. Open the Kilo Code sidebar in VS Code
@@ -141,6 +132,15 @@ To set a default model:
   "model": "anthropic/claude-sonnet-4-20250514",
 }
 ```
+
+{% /tab %}
+{% tab label="VSCode (Legacy)" %}
+
+1. Click the {% kilo-code-icon /%} icon in the VS Code sidebar
+2. Select your API provider from the dropdown
+3. Paste your API key
+4. Choose your model
+5. Click **"Let's go!"**
 
 {% /tab %}
 {% /tabs %}
