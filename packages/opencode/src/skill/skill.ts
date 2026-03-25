@@ -16,6 +16,7 @@ import { Discovery } from "./discovery"
 import { Glob } from "../util/glob"
 
 import { KilocodePaths } from "../kilocode/paths" // kilocode_change
+import { BUILTIN_SKILLS } from "../kilocode/skills/builtin" // kilocode_change
 
 export namespace Skill {
   const log = Log.create({ service: "skill" })
@@ -52,9 +53,22 @@ export namespace Skill {
   const KILO_SKILL_PATTERN = "{skill,skills}/**/SKILL.md"
   const SKILL_PATTERN = "**/SKILL.md"
 
+  export const BUILTIN_LOCATION = "builtin" // kilocode_change
+
   export const state = Instance.state(async () => {
     const skills: Record<string, Info> = {}
     const dirs = new Set<string>()
+
+    // kilocode_change start - Register built-in skills first (lowest precedence, any external skill with same name overrides)
+    for (const skill of BUILTIN_SKILLS) {
+      skills[skill.name] = {
+        name: skill.name,
+        description: skill.description,
+        location: BUILTIN_LOCATION,
+        content: skill.content,
+      }
+    }
+    // kilocode_change end
 
     const addSkill = async (match: string) => {
       const md = await ConfigMarkdown.parse(match).catch((err) => {
