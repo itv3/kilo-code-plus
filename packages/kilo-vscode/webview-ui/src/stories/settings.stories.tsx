@@ -93,7 +93,9 @@ export const AgentBehaviourEditCustomMode: Story = {
     }
     const cfg: Record<string, AgentConfig> = {
       reviewer: {
+        description: "Review code for quality and best practices",
         prompt: "You are a code reviewer. Focus on code quality, best practices, and potential bugs.",
+        model: "anthropic/claude-sonnet-4-20250514",
         temperature: 0.3,
       },
     }
@@ -107,22 +109,27 @@ export const AgentBehaviourEditCustomMode: Story = {
   },
 }
 
-/** Renders AgentBehaviourTab and clicks into the "reviewer" custom mode's edit view on mount. */
+/**
+ * Renders AgentBehaviourTab and clicks into the "reviewer" custom mode's
+ * edit view on mount. Uses requestAnimationFrame to ensure the DOM is
+ * fully rendered before querying for the list item.
+ */
 function EditModeWrapper() {
   let ref: HTMLDivElement | undefined
   onMount(() => {
-    if (!ref) return
-    // Find the agent list item for "reviewer" and click it to trigger the edit view
-    const items = Array.from(ref.querySelectorAll<HTMLDivElement>("[style*='cursor: pointer']"))
-    for (const item of items) {
-      if (item.textContent?.includes("reviewer")) {
-        item.click()
-        return
+    requestAnimationFrame(() => {
+      if (!ref) return
+      const items = Array.from(ref.querySelectorAll<HTMLDivElement>("[style*='cursor: pointer']"))
+      for (const item of items) {
+        if (item.textContent?.includes("reviewer")) {
+          item.click()
+          return
+        }
       }
-    }
+    })
   })
   return (
-    <div ref={ref} style={{ width: "420px", "max-height": "700px", overflow: "auto" }}>
+    <div ref={ref} style={{ width: "420px", height: "700px", overflow: "auto" }}>
       <AgentBehaviourTab />
     </div>
   )
