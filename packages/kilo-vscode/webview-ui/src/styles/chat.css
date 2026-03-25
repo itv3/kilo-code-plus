@@ -188,6 +188,15 @@
   min-width: fit-content;
 }
 
+/* Tooltip wrapper divs must fill their flex space, and buttons inside must fill the wrapper */
+.session-actions-row > [data-component="tooltip-trigger"] {
+  display: flex;
+}
+
+.session-actions-row > [data-component="tooltip-trigger"] > [data-component="button"] {
+  flex: 1;
+}
+
 /* Diff stats tooltip wrapper — don't grow, push right */
 .session-diff-wrapper {
   flex: 0 0 auto !important;
