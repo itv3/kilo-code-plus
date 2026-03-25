@@ -6,6 +6,10 @@ import type { Provider } from "./provider"
 import type { ModelsDev } from "./models"
 import { iife } from "@/util/iife"
 import { Flag } from "@/flag/flag"
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic"
+import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai"
+import type { OpenRouterProviderOptions } from "@openrouter/ai-sdk-provider"
+import { kiloProviderOptions } from "@/kilocode/provider-options"
 
 type Modality = NonNullable<ModelsDev.Model["modalities"]>["input"][number]
 
@@ -935,6 +939,12 @@ export namespace ProviderTransform {
 
       return result
     }
+
+    // kilocode_change start
+    if (model.api.npm === "@kilocode/kilo-gateway") {
+      return kiloProviderOptions(options)
+    }
+    // kilocode_change end
 
     const key = sdkKey(model.api.npm) ?? model.providerID
     return { [key]: options }
