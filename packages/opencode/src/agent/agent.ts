@@ -148,13 +148,13 @@ export namespace Agent {
         options: {},
         permission: PermissionNext.merge(
           defaults,
+          user, // kilocode_change: user before orchestrator-specific so orchestrator's deny+allowlist wins
           PermissionNext.fromConfig({
             "*": "deny",
             read: "allow",
             grep: "allow",
             glob: "allow",
             list: "allow",
-            // bash: "allow", // kilocode_change - disabled to prevent orchestrator from writing files via shell commands instead of delegating to sub-agents
             question: "allow",
             task: "allow",
             todoread: "allow",
@@ -167,7 +167,6 @@ export namespace Agent {
               [Truncate.GLOB]: "allow",
             },
           }),
-          user,
         ),
         mode: "primary",
         native: true,
