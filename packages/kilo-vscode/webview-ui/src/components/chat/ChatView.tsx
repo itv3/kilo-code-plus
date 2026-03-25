@@ -7,6 +7,7 @@ import { Component, Show, createEffect, createMemo, createSignal, on, onCleanup,
 import { Button } from "@kilocode/kilo-ui/button"
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
+import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { TaskHeader } from "./TaskHeader"
 import { MessageList } from "./MessageList"
 import { PromptInput } from "./PromptInput"
@@ -142,47 +143,53 @@ export const ChatView: Component<ChatViewProps> = (props) => {
           <Show when={!props.readonly && hasMessages() && idle() && !blocked()}>
             <div class="new-task-button-wrapper">
               <div class="session-actions-row">
-                <Button
-                  variant="secondary"
-                  size="small"
-                  onClick={() => window.dispatchEvent(new CustomEvent("newTaskRequest"))}
-                  aria-label={language.t("command.session.new.task")}
-                >
-                  {language.t("command.session.new.task")}
-                </Button>
-                <Show when={canContinueInWorktree()}>
+                <Tooltip value="Start a new conversation" placement="top">
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     size="small"
-                    disabled={transferring()}
-                    onClick={() => {
-                      const sid = id()
-                      if (!sid) return
-                      setTransferring(true)
-                      setTransferDetail("Capturing changes...")
-                      vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
-                    }}
-                    aria-label="Continue in Worktree"
+                    onClick={() => window.dispatchEvent(new CustomEvent("newTaskRequest"))}
+                    aria-label={language.t("command.session.new.task")}
                   >
-                    <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
-                      <Spinner class="chat-spinner-small" />
-                    </Show>
-                    {transferring() ? transferDetail() : "Worktree"}
+                    {language.t("command.session.new.task")}
                   </Button>
+                </Tooltip>
+                <Show when={canContinueInWorktree()}>
+                  <Tooltip value="Continue this session in an isolated git worktree" placement="top">
+                    <Button
+                      variant="ghost"
+                      size="small"
+                      disabled={transferring()}
+                      onClick={() => {
+                        const sid = id()
+                        if (!sid) return
+                        setTransferring(true)
+                        setTransferDetail("Capturing changes...")
+                        vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
+                      }}
+                      aria-label="Continue in Worktree"
+                    >
+                      <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
+                        <Spinner class="chat-spinner-small" />
+                      </Show>
+                      {transferring() ? transferDetail() : "Worktree"}
+                    </Button>
+                  </Tooltip>
                 </Show>
                 <Show when={isSidebar()}>
-                  <button
-                    class="session-diff-badge"
-                    onClick={() => vscode.postMessage({ type: "openChanges" })}
-                    aria-label={language.t("command.session.show.changes")}
-                  >
-                    <Icon name="layers" size="small" />
-                    <Show when={session.summary()?.files} fallback={<span>0f</span>}>
-                      <span class="session-diff-files">{session.summary()!.files}f</span>
-                      <span class="session-diff-add">+{session.summary()!.additions}</span>
-                      <span class="session-diff-del">-{session.summary()!.deletions}</span>
-                    </Show>
-                  </button>
+                  <Tooltip value="View all file changes in this session" placement="top">
+                    <button
+                      class="session-diff-badge"
+                      onClick={() => vscode.postMessage({ type: "openChanges" })}
+                      aria-label={language.t("command.session.show.changes")}
+                    >
+                      <Icon name="layers" size="small" />
+                      <Show when={session.summary()?.files} fallback={<span>0f</span>}>
+                        <span class="session-diff-files">{session.summary()!.files}f</span>
+                        <span class="session-diff-add">+{session.summary()!.additions}</span>
+                        <span class="session-diff-del">-{session.summary()!.deletions}</span>
+                      </Show>
+                    </button>
+                  </Tooltip>
                 </Show>
               </div>
             </div>
