@@ -1072,7 +1072,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "Uredi mod",
   "settings.agentBehaviour.editMode.description": "Opis",
   "settings.agentBehaviour.editMode.prompt": "Sistemski prompt",
-  "settings.agentBehaviour.editMode.save": "Spremi",
+  "settings.agentBehaviour.editMode.save": "Gotovo",
   "settings.agentBehaviour.editMode.back": "Nazad na listu",
   "settings.agentBehaviour.editMode.native": "Ugrađeni mod (definicija samo za čitanje)",
   "settings.agentBehaviour.editMode.promptOverride": "Prilagođeno nadjačavanje prompta za ovaj ugrađeni mod",

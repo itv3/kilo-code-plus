@@ -1050,7 +1050,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "编辑模式",
   "settings.agentBehaviour.editMode.description": "描述",
   "settings.agentBehaviour.editMode.prompt": "系统提示",
-  "settings.agentBehaviour.editMode.save": "保存",
+  "settings.agentBehaviour.editMode.save": "完成",
   "settings.agentBehaviour.editMode.back": "返回列表",
   "settings.agentBehaviour.editMode.native": "内置模式（只读定义）",
   "settings.agentBehaviour.editMode.promptOverride": "此内置模式的自定义提示覆盖",

@@ -1092,7 +1092,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "Edit Mode",
   "settings.agentBehaviour.editMode.description": "Description",
   "settings.agentBehaviour.editMode.prompt": "System Prompt",
-  "settings.agentBehaviour.editMode.save": "Save",
+  "settings.agentBehaviour.editMode.save": "Done",
   "settings.agentBehaviour.editMode.back": "Back to list",
   "settings.agentBehaviour.editMode.native": "Built-in mode (read-only definition)",
   "settings.agentBehaviour.editMode.promptOverride": "Custom prompt override for this built-in mode",

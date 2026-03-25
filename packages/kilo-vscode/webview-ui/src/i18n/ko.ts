@@ -1063,7 +1063,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "모드 편집",
   "settings.agentBehaviour.editMode.description": "설명",
   "settings.agentBehaviour.editMode.prompt": "시스템 프롬프트",
-  "settings.agentBehaviour.editMode.save": "저장",
+  "settings.agentBehaviour.editMode.save": "완료",
   "settings.agentBehaviour.editMode.back": "목록으로 돌아가기",
   "settings.agentBehaviour.editMode.native": "내장 모드 (읽기 전용 정의)",
   "settings.agentBehaviour.editMode.promptOverride": "이 내장 모드에 대한 사용자 지정 프롬프트 재정의",

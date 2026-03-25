@@ -1089,7 +1089,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "Modifier le mode",
   "settings.agentBehaviour.editMode.description": "Description",
   "settings.agentBehaviour.editMode.prompt": "Prompt système",
-  "settings.agentBehaviour.editMode.save": "Enregistrer",
+  "settings.agentBehaviour.editMode.save": "Terminé",
   "settings.agentBehaviour.editMode.back": "Retour à la liste",
   "settings.agentBehaviour.editMode.native": "Mode intégré (définition en lecture seule)",
   "settings.agentBehaviour.editMode.promptOverride": "Remplacement de prompt personnalisé pour ce mode intégré",

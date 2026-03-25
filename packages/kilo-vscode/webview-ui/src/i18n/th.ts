@@ -1059,7 +1059,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "แก้ไขโหมด",
   "settings.agentBehaviour.editMode.description": "คำอธิบาย",
   "settings.agentBehaviour.editMode.prompt": "System Prompt",
-  "settings.agentBehaviour.editMode.save": "บันทึก",
+  "settings.agentBehaviour.editMode.save": "เสร็จสิ้น",
   "settings.agentBehaviour.editMode.back": "กลับไปที่รายการ",
   "settings.agentBehaviour.editMode.native": "โหมดในตัว (นิยามสำหรับอ่านอย่างเดียว)",
   "settings.agentBehaviour.editMode.promptOverride": "การแทนที่ prompt แบบกำหนดเองสำหรับโหมดในตัวนี้",

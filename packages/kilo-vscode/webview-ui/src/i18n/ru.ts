@@ -1074,7 +1074,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "Редактировать режим",
   "settings.agentBehaviour.editMode.description": "Описание",
   "settings.agentBehaviour.editMode.prompt": "Системный промпт",
-  "settings.agentBehaviour.editMode.save": "Сохранить",
+  "settings.agentBehaviour.editMode.save": "Готово",
   "settings.agentBehaviour.editMode.back": "Вернуться к списку",
   "settings.agentBehaviour.editMode.native": "Встроенный режим (определение только для чтения)",
   "settings.agentBehaviour.editMode.promptOverride":

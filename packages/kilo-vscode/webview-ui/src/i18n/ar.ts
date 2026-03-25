@@ -1059,7 +1059,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "تعديل الوضع",
   "settings.agentBehaviour.editMode.description": "الوصف",
   "settings.agentBehaviour.editMode.prompt": "موجه النظام",
-  "settings.agentBehaviour.editMode.save": "حفظ",
+  "settings.agentBehaviour.editMode.save": "تم",
   "settings.agentBehaviour.editMode.back": "العودة إلى القائمة",
   "settings.agentBehaviour.editMode.native": "وضع مدمج (تعريف للقراءة فقط)",
   "settings.agentBehaviour.editMode.promptOverride": "تجاوز موجه مخصص لهذا الوضع المدمج",

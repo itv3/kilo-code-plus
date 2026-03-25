@@ -1067,7 +1067,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "モードを編集",
   "settings.agentBehaviour.editMode.description": "説明",
   "settings.agentBehaviour.editMode.prompt": "システムプロンプト",
-  "settings.agentBehaviour.editMode.save": "保存",
+  "settings.agentBehaviour.editMode.save": "完了",
   "settings.agentBehaviour.editMode.back": "リストに戻る",
   "settings.agentBehaviour.editMode.native": "組み込みモード（読み取り専用の定義）",
   "settings.agentBehaviour.editMode.promptOverride": "この組み込みモードのカスタムプロンプト上書き",

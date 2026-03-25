@@ -1067,7 +1067,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "Rediger tilstand",
   "settings.agentBehaviour.editMode.description": "Beskrivelse",
   "settings.agentBehaviour.editMode.prompt": "Systemprompt",
-  "settings.agentBehaviour.editMode.save": "Gem",
+  "settings.agentBehaviour.editMode.save": "Færdig",
   "settings.agentBehaviour.editMode.back": "Tilbage til listen",
   "settings.agentBehaviour.editMode.native": "Indbygget tilstand (skrivebeskyttet definition)",
   "settings.agentBehaviour.editMode.promptOverride": "Tilpasset prompt-tilsidesættelse for denne indbyggede tilstand",

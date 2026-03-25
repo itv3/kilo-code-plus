@@ -1070,7 +1070,7 @@ export const dict = {
   "settings.agentBehaviour.editMode": "Rediger modus",
   "settings.agentBehaviour.editMode.description": "Beskrivelse",
   "settings.agentBehaviour.editMode.prompt": "Systemprompt",
-  "settings.agentBehaviour.editMode.save": "Lagre",
+  "settings.agentBehaviour.editMode.save": "Ferdig",
   "settings.agentBehaviour.editMode.back": "Tilbake til listen",
   "settings.agentBehaviour.editMode.native": "Innebygd modus (skrivebeskyttet definisjon)",
   "settings.agentBehaviour.editMode.promptOverride": "Tilpasset prompt-overstyring for denne innebygde modusen",
