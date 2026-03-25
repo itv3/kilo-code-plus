@@ -10,7 +10,9 @@ import { useDialog } from "@kilocode/kilo-ui/context/dialog"
 import { useConfig } from "../../context/config"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
-import type { AgentConfig, AgentInfo, SkillInfo } from "../../types/messages"
+import type { AgentInfo, SkillInfo } from "../../types/messages"
+import ModeEditView from "./ModeEditView"
+import ModeCreateView from "./ModeCreateView"
 
 type SubtabId = "agents" | "mcpServers" | "rules" | "workflows" | "skills"
 
@@ -58,7 +60,6 @@ const AgentBehaviourTab: Component = () => {
   const session = useSession()
   const dialog = useDialog()
   const [activeSubtab, setActiveSubtab] = createSignal<SubtabId>("agents")
-  const [selectedAgent, setSelectedAgent] = createSignal<string>("")
   const [newSkillPath, setNewSkillPath] = createSignal("")
   const [newSkillUrl, setNewSkillUrl] = createSignal("")
   const [newInstruction, setNewInstruction] = createSignal("")
@@ -66,12 +67,6 @@ const AgentBehaviourTab: Component = () => {
   // Agent view state
   const [agentView, setAgentView] = createSignal<AgentView>("list")
   const [editingAgent, setEditingAgent] = createSignal<string>("")
-
-  // Create mode form state
-  const [newName, setNewName] = createSignal("")
-  const [newDescription, setNewDescription] = createSignal("")
-  const [newPrompt, setNewPrompt] = createSignal("")
-  const [nameError, setNameError] = createSignal("")
 
   // Fetch skills whenever the skills subtab becomes active
   createEffect(() => {
@@ -96,30 +91,6 @@ const AgentBehaviourTab: Component = () => {
     { value: "", label: language.t("common.default") },
     ...agentNames().map((name) => ({ value: name, label: name })),
   ])
-
-  const agentSelectorOptions = createMemo<SelectOption[]>(() => [
-    { value: "", label: language.t("settings.agentBehaviour.selectAgent") },
-    ...agentNames().map((name) => ({ value: name, label: name })),
-  ])
-
-  const currentAgentConfig = createMemo<AgentConfig>(() => {
-    const name = selectedAgent()
-    if (!name) {
-      return {}
-    }
-    return config().agent?.[name] ?? {}
-  })
-
-  const updateAgentConfig = (name: string, partial: Partial<AgentConfig>) => {
-    const existing = config().agent ?? {}
-    const current = existing[name] ?? {}
-    updateConfig({
-      agent: {
-        ...existing,
-        [name]: { ...current, ...partial },
-      },
-    })
-  }
 
   const instructions = () => config().instructions ?? []
 
@@ -245,311 +216,20 @@ const AgentBehaviourTab: Component = () => {
     ))
   }
 
-  // Validate new mode name
-  const validateName = (name: string): string => {
-    if (!name.trim()) return language.t("settings.agentBehaviour.createMode.nameRequired")
-    if (!/^[a-z][a-z0-9-]*$/.test(name.trim())) return language.t("settings.agentBehaviour.createMode.nameInvalid")
-    if (agentNames().includes(name.trim())) return language.t("settings.agentBehaviour.createMode.nameTaken")
-    return ""
-  }
-
-  // Handle creating a new mode (accumulates in config draft, persisted via Save Bar)
-  const handleCreate = () => {
-    const name = newName().trim()
-    const error = validateName(name)
-    if (error) {
-      setNameError(error)
-      return
-    }
-    updateAgentConfig(name, {
-      mode: "primary",
-      description: newDescription().trim() || undefined,
-      prompt: newPrompt().trim() || undefined,
-    })
-    // Reset and go back to list
-    setNewName("")
-    setNewDescription("")
-    setNewPrompt("")
-    setNameError("")
-    setAgentView("list")
-  }
-
-  // Start editing a mode
   const startEdit = (name: string) => {
     setEditingAgent(name)
-    setSelectedAgent(name)
     setAgentView("edit")
   }
 
-  const renderCreateModeView = () => (
-    <div>
-      <div style={{ display: "flex", "align-items": "center", "margin-bottom": "16px" }}>
-        <IconButton
-          size="small"
-          variant="ghost"
-          icon="arrow-left"
-          onClick={() => {
-            setAgentView("list")
-            setNewName("")
-            setNewDescription("")
-            setNewPrompt("")
-            setNameError("")
-          }}
-        />
-        <span style={{ "font-weight": "600", "font-size": "14px", "margin-left": "8px" }}>
-          {language.t("settings.agentBehaviour.createMode")}
-        </span>
-      </div>
-
-      {/* Name */}
-      <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.createMode.name")}
-          description={language.t("settings.agentBehaviour.createMode.name.description")}
-          last
-        >
-          <TextField
-            value={newName()}
-            placeholder={language.t("settings.agentBehaviour.createMode.name.placeholder")}
-            onChange={(val) => {
-              setNewName(val)
-              setNameError("")
-            }}
-          />
-          <Show when={nameError()}>
-            <div
-              style={{
-                "font-size": "11px",
-                color: "var(--vscode-errorForeground)",
-                "margin-top": "4px",
-              }}
-            >
-              {nameError()}
-            </div>
-          </Show>
-        </SettingsRow>
-      </Card>
-
-      {/* Description (full-width) */}
-      <Card style={{ "margin-bottom": "12px" }}>
-        <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
-          {language.t("settings.agentBehaviour.createMode.description")}
-        </div>
-        <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
-          {language.t("settings.agentBehaviour.createMode.description.help")}
-        </div>
-        <TextField
-          value={newDescription()}
-          placeholder={language.t("settings.agentBehaviour.createMode.description.placeholder")}
-          onChange={(val) => setNewDescription(val)}
-        />
-      </Card>
-
-      {/* Prompt (full-width, auto-resizing) */}
-      <Card style={{ "margin-bottom": "12px" }}>
-        <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
-          {language.t("settings.agentBehaviour.createMode.prompt")}
-        </div>
-        <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
-          {language.t("settings.agentBehaviour.createMode.prompt.help")}
-        </div>
-        <TextField
-          value={newPrompt()}
-          placeholder={language.t("settings.agentBehaviour.createMode.prompt.placeholder")}
-          multiline
-          onChange={(val) => setNewPrompt(val)}
-        />
-      </Card>
-
-      <div style={{ display: "flex", gap: "8px", "justify-content": "flex-end" }}>
-        <Button
-          variant="ghost"
-          onClick={() => {
-            setAgentView("list")
-            setNewName("")
-            setNewDescription("")
-            setNewPrompt("")
-            setNameError("")
-          }}
-        >
-          {language.t("settings.agentBehaviour.createMode.cancel")}
-        </Button>
-        <Button variant="primary" onClick={handleCreate}>
-          {language.t("settings.agentBehaviour.createMode.button")}
-        </Button>
-      </div>
-    </div>
-  )
-
-  const renderEditModeView = () => {
-    const name = editingAgent()
-    const agent = () => session.agents().find((a) => a.name === name)
-    const isNative = () => agent()?.native ?? false
-
-    return (
-      <div>
-        <div
-          style={{
-            display: "flex",
-            "align-items": "center",
-            "justify-content": "space-between",
-            "margin-bottom": "16px",
-          }}
-        >
-          <div style={{ display: "flex", "align-items": "center" }}>
-            <IconButton
-              size="small"
-              variant="ghost"
-              icon="arrow-left"
-              onClick={() => {
-                setAgentView("list")
-                setEditingAgent("")
-              }}
-            />
-            <span style={{ "font-weight": "600", "font-size": "14px", "margin-left": "8px" }}>
-              {language.t("settings.agentBehaviour.editMode")} — {name}
-            </span>
-          </div>
-          <Show when={!isNative()}>
-            <IconButton
-              size="small"
-              variant="ghost"
-              icon="close"
-              onClick={() => {
-                const a = agent()
-                if (a) confirmRemoveMode(a)
-              }}
-            />
-          </Show>
-        </div>
-
-        <Show when={isNative()}>
-          <Card style={{ "margin-bottom": "12px" }}>
-            <div
-              style={{
-                "font-size": "12px",
-                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                padding: "4px 0",
-              }}
-            >
-              {language.t("settings.agentBehaviour.editMode.native")}
-            </div>
-          </Card>
-        </Show>
-
-        {/* Description (full-width, custom modes only) */}
-        <Show when={!isNative()}>
-          <Card style={{ "margin-bottom": "12px" }}>
-            <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
-              {language.t("settings.agentBehaviour.editMode.description")}
-            </div>
-            <TextField
-              value={currentAgentConfig().description ?? ""}
-              placeholder={language.t("settings.agentBehaviour.createMode.description.placeholder")}
-              onChange={(val) => updateAgentConfig(name, { description: val || undefined })}
-            />
-          </Card>
-        </Show>
-
-        {/* Prompt (full-width, auto-resizing) */}
-        <Card style={{ "margin-bottom": "12px" }}>
-          <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
-            {isNative()
-              ? language.t("settings.agentBehaviour.editMode.promptOverride")
-              : language.t("settings.agentBehaviour.editMode.prompt")}
-          </div>
-          <TextField
-            value={currentAgentConfig().prompt ?? ""}
-            placeholder={language.t("settings.agentBehaviour.createMode.prompt.placeholder")}
-            multiline
-            onChange={(val) => updateAgentConfig(name, { prompt: val || undefined })}
-          />
-        </Card>
-
-        {/* Config overrides (wider inputs) */}
-        <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
-          {/* Model override */}
-          <SettingsRow
-            title={language.t("settings.agentBehaviour.modelOverride.title")}
-            description={language.t("settings.agentBehaviour.modelOverride.description")}
-          >
-            <TextField
-              value={currentAgentConfig().model ?? ""}
-              placeholder="e.g. anthropic/claude-sonnet-4-20250514"
-              onChange={(val) =>
-                updateAgentConfig(name, {
-                  model: val || undefined,
-                })
-              }
-            />
-          </SettingsRow>
-
-          {/* Temperature */}
-          <SettingsRow
-            title={language.t("settings.agentBehaviour.temperature.title")}
-            description={language.t("settings.agentBehaviour.temperature.description")}
-          >
-            <TextField
-              value={currentAgentConfig().temperature?.toString() ?? ""}
-              placeholder={language.t("common.default")}
-              onChange={(val) => {
-                const parsed = parseFloat(val)
-                updateAgentConfig(name, { temperature: isNaN(parsed) ? undefined : parsed })
-              }}
-            />
-          </SettingsRow>
-
-          {/* Top-p */}
-          <SettingsRow
-            title={language.t("settings.agentBehaviour.topP.title")}
-            description={language.t("settings.agentBehaviour.topP.description")}
-          >
-            <TextField
-              value={currentAgentConfig().top_p?.toString() ?? ""}
-              placeholder={language.t("common.default")}
-              onChange={(val) => {
-                const parsed = parseFloat(val)
-                updateAgentConfig(name, { top_p: isNaN(parsed) ? undefined : parsed })
-              }}
-            />
-          </SettingsRow>
-
-          {/* Max steps */}
-          <SettingsRow
-            title={language.t("settings.agentBehaviour.maxSteps.title")}
-            description={language.t("settings.agentBehaviour.maxSteps.description")}
-            last
-          >
-            <TextField
-              value={currentAgentConfig().steps?.toString() ?? ""}
-              placeholder={language.t("common.default")}
-              onChange={(val) => {
-                const parsed = parseInt(val, 10)
-                updateAgentConfig(name, { steps: isNaN(parsed) ? undefined : parsed })
-              }}
-            />
-          </SettingsRow>
-        </Card>
-
-        <div style={{ display: "flex", "justify-content": "flex-end" }}>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setAgentView("list")
-              setEditingAgent("")
-            }}
-          >
-            {language.t("settings.agentBehaviour.editMode.back")}
-          </Button>
-        </div>
-      </div>
-    )
+  const back = () => {
+    setAgentView("list")
+    setEditingAgent("")
   }
 
   const renderAgentsSubtab = () => {
     const view = agentView()
-    if (view === "create") return renderCreateModeView()
-    if (view === "edit") return renderEditModeView()
+    if (view === "create") return <ModeCreateView taken={agentNames()} onBack={back} />
+    if (view === "edit") return <ModeEditView name={editingAgent()} onBack={back} onRemove={confirmRemoveMode} />
 
     return (
       <div>
