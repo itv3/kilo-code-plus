@@ -446,7 +446,7 @@ const AgentBehaviourTab: Component = () => {
             <TextField
               value={currentAgentConfig().description ?? ""}
               placeholder={language.t("settings.agentBehaviour.createMode.description.placeholder")}
-              onChange={(val) => updateAgentConfig(name, { description: val.trim() || undefined })}
+              onChange={(val) => updateAgentConfig(name, { description: val || undefined })}
             />
           </Card>
         </Show>
@@ -462,7 +462,7 @@ const AgentBehaviourTab: Component = () => {
             value={currentAgentConfig().prompt ?? ""}
             placeholder={language.t("settings.agentBehaviour.createMode.prompt.placeholder")}
             multiline
-            onChange={(val) => updateAgentConfig(name, { prompt: val.trim() || undefined })}
+            onChange={(val) => updateAgentConfig(name, { prompt: val || undefined })}
           />
         </Card>
 
@@ -478,7 +478,7 @@ const AgentBehaviourTab: Component = () => {
               placeholder="e.g. anthropic/claude-sonnet-4-20250514"
               onChange={(val) =>
                 updateAgentConfig(name, {
-                  model: val.trim() || undefined,
+                  model: val || undefined,
                 })
               }
             />
