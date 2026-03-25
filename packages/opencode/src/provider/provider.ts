@@ -6,12 +6,10 @@ import { mapValues, mergeDeep, omit, pickBy, sortBy } from "remeda"
 import { NoSuchModelError, type Provider as SDK } from "ai"
 import { Log } from "../util/log"
 import { BunProc } from "../bun"
+import { Hash } from "../util/hash"
 import { Plugin } from "../plugin"
-import {
-  ModelsDev,
-  Prompt, // kilocode_change
-} from "./models"
 import { NamedError } from "@opencode-ai/util/error"
+import { ModelsDev, Prompt } from "./models" // kilocode_change
 import { Auth } from "../auth"
 import { Env } from "../env"
 import { Instance } from "../project/instance"
@@ -133,7 +131,7 @@ export namespace Provider {
             // TODO: Add adaptive thinking headers when @ai-sdk/anthropic supports it:
             // adaptive-thinking-2026-01-28,effort-2025-11-24,max-effort-2026-01-24
             "anthropic-beta":
-              "claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14,context-1m-2025-08-07",
+              "claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14",
           },
         },
       }
@@ -468,6 +466,7 @@ export namespace Provider {
 
       const aiGatewayHeaders = {
         "User-Agent": `kilo/${Installation.VERSION} gitlab-ai-provider/${GITLAB_PROVIDER_VERSION} (${os.platform()} ${os.release()}; ${os.arch()})`, // kilocode_change
+        "anthropic-beta": "context-1m-2025-08-07",
         ...(providerConfig?.options?.aiGatewayHeaders || {}),
       }
 
@@ -536,7 +535,7 @@ export namespace Provider {
       if (!apiToken) {
         throw new Error(
           "CLOUDFLARE_API_TOKEN (or CF_AIG_TOKEN) is required for Cloudflare AI Gateway. " +
-            "Set it via environment variable or run `opencode auth cloudflare-ai-gateway`.",
+            "Set it via environment variable or run `kilo auth cloudflare-ai-gateway`.", // kilocode_change
         )
       }
 
@@ -691,6 +690,7 @@ export namespace Provider {
       // kilocode_change start
       recommendedIndex: z.number().optional(),
       prompt: Prompt.optional().catch(undefined),
+      isFree: z.boolean().optional(),
       // kilocode_change end
     })
     .meta({
@@ -777,6 +777,7 @@ export namespace Provider {
       variants: provider.id === "kilo" ? (model.variants ?? {}) : {},
       recommendedIndex: model.recommendedIndex,
       prompt: model.prompt,
+      isFree: model.isFree,
       // kilocode_change end
     }
 
@@ -816,7 +817,7 @@ export namespace Provider {
     const modelLoaders: {
       [providerID: string]: CustomModelLoader
     } = {}
-    const sdk = new Map<number, SDK>()
+    const sdk = new Map<string, SDK>()
 
     log.info("init")
 
@@ -925,6 +926,7 @@ export namespace Provider {
           // kilocode_change start
           recommendedIndex: model.recommendedIndex ?? existingModel?.recommendedIndex,
           prompt: model.prompt ?? existingModel?.prompt,
+          isFree: model.isFree ?? existingModel?.isFree,
           // kilocode_change end
         }
         const merged = mergeDeep(ProviderTransform.variants(parsedModel), model.variants ?? {})
@@ -1111,7 +1113,7 @@ export namespace Provider {
           ...model.headers,
         }
 
-      const key = Bun.hash.xxHash32(JSON.stringify({ providerID: model.providerID, npm: model.api.npm, options }))
+      const key = Hash.fast(JSON.stringify({ providerID: model.providerID, npm: model.api.npm, options }))
       const existing = s.sdk.get(key)
       if (existing) return existing
 
