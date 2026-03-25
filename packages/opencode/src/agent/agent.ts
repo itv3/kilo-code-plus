@@ -155,6 +155,7 @@ export namespace Agent {
             grep: "allow",
             glob: "allow",
             list: "allow",
+            // bash: "allow", // kilocode_change - disabled to prevent orchestrator from writing files via shell commands instead of delegating to sub-agents
             question: "allow",
             task: "allow",
             todoread: "allow",
