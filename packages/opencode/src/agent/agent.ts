@@ -63,7 +63,7 @@ export namespace Agent {
     const skillDirs = await Skill.dirs()
     const whitelistedDirs = [Truncate.GLOB, ...skillDirs.map((dir) => path.join(dir, "*"))]
     // kilocode_change start — safe bash commands that don't need user approval
-    const bash: Record<string, string> = {
+    const bash: Record<string, "allow" | "ask" | "deny"> = {
       "*": "ask",
       // read-only / informational
       "cat *": "allow",
