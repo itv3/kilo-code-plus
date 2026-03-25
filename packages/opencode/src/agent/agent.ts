@@ -92,8 +92,6 @@ export namespace Agent {
       "grep *": "allow",
       "rg *": "allow",
       "ag *": "allow",
-      "awk *": "allow",
-      "sed *": "allow",
       "sort *": "allow",
       "uniq *": "allow",
       "cut *": "allow",
@@ -106,41 +104,20 @@ export namespace Agent {
       "mv *": "allow",
       // version control
       "git *": "allow",
-      // package managers & runtimes
-      "node *": "allow",
-      "npx *": "allow",
+      // package managers (install/build, not arbitrary execution)
       "npm *": "allow",
       "yarn *": "allow",
       "pnpm *": "allow",
       "bun *": "allow",
-      "bunx *": "allow",
-      "deno *": "allow",
-      // build & language tools
+      // build tools (compilers, not script runners)
       "tsc *": "allow",
       "tsgo *": "allow",
-      "cargo *": "allow",
-      "go *": "allow",
-      "python *": "allow",
-      "python3 *": "allow",
-      "pip *": "allow",
-      "pip3 *": "allow",
-      "uv *": "allow",
-      "ruby *": "allow",
-      "gem *": "allow",
       "make *": "allow",
-      "cmake *": "allow",
-      "dotnet *": "allow",
-      // http & archive
-      "curl *": "allow",
-      "wget *": "allow",
+      // archive
       "tar *": "allow",
       "unzip *": "allow",
       "gzip *": "allow",
       "gunzip *": "allow",
-      // containers
-      "docker *": "allow",
-      "docker-compose *": "allow",
-      "kubectl *": "allow",
     }
     // kilocode_change end
     const defaults = PermissionNext.fromConfig({

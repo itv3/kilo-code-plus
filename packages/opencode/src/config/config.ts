@@ -1340,12 +1340,15 @@ export namespace Config {
 
   async function migrateBashPermission() {
     const files = GLOBAL_CONFIG_FILES.map((file) => path.join(Global.Path.config, file))
+    // also check legacy TOML config — its presence means existing user
+    const legacy = path.join(Global.Path.config, "config")
     const existing: string[] = []
     for (const file of files) {
       if (existsSync(file)) existing.push(file)
     }
+    const hasLegacy = existsSync(legacy)
     // no global config → new user, they'll get the new bash:ask default
-    if (existing.length === 0) return
+    if (existing.length === 0 && !hasLegacy) return
     // check if any config file already has an explicit bash permission
     for (const file of existing) {
       const text = await Bun.file(file).text()
@@ -1353,9 +1356,12 @@ export namespace Config {
       if (data.permission?.bash) return
     }
     // existing user without bash permission in any file → write bash:allow to the
-    // highest-precedence existing file to preserve their current behavior
-    const target = existing[existing.length - 1]
-    const text = await Bun.file(target).text()
+    // highest-precedence existing file to preserve their current behavior.
+    // if only the legacy TOML file exists, write to config.json (the TOML migration will merge into it)
+    const target = existing.length > 0 ? existing[existing.length - 1] : path.join(Global.Path.config, "config.json")
+    const text = await Bun.file(target)
+      .text()
+      .catch(() => "{}")
     if (target.endsWith(".jsonc")) {
       const edits = modify(text, ["permission", "bash"], "allow", {
         formattingOptions: { insertSpaces: true, tabSize: 2 },
