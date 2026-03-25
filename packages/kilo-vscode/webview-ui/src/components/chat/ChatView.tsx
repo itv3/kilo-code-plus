@@ -154,7 +154,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                   </Button>
                 </Tooltip>
                 <Show when={canContinueInWorktree()}>
-                  <Tooltip value="Continue this session in an isolated git worktree" placement="top">
+                  <Tooltip value="Continue in isolated worktree" placement="top">
                     <Button
                       variant="ghost"
                       size="small"
@@ -175,19 +175,17 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                     </Button>
                   </Tooltip>
                 </Show>
-                <Show when={isSidebar()}>
-                  <Tooltip value="View all file changes in this session" placement="top">
+                <Show when={isSidebar() && session.summary()?.files}>
+                  <Tooltip value="View file changes" placement="top">
                     <button
                       class="session-diff-badge"
                       onClick={() => vscode.postMessage({ type: "openChanges" })}
                       aria-label={language.t("command.session.show.changes")}
                     >
                       <Icon name="layers" size="small" />
-                      <Show when={session.summary()?.files} fallback={<span>0f</span>}>
-                        <span class="session-diff-files">{session.summary()!.files}f</span>
-                        <span class="session-diff-add">+{session.summary()!.additions}</span>
-                        <span class="session-diff-del">-{session.summary()!.deletions}</span>
-                      </Show>
+                      <span class="session-diff-files">{session.summary()!.files}f</span>
+                      <span class="session-diff-add">+{session.summary()!.additions}</span>
+                      <span class="session-diff-del">-{session.summary()!.deletions}</span>
                     </button>
                   </Tooltip>
                 </Show>
