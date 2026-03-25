@@ -107,10 +107,30 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
 
     const sdk = useSDK()
 
+    const fullSyncedSessions = new Set<string>()
+
     async function syncWorkspaces() {
       const result = await sdk.client.experimental.workspace.list().catch(() => undefined)
       if (!result?.data) return
       setStore("workspaceList", reconcile(result.data))
+    }
+
+    function evict(sessionID: string) {
+      setStore(
+        produce((draft) => {
+          const messages = draft.message[sessionID]
+          if (messages) {
+            for (const msg of messages) delete draft.part[msg.id]
+          }
+          delete draft.message[sessionID]
+          delete draft.session_diff[sessionID]
+          delete draft.session_status[sessionID]
+          delete draft.todo[sessionID]
+          delete draft.permission[sessionID]
+          delete draft.question[sessionID]
+        }),
+      )
+      fullSyncedSessions.delete(sessionID)
     }
 
     sdk.event.listen((e) => {
@@ -207,15 +227,17 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
 
         case "session.deleted": {
-          const result = Binary.search(store.session, event.properties.info.id, (s) => s.id)
-          if (result.found) {
+          const sid = event.properties.info.id
+          const match = Binary.search(store.session, sid, (s) => s.id)
+          if (match.found) {
             setStore(
               "session",
               produce((draft) => {
-                draft.splice(result.index, 1)
+                draft.splice(match.index, 1)
               }),
             )
           }
+          evict(sid)
           break
         }
         case "session.updated": {
@@ -445,7 +467,6 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       bootstrap()
     })
 
-    const fullSyncedSessions = new Set<string>()
     const result = {
       data: store,
       set: setStore,
@@ -494,6 +515,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           )
           fullSyncedSessions.add(sessionID)
         },
+        evict,
       },
       workspace: {
         get(workspaceID: string) {
