@@ -148,7 +148,6 @@ export namespace Agent {
         options: {},
         permission: PermissionNext.merge(
           defaults,
-          user, // kilocode_change: user before orchestrator-specific so orchestrator's deny+allowlist wins
           PermissionNext.fromConfig({
             "*": "deny",
             read: "allow",
@@ -168,6 +167,12 @@ export namespace Agent {
               [Truncate.GLOB]: "allow",
             },
           }),
+          user,
+          // kilocode_change start - enforce bash deny after user so user config cannot re-enable shell
+          PermissionNext.fromConfig({
+            bash: "deny",
+          }),
+          // kilocode_change end
         ),
         mode: "primary",
         native: true,
