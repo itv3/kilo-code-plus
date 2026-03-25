@@ -460,7 +460,7 @@ const AgentBehaviourTab: Component = () => {
                             color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
                           }}
                         >
-                          {mcp.url ? "SSE" : "stdio"}
+                          {mcp.url ? "remote" : "stdio"}
                         </span>
                       </div>
                       <IconButton
@@ -493,13 +493,20 @@ const AgentBehaviourTab: Component = () => {
                               {Array.isArray(mcp.command) ? mcp.command[0] : mcp.command}
                             </span>
                           </div>
-                          <Show when={Array.isArray(mcp.command) && mcp.command.length > 1}>
+                          <Show
+                            when={
+                              (Array.isArray(mcp.command) && mcp.command.length > 1) ||
+                              (!Array.isArray(mcp.command) && mcp.args && mcp.args.length > 0)
+                            }
+                          >
                             <div style={{ "margin-bottom": "4px" }}>
                               <span style={{ "font-weight": "500" }}>
                                 {language.t("settings.agentBehaviour.mcpDetail.args")}:{" "}
                               </span>
                               <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
-                                {(mcp.command as string[]).slice(1).join(" ")}
+                                {Array.isArray(mcp.command)
+                                  ? (mcp.command as string[]).slice(1).join(" ")
+                                  : (mcp.args ?? []).join(" ")}
                               </span>
                             </div>
                           </Show>
