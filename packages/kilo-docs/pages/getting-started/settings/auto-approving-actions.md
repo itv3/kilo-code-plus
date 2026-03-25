@@ -354,7 +354,7 @@ This is the fastest way to work with Kilo Code, but also the riskiest. Use it on
 
 The extension uses a granular, per-tool permission system. You can configure permissions through the **Settings → Auto Approve** tab, which provides a UI with per-tool **Allow / Ask / Deny** dropdowns.
 
-The UI reads and writes to the same `kilo.json` config files used by the CLI, so changes made in either place are reflected in both.
+The UI reads and writes to the same `kilo.jsonc` config files used by the CLI, so changes made in either place are reflected in both.
 
 ## Permission Levels
 
@@ -391,13 +391,13 @@ The Auto Approve tab lists the following tool-specific permissions. Some tools a
 
 ## Runtime Permission Requests
 
-When a tool is set to `"ask"`, Kilo pauses and displays a permission request popup. You have three options:
+When a tool is set to `"ask"`, Kilo pauses and displays a permission prompt. You have three options:
 
-| Option     | Behavior                                                 |
-| ---------- | -------------------------------------------------------- |
-| **Once**   | Allow this specific invocation only                      |
-| **Always** | Allow this tool (or pattern) for the rest of the session |
-| **Reject** | Block this specific invocation                           |
+| Option           | Behavior                                                 |
+| ---------------- | -------------------------------------------------------- |
+| **Allow once**   | Allow this specific invocation only                      |
+| **Allow always** | Allow this tool (or pattern) for the rest of the session |
+| **Deny**         | Block this specific invocation                           |
 
 ## Defaults
 
@@ -412,7 +412,7 @@ Most tools default to `"*": "allow"` for a smooth out-of-the-box experience. Not
 
 ## Overview
 
-The CLI uses a granular, per-tool permission system configured in `kilo.json`. Instead of broad categories like "read" or "write," each tool has its own permission level with glob-pattern rules for fine-grained control.
+The CLI uses a granular, per-tool permission system configured in `kilo.jsonc`. Instead of broad categories like "read" or "write," each tool has its own permission level with glob-pattern rules for fine-grained control.
 
 ## Permission Levels
 
@@ -428,7 +428,7 @@ When no rule matches a permission check, the default action is `ask`.
 
 ## Available Tool Permissions
 
-Permissions are configured under the `permission` key in `kilo.json`. The following tool-specific permission levels are available:
+Permissions are configured under the `permission` key in `kilo.jsonc`. The following tool-specific permission levels are available:
 
 | Permission                 | Controls                                               |
 | -------------------------- | ------------------------------------------------------ |
@@ -527,13 +527,13 @@ In this example, the `code` agent can run `git` commands automatically and asks 
 
 ## Runtime Permission Requests
 
-When a tool is set to `"ask"`, Kilo pauses and displays a permission request popup. You have three options:
+When a tool is set to `"ask"`, Kilo pauses and displays a permission prompt. You have three options:
 
-| Option     | Behavior                                                 |
-| ---------- | -------------------------------------------------------- |
-| **Once**   | Allow this specific invocation only                      |
-| **Always** | Allow this tool (or pattern) for the rest of the session |
-| **Reject** | Block this specific invocation                           |
+| Option           | Behavior                                                 |
+| ---------------- | -------------------------------------------------------- |
+| **Allow once**   | Allow this specific invocation only                      |
+| **Allow always** | Allow this tool (or pattern) for the rest of the session |
+| **Deny**         | Block this specific invocation                           |
 
 ## Defaults
 

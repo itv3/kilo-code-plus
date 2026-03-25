@@ -75,8 +75,8 @@ This UI reads and writes to the same underlying JSONC config files used by the C
 
 There are two primary config files:
 
-- **Global config:** `~/.config/kilo/kilo.json` — applies to all projects.
-- **Project config:** `kilo.json` in your project root, or `.kilo/kilo.json` for a cleaner setup. The `.kilo/` version takes priority if both exist.
+- **Global config:** `~/.config/kilo/kilo.jsonc` — applies to all projects.
+- **Project config:** `kilo.jsonc` in your project root, or `.kilo/kilo.jsonc` for a cleaner setup. The `.kilo/` version takes priority if both exist.
 
 {% callout type="warning" %}
 If you check config files into version control, make sure they do not contain API keys or other secrets (e.g., `provider.*.options.apiKey`). Use environment variables for credentials instead.
@@ -93,8 +93,8 @@ In the CLI, settings are managed via config files directly.
 
 ### Config File Locations
 
-- **Global config:** `~/.config/kilo/kilo.json` — applies to all projects.
-- **Project config:** `kilo.json` in your project root, or `.kilo/kilo.json` for a cleaner setup. The `.kilo/` version takes priority if both exist.
+- **Global config:** `~/.config/kilo/kilo.jsonc` — applies to all projects.
+- **Project config:** `kilo.jsonc` in your project root, or `.kilo/kilo.jsonc` for a cleaner setup. The `.kilo/` version takes priority if both exist.
 
 {% callout type="warning" %}
 If you check config files into version control, make sure they do not contain API keys or other secrets (e.g., `provider.*.options.apiKey`). Use environment variables for credentials instead.
@@ -104,7 +104,7 @@ Higher-priority levels override lower ones. This allows organizations to enforce
 
 ### Export and Import
 
-There is no traditional export/import of settings -- the JSONC config files themselves are portable. Copy `~/.config/kilo/kilo.json` or `kilo.json` to another machine and you're done.
+There is no traditional export/import of settings -- the JSONC config files themselves are portable. Copy `~/.config/kilo/kilo.jsonc` or `kilo.jsonc` to another machine and you're done.
 
 {% /tab %}
 {% tab label="CLI" %}
@@ -112,15 +112,15 @@ There is no traditional export/import of settings -- the JSONC config files them
 In the CLI, settings are managed via **JSONC config files** directly. Config files are plain-text and portable -- you can copy them between machines.
 
 {% callout type="warning" %}
-If you check `kilo.json` into version control, make sure it does not contain API keys or other secrets (e.g., `provider.*.options.apiKey`). Use environment variables for credentials instead.
+If you check `kilo.jsonc` into version control, make sure it does not contain API keys or other secrets (e.g., `provider.*.options.apiKey`). Use environment variables for credentials instead.
 {% /callout %}
 
 ### Config File Locations
 
 There are two primary config files:
 
-- **Global config:** `~/.config/kilo/kilo.json` -- applies to all projects.
-- **Project config:** `kilo.json` in the root of your project -- overrides global settings for that project.
+- **Global config:** `~/.config/kilo/kilo.jsonc` -- applies to all projects.
+- **Project config:** `kilo.jsonc` in the root of your project -- overrides global settings for that project.
 
 Both files use the [JSONC](https://code.visualstudio.com/docs/languages/json#_json-with-comments) format (JSON with comments).
 
@@ -130,9 +130,9 @@ Settings are resolved through an 8-level precedence system (lowest to highest pr
 
 1. **Legacy Kilocode** -- migrated settings from the VSCode extension
 2. **Remote well-known** -- remotely fetched defaults
-3. **Global** -- `~/.config/kilo/kilo.json`
+3. **Global** -- `~/.config/kilo/kilo.jsonc`
 4. **Custom** -- additional custom config paths
-5. **Project** -- `kilo.json` in the project root
+5. **Project** -- `kilo.jsonc` in the project root
 6. **`.kilo` directory** -- config from a `.kilo/` directory in the project
 7. **Inline environment** -- environment variable overrides
 8. **Managed / Enterprise** -- enterprise-managed configuration (highest priority)
@@ -141,11 +141,11 @@ Higher-priority levels override lower ones. This allows organizations to enforce
 
 ### Schema Auto-Injection
 
-When you create or open a `kilo.json` file, the CLI automatically injects a `$schema` property pointing to the config JSON schema. This gives you **autocompletion and validation** in any editor that supports JSON Schema (VS Code, JetBrains, etc.).
+When you create or open a `kilo.jsonc` file, the CLI automatically injects a `$schema` property pointing to the config JSON schema. This gives you **autocompletion and validation** in any editor that supports JSON Schema (VS Code, JetBrains, etc.).
 
 ### Export and Import
 
-There is no traditional export/import of settings -- the JSONC config files themselves are portable. Copy `~/.config/kilo/kilo.json` or `kilo.json` to another machine and you're done.
+There is no traditional export/import of settings -- the JSONC config files themselves are portable. Copy `~/.config/kilo/kilo.jsonc` or `kilo.jsonc` to another machine and you're done.
 
 For **session** export and import, use the CLI commands:
 
@@ -211,12 +211,12 @@ You can find this setting in the Kilo Code settings under 'Advanced Settings'.
 {% /tab %}
 {% tab label="VSCode" %}
 
-The new extension does not currently expose the same experimental feature toggles as the **VSCode (Legacy)** version. Advanced options are configured via the JSONC config files that the Settings webview reads and writes. Refer to the auto-generated `$schema` in your `kilo.json` for the full list of available options.
+The new extension does not currently expose the same experimental feature toggles as the **VSCode (Legacy)** version. Advanced options are configured via the JSONC config files that the Settings webview reads and writes. Refer to the auto-generated `$schema` in your `kilo.jsonc` for the full list of available options.
 
 {% /tab %}
 {% tab label="CLI" %}
 
-The CLI does not currently expose the same experimental feature toggles as the **VSCode (Legacy)** version. Configuration of model behavior, file editing strategies, and other advanced options is handled directly in the JSONC config files. Refer to the auto-generated `$schema` in your `kilo.json` for the full list of available options.
+The CLI does not currently expose the same experimental feature toggles as the **VSCode (Legacy)** version. Configuration of model behavior, file editing strategies, and other advanced options is handled directly in the JSONC config files. Refer to the auto-generated `$schema` in your `kilo.jsonc` for the full list of available options.
 
 {% /tab %}
 {% /tabs %}

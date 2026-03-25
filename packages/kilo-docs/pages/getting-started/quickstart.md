@@ -104,7 +104,7 @@ Kilo Code works iteratively. Continue giving feedback or follow-up instructions 
 
 ### Key Differences from Legacy
 
-- **Settings** are managed via `kilo.json` config files (the Settings webview reads and writes the same files)
+- **Settings** are managed via `kilo.jsonc` config files (the Settings webview reads and writes the same files)
 - **Permissions** use a granular per-tool system instead of broad approval categories
 - **Modes** are called "agents" and configured as `.md` files or via the `agent` config key
 - **Autocomplete** uses FIM (Fill-in-the-Middle) with Codestral
@@ -146,7 +146,7 @@ Press **Enter** to send.
 
 Kilo analyzes your request and proposes actions. By default, most tools are auto-approved — only shell commands, external directory access, and sensitive file reads will prompt for confirmation. You'll see the tool name, arguments, and can approve or reject each action.
 
-To change permission defaults, configure the `permission` key in your `kilo.json` config file. See [Auto-Approving Actions](/docs/getting-started/settings/auto-approving-actions) for details.
+To change permission defaults, configure the `permission` key in your `kilo.jsonc` config file. See [Auto-Approving Actions](/docs/getting-started/settings/auto-approving-actions) for details.
 
 ### Step 5: Iterate
 
