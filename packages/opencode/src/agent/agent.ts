@@ -154,7 +154,6 @@ export namespace Agent {
             grep: "allow",
             glob: "allow",
             list: "allow",
-            bash: "allow",
             question: "allow",
             task: "allow",
             todoread: "allow",
