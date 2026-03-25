@@ -1109,6 +1109,10 @@ export const dict = {
   "settings.agentBehaviour.removeSkill.button": "Supprimer",
   "settings.agentBehaviour.instructionFiles": "Fichiers d'instructions supplémentaires",
   "settings.agentBehaviour.instructionFiles.description": "Chemins vers des fichiers d'instructions supplémentaires",
+  "settings.agentBehaviour.mcpDetail.command": "Commande",
+  "settings.agentBehaviour.mcpDetail.args": "Arguments",
+  "settings.agentBehaviour.mcpDetail.env": "Environnement",
+  "settings.agentBehaviour.mcpDetail.disabled": "Ce serveur est désactivé.",
   "settings.agentBehaviour.mcpEmpty":
     "Aucun serveur MCP configuré. Modifiez le fichier de configuration opencode pour ajouter des serveurs MCP.",
   "settings.agentBehaviour.workflowsPlaceholder":

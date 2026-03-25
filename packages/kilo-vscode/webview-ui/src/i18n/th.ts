@@ -1079,6 +1079,10 @@ export const dict = {
   "settings.agentBehaviour.removeSkill.button": "ลบ",
   "settings.agentBehaviour.instructionFiles": "ไฟล์คำสั่งเพิ่มเติม",
   "settings.agentBehaviour.instructionFiles.description": "เส้นทางไฟล์คำสั่งเพิ่มเติมในพรอมต์ระบบ",
+  "settings.agentBehaviour.mcpDetail.command": "คำสั่ง",
+  "settings.agentBehaviour.mcpDetail.args": "อาร์กิวเมนต์",
+  "settings.agentBehaviour.mcpDetail.env": "สภาพแวดล้อม",
+  "settings.agentBehaviour.mcpDetail.disabled": "เซิร์ฟเวอร์นี้ถูกปิดใช้งาน",
   "settings.agentBehaviour.mcpEmpty":
     "ไม่ได้กำหนดค่าเซิร์ฟเวอร์ MCP แก้ไขไฟล์กำหนดค่า opencode เพื่อเพิ่มเซิร์ฟเวอร์ MCP",
   "settings.agentBehaviour.workflowsPlaceholder": "เวิร์กโฟลว์จัดการผ่านไฟล์เวิร์กโฟลว์ในพื้นที่ทำงาน",

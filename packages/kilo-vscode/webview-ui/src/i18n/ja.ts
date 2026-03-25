@@ -1086,6 +1086,10 @@ export const dict = {
   "settings.agentBehaviour.removeSkill.button": "削除",
   "settings.agentBehaviour.instructionFiles": "追加の指示ファイル",
   "settings.agentBehaviour.instructionFiles.description": "システムプロンプトに含まれる追加の指示ファイルへのパス",
+  "settings.agentBehaviour.mcpDetail.command": "コマンド",
+  "settings.agentBehaviour.mcpDetail.args": "引数",
+  "settings.agentBehaviour.mcpDetail.env": "環境",
+  "settings.agentBehaviour.mcpDetail.disabled": "このサーバーは無効です。",
   "settings.agentBehaviour.mcpEmpty":
     "MCPサーバーが設定されていません。opencode設定ファイルを編集してMCPサーバーを追加してください。",
   "settings.agentBehaviour.workflowsPlaceholder":

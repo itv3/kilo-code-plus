@@ -1087,6 +1087,10 @@ export const dict = {
   "settings.agentBehaviour.removeSkill.button": "Fjern",
   "settings.agentBehaviour.instructionFiles": "Yderligere instruktionsfiler",
   "settings.agentBehaviour.instructionFiles.description": "Stier til yderligere instruktionsfiler i systemprompten",
+  "settings.agentBehaviour.mcpDetail.command": "Kommando",
+  "settings.agentBehaviour.mcpDetail.args": "Argumenter",
+  "settings.agentBehaviour.mcpDetail.env": "Miljø",
+  "settings.agentBehaviour.mcpDetail.disabled": "Denne server er deaktiveret.",
   "settings.agentBehaviour.mcpEmpty":
     "Ingen MCP-servere konfigureret. Rediger opencode-konfigurationsfilen for at tilføje MCP-servere.",
   "settings.agentBehaviour.workflowsPlaceholder": "Workflows administreres via workflow-filer i dit arbejdsområde.",
