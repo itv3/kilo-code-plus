@@ -150,20 +150,6 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                 >
                   {language.t("command.session.new.task")}
                 </Button>
-                <Show when={isSidebar()}>
-                  <button
-                    class="session-diff-badge"
-                    onClick={() => vscode.postMessage({ type: "openChanges" })}
-                    aria-label={language.t("command.session.show.changes")}
-                  >
-                    <Icon name="layers" size="small" />
-                    <Show when={session.summary()?.files} fallback={<span>0f</span>}>
-                      <span class="session-diff-files">{session.summary()!.files}f</span>
-                      <span class="session-diff-add">+{session.summary()!.additions}</span>
-                      <span class="session-diff-del">-{session.summary()!.deletions}</span>
-                    </Show>
-                  </button>
-                </Show>
                 <Show when={canContinueInWorktree()}>
                   <Button
                     variant="ghost"
@@ -183,6 +169,20 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                     </Show>
                     {transferring() ? transferDetail() : "Worktree"}
                   </Button>
+                </Show>
+                <Show when={isSidebar()}>
+                  <button
+                    class="session-diff-badge"
+                    onClick={() => vscode.postMessage({ type: "openChanges" })}
+                    aria-label={language.t("command.session.show.changes")}
+                  >
+                    <Icon name="layers" size="small" />
+                    <Show when={session.summary()?.files} fallback={<span>0f</span>}>
+                      <span class="session-diff-files">{session.summary()!.files}f</span>
+                      <span class="session-diff-add">+{session.summary()!.additions}</span>
+                      <span class="session-diff-del">-{session.summary()!.deletions}</span>
+                    </Show>
+                  </button>
                 </Show>
               </div>
             </div>
