@@ -23,6 +23,7 @@ import { useServer } from "../../context/server"
 
 interface ChatViewProps {
   onSelectSession?: (id: string) => void
+  onShowHistory?: () => void
   readonly?: boolean
   /** When true, show the "Continue in Worktree" button. Defaults to true in the sidebar. */
   continueInWorktree?: boolean
@@ -126,7 +127,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
       <TaskHeader readonly={props.readonly} />
       <div class="chat-messages-wrapper">
         <div class="chat-messages">
-          <MessageList onSelectSession={props.onSelectSession} />
+          <MessageList onSelectSession={props.onSelectSession} onShowHistory={props.onShowHistory} />
         </div>
       </div>
 
