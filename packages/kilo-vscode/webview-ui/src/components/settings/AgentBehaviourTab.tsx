@@ -530,6 +530,18 @@ const AgentBehaviourTab: Component = () => {
             />
           </SettingsRow>
         </Card>
+
+        <div style={{ display: "flex", "justify-content": "flex-end" }}>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setAgentView("list")
+              setEditingAgent("")
+            }}
+          >
+            {language.t("settings.agentBehaviour.editMode.back")}
+          </Button>
+        </div>
       </div>
     )
   }
