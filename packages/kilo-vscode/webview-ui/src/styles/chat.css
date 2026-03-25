@@ -424,6 +424,25 @@
   min-width: 0;
 }
 
+.show-history-btn {
+  appearance: none;
+  border: 1px solid var(--vscode-button-secondaryBorder, var(--vscode-contrastBorder, transparent));
+  border-radius: 4px;
+  background: var(--vscode-button-secondaryBackground, transparent);
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  margin-top: 4px;
+  text-align: center;
+  width: 100%;
+}
+
+.show-history-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
+}
+
 .recent-session-date {
   font-size: 11px;
   color: var(--vscode-descriptionForeground);

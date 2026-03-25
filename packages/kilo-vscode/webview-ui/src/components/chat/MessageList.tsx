@@ -39,6 +39,7 @@ const KiloLogo = (): JSX.Element => {
 
 interface MessageListProps {
   onSelectSession?: (id: string) => void
+  onShowHistory?: () => void
 }
 
 export const MessageList: Component<MessageListProps> = (props) => {
@@ -124,6 +125,11 @@ export const MessageList: Component<MessageListProps> = (props) => {
                       </button>
                     )}
                   </For>
+                  <Show when={props.onShowHistory}>
+                    <button class="show-history-btn" onClick={() => props.onShowHistory?.()}>
+                      {language.t("session.showHistory")}
+                    </button>
+                  </Show>
                 </div>
               </Show>
               <button class="feedback-button" onClick={() => dialog.show(() => <FeedbackDialog />)}>

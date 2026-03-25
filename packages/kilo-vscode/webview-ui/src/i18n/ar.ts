@@ -818,6 +818,7 @@ export const dict = {
   "session.delete.button": "حذف الجلسة",
   "session.untitled": "بدون عنوان",
   "session.recent": "الأخيرة",
+  "session.showHistory": "Show History",
   "session.search.placeholder": "البحث في الجلسات...",
   "session.empty": "لا توجد جلسات بعد. انقر + لبدء محادثة جديدة.",
   "session.tab.local": "Local",
