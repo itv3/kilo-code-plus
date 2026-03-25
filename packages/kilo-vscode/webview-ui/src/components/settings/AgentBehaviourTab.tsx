@@ -860,7 +860,7 @@ const AgentBehaviourTab: Component = () => {
                       {cmd.description}
                     </div>
                   </Show>
-                  <Show when={cmd.command}>
+                  <Show when={cmd.template}>
                     <div
                       style={{
                         "font-size": "11px",
@@ -872,7 +872,7 @@ const AgentBehaviourTab: Component = () => {
                         "white-space": "nowrap",
                       }}
                     >
-                      {cmd.command}
+                      {cmd.template}
                     </div>
                   </Show>
                 </div>
