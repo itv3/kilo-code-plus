@@ -34,7 +34,7 @@ function git(args: string[], cwd: string, stdin?: string): Promise<{ code: numbe
     const child = cp.execFile(
       "git",
       args,
-      { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+      { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, windowsHide: true },
       (error, stdout, stderr) => {
         if (!error) {
           resolve({ code: 0, stdout, stderr })

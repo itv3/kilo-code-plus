@@ -8,6 +8,7 @@ import { Button } from "@kilocode/kilo-ui/button"
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { Tooltip } from "@kilocode/kilo-ui/tooltip"
+import { showToast } from "@kilocode/kilo-ui/toast"
 import { TaskHeader } from "./TaskHeader"
 import { MessageList } from "./MessageList"
 import { PromptInput } from "./PromptInput"
@@ -35,8 +36,8 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const server = useServer()
   // Show "Show Changes" only in the standalone sidebar, not inside Agent Manager
   const isSidebar = () => worktreeMode === undefined
-  // Show "Continue in Worktree": explicit prop, or default to true in sidebar
-  const canContinueInWorktree = () => props.continueInWorktree ?? isSidebar()
+  // Show "Continue in Worktree": only when explicitly enabled via prop
+  const canContinueInWorktree = () => props.continueInWorktree === true
 
   const id = () => session.currentSessionID()
   const hasMessages = () => session.messages().length > 0
@@ -97,10 +98,16 @@ export const ChatView: Component<ChatViewProps> = (props) => {
     }
     const cleanup = vscode.onMessage((msg) => {
       if (msg.type !== "continueInWorktreeProgress") return
-      const status = (msg as { status: string }).status
-      if (status === "done" || status === "error") {
+      const m = msg as { status: string; error?: string }
+      if (m.status === "done") {
         setTransferring(false)
         setTransferDetail("")
+        return
+      }
+      if (m.status === "error") {
+        setTransferring(false)
+        setTransferDetail("")
+        showToast({ title: m.error ?? "Failed to continue in worktree" })
         return
       }
       setTransferDetail(labels[status] ?? "Working...")
