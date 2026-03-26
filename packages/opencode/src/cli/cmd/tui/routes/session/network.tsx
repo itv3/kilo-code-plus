@@ -14,11 +14,11 @@ export function NetworkPrompt(props: { request: SessionNetworkWait }) {
   const dialog = useDialog()
 
   function reply() {
-    sdk.client.network.reply({ requestID: props.request.id })
+    void sdk.client.network.reply({ requestID: props.request.id }).catch(() => {})
   }
 
   function reject() {
-    sdk.client.network.reject({ requestID: props.request.id })
+    void sdk.client.network.reject({ requestID: props.request.id }).catch(() => {})
   }
 
   useKeyboard((evt) => {
