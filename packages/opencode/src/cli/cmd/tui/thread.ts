@@ -24,12 +24,11 @@ declare global {
 
 type RpcClient = ReturnType<typeof Rpc.client<typeof rpc>>
 
-// kilocode_change start — getter-indirection so fetch/events follow worker restarts
-function createWorkerFetch(getter: () => RpcClient): typeof fetch {
+function createWorkerFetch(client: RpcClient): typeof fetch {
   const fn = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = new Request(input, init)
     const body = request.body ? await request.text() : undefined
-    const result = await getter().call("fetch", {
+    const result = await client.call("fetch", {
       url: request.url,
       method: request.method,
       headers: Object.fromEntries(request.headers.entries()),
@@ -43,47 +42,14 @@ function createWorkerFetch(getter: () => RpcClient): typeof fetch {
   return fn as typeof fetch
 }
 
-function createEventSource(getter: () => RpcClient): EventSource & { rebind(): void } {
-  // Handlers registered via on() persist across worker restarts.
-  // Call rebind() after replacing the RPC client so they re-attach.
-  const handlers = new Set<(event: Event) => void>()
-  let unsubs: (() => void)[] = []
-  let workspace: string | undefined
-
-  function rebind() {
-    for (const u of unsubs) u()
-    unsubs = []
-    const cur = getter()
-    for (const h of handlers) {
-      unsubs.push(cur.on<Event>("event", h))
-    }
-    // Replay last workspace so the new worker receives events for the
-    // correct workspace instead of falling back to the default.
-    if (workspace !== undefined) {
-      void cur.call("setWorkspace", { workspaceID: workspace })
-    }
-  }
-
+function createEventSource(client: RpcClient): EventSource {
   return {
-    on: (handler) => {
-      handlers.add(handler)
-      const unsub = getter().on<Event>("event", handler)
-      unsubs.push(unsub)
-      return () => {
-        handlers.delete(handler)
-        unsub()
-        const idx = unsubs.indexOf(unsub)
-        if (idx !== -1) unsubs.splice(idx, 1)
-      }
+    on: (handler) => client.on<Event>("event", handler),
+    setWorkspace: (workspaceID) => {
+      void client.call("setWorkspace", { workspaceID })
     },
-    setWorkspace: (id) => {
-      workspace = id
-      void getter().call("setWorkspace", { workspaceID: id })
-    },
-    rebind,
   }
 }
-// kilocode_change end
 
 async function target() {
   if (typeof KILO_WORKER_PATH !== "undefined") return KILO_WORKER_PATH
@@ -181,21 +147,46 @@ export const TuiThreadCommand = cmd({
       }
       const cwd = Filesystem.resolve(process.cwd())
 
-      // kilocode_change start — mutable worker/client so /new can recycle the worker
-      // to reclaim native memory held by Bun's JSC allocator.
+      // kilocode_change start — use a child process instead of a Worker thread so
+      // that killing and respawning actually returns native memory to the OS.
+      // Bun Workers are threads within the same process — terminate() frees the
+      // JSC context but mimalloc retains every page process-wide.
       // See https://github.com/oven-sh/bun/issues/28318
-      let worker = new Worker(file, {
-        env: Object.fromEntries(
-          Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
-        ),
-      })
-      worker.onerror = (e) => {
-        Log.Default.error(e)
-      }
+      const resolved = file instanceof URL ? fileURLToPath(file) : file
+      const env = Object.fromEntries(
+        Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
+      )
+      // Forward runtime flags (e.g. --conditions=browser) + app flags.
+      const execArgs = process.execArgv ?? []
+      const appArgs = process.argv.includes("--print-logs") ? ["--print-logs"] : []
 
-      let client = Rpc.client<typeof rpc>(worker)
-      const getClient = () => client
+      // IPC relay: messages from the child are forwarded to whatever handler
+      // Rpc.client() installs.  The relay persists across subprocess restarts
+      // so we never need to re-create the RPC client or rebind event listeners.
+      let relay: ((data: string) => void) | undefined
+      const spawn = () =>
+        Bun.spawn({
+          cmd: [process.execPath, ...execArgs, resolved, ...appArgs],
+          cwd,
+          env,
+          ipc(message) {
+            relay?.(message as string)
+          },
+          stdio: ["ignore", "ignore", "ignore"],
+          windowsHide: true,
+        })
+
+      let child = spawn()
+
+      const target_: Rpc.Target = {
+        send: (data) => child.send(data),
+        receive: (handler) => {
+          relay = handler
+        },
+      }
+      const client = Rpc.client<typeof rpc>(target_)
       // kilocode_change end
+
       const error = (e: unknown) => {
         Log.Default.error(e)
       }
@@ -222,43 +213,36 @@ export const TuiThreadCommand = cmd({
             error: error instanceof Error ? error.message : String(error),
           })
         })
-        worker.terminate()
+        child.kill()
       }
 
-      // kilocode_change start — restart the worker to reclaim native/JSC memory.
-      // Bun's JSC does not return freed native heap pages to the OS within a
-      // single Worker lifetime, so the only way to reclaim that memory after
-      // large sessions is to terminate the worker and spawn a fresh one.
+      // kilocode_change start — restart the subprocess to reclaim native/JSC memory.
+      // Killing the child process returns all its memory to the OS because it is
+      // a separate address space, unlike Worker threads which share the parent's
+      // allocator.
       let restarting = false
-      let events: ReturnType<typeof createEventSource> | undefined
       const restart = async () => {
         if (restarting || stopped || external) return
         restarting = true
         try {
-          Log.Default.info("restarting worker to reclaim memory")
-          // 1. Reject any in-flight RPC calls so callers don't hang forever.
-          const reason = new Error("worker restarting")
-          client.rejectAll(reason)
-          // 2. Graceful shutdown of the old worker (flushes event stream, disposes instances).
+          Log.Default.info("restarting worker subprocess to reclaim memory")
+          // 1. Graceful shutdown — let worker flush state to disk.
           await withTimeout(client.call("shutdown", undefined), 5000).catch((err) => {
             Log.Default.warn("worker shutdown during restart failed", {
               error: err instanceof Error ? err.message : String(err),
             })
           })
-          worker.terminate()
-          // 3. Spawn fresh worker + RPC client.
-          worker = new Worker(file, {
-            env: Object.fromEntries(
-              Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
-            ),
+          // 2. Kill old process and wait for it to exit.
+          child.kill()
+          await withTimeout(child.exited, 5000).catch(() => {
+            child.kill(9) // SIGKILL fallback
           })
-          worker.onerror = (e) => {
-            Log.Default.error(e)
-          }
-          client = Rpc.client<typeof rpc>(worker)
-          // 4. Re-attach event handlers to the new client so the TUI receives
-          //    events (including server.instance.disposed which triggers bootstrap).
-          events?.rebind()
+          // 3. Reject any in-flight RPC calls so callers don't hang.
+          client.rejectAll(new Error("worker restarted"))
+          // 4. Spawn fresh subprocess.  The relay + RPC client persist — event
+          //    listeners stay registered and new calls automatically route to
+          //    the new child through the mutable `child` closure.
+          child = spawn()
         } finally {
           restarting = false
         }
@@ -344,8 +328,6 @@ export const TuiThreadCommand = cmd({
         network.port !== 0 ||
         network.hostname !== "127.0.0.1"
 
-      // kilocode_change start — assign events so restart() can call rebind()
-      events = external ? undefined : createEventSource(getClient)
       const transport = external
         ? {
             url: (await client.call("server", network)).url,
@@ -354,10 +336,9 @@ export const TuiThreadCommand = cmd({
           }
         : {
             url: "http://kilo.internal",
-            fetch: createWorkerFetch(getClient),
-            events,
+            fetch: createWorkerFetch(client),
+            events: createEventSource(client),
           }
-      // kilocode_change end
 
       setTimeout(() => {
         client.call("checkUpgrade", { directory: cwd }).catch(() => {})
@@ -389,7 +370,7 @@ export const TuiThreadCommand = cmd({
           directory: cwd,
           fetch: transport.fetch,
           events: transport.events,
-          restart: external ? undefined : restart, // kilocode_change — worker restart for /new
+          restart: external ? undefined : restart, // kilocode_change — subprocess restart for /new
           args: {
             continue: args.continue,
             sessionID: args.session,
