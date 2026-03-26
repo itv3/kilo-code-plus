@@ -1,5 +1,6 @@
 import { Component, Show, createMemo } from "solid-js"
 import { TextField } from "@kilocode/kilo-ui/text-field"
+import { Switch } from "@kilocode/kilo-ui/switch"
 import { Card } from "@kilocode/kilo-ui/card"
 import { Button } from "@kilocode/kilo-ui/button"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
@@ -178,7 +179,6 @@ const ModeEditView: Component<Props> = (props) => {
         <SettingsRow
           title={language.t("settings.agentBehaviour.maxSteps.title")}
           description={language.t("settings.agentBehaviour.maxSteps.description")}
-          last
         >
           <TextField
             value={cfg().steps?.toString() ?? ""}
@@ -188,6 +188,45 @@ const ModeEditView: Component<Props> = (props) => {
               update({ steps: isNaN(parsed) ? undefined : parsed })
             }}
           />
+        </SettingsRow>
+
+        <SettingsRow
+          title={language.t("settings.agentBehaviour.hidden.title")}
+          description={language.t("settings.agentBehaviour.hidden.description")}
+        >
+          <Switch
+            checked={cfg().hidden ?? false}
+            onChange={(val) => {
+              update({ hidden: val || undefined })
+              // Clear default_agent if hiding the current default
+              if (val && config().default_agent === props.name) {
+                updateConfig({ default_agent: undefined })
+              }
+            }}
+            hideLabel
+          >
+            {language.t("settings.agentBehaviour.hidden.title")}
+          </Switch>
+        </SettingsRow>
+
+        <SettingsRow
+          title={language.t("settings.agentBehaviour.disable.title")}
+          description={language.t("settings.agentBehaviour.disable.description")}
+          last
+        >
+          <Switch
+            checked={cfg().disable ?? false}
+            onChange={(val) => {
+              update({ disable: val || undefined })
+              // Clear default_agent if disabling the current default
+              if (val && config().default_agent === props.name) {
+                updateConfig({ default_agent: undefined })
+              }
+            }}
+            hideLabel
+          >
+            {language.t("settings.agentBehaviour.disable.title")}
+          </Switch>
         </SettingsRow>
       </Card>
 
