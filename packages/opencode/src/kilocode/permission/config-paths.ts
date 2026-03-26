@@ -26,7 +26,15 @@ export namespace ConfigProtection {
   export function isRelative(pattern: string): boolean {
     const normalized = normalize(pattern)
     for (const dir of CONFIG_DIRS) {
-      if (normalized === dir.slice(0, -1) || normalized.startsWith(dir)) return true
+      const bare = dir.slice(0, -1) // e.g. ".kilo"
+      // Match at root (e.g. ".kilo/foo") or nested (e.g. "packages/sub/.kilo/foo")
+      if (
+        normalized === bare ||
+        normalized.startsWith(dir) ||
+        normalized.includes("/" + dir) ||
+        normalized.endsWith("/" + bare)
+      )
+        return true
     }
     return CONFIG_ROOT_FILES.has(normalized)
   }
