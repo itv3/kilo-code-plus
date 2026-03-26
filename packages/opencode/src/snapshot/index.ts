@@ -14,6 +14,7 @@ export namespace Snapshot {
   const log = Log.create({ service: "snapshot" })
   const hour = 60 * 60 * 1000
   const prune = "7.days"
+  const MAX_DIFF_SIZE = 256 * 1024 // kilocode_change
 
   export function init() {
     Scheduler.register({
@@ -232,9 +233,9 @@ export namespace Snapshot {
       const oversized =
         !isBinaryFile &&
         ((parseInt(await $`git --git-dir ${git} cat-file -s ${from}:${file}`.quiet().nothrow().text()) || 0) >
-          256 * 1024 ||
+          MAX_DIFF_SIZE ||
           (parseInt(await $`git --git-dir ${git} cat-file -s ${to}:${file}`.quiet().nothrow().text()) || 0) >
-            256 * 1024)
+            MAX_DIFF_SIZE)
       const skip = isBinaryFile || oversized
       const before = skip
         ? ""
