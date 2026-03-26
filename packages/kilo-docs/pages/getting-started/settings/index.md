@@ -20,7 +20,7 @@ This UI reads and writes to the same underlying JSONC config files used by the C
 
 There are two primary config files:
 
-- **Global config:** `~/.config/kilo/kilo.jsonc` — applies to all projects.
+- **Global config:** `~/.config/kilo/kilo.jsonc` — applies to all projects. On Windows, this is `C:\Users\<username>\.config\kilo\kilo.jsonc`.
 - **Project config:** `kilo.jsonc` in your project root, or `.kilo/kilo.jsonc` for a cleaner setup. The `.kilo/` version takes priority if both exist.
 
 {% callout type="warning" %}
@@ -44,7 +44,7 @@ If you check `kilo.jsonc` into version control, make sure it does not contain AP
 
 There are two primary config files:
 
-- **Global config:** `~/.config/kilo/kilo.jsonc` -- applies to all projects.
+- **Global config:** `~/.config/kilo/kilo.jsonc` -- applies to all projects. On Windows, this is `C:\Users\<username>\.config\kilo\kilo.jsonc`.
 - **Project config:** `kilo.jsonc` in the root of your project -- overrides global settings for that project.
 
 Both files use the [JSONC](https://code.visualstudio.com/docs/languages/json#_json-with-comments) format (JSON with comments).
