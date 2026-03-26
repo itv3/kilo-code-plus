@@ -6,7 +6,7 @@ description: "Learn how to use the Kilo Code chat interface effectively"
 # Chatting with Kilo Code
 
 {% callout type="tip" %}
-**Bottom line:** Kilo Code is an AI coding assistant that lives in VS Code. You chat with it in plain English, and it writes, edits, and explains code for you.
+**Bottom line:** Kilo Code is an AI coding assistant. You chat with it in plain English, and it writes, edits, and explains code for you.
 {% /callout %}
 
 {% callout type="note" title="Prefer quick completions?" %}
