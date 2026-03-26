@@ -21,15 +21,15 @@ export namespace Rpc {
     postMessage: (data: string) => void | null
     onmessage: ((this: Worker, ev: MessageEvent<any>) => any) | null
   }) {
-    const pending = new Map<number, (result: any) => void>()
+    const pending = new Map<number, { resolve: (result: any) => void; reject: (error: any) => void }>()
     const listeners = new Map<string, Set<(data: any) => void>>()
     let id = 0
     target.onmessage = async (evt) => {
       const parsed = JSON.parse(evt.data)
       if (parsed.type === "rpc.result") {
-        const resolve = pending.get(parsed.id)
-        if (resolve) {
-          resolve(parsed.result)
+        const entry = pending.get(parsed.id)
+        if (entry) {
+          entry.resolve(parsed.result)
           pending.delete(parsed.id)
         }
       }
@@ -45,8 +45,8 @@ export namespace Rpc {
     return {
       call<Method extends keyof T>(method: Method, input: Parameters<T[Method]>[0]): Promise<ReturnType<T[Method]>> {
         const requestId = id++
-        return new Promise((resolve) => {
-          pending.set(requestId, resolve)
+        return new Promise((resolve, reject) => {
+          pending.set(requestId, { resolve, reject })
           target.postMessage(JSON.stringify({ type: "rpc.request", method, input, id: requestId }))
         })
       },
@@ -60,6 +60,12 @@ export namespace Rpc {
         return () => {
           handlers!.delete(handler)
         }
+      },
+      rejectAll(reason: Error) {
+        for (const entry of pending.values()) {
+          entry.reject(reason)
+        }
+        pending.clear()
       },
     }
   }
