@@ -49,7 +49,10 @@ describe("ToolRegistry tool name contract (runtime)", () => {
   it("all tools used by kilo-vscode are registered in ToolRegistry", () => {
     const names = JSON.stringify(TOOL_NAMES_WE_DEPEND_ON)
     const result = check(`
-      import { ToolRegistry } from "./src/components/message-part.tsx"
+      const hist = { state: null, length: 1, replaceState(s) { hist.state = s }, pushState(s) { hist.state = s }, go() {} }
+      const mql = { matches: false, media: "", onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true } }
+      globalThis.window = globalThis.window || { history: hist, location: { pathname: "/", search: "", hash: "", href: "/", origin: "" }, scrollTo() {}, addEventListener() {}, removeEventListener() {}, confirm() { return false }, matchMedia() { return mql } }
+      const { ToolRegistry } = await import("./src/components/message-part.tsx")
       const names = ${names}
       const missing = names.filter(n => typeof ToolRegistry.render(n) !== "function")
       if (missing.length) {
@@ -57,6 +60,7 @@ describe("ToolRegistry tool name contract (runtime)", () => {
         process.exit(1)
       }
       console.log("ok")
+      process.exit(0)
     `)
     expect(result.ok, `ToolRegistry check failed: ${result.output}`).toBe(true)
   })
@@ -67,12 +71,16 @@ describe("getToolInfo() export contract (runtime)", () => {
     // Note: getToolInfo() calls useI18n() internally, so we cannot invoke it
     // outside a SolidJS rendering context. We verify it exists as a function.
     const result = check(`
-      import { getToolInfo } from "./src/components/message-part.tsx"
+      const hist = { state: null, length: 1, replaceState(s) { hist.state = s }, pushState(s) { hist.state = s }, go() {} }
+      const mql = { matches: false, media: "", onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true } }
+      globalThis.window = globalThis.window || { history: hist, location: { pathname: "/", search: "", hash: "", href: "/", origin: "" }, scrollTo() {}, addEventListener() {}, removeEventListener() {}, confirm() { return false }, matchMedia() { return mql } }
+      const { getToolInfo } = await import("./src/components/message-part.tsx")
       if (typeof getToolInfo !== "function") {
         console.error("getToolInfo is " + typeof getToolInfo)
         process.exit(1)
       }
       console.log("ok")
+      process.exit(0)
     `)
     expect(result.ok, `getToolInfo check failed: ${result.output}`).toBe(true)
   })
@@ -109,5 +117,24 @@ describe("DataProvider contract (runtime)", () => {
     expect(src).toContain("onOpenFile")
     expect(src).toContain("OpenFileFn")
     expect(src).toMatch(/openFile:\s*props\.onOpenFile/)
+  })
+})
+
+describe("BasicTool export contract (runtime)", () => {
+  it("BasicTool and GenericTool are exported from basic-tool", () => {
+    const result = check(`
+      const { BasicTool, GenericTool } = await import("./src/components/basic-tool.tsx")
+      if (typeof BasicTool !== "function") {
+        console.error("BasicTool is " + typeof BasicTool)
+        process.exit(1)
+      }
+      if (typeof GenericTool !== "function") {
+        console.error("GenericTool is " + typeof GenericTool)
+        process.exit(1)
+      }
+      console.log("ok")
+      process.exit(0)
+    `)
+    expect(result.ok, `BasicTool export check failed: ${result.output}`).toBe(true)
   })
 })

@@ -1,6 +1,6 @@
 import { marked } from "marked"
 import markedKatex from "marked-katex-extension"
-
+import markedShiki from "marked-shiki"
 import katex from "katex"
 import { bundledLanguages, type BundledLanguage } from "shiki"
 import { parseFilePath } from "../file-path" // kilocode_change
@@ -534,9 +534,7 @@ export async function deferredHighlight(
   onComplete?: () => void,
   signal?: { aborted: boolean },
 ): Promise<void> {
-  const blocks = Array.from(
-    container.querySelectorAll("pre > code[data-lang]:not([data-highlighted])"),
-  )
+  const blocks = Array.from(container.querySelectorAll("pre > code[data-lang]:not([data-highlighted])"))
   if (blocks.length === 0) {
     onComplete?.()
     return
@@ -591,10 +589,13 @@ export async function deferredHighlight(
             resolve()
           }
           if (!highlighter.getLoadedLanguages().includes(language)) {
-            highlighter.loadLanguage(language as BundledLanguage).then(highlight).catch((err) => {
-              console.warn("Failed to load language for highlighting", language, err)
-              resolve()
-            })
+            highlighter
+              .loadLanguage(language as BundledLanguage)
+              .then(highlight)
+              .catch((err) => {
+                console.warn("Failed to load language for highlighting", language, err)
+                resolve()
+              })
             return
           }
           highlight()
@@ -631,12 +632,18 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
           // kilocode_change start
           codespan({ text }) {
             const file = parseFilePath(text)
+            const escaped = text
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#39;")
             if (file) {
               const lineAttr = file.line ? ` data-file-line="${file.line}"` : ""
               const colAttr = file.column ? ` data-file-col="${file.column}"` : ""
-              return `<code class="file-link" data-file-path="${file.path}"${lineAttr}${colAttr}>${text}</code>`
+              return `<code class="file-link" data-file-path="${file.path}"${lineAttr}${colAttr}>${escaped}</code>`
             }
-            return `<code>${text}</code>`
+            return `<code>${escaped}</code>`
           },
           code({ text, lang }) {
             const escaped = text
@@ -658,6 +665,22 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
       markedKatex({
         throwOnError: false,
         nonStandard: true,
+      }),
+      markedShiki({
+        async highlight(code, lang) {
+          const highlighter = await getSharedHighlighter({ themes: ["Kilo"], langs: [] })
+          if (!(lang in bundledLanguages)) {
+            lang = "text"
+          }
+          if (!highlighter.getLoadedLanguages().includes(lang)) {
+            await highlighter.loadLanguage(lang as BundledLanguage)
+          }
+          return highlighter.codeToHtml(code, {
+            lang: lang || "text",
+            theme: "Kilo",
+            tabindex: false,
+          })
+        },
       }),
     )
     // kilocode_change end

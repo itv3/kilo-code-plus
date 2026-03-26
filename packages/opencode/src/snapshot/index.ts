@@ -1,6 +1,7 @@
 import { $ } from "bun"
 import path from "path"
 import fs from "fs/promises"
+import { Filesystem } from "../util/filesystem"
 import { Log } from "../util/log"
 import { Flag } from "../flag/flag"
 import { Global } from "../global"
@@ -13,6 +14,7 @@ export namespace Snapshot {
   const log = Log.create({ service: "snapshot" })
   const hour = 60 * 60 * 1000
   const prune = "7.days"
+  export const MAX_DIFF_SIZE = 256 * 1024 // kilocode_change
 
   export function init() {
     Scheduler.register({
@@ -33,10 +35,11 @@ export namespace Snapshot {
       .then(() => true)
       .catch(() => false)
     if (!exists) return
-    const result = await $`git --git-dir ${git} --work-tree ${Instance.worktree} gc --prune=${prune}`
-      .quiet()
-      .cwd(Instance.directory)
-      .nothrow()
+    const result =
+      await $`git -c core.autocrlf=false -c core.longpaths=true -c core.symlinks=true --git-dir ${git} --work-tree ${Instance.worktree} gc --prune=${prune}`
+        .quiet()
+        .cwd(Instance.directory)
+        .nothrow()
     if (result.exitCode !== 0) {
       log.warn("cleanup failed", {
         exitCode: result.exitCode,
@@ -227,13 +230,22 @@ export namespace Snapshot {
       if (!line) continue
       const [additions, deletions, file] = line.split("\t")
       const isBinaryFile = additions === "-" && deletions === "-"
-      const before = isBinaryFile
+      // kilocode_change start
+      const oversized =
+        !isBinaryFile &&
+        ((parseInt(await $`git --git-dir ${git} cat-file -s ${from}:${file}`.quiet().nothrow().text()) || 0) >
+          MAX_DIFF_SIZE ||
+          (parseInt(await $`git --git-dir ${git} cat-file -s ${to}:${file}`.quiet().nothrow().text()) || 0) >
+            MAX_DIFF_SIZE)
+      const skip = isBinaryFile || oversized
+      // kilocode_change end
+      const before = skip
         ? ""
         : await $`git -c core.autocrlf=false -c core.longpaths=true -c core.symlinks=true --git-dir ${git} --work-tree ${Instance.worktree} show ${from}:${file}`
             .quiet()
             .nothrow()
             .text()
-      const after = isBinaryFile
+      const after = skip
         ? ""
         : await $`git -c core.autocrlf=false -c core.longpaths=true -c core.symlinks=true --git-dir ${git} --work-tree ${Instance.worktree} show ${to}:${file}`
             .quiet()
@@ -271,13 +283,12 @@ export namespace Snapshot {
     const target = path.join(git, "info", "exclude")
     await fs.mkdir(path.join(git, "info"), { recursive: true })
     if (!file) {
-      await Bun.write(target, "")
+      await Filesystem.write(target, "")
       return
     }
-    const text = await Bun.file(file)
-      .text()
-      .catch(() => "")
-    await Bun.write(target, text)
+    const text = await Filesystem.readText(file).catch(() => "")
+
+    await Filesystem.write(target, text)
   }
 
   async function excludes() {
