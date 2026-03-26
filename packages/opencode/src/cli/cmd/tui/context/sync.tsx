@@ -273,8 +273,9 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
+        // kilocode_change start
         case "message.updated": {
-          const info = strip(event.properties.info) // kilocode_change
+          const info = strip(event.properties.info)
           const messages = store.message[info.sessionID]
           if (!messages) {
             setStore("message", info.sessionID, [info])
@@ -313,6 +314,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           }
           break
         }
+        // kilocode_change end
         case "message.removed": {
           const messages = store.message[event.properties.sessionID]
           const result = Binary.search(messages, event.properties.messageID, (m) => m.id)

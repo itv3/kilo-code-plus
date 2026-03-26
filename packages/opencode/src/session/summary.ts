@@ -121,6 +121,7 @@ export namespace SessionSummary {
     }),
     async (input) => {
       const diffs = await Storage.read<Snapshot.FileDiff[]>(["session_diff", input.sessionID]).catch(() => [])
+      // kilocode_change start — scrub oversized diffs from stored session_diff
       const limit = 256 * 1024
       const next = diffs.map((item) => {
         const file = unquoteGitPath(item.file)
@@ -135,6 +136,7 @@ export namespace SessionSummary {
       })
       const changed = next.some((item, i) => item !== diffs[i])
       if (changed) Storage.write(["session_diff", input.sessionID], next).catch(() => {})
+      // kilocode_change end
       return next
     },
   )
