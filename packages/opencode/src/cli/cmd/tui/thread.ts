@@ -48,6 +48,7 @@ function createEventSource(getter: () => RpcClient): EventSource & { rebind(): v
   // Call rebind() after replacing the RPC client so they re-attach.
   const handlers = new Set<(event: Event) => void>()
   let unsubs: (() => void)[] = []
+  let workspace: string | undefined
 
   function rebind() {
     for (const u of unsubs) u()
@@ -55,6 +56,11 @@ function createEventSource(getter: () => RpcClient): EventSource & { rebind(): v
     const cur = getter()
     for (const h of handlers) {
       unsubs.push(cur.on<Event>("event", h))
+    }
+    // Replay last workspace so the new worker receives events for the
+    // correct workspace instead of falling back to the default.
+    if (workspace !== undefined) {
+      void cur.call("setWorkspace", { workspaceID: workspace })
     }
   }
 
@@ -70,8 +76,9 @@ function createEventSource(getter: () => RpcClient): EventSource & { rebind(): v
         if (idx !== -1) unsubs.splice(idx, 1)
       }
     },
-    setWorkspace: (workspaceID) => {
-      void getter().call("setWorkspace", { workspaceID })
+    setWorkspace: (id) => {
+      workspace = id
+      void getter().call("setWorkspace", { workspaceID: id })
     },
     rebind,
   }
