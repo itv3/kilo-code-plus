@@ -9,6 +9,7 @@ import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import type { AgentConfig, AgentInfo } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
+import { buildExport } from "./mode-io"
 
 interface Props {
   name: string
@@ -40,6 +41,18 @@ const ModeEditView: Component<Props> = (props) => {
     })
   }
 
+  const exportMode = () => {
+    const data = buildExport(props.name, cfg())
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = `${props.name}.agent.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
       <div
@@ -57,15 +70,24 @@ const ModeEditView: Component<Props> = (props) => {
           </span>
         </div>
         <Show when={!native()}>
-          <IconButton
-            size="small"
-            variant="ghost"
-            icon="close"
-            onClick={() => {
-              const a = agent()
-              if (a) props.onRemove(a)
-            }}
-          />
+          <div style={{ display: "flex", gap: "4px" }}>
+            <IconButton
+              size="small"
+              variant="ghost"
+              icon="download"
+              title={language.t("settings.agentBehaviour.exportMode")}
+              onClick={exportMode}
+            />
+            <IconButton
+              size="small"
+              variant="ghost"
+              icon="close"
+              onClick={() => {
+                const a = agent()
+                if (a) props.onRemove(a)
+              }}
+            />
+          </div>
         </Show>
       </div>
 

@@ -14,6 +14,8 @@ import type { AgentInfo, SkillInfo } from "../../types/messages"
 import ModeEditView from "./ModeEditView"
 import ModeCreateView from "./ModeCreateView"
 import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
+import { parseImport, MAX_IMPORT_SIZE } from "./mode-io"
+import type { ImportError } from "./mode-io"
 
 type SubtabId = "agents" | "mcpServers" | "rules" | "workflows" | "skills"
 
@@ -227,6 +229,41 @@ const AgentBehaviourTab: Component = () => {
     setEditingAgent("")
   }
 
+  const [importError, setImportError] = createSignal("")
+
+  const errorKey = (tag: ImportError) => `settings.agentBehaviour.importMode.${tag}` as const
+
+  const importMode = (file: File) => {
+    setImportError("")
+    if (file.size > MAX_IMPORT_SIZE) {
+      setImportError(language.t(errorKey("tooLarge")))
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = parseImport(reader.result as string, agentNames())
+      if (!result.ok) {
+        setImportError(language.t(errorKey(result.error)))
+        return
+      }
+      const existing = config().agent ?? {}
+      updateConfig({ agent: { ...existing, [result.name]: result.config } })
+      setImportError("")
+    }
+    reader.readAsText(file)
+  }
+
+  const triggerImport = () => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = ".json"
+    input.onchange = () => {
+      const file = input.files?.[0]
+      if (file) importMode(file)
+    }
+    input.click()
+  }
+
   const renderAgentsSubtab = () => {
     const view = agentView()
     if (view === "create") return <ModeCreateView taken={agentNames()} onBack={back} />
@@ -270,10 +307,27 @@ const AgentBehaviourTab: Component = () => {
           }}
         >
           <div data-slot="settings-row-label-title">{language.t("settings.agentBehaviour.availableAgents")}</div>
-          <Button variant="secondary" size="small" onClick={() => setAgentView("create")}>
-            {language.t("settings.agentBehaviour.createMode")}
-          </Button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Button variant="ghost" size="small" onClick={triggerImport}>
+              {language.t("settings.agentBehaviour.importMode")}
+            </Button>
+            <Button variant="secondary" size="small" onClick={() => setAgentView("create")}>
+              {language.t("settings.agentBehaviour.createMode")}
+            </Button>
+          </div>
         </div>
+
+        <Show when={importError()}>
+          <div
+            style={{
+              "font-size": "12px",
+              color: "var(--vscode-errorForeground)",
+              "margin-bottom": "8px",
+            }}
+          >
+            {importError()}
+          </div>
+        </Show>
 
         {/* Agents list - clickable to edit */}
         <Show
