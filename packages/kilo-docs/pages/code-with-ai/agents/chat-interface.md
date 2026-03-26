@@ -18,7 +18,7 @@ If you're typing code in the editor and want AI to finish your line or block, ch
 {% tabs %}
 {% tab label="VSCode" %}
 
-Click the Kilo Code icon ({% kilo-code-icon /%}) in VS Code's Primary Side Bar to open the sidebar chat. You can also pop it out into an editor tab for a larger workspace.
+Click the Kilo Code icon ({% kiloCodeIcon /%}) in VS Code's Primary Side Bar to open the sidebar chat. You can also pop it out into an editor tab for a larger workspace.
 
 {% /tab %}
 {% tab label="CLI" %}
@@ -28,7 +28,7 @@ Open your terminal and run `kilo` to launch the interactive TUI. You'll see a pr
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
-Find the Kilo Code icon ({% kilo-code-icon /%}) in VS Code's Primary Side Bar. Click it to open the chat panel.
+Find the Kilo Code icon ({% kiloCodeIcon /%}) in VS Code's Primary Side Bar. Click it to open the chat panel.
 
 **Lost the panel?** Go to View > Open View... and search for "Kilo Code"
 

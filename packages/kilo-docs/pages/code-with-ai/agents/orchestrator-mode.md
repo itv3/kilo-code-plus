@@ -10,14 +10,14 @@ Orchestrator Mode allows you to break down complex projects into smaller, manage
 ## Why Use Orchestrator Mode?
 
 - **Tackle Complexity:** Break large, multi-step projects (e.g., building a full feature) into focused subtasks (e.g., design, implementation, documentation).
-- **Use Specialized Modes:** Automatically delegate subtasks to the mode best suited for that specific piece of work, leveraging specialized capabilities for optimal results.
+- **Use Specialized Agents:** Automatically delegate subtasks to the agent best suited for that specific piece of work, leveraging specialized capabilities for optimal results.
 - **Maintain Focus & Efficiency:** Each subtask operates in its own isolated context with a separate conversation history. This prevents the parent (orchestrator) task from becoming cluttered with the detailed execution steps (like code diffs or file analysis results), allowing it to focus efficiently on the high-level workflow and manage the overall process based on concise summaries from completed subtasks.
 - **Streamline Workflows:** Results from one subtask can be automatically passed to the next, creating a smooth flow (e.g., architectural decisions feeding into the coding task).
 
 ## How It Works
 
 1.  Using Orchestrator Mode, Kilo can analyze a complex task and suggest breaking it down into a subtask.
-2.  The parent task pauses, and the new subtask begins in a different mode.
+2.  The parent task pauses, and the new subtask begins with a dedicated subagent.
 3.  When the subtask's goal is achieved, Kilo signals completion.
 4.  The parent task resumes with only the summary of the subtask. The parent uses this summary to continue the main workflow.
 
@@ -29,7 +29,7 @@ Orchestrator Mode allows you to break down complex projects into smaller, manage
   - **Up:** Via the final summary provided when the subtask finishes. Be mindful that only this summary returns to the parent.
 - **Navigation:** Kilo's interface helps you see the hierarchy of tasks (which task is the parent, which are children). You can typically navigate between active and paused tasks.
 
-Orchestrator Mode provides a powerful way to manage complex development workflows directly within Kilo Code, leveraging specialized modes for maximum efficiency.
+Orchestrator Mode provides a powerful way to manage complex development workflows directly within Kilo Code, leveraging specialized agents for maximum efficiency.
 
 {% callout type="tip" title="Keep Tasks Focused" %}
 Use subtasks to maintain clarity. If a request significantly shifts focus or requires a different expertise (mode), consider creating a subtask rather than overloading the current one.

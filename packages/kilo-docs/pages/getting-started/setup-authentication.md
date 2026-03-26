@@ -75,7 +75,7 @@ Already have a ChatGPT subscription? You can use it with Kilo Code through the [
 
 ### Configuring Your Provider
 
-1. Click the {% kilo-code-icon /%} icon in the VS Code sidebar
+1. Click the {% kiloCodeIcon /%} icon in the VS Code sidebar
 2. Select your API provider from the dropdown
 3. Paste your API key
 4. Choose your model:
