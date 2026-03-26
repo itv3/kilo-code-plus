@@ -71,7 +71,17 @@ export namespace MCP {
       list.map(async ([key, mcp]) => {
         if (!isMcpConfigured(mcp)) return
         if (mcp.type !== "remote") return
-        const result = await create(key, mcp)
+        const result = await create(key, mcp).catch((err) => {
+          log.error("remote reconnect failed", { name: key, err })
+          s.status[key] = { status: "failed", error: err instanceof Error ? err.message : String(err) }
+          const stale = s.clients[key]
+          if (stale) {
+            stale.close().catch((e) => log.error("failed to close stale client", { name: key, e }))
+            delete s.clients[key]
+          }
+          return undefined
+        })
+        if (!result) return
         s.status[key] = result.status
         if (result.mcpClient) {
           const existing = s.clients[key]
