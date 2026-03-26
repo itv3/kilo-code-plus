@@ -39,21 +39,29 @@ export namespace ConfigProtection {
     return CONFIG_ROOT_FILES.has(normalized)
   }
 
+  /** Check if `child` is equal to or nested inside `parent`. */
+  function within(child: string, parent: string): boolean {
+    return child === parent || child.startsWith(parent + path.sep)
+  }
+
   /** Check if an absolute path is inside a known CLI config directory. */
   export function isAbsolute(filepath: string): boolean {
     const resolved = path.resolve(filepath)
 
     // ~/.config/kilo/ (XDG config)
-    const xdg = path.resolve(Global.Path.config)
-    if (resolved === xdg || resolved.startsWith(xdg + path.sep)) return true
+    if (within(resolved, path.resolve(Global.Path.config))) return true
 
     // ~/.kilo/ and ~/.kilocode/ (legacy global dirs)
     for (const dir of KilocodePaths.globalDirs()) {
-      const abs = path.resolve(dir)
-      if (resolved === abs || resolved.startsWith(abs + path.sep)) return true
+      if (within(resolved, path.resolve(dir))) return true
     }
 
     return false
+  }
+
+  /** Check a single path (absolute or relative) against config protection. */
+  function protected_(p: string): boolean {
+    return path.isAbsolute(p) ? isAbsolute(p) : isRelative(p)
   }
 
   /**
@@ -67,9 +75,9 @@ export namespace ConfigProtection {
   }): boolean {
     if (request.permission !== "edit") return false
 
-    // Check patterns — handle both relative and absolute (mirrors metadata.filepath logic)
+    // Check patterns — handle both relative and absolute
     for (const pattern of request.patterns) {
-      if (path.isAbsolute(pattern) ? isAbsolute(pattern) : isRelative(pattern)) return true
+      if (protected_(pattern)) return true
     }
 
     // Check metadata.filepath (absolute for edit, comma-joined relative for apply_patch)
@@ -78,7 +86,7 @@ export namespace ConfigProtection {
       // apply_patch joins relative paths with ", "
       const parts = fp.includes(", ") ? fp.split(", ") : [fp]
       for (const part of parts) {
-        if (path.isAbsolute(part) ? isAbsolute(part) : isRelative(part)) return true
+        if (protected_(part)) return true
       }
     }
 
@@ -88,7 +96,7 @@ export namespace ConfigProtection {
       for (const file of files) {
         for (const key of ["filePath", "movePath"] as const) {
           const val = file?.[key]
-          if (typeof val === "string" && (path.isAbsolute(val) ? isAbsolute(val) : isRelative(val))) return true
+          if (typeof val === "string" && protected_(val)) return true
         }
       }
     }
