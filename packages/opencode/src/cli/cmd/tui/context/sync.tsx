@@ -53,7 +53,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
         [sessionID: string]: SessionStatus
       }
       session_diff: {
-        [sessionID: string]: Omit<Snapshot.FileDiff, "before" | "after">[]
+        [sessionID: string]: Omit<Snapshot.FileDiff, "before" | "after">[] // kilocode_change
       }
       todo: {
         [sessionID: string]: Todo[]
@@ -107,7 +107,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
 
     const sdk = useSDK()
 
-    const fullSyncedSessions = new Set<string>()
+    const fullSyncedSessions = new Set<string>() // kilocode_change
 
     async function syncWorkspaces() {
       const result = await sdk.client.experimental.workspace.list().catch(() => undefined)
@@ -115,6 +115,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       setStore("workspaceList", reconcile(result.data))
     }
 
+    // kilocode_change start
     function evict(sessionID: string) {
       // Collect child session IDs so we can evict them too.
       const children = store.session.filter((s) => s.parentID === sessionID).map((s) => s.id)
@@ -141,6 +142,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       const { summary, ...rest } = msg
       return { ...rest, summary: { ...summary, diffs: [] } } as Message
     }
+    // kilocode_change end
 
     sdk.event.listen((e) => {
       const event = e.details
@@ -235,6 +237,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           )
           break
 
+        // kilocode_change start
         case "session.deleted": {
           const sid = event.properties.info.id
           const match = Binary.search(store.session, sid, (s) => s.id)
@@ -249,6 +252,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           evict(sid)
           break
         }
+        // kilocode_change end
         case "session.updated": {
           const result = Binary.search(store.session, event.properties.info.id, (s) => s.id)
           if (result.found) {
@@ -270,7 +274,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
         }
 
         case "message.updated": {
-          const info = strip(event.properties.info)
+          const info = strip(event.properties.info) // kilocode_change
           const messages = store.message[info.sessionID]
           if (!messages) {
             setStore("message", info.sessionID, [info])
@@ -516,7 +520,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               if (match.found) draft.session[match.index] = session.data!
               if (!match.found) draft.session.splice(match.index, 0, session.data!)
               draft.todo[sessionID] = todo.data ?? []
-              draft.message[sessionID] = messages.data!.map((x) => strip(x.info))
+              draft.message[sessionID] = messages.data!.map((x) => strip(x.info)) // kilocode_change
               for (const message of messages.data!) {
                 draft.part[message.info.id] = message.parts
               }
@@ -525,7 +529,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           )
           fullSyncedSessions.add(sessionID)
         },
-        evict,
+        evict, // kilocode_change
       },
       workspace: {
         get(workspaceID: string) {
