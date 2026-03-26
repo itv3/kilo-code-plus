@@ -10,10 +10,12 @@ import { useDialog } from "@kilocode/kilo-ui/context/dialog"
 import { useConfig } from "../../context/config"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
-import type { AgentConfig, AgentInfo, SkillInfo } from "../../types/messages"
+import type { AgentInfo, SkillInfo } from "../../types/messages"
 import ModeEditView from "./ModeEditView"
 import ModeCreateView from "./ModeCreateView"
 import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
+import { parseImport, MAX_IMPORT_SIZE } from "./mode-io"
+import type { ImportError } from "./mode-io"
 
 type SubtabId = "agents" | "mcpServers" | "rules" | "workflows" | "skills"
 
@@ -229,42 +231,24 @@ const AgentBehaviourTab: Component = () => {
 
   const [importError, setImportError] = createSignal("")
 
+  const errorKey = (tag: ImportError) => `settings.agentBehaviour.importMode.${tag}` as const
+
   const importMode = (file: File) => {
     setImportError("")
-    if (file.size > 1_048_576) {
-      setImportError(language.t("settings.agentBehaviour.importMode.tooLarge"))
+    if (file.size > MAX_IMPORT_SIZE) {
+      setImportError(language.t(errorKey("tooLarge")))
       return
     }
     const reader = new FileReader()
     reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result as string)
-        const name = typeof data.name === "string" ? data.name.trim() : ""
-        if (!name || !/^[a-z][a-z0-9-]*$/.test(name)) {
-          setImportError(language.t("settings.agentBehaviour.importMode.invalidName"))
-          return
-        }
-        if (agentNames().includes(name)) {
-          setImportError(language.t("settings.agentBehaviour.importMode.nameTaken"))
-          return
-        }
-        const partial: Partial<AgentConfig> = {}
-        if (typeof data.description === "string") partial.description = data.description
-        if (typeof data.prompt === "string") partial.prompt = data.prompt
-        if (typeof data.model === "string") partial.model = data.model
-        const modes = ["subagent", "primary", "all"] as const
-        if (typeof data.mode === "string" && modes.includes(data.mode)) partial.mode = data.mode
-        if (typeof data.temperature === "number") partial.temperature = data.temperature
-        if (typeof data.top_p === "number") partial.top_p = data.top_p
-        if (typeof data.steps === "number") partial.steps = data.steps
-        const existing = config().agent ?? {}
-        updateConfig({
-          agent: { ...existing, [name]: { ...partial, mode: partial.mode ?? "primary" } },
-        })
-        setImportError("")
-      } catch {
-        setImportError(language.t("settings.agentBehaviour.importMode.invalidJson"))
+      const result = parseImport(reader.result as string, agentNames())
+      if (!result.ok) {
+        setImportError(language.t(errorKey(result.error)))
+        return
       }
+      const existing = config().agent ?? {}
+      updateConfig({ agent: { ...existing, [result.name]: result.config } })
+      setImportError("")
     }
     reader.readAsText(file)
   }

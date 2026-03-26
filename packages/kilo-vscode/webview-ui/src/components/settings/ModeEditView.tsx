@@ -9,6 +9,7 @@ import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import type { AgentConfig, AgentInfo } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
+import { buildExport } from "./mode-io"
 
 interface Props {
   name: string
@@ -41,7 +42,7 @@ const ModeEditView: Component<Props> = (props) => {
   }
 
   const exportMode = () => {
-    const data = { name: props.name, ...cfg() }
+    const data = buildExport(props.name, cfg())
     const json = JSON.stringify(data, null, 2)
     const blob = new Blob([json], { type: "application/json" })
     const url = URL.createObjectURL(blob)
