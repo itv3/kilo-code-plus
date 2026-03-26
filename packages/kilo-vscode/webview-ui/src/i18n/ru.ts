@@ -831,8 +831,11 @@ export const dict = {
   "session.delete.button": "Удалить сессию",
   "session.untitled": "Без названия",
   "session.recent": "Недавние",
+  "session.showHistory": "Показать историю",
   "session.search.placeholder": "Поиск сессий...",
   "session.empty": "Сессий пока нет. Нажмите + чтобы начать новый разговор.",
+  "session.tab.local": "Local",
+  "session.tab.cloud": "Cloud",
   "session.cloud.repoOnly": "Только этот репозиторий",
   "session.cloud.import": "Импорт из облака",
   "feedback.button": "Отзывы и поддержка",
@@ -1048,11 +1051,51 @@ export const dict = {
   "settings.agentBehaviour.topP.description": "Параметр nucleus-сэмплирования (0-1)",
   "settings.agentBehaviour.maxSteps.title": "Макс. шагов",
   "settings.agentBehaviour.maxSteps.description": "Максимальное число итераций агента",
+  "settings.agentBehaviour.hidden.title": "Скрытый",
+  "settings.agentBehaviour.hidden.description": "Скрыть этого агента из переключателя режимов в поле ввода чата",
+  "settings.agentBehaviour.disable.title": "Отключён",
+  "settings.agentBehaviour.disable.description": "Полностью отключить этого агента — он не будет отображаться нигде",
+  "settings.agentBehaviour.badge.hidden": "скрытый",
+  "settings.agentBehaviour.badge.disabled": "отключён",
   "settings.agentBehaviour.discoveredSkills": "Обнаруженные навыки",
   "settings.agentBehaviour.noSkillsFound":
     "Навыки не обнаружены. Добавьте пути к папкам навыков или URL-адреса ниже, чтобы сделать навыки доступными.",
   "settings.agentBehaviour.availableModes": "Доступные пользовательские режимы",
   "settings.agentBehaviour.noModesFound": "Режимы не найдены.",
+  "settings.agentBehaviour.createMode": "Создать новый режим",
+  "settings.agentBehaviour.createMode.name": "Название",
+  "settings.agentBehaviour.createMode.name.placeholder": "например, reviewer",
+  "settings.agentBehaviour.createMode.name.description":
+    "Уникальный идентификатор режима. Используйте только строчные буквы, цифры и дефисы.",
+  "settings.agentBehaviour.createMode.description": "Описание",
+  "settings.agentBehaviour.createMode.description.placeholder":
+    "например, Проверяет код на качество и соответствие лучшим практикам",
+  "settings.agentBehaviour.createMode.description.help": "Краткое описание того, что делает этот режим.",
+  "settings.agentBehaviour.createMode.prompt": "Системный промпт",
+  "settings.agentBehaviour.createMode.prompt.placeholder":
+    "например, Вы ревьюер кода. Сосредоточьтесь на качестве кода, лучших практиках и потенциальных ошибках.",
+  "settings.agentBehaviour.createMode.prompt.help": "Инструкции для ИИ-агента при использовании этого режима.",
+  "settings.agentBehaviour.createMode.button": "Создать",
+  "settings.agentBehaviour.createMode.cancel": "Отмена",
+  "settings.agentBehaviour.createMode.nameRequired": "Название обязательно",
+  "settings.agentBehaviour.createMode.nameInvalid": "Название может содержать только строчные буквы, цифры и дефисы",
+  "settings.agentBehaviour.createMode.nameTaken": "Режим с таким названием уже существует",
+  "settings.agentBehaviour.importMode": "Импорт",
+  "settings.agentBehaviour.importMode.invalidName":
+    "Недопустимое имя режима в файле. Имя должно начинаться со строчной буквы и содержать только строчные буквы, цифры и дефисы.",
+  "settings.agentBehaviour.importMode.nameTaken": "Режим с таким названием уже существует.",
+  "settings.agentBehaviour.importMode.invalidJson":
+    "Недопустимый файл JSON. Пожалуйста, выберите корректный файл определения агента.",
+  "settings.agentBehaviour.importMode.tooLarge": "Файл слишком большой. Определения агентов должны быть менее 1 МБ.",
+  "settings.agentBehaviour.exportMode": "Экспортировать определение агента",
+  "settings.agentBehaviour.editMode": "Редактировать режим",
+  "settings.agentBehaviour.editMode.description": "Описание",
+  "settings.agentBehaviour.editMode.prompt": "Системный промпт",
+  "settings.agentBehaviour.editMode.save": "Готово",
+  "settings.agentBehaviour.editMode.back": "Вернуться к списку",
+  "settings.agentBehaviour.editMode.native": "Встроенный режим (определение только для чтения)",
+  "settings.agentBehaviour.editMode.promptOverride":
+    "Пользовательское переопределение промпта для этого встроенного режима",
   "settings.agentBehaviour.removeMode.title": "Удалить режим",
   "settings.agentBehaviour.removeMode.confirm":
     'Удалить режим "{{name}}"? Это отключит режим, обновив вашу конфигурацию.',
@@ -1066,11 +1109,23 @@ export const dict = {
   "settings.agentBehaviour.removeSkill.confirm":
     'Удалить навык "{{name}}"? Это приведет к удалению файлов навыка с диска.',
   "settings.agentBehaviour.removeSkill.button": "Удалить",
+  "settings.agentBehaviour.rules.description":
+    "Правила — это файлы инструкций, которые направляют поведение агента. Они включаются в системный промпт для каждого разговора. Добавьте пути к файлам ниже, чтобы включить дополнительные правила.",
   "settings.agentBehaviour.instructionFiles": "Дополнительные файлы инструкций",
   "settings.agentBehaviour.instructionFiles.description": "Пути к дополнительным файлам инструкций в системном промпте",
+  "settings.agentBehaviour.mcpDetail.command": "Команда",
+  "settings.agentBehaviour.mcpDetail.args": "Аргументы",
+  "settings.agentBehaviour.mcpDetail.env": "Окружение",
+  "settings.agentBehaviour.mcpDetail.disabled": "Этот сервер отключён.",
   "settings.agentBehaviour.mcpEmpty":
     "MCP-серверы не настроены. Отредактируйте файл конфигурации opencode для добавления MCP-серверов.",
   "settings.agentBehaviour.workflowsPlaceholder": "Рабочие процессы управляются через файлы рабочих процессов.",
+  "settings.agentBehaviour.workflows.description":
+    "Рабочие процессы — это пользовательские слэш-команды, определённые в вашей конфигурации. Введите /command-name в чате, чтобы вызвать их. Команды настраиваются в opencode.json в разделе 'command'.",
+  "settings.agentBehaviour.workflows.empty":
+    "Пользовательские команды не настроены. Добавьте команды в opencode.json, чтобы увидеть их здесь.",
+  "settings.agentBehaviour.workflows.detail.description": "Описание",
+  "settings.agentBehaviour.workflows.detail.template": "Шаблон",
   "settings.agentBehaviour.notImplemented": "Ещё не реализовано.",
   "settings.autoApprove.description":
     "Определите правила запуска инструментов. Большинство инструментов по умолчанию Разрешены. Для doom_loop и external_directory по умолчанию установлено Спрашивать.",
