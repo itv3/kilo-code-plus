@@ -10,6 +10,12 @@ export namespace ConfigProtection {
   const CONFIG_DIRS = [".kilo/", ".kilocode/", ".opencode/"]
 
   /**
+   * Subdirectories under CONFIG_DIRS that are NOT config files (e.g. plan files).
+   * Paths under these subdirs are exempt from config protection.
+   */
+  const EXCLUDED_SUBDIRS = ["plans/"]
+
+  /**
    * Root-level config files that must be protected.
    * Matched only when the relative path has no directory component.
    */
@@ -22,19 +28,27 @@ export namespace ConfigProtection {
     return p.replaceAll("\\", "/")
   }
 
+  /** Return the remainder after the config dir prefix, or undefined if excluded. */
+  function excluded(remainder: string): boolean {
+    return EXCLUDED_SUBDIRS.some((sub) => remainder.startsWith(sub))
+  }
+
   /** Check if a project-relative path points to a config file or directory. */
   export function isRelative(pattern: string): boolean {
     const normalized = normalize(pattern)
     for (const dir of CONFIG_DIRS) {
       const bare = dir.slice(0, -1) // e.g. ".kilo"
       // Match at root (e.g. ".kilo/foo") or nested (e.g. "packages/sub/.kilo/foo")
-      if (
-        normalized === bare ||
-        normalized.startsWith(dir) ||
-        normalized.includes("/" + dir) ||
-        normalized.endsWith("/" + bare)
-      )
+      if (normalized === bare || normalized.endsWith("/" + bare)) return true
+      if (normalized.startsWith(dir)) {
+        if (excluded(normalized.slice(dir.length))) continue
         return true
+      }
+      const nested = normalized.indexOf("/" + dir)
+      if (nested !== -1) {
+        if (excluded(normalized.slice(nested + 1 + dir.length))) continue
+        return true
+      }
     }
     return CONFIG_ROOT_FILES.has(normalized)
   }
@@ -66,13 +80,22 @@ export namespace ConfigProtection {
 
   /**
    * Determine if a permission request targets config files.
-   * Only checks `edit` permission — read access is not restricted.
+   * Checks `edit` and `external_directory` permissions — read access is not restricted.
    */
   export function isRequest(request: {
     permission: string
     patterns: string[]
     metadata?: Record<string, any>
   }): boolean {
+    // external_directory patterns are absolute globs like "/Users/alex/.config/kilo/*"
+    if (request.permission === "external_directory") {
+      for (const pattern of request.patterns) {
+        const dir = pattern.replace(/\/\*$/, "")
+        if (isAbsolute(dir)) return true
+      }
+      return false
+    }
+
     if (request.permission !== "edit") return false
 
     // Check patterns — handle both relative and absolute
