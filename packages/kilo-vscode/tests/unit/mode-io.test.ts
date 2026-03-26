@@ -43,6 +43,22 @@ describe("parseImport", () => {
     expect(parseImport("not json", [])).toEqual({ ok: false, error: "invalidJson" })
   })
 
+  it("rejects JSON null", () => {
+    expect(parseImport("null", [])).toEqual({ ok: false, error: "invalidJson" })
+  })
+
+  it("rejects JSON array", () => {
+    expect(parseImport("[]", [])).toEqual({ ok: false, error: "invalidJson" })
+  })
+
+  it("rejects JSON string", () => {
+    expect(parseImport('"hello"', [])).toEqual({ ok: false, error: "invalidJson" })
+  })
+
+  it("rejects JSON number", () => {
+    expect(parseImport("42", [])).toEqual({ ok: false, error: "invalidJson" })
+  })
+
   it("rejects missing name", () => {
     expect(parseImport("{}", [])).toEqual({ ok: false, error: "invalidName" })
   })
@@ -129,6 +145,22 @@ describe("parseImport", () => {
       ok: true,
       name: "test",
       config: { mode: "primary", permission: { read: "allow" } },
+    })
+  })
+
+  it("preserves nested per-pattern permission rules", () => {
+    const json = JSON.stringify({
+      name: "test",
+      permission: { bash: { "*": "ask", uname: "allow" }, read: "allow" },
+    })
+    const result = parseImport(json, [])
+    expect(result).toEqual({
+      ok: true,
+      name: "test",
+      config: {
+        mode: "primary",
+        permission: { bash: { "*": "ask", uname: "allow" }, read: "allow" },
+      },
     })
   })
 
