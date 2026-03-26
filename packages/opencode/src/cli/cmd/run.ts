@@ -478,6 +478,8 @@ export const RunCommand = cmd({
 
       async function loop() {
         const toggles = new Map<string, boolean>()
+        const MAX_RETRIES = 3 // kilocode_change
+        let retries = 0 // kilocode_change
 
         for await (const event of events.stream) {
           if (
@@ -605,7 +607,17 @@ export const RunCommand = cmd({
           if (event.type === "session.network.asked") {
             const request = event.properties
             if (request.sessionID !== sessionID) continue
-            await new Promise((r) => setTimeout(r, 5000))
+            retries++
+            if (retries > MAX_RETRIES) {
+              UI.println(
+                UI.Style.TEXT_WARNING_BOLD + "!",
+                UI.Style.TEXT_NORMAL + `network retry limit reached (${MAX_RETRIES}); rejecting`,
+              )
+              await sdk.network.reject({ requestID: request.id })
+              continue
+            }
+            const delay = Math.min(5000 * Math.pow(2, retries - 1), 60000)
+            await new Promise((r) => setTimeout(r, delay))
             await sdk.network.reply({
               requestID: request.id,
             })
