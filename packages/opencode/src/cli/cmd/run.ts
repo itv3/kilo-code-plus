@@ -621,6 +621,7 @@ export const RunCommand = cmd({
             await sdk.network.reply({
               requestID: request.id,
             })
+            retries = 0
           }
         }
       }
