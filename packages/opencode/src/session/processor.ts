@@ -410,6 +410,12 @@ export namespace SessionProcessor {
                   })
                   if (blocked) {
                     input.assistantMessage.error = error
+                    Bus.publish(Session.Event.Error, {
+                      sessionID: input.assistantMessage.sessionID,
+                      error,
+                    })
+                    SessionStatus.set(input.sessionID, { type: "idle" })
+                    break
                   } else {
                     attempt = 0
                     SessionStatus.set(input.sessionID, { type: "retry", attempt: 1, message: retry, next: Date.now() })
