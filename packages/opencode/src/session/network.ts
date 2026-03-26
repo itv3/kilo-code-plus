@@ -1,7 +1,6 @@
 import { Bus } from "../bus"
 import { BusEvent } from "../bus/bus-event"
 import { Identifier } from "../id/id"
-import { Config } from "../config/config"
 import { Instance } from "../project/instance"
 import { Log } from "../util/log"
 import { fn } from "../util/fn"
@@ -89,10 +88,7 @@ export namespace SessionNetwork {
       err: z.unknown(),
     }),
     async (input) => {
-      if (!disconnected(input.err)) return false
-      const cfg = await Config.get()
-      const list = Object.values(cfg.mcp ?? {})
-      return list.some((item) => item && typeof item === "object" && "type" in item && item.type === "remote")
+      return disconnected(input.err)
     },
   )
 
