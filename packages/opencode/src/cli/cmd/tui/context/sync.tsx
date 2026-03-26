@@ -116,6 +116,8 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
     }
 
     function evict(sessionID: string) {
+      // Collect child session IDs so we can evict them too.
+      const children = store.session.filter((s) => s.parentID === sessionID).map((s) => s.id)
       setStore(
         produce((draft) => {
           const messages = draft.message[sessionID]
@@ -129,6 +131,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
         }),
       )
       fullSyncedSessions.delete(sessionID)
+      for (const child of children) evict(child)
     }
 
     // Strip summary.diffs from user messages — the TUI never reads them
