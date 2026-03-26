@@ -98,6 +98,10 @@ export namespace SessionNetwork {
     return new Promise<void>((resolve, reject) => {
       const onAbort = () => {
         delete s.pending[id]
+        Bus.publish(Event.Rejected, {
+          sessionID: input.sessionID,
+          requestID: id,
+        })
         reject(new DOMException("Aborted", "AbortError"))
       }
       s.pending[id] = {
