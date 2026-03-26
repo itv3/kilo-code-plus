@@ -1083,6 +1083,8 @@ export const dict = {
   "settings.agentBehaviour.workflows.description":
     "工作流程是在設定中定義的自訂斜線命令。在聊天中輸入 /command-name 來呼叫它們。命令在 opencode.json 的 'command' 區段中設定。",
   "settings.agentBehaviour.workflows.empty": "未設定自訂命令。將命令新增至 opencode.json 即可在此處看到。",
+  "settings.agentBehaviour.workflows.detail.description": "描述",
+  "settings.agentBehaviour.workflows.detail.template": "範本",
   "settings.agentBehaviour.notImplemented": "尚未實作。",
   "settings.autoApprove.description":
     "定義工具的執行權限。大多數工具預設為允許。doom_loop 與 external_directory 預設為詢問。",

@@ -1110,6 +1110,8 @@ export const dict = {
     "Fluxos de trabalho são comandos de barra personalizados definidos na sua configuração. Digite /command-name no chat para invocá-los. Os comandos são configurados no opencode.json na seção 'command'.",
   "settings.agentBehaviour.workflows.empty":
     "Nenhum comando personalizado configurado. Adicione comandos ao opencode.json para vê-los aqui.",
+  "settings.agentBehaviour.workflows.detail.description": "Descrição",
+  "settings.agentBehaviour.workflows.detail.template": "Modelo",
   "settings.agentBehaviour.notImplemented": "Ainda não implementado.",
   "settings.autoApprove.description":
     "Defina como as ferramentas têm permissão para serem executadas. A maioria das ferramentas tem o padrão Permitir. doom_loop e external_directory têm o padrão Perguntar.",

@@ -1123,6 +1123,8 @@ export const dict = {
     "Workflows sind benutzerdefinierte Slash-Befehle, die in Ihrer Konfiguration definiert sind. Geben Sie /command-name im Chat ein, um sie aufzurufen. Befehle werden in opencode.json im Abschnitt 'command' konfiguriert.",
   "settings.agentBehaviour.workflows.empty":
     "Keine benutzerdefinierten Befehle konfiguriert. Fügen Sie Befehle zu opencode.json hinzu, um sie hier zu sehen.",
+  "settings.agentBehaviour.workflows.detail.description": "Beschreibung",
+  "settings.agentBehaviour.workflows.detail.template": "Vorlage",
   "settings.agentBehaviour.notImplemented": "Noch nicht implementiert.",
   "settings.autoApprove.description":
     "Legen Sie fest, wie Tools ausgeführt werden dürfen. Die meisten Tools sind standardmäßig auf Zulassen eingestellt. doom_loop und external_directory sind standardmäßig auf Fragen eingestellt.",

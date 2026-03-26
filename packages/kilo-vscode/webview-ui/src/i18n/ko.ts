@@ -1098,6 +1098,8 @@ export const dict = {
     "워크플로우는 구성에서 정의된 사용자 정의 슬래시 명령입니다. 채팅에서 /command-name을 입력하여 실행합니다. 명령은 opencode.json의 'command' 섹션에서 구성됩니다.",
   "settings.agentBehaviour.workflows.empty":
     "구성된 사용자 정의 명령이 없습니다. opencode.json에 명령을 추가하면 여기에 표시됩니다.",
+  "settings.agentBehaviour.workflows.detail.description": "설명",
+  "settings.agentBehaviour.workflows.detail.template": "템플릿",
   "settings.agentBehaviour.notImplemented": "아직 구현되지 않았습니다.",
   "settings.autoApprove.description":
     "도구 실행 허용 방식을 정의합니다. 대부분의 도구 기본값은 '허용'입니다. doom_loop 및 external_directory의 기본값은 '확인'입니다.",

@@ -1090,6 +1090,8 @@ export const dict = {
     "Workflows zijn aangepaste slash-commando's gedefinieerd in je configuratie. Typ /command-name in de chat om ze aan te roepen. Commando's worden geconfigureerd in opencode.json onder de sectie 'command'.",
   "settings.agentBehaviour.workflows.empty":
     "Geen aangepaste commando's geconfigureerd. Voeg commando's toe aan opencode.json om ze hier te zien.",
+  "settings.agentBehaviour.workflows.detail.description": "Beschrijving",
+  "settings.agentBehaviour.workflows.detail.template": "Sjabloon",
   "settings.agentBehaviour.notImplemented": "Nog niet geïmplementeerd.",
 
   "settings.autoApprove.description":

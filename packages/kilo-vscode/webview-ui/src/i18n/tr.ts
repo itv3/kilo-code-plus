@@ -1089,6 +1089,8 @@ export const dict = {
     "İş akışları, yapılandırmanızda tanımlanan özel eğik çizgi komutlarıdır. Çağırmak için sohbette /command-name yazın. Komutlar opencode.json dosyasındaki 'command' bölümünde yapılandırılır.",
   "settings.agentBehaviour.workflows.empty":
     "Yapılandırılmış özel komut yok. Burada görmek için opencode.json dosyasına komutlar ekleyin.",
+  "settings.agentBehaviour.workflows.detail.description": "Açıklama",
+  "settings.agentBehaviour.workflows.detail.template": "Şablon",
   "settings.agentBehaviour.notImplemented": "Henüz uygulanmadı.",
 
   "settings.autoApprove.description":

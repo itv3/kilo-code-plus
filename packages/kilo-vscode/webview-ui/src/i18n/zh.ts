@@ -1081,6 +1081,8 @@ export const dict = {
   "settings.agentBehaviour.workflows.description":
     "工作流是在配置中定义的自定义斜杠命令。在聊天中输入 /command-name 来调用它们。命令在 opencode.json 的 'command' 部分中配置。",
   "settings.agentBehaviour.workflows.empty": "未配置自定义命令。将命令添加到 opencode.json 即可在此处看到。",
+  "settings.agentBehaviour.workflows.detail.description": "描述",
+  "settings.agentBehaviour.workflows.detail.template": "模板",
   "settings.agentBehaviour.notImplemented": "尚未实现。",
   "settings.autoApprove.description":
     "定义工具的运行权限。大多数工具默认为「允许」。doom_loop 和 external_directory 默认为「询问」。",

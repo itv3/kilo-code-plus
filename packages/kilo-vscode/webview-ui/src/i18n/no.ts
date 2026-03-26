@@ -1106,6 +1106,8 @@ export const dict = {
     "Arbeidsflyter er egendefinerte skråstrekkommandoer definert i konfigurasjonen din. Skriv /command-name i chatten for å kjøre dem. Kommandoer konfigureres i opencode.json under seksjonen 'command'.",
   "settings.agentBehaviour.workflows.empty":
     "Ingen egendefinerte kommandoer konfigurert. Legg til kommandoer i opencode.json for å se dem her.",
+  "settings.agentBehaviour.workflows.detail.description": "Beskrivelse",
+  "settings.agentBehaviour.workflows.detail.template": "Mal",
   "settings.agentBehaviour.notImplemented": "Ikke implementert ennå.",
   "settings.autoApprove.description":
     "Definer hvordan verktøy kan kjøre. De fleste verktøy har Tillat som standard. doom_loop og external_directory har Spør som standard.",

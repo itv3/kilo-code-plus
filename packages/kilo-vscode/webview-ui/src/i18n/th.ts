@@ -1095,6 +1095,8 @@ export const dict = {
     "เวิร์กโฟลว์คือคำสั่งสแลชแบบกำหนดเองที่กำหนดไว้ในการตั้งค่าของคุณ พิมพ์ /command-name ในแชทเพื่อเรียกใช้ คำสั่งถูกกำหนดค่าใน opencode.json ภายใต้ส่วน 'command'",
   "settings.agentBehaviour.workflows.empty":
     "ไม่มีคำสั่งแบบกำหนดเองที่กำหนดค่าไว้ เพิ่มคำสั่งใน opencode.json เพื่อดูที่นี่",
+  "settings.agentBehaviour.workflows.detail.description": "คำอธิบาย",
+  "settings.agentBehaviour.workflows.detail.template": "เทมเพลต",
   "settings.agentBehaviour.notImplemented": "ยังไม่ได้ใช้งาน",
   "settings.autoApprove.description":
     "กำหนดวิธีอนุญาตการทำงานของเครื่องมือ โดยค่าเริ่มต้นเครื่องมือส่วนใหญ่คืออนุญาต ส่วน doom_loop และ external_directory ค่าเริ่มต้นคือถาม",

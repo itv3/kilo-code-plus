@@ -1108,6 +1108,8 @@ export const dict = {
     "Przepływy pracy to niestandardowe komendy slash zdefiniowane w konfiguracji. Wpisz /command-name na czacie, aby je uruchomić. Komendy konfiguruje się w opencode.json w sekcji 'command'.",
   "settings.agentBehaviour.workflows.empty":
     "Brak skonfigurowanych niestandardowych komend. Dodaj komendy do opencode.json, aby je tu zobaczyć.",
+  "settings.agentBehaviour.workflows.detail.description": "Opis",
+  "settings.agentBehaviour.workflows.detail.template": "Szablon",
   "settings.agentBehaviour.notImplemented": "Jeszcze nie zaimplementowano.",
   "settings.autoApprove.description":
     "Zdefiniuj, jak narzędzia mogą być uruchamiane. Większość narzędzi domyślnie ma ustawienie Zezwalaj. doom_loop i external_directory domyślnie mają ustawienie Pytaj.",

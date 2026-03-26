@@ -1092,6 +1092,8 @@ export const dict = {
   "settings.agentBehaviour.workflows.description":
     "سير العمل هي أوامر شرطة مائلة مخصصة محددة في التهيئة الخاصة بك. اكتب /command-name في الدردشة لتشغيلها. يتم تهيئة الأوامر في opencode.json ضمن قسم 'command'.",
   "settings.agentBehaviour.workflows.empty": "لم يتم تهيئة أوامر مخصصة. أضف أوامر إلى opencode.json لرؤيتها هنا.",
+  "settings.agentBehaviour.workflows.detail.description": "الوصف",
+  "settings.agentBehaviour.workflows.detail.template": "القالب",
   "settings.agentBehaviour.notImplemented": "لم يتم التنفيذ بعد.",
   "settings.autoApprove.description":
     "تحديد كيفية السماح بتشغيل الأدوات. معظم الأدوات معينة افتراضياً على السماح. doom_loop و external_directory معينة افتراضياً على السؤال.",
