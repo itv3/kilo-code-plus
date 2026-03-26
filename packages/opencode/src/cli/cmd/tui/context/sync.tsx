@@ -134,6 +134,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           delete draft.session_diff[sessionID]
           delete draft.session_status[sessionID]
           delete draft.todo[sessionID]
+          delete draft.network[sessionID]
         }),
       )
       fullSyncedSessions.delete(sessionID)
