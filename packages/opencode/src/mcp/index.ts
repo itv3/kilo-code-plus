@@ -67,7 +67,7 @@ export namespace MCP {
     const cfg = await Config.get()
     const list = Object.entries(cfg.mcp ?? {})
     const s = await state()
-    await Promise.all(
+    await Promise.allSettled(
       list.map(async ([key, mcp]) => {
         if (!isMcpConfigured(mcp)) return
         if (mcp.type !== "remote") return
