@@ -145,6 +145,7 @@ export namespace Server {
           }),
         )
         .route("/global", GlobalRoutes())
+        .route("/remote", RemoteRoutes()) // kilocode_change
         .put(
           "/auth/:providerID",
           describeRoute({
@@ -273,7 +274,6 @@ export namespace Server {
         .route("/network", NetworkRoutes())
         .route("/provider", ProviderRoutes())
         .route("/telemetry", TelemetryRoutes()) // kilocode_change
-        .route("/remote", RemoteRoutes()) // kilocode_change
         .route("/commit-message", CommitMessageRoutes()) // kilocode_change
         .route("/enhance-prompt", EnhancePromptRoutes()) // kilocode_change
         .route("/kilocode", KilocodeRoutes()) // kilocode_change
