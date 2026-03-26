@@ -83,15 +83,6 @@ export namespace SessionNetwork {
     return "Network connection failed"
   }
 
-  export const shouldPrompt = fn(
-    z.object({
-      err: z.unknown(),
-    }),
-    async (input) => {
-      return disconnected(input.err)
-    },
-  )
-
   export async function ask(input: { sessionID: string; message: string; abort: AbortSignal }) {
     const s = await state()
     const id = Identifier.ascending("question")
@@ -137,7 +128,9 @@ export namespace SessionNetwork {
         return
       }
       delete s.pending[input.requestID]
-      await MCP.reconnectRemote().catch(() => {})
+      await MCP.reconnectRemote().catch((err) => {
+        log.error("remote reconnect failed", { err })
+      })
       Bus.publish(Event.Replied, {
         sessionID: req.info.sessionID,
         requestID: req.info.id,
