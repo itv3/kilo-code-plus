@@ -605,6 +605,7 @@ export const RunCommand = cmd({
           if (event.type === "session.network.asked") {
             const request = event.properties
             if (request.sessionID !== sessionID) continue
+            await new Promise((r) => setTimeout(r, 5000))
             await sdk.network.reply({
               requestID: request.id,
             })
