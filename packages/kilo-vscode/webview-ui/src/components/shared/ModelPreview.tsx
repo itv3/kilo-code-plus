@@ -9,9 +9,8 @@ interface Props {
 
 function fmtPrice(n: number): string {
   if (n === 0) return "Free"
-  const per1M = n * 1_000_000
-  if (per1M < 0.01) return `$${per1M.toFixed(4)}/1M`
-  return `$${per1M.toFixed(2)}/1M`
+  if (n < 0.01) return `$${n.toFixed(4)}/1M`
+  return `$${n.toFixed(2)}/1M`
 }
 
 function fmtContext(n: number): string {
