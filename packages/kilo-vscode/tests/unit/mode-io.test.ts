@@ -102,6 +102,57 @@ describe("parseImport", () => {
     const result = parseImport(json, [])
     expect(result).toEqual({ ok: true, name: "trimmed", config: { mode: "primary" } })
   })
+
+  it("preserves valid permission entries", () => {
+    const json = JSON.stringify({
+      name: "reviewer",
+      permission: { read: "allow", bash: "allow", edit: "deny", mcp: "ask" },
+    })
+    const result = parseImport(json, [])
+    expect(result).toEqual({
+      ok: true,
+      name: "reviewer",
+      config: {
+        mode: "primary",
+        permission: { read: "allow", bash: "allow", edit: "deny", mcp: "ask" },
+      },
+    })
+  })
+
+  it("drops invalid permission values", () => {
+    const json = JSON.stringify({
+      name: "test",
+      permission: { read: "allow", bad: "nope", num: 42, arr: [] },
+    })
+    const result = parseImport(json, [])
+    expect(result).toEqual({
+      ok: true,
+      name: "test",
+      config: { mode: "primary", permission: { read: "allow" } },
+    })
+  })
+
+  it("ignores non-object permission field", () => {
+    const json = JSON.stringify({ name: "test", permission: "allow" })
+    const result = parseImport(json, [])
+    expect(result).toEqual({ ok: true, name: "test", config: { mode: "primary" } })
+  })
+
+  it("round-trips permission through export and import", () => {
+    const cfg = {
+      mode: "primary" as const,
+      prompt: "Review code",
+      permission: { read: "allow" as const, edit: "deny" as const },
+    }
+    const exported = buildExport("reviewer", cfg)
+    const json = JSON.stringify(exported)
+    const result = parseImport(json, [])
+    expect(result).toEqual({
+      ok: true,
+      name: "reviewer",
+      config: { mode: "primary", prompt: "Review code", permission: { read: "allow", edit: "deny" } },
+    })
+  })
 })
 
 describe("buildExport", () => {
