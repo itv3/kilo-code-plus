@@ -146,7 +146,7 @@ Reference files and other context directly in your message using `@`:
 
 ## Suggested Responses
 
-When Kilo Code needs more information to complete a task, it uses the [`ask_followup_question`](/docs/automate/tools/ask-followup-question) tool. To make responding easier and faster, Kilo Code often provides suggested answers alongside the question.
+When Kilo Code needs more information to complete a task, it asks a follow-up question and often provides suggested answers to make responding faster.
 
 {% tabs %}
 {% tab label="VSCode" %}
@@ -246,4 +246,4 @@ This feature streamlines the interaction when Kilo Code requires clarification, 
 {% /tab %}
 {% /tabs %}
 
-Ready to start coding? Open the chat panel and describe what you want to build!
+Ready to start coding? Start a session in Kilo Code and describe what you want to build!

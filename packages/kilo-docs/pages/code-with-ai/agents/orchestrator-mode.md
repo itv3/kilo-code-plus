@@ -5,7 +5,7 @@ description: "Using Orchestrator mode for complex multi-step tasks"
 
 # Orchestrator Mode: Coordinate Complex Workflows
 
-Orchestrator Mode (formerly known as Boomerang Tasks) allows you to break down complex projects into smaller, manageable pieces. Think of it like delegating parts of your work to specialized assistants. Each subtask runs in its own context, often using a different Kilo Code mode tailored for that specific job (like [`code`](/docs/code-with-ai/agents/using-modes#code-mode-default), [`architect`](/docs/code-with-ai/agents/using-modes#architect-mode), or [`debug`](/docs/code-with-ai/agents/using-modes#debug-mode)).
+Orchestrator Mode allows you to break down complex projects into smaller, manageable pieces. Think of it like delegating parts of your work to specialized assistants. Each subtask runs in its own context using a subagent (such as `general` for autonomous work or `explore` for codebase research) tailored for that specific job.
 
 ## Why Use Orchestrator Mode?
 

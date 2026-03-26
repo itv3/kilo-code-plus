@@ -33,7 +33,7 @@ While the specifics change constantly, some principles stay consistent:
 - Set the default model with the `model` key in your `kilo.jsonc` config file.
 - In the TUI, use the **model picker** (keybind to cycle through configured models).
 - For non-interactive use, pass `--model` flag to `kilo run` (e.g., `kilo run --model claude-sonnet-4-20250514`).
-- Configure per-agent models in the agents section of your config.
+- Configure per-agent models in the `agent` section of your config.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}

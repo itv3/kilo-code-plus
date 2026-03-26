@@ -26,7 +26,7 @@ The **VSCode** extension and **CLI** call these **agents**, while the **VSCode (
 There are several ways to switch agents:
 
 - **Dropdown menu:** Click the agent selector in the sidebar to switch between agents.
-- **Slash commands:** Type `/` in the chat input to switch agents (e.g., `/code`, `/ask`, `/plan`, `/debug`).
+- **Slash commands:** Type `/` in the chat input to see available commands, including `/agents` to open the agent picker.
 - **Keyboard shortcut:** Use a keyboard shortcut to cycle through available agents.
 
 {% /tab %}
@@ -35,7 +35,7 @@ There are several ways to switch agents:
 There are several ways to switch agents:
 
 - **Keybinds:** Press the displayed key to cycle through available agents.
-- **Slash commands:** Type `/` in the chat input to see available commands, including switching agents (e.g., `/code`, `/ask`, `/plan`, `/debug`).
+- **Slash commands:** Type `/` in the chat input to see available commands, including `/agents` to open the agent picker.
 - **Config file:** Set the `default_agent` key in your configuration to change the default agent on startup.
 
 {% /tab %}
@@ -105,7 +105,7 @@ Users often confuse `/newtask` and `/smol`. Here's the key difference:
 | Aspect               | Details                                                                                              |
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
 | **Description**      | An experienced technical leader and planner who helps design systems and create implementation plans |
-| **Tool Access**      | Read-only tools plus restricted file editing (e.g., markdown files only)                             |
+| **Tool Access**      | Read-only tools plus restricted file editing (plan files in `.kilo/plans/` only)                     |
 | **Ideal For**        | System design, high-level planning, and architecture discussions                                     |
 | **Special Features** | Similar to the legacy extension's "Architect" mode, with a planning-focused approach                 |
 
@@ -157,7 +157,7 @@ The VSCode extension and CLI do not include a built-in Review agent. Code review
 | Aspect               | Details                                                                                              |
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
 | **Description**      | An experienced technical leader and planner who helps design systems and create implementation plans |
-| **Tool Access**      | Read-only tools plus restricted file editing (e.g., markdown files only)                             |
+| **Tool Access**      | Read-only tools plus restricted file editing (plan files in `.kilo/plans/` only)                     |
 | **Ideal For**        | System design, high-level planning, and architecture discussions                                     |
 | **Special Features** | Similar to the legacy extension's "Architect" mode, with a planning-focused approach                 |
 
