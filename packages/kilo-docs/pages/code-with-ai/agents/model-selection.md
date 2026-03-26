@@ -24,8 +24,9 @@ While the specifics change constantly, some principles stay consistent:
 {% tabs %}
 {% tab label="VSCode" %}
 
-- Open the **Settings webview** in the extension sidebar to select a model.
-- Alternatively, set models directly in the `kilo.jsonc` config file (the extension reads the same config as the CLI).
+- Use the **model selector** in the chat prompt area to pick a model for the current session. You can also type `/models` to open the model picker.
+- Set per-agent defaults and a global default in the **Settings** panel (Models tab), or directly in the `kilo.jsonc` config file.
+- **Model precedence:** Session override → Per-agent config → Global config → Recent models → Kilo Auto (free).
 
 {% /tab %}
 {% tab label="CLI" %}

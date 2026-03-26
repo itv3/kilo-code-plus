@@ -131,9 +131,9 @@ When you need more capability than free models provide, these options deliver ex
 
 **Use appropriate modes to limit expensive operations:**
 
-- **[Ask Mode](/docs/code-with-ai/agents/using-modes#ask-mode):** Information gathering without code changes
-- **[Architect Mode](/docs/code-with-ai/agents/using-modes#architect-mode):** Planning without expensive file operations
-- **[Debug Mode](/docs/code-with-ai/agents/using-modes#debug-mode):** Focused troubleshooting
+- **[Ask Agent](/docs/code-with-ai/agents/using-agents#ask-agent):** Information gathering without code changes
+- **[Plan Agent](/docs/code-with-ai/agents/using-agents#plan-agent):** Planning without expensive file operations
+- **[Debug Agent](/docs/code-with-ai/agents/using-agents#debug-agent):** Focused troubleshooting
 
 **Custom modes for budget control:**
 

@@ -807,4 +807,10 @@ module.exports = [
     basePath: false,
     permanent: true,
   },
+  {
+    source: "/docs/code-with-ai/agents/using-modes",
+    destination: "/docs/code-with-ai/agents/using-agents",
+    basePath: false,
+    permanent: true,
+  },
 ]

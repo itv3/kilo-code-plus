@@ -5,31 +5,26 @@ description: "How to provide context to Kilo Code using mentions"
 
 # Context Mentions
 
-Providing the right context helps Kilo Code understand your project and perform tasks accurately. How you provide that context depends on which platform you're using — the **VSCode** extension and **CLI** use a tool-based approach where the agent automatically discovers the context it needs, while the **VSCode (Legacy)** extension uses `@`-mentions in the chat input.
+Providing the right context helps Kilo Code understand your project and perform tasks accurately. All platforms support `@`-mentions for referencing files, and the agent can also discover context on its own using built-in tools like `read`, `grep`, and `glob`.
 
 {% tabs %}
 {% tab label="VSCode" %}
 
-The **VSCode** extension uses a tool-based context model. The agent **automatically discovers and reads the context it needs** using built-in tools. You can also type `@` in the chat input to get file autocomplete suggestions, but the agent can also find files on its own using its tools.
+The extension supports `@`-mention autocomplete for file paths and also uses a tool-based context model where the agent can automatically discover and read files using built-in tools.
 
 ## How Context Works
 
 When you describe a task, the agent uses its tools — `read`, `grep`, `glob`, and others — to find and read relevant files on its own. You don't need to explicitly point it at files in most cases; just describe what you want done and the agent will locate the right code.
 
+### @-Mention Autocomplete
+
+Type `@` in the chat input followed by a filename to get autocomplete suggestions. Selecting a file attaches its contents to your message. This is the quickest way to reference a specific file.
+
 ### Automatic Editor Context
 
-The agent automatically receives context from your editor:
+The extension automatically includes context from your editor with each message — your currently focused file and all open editor tabs. You don't need to mention these explicitly.
 
-| Context         | Details                                            |
-| --------------- | -------------------------------------------------- |
-| **Active file** | The file currently open and focused in your editor |
-| **Open tabs**   | Files you have open in editor tabs                 |
-
-This context is passed to the agent without any explicit mentions — it's included automatically with each message you send.
-
-{% callout type="note" %}
-**Selection** and **diagnostics** are not sent automatically with each message. They are available through VS Code Code Actions (e.g., selecting code and using the lightbulb menu), but are not part of the default editor context.
-{% /callout %}
+Selected code and editor diagnostics (errors/warnings) are not included automatically. However, you can send these to Kilo Code through VS Code's Code Actions: select code or hover over an error, then use the lightbulb menu to find context-dependent actions like "Explain with Kilo Code" or "Fix with Kilo Code."
 
 ### Tool-Based File Access
 
@@ -68,7 +63,7 @@ In the terminal-based TUI, you can provide context in several ways:
 
 - **Type `@` for file autocomplete** — In the TUI, type `@` followed by a filename to get autocomplete suggestions for quick file references.
 - **Mention file paths in your message** — Simply refer to files by path in your conversation text (e.g., "look at src/utils.ts") and the agent will read them.
-- **Use `kilo run -f`** — When using the non-interactive `kilo run` command, pass `-f path/to/file.ts` to explicitly include a file's contents in the context. This flag is not available in the interactive TUI.
+- **Use `kilo run -f`** — When using the non-interactive `kilo run` command, pass `-f path/to/file.ts` to explicitly include a file's contents in the context.
 - **Let the agent find files itself** — The agent has access to `glob` (find files by pattern), `grep` (search file contents), and `read` (read file contents) tools. Describe what you're looking for and it will locate the relevant code.
 
 ### Tool-Based File Access
@@ -90,7 +85,7 @@ This means the agent can explore your entire project as needed, rather than bein
 | ------------------------------ | -------------------------------------------------------------------------------------------------- |
 | **Describe the task clearly**  | The agent finds context on its own — focus on _what_ you want done rather than _where_ the code is |
 | **Mention files when helpful** | If you know the exact file, mention its path to save the agent a search step                       |
-| **Use `kilo run -f`**          | Pass key files with `-f` when using `kilo run` for immediate context (not available in the TUI)    |
+| **Use `kilo run -f`**          | Pass key files with `-f` when using `kilo run` for immediate context                               |
 | **Trust the agent's tools**    | The agent can search, read, and explore your codebase — let it do the discovery work               |
 
 {% /tab %}

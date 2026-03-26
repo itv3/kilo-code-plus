@@ -1,69 +1,44 @@
 ---
 title: "Orchestrator Mode"
-description: "Using Orchestrator mode for complex multi-step tasks"
+description: "Orchestrator mode is no longer needed — all agents now support subagents"
 ---
 
-# Orchestrator Mode: Coordinate Complex Workflows
+# Orchestrator Mode
 
-Orchestrator Mode allows you to break down complex projects into smaller, manageable pieces. Think of it like delegating parts of your work to specialized assistants. Each subtask runs in its own context using a subagent (such as `general` for autonomous work or `explore` for codebase research) tailored for that specific job.
-
-## Why Use Orchestrator Mode?
-
-- **Tackle Complexity:** Break large, multi-step projects (e.g., building a full feature) into focused subtasks (e.g., design, implementation, documentation).
-- **Use Specialized Agents:** Automatically delegate subtasks to the agent best suited for that specific piece of work, leveraging specialized capabilities for optimal results.
-- **Maintain Focus & Efficiency:** Each subtask operates in its own isolated context with a separate conversation history. This prevents the parent (orchestrator) task from becoming cluttered with the detailed execution steps (like code diffs or file analysis results), allowing it to focus efficiently on the high-level workflow and manage the overall process based on concise summaries from completed subtasks.
-- **Streamline Workflows:** Results from one subtask can be automatically passed to the next, creating a smooth flow (e.g., architectural decisions feeding into the coding task).
-
-## How It Works
-
-1.  Using Orchestrator Mode, Kilo can analyze a complex task and suggest breaking it down into a subtask.
-2.  The parent task pauses, and the new subtask begins with a dedicated subagent.
-3.  When the subtask's goal is achieved, Kilo signals completion.
-4.  The parent task resumes with only the summary of the subtask. The parent uses this summary to continue the main workflow.
-
-## Key Considerations
-
-- **Approval Required:** By default, you must approve the creation and completion of each subtask. This can be automated via the [Auto-Approving Actions](/docs/getting-started/settings/auto-approving-actions#subtasks) settings if desired.
-- **Context Isolation and Transfer:** Each subtask operates in complete isolation with its own conversation history. It does not automatically inherit the parent's context. Information must be explicitly passed:
-  - **Down:** Via the initial instructions provided when the subtask is created.
-  - **Up:** Via the final summary provided when the subtask finishes. Be mindful that only this summary returns to the parent.
-- **Navigation:** Kilo's interface helps you see the hierarchy of tasks (which task is the parent, which are children). You can typically navigate between active and paused tasks.
-
-Orchestrator Mode provides a powerful way to manage complex development workflows directly within Kilo Code, leveraging specialized agents for maximum efficiency.
-
-{% callout type="tip" title="Keep Tasks Focused" %}
-Use subtasks to maintain clarity. If a request significantly shifts focus or requires a different expertise (mode), consider creating a subtask rather than overloading the current one.
+{% callout type="info" title="Orchestrator mode is no longer needed" %}
+In the VSCode extension and CLI, **every agent can now delegate to subagents automatically**. You no longer need a dedicated orchestrator — just pick the agent for your task (e.g. Code, Plan, Debug) and it will coordinate subagents when helpful. The orchestrator agent still exists for backward compatibility, but there is no advantage to using it directly.
 {% /callout %}
 
-{% tabs %}
-{% tab label="VSCode" %}
+## What Changed
 
-Orchestrator mode uses the `task` tool to launch **subagent sessions**:
+Previously, orchestrator mode was the only way to break complex tasks into subtasks. You had to explicitly switch to orchestrator mode, which would then delegate work to other modes like Code or Architect.
 
-- The `task` tool creates a new child session. The agent name is specified as a parameter (e.g., `general`, `explore`, or custom subagent types you define).
-- Child sessions are **fully isolated** — they run in their own conversation context and do not share message history with the parent.
-- When the subagent completes its work, it returns a single message back to the parent orchestrator with the result.
-- The parent orchestrator can launch multiple subagent sessions concurrently for parallel work.
+Now, **subagent support is built into every agent**. When any agent encounters a task that would benefit from delegation — like exploring a codebase, running a parallel search, or handling a subtask in isolation — it can launch a subagent directly using the `task` tool. There's no need to switch agents first.
 
-{% /tab %}
-{% tab label="CLI" %}
+## What You Should Do
 
-Orchestrator mode uses the `task` tool to launch **subagent sessions**:
+- **Just pick the right agent for your task.** Use Code for implementation, Plan for architecture, Debug for troubleshooting. Each will orchestrate subagents where it makes sense.
+- **Add custom subagents** if you want specialized delegation behavior. See [Custom Subagents](/docs/customize/custom-subagents) for details.
+- **Stop switching to orchestrator mode** before complex tasks. Your current agent already has that capability.
 
-- The `task` tool creates a new child session. The agent name is specified as a parameter (e.g., `general`, `explore`, or custom subagent types you define).
-- Child sessions are **fully isolated** — they run in their own conversation context and do not share message history with the parent.
-- When the subagent completes its work, it returns a single message back to the parent orchestrator with the result.
-- The parent orchestrator can launch multiple subagent sessions concurrently for parallel work.
+## How Subagents Work
 
-{% /tab %}
-{% tab label="VSCode (Legacy)" %}
+1. The agent analyzes a complex task and decides a subtask would benefit from isolation.
+2. It launches a subagent session using the `task` tool (e.g., `general` for autonomous work, `explore` for codebase research).
+3. The subagent runs in its own isolated context — separate conversation history, no shared state.
+4. When done, the subagent returns a summary to the parent agent, which continues its work.
 
-{% youtube url="https://www.youtube.com/watch?v=20MmJNeOODo" caption="Orchestrator Mode explained and demonstrated" /%}
+Agents can launch multiple subagent sessions concurrently for parallel work.
 
-In the legacy extension, orchestrator mode uses two tools to manage subtasks:
+{% callout type="tip" title="Keep Tasks Focused" %}
+Use subtasks to maintain clarity. If a request significantly shifts focus or requires different expertise, the agent can create a subtask rather than overloading its current context.
+{% /callout %}
 
-1. The [`new_task`](/docs/automate/tools/new-task) tool creates a subtask. Context is passed via the `message` parameter, and the subtask's mode is specified via the `mode` parameter (e.g., `code`, `architect`, `debug`).
-2. When a subtask finishes, it calls [`attempt_completion`](/docs/automate/tools/attempt-completion). The summary is passed back to the parent via the `result` parameter.
+{% callout type="info" title="VSCode (Legacy)" collapsed=true %}
+In the legacy extension, orchestrator mode uses two dedicated tools:
 
-{% /tab %}
-{% /tabs %}
+1. [`new_task`](/docs/automate/tools/new-task) — Creates a subtask with context passed via the `message` parameter and a mode specified via `mode` (e.g., `code`, `architect`, `debug`).
+2. [`attempt_completion`](/docs/automate/tools/attempt-completion) — Signals subtask completion and passes a summary back to the parent via the `result` parameter.
+
+{% youtube url="https://www.youtube.com/watch?v=20MmJNeOODo" caption="Orchestrator Mode in the legacy extension" /%}
+{% /callout %}

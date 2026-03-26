@@ -23,7 +23,7 @@ Click the Kilo Code icon ({% kiloCodeIcon /%}) in VS Code's Primary Side Bar to 
 {% /tab %}
 {% tab label="CLI" %}
 
-Open your terminal and run `kilo` to launch the interactive TUI. You'll see a prompt where you can start typing requests immediately. The TUI is fully keyboard-driven — no mouse required.
+Open your terminal and run `kilo` to launch the interactive terminal interface (TUI). You'll see a prompt where you can start typing requests immediately. The TUI is fully keyboard-driven — no mouse required.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
@@ -68,7 +68,7 @@ Find the Kilo Code icon ({% kiloCodeIcon /%}) in VS Code's Primary Side Bar. Cli
 **Essential controls:**
 
 - **Input prompt** - Type your requests and press Enter to send
-- **Action buttons** - Approve or reject proposed changes
+- **Action buttons** - Approve or reject proposed changes, answer questions
 - **Agent dropdown** - Switch between agents (e.g. Code, Ask, Plan) from the sidebar
 - **Session management** - Start new sessions or resume previous ones
 
@@ -82,13 +82,13 @@ The extension automatically passes context from your editor, including your open
 **Essential controls:**
 
 - **Input prompt** - Type your requests and press Enter to send
-- **Action buttons** - Approve or reject proposed changes
+- **Action buttons** - Approve or reject proposed changes, answer questions
 - **Agent cycling** - Switch between agents using keybinds or slash commands
 - **Session management** - Start new sessions or resume previous ones
 
 **Providing context:**
 
-Type `@` in the TUI to get file autocomplete suggestions, or mention file paths directly in your message (e.g., "look at src/utils.ts") and the agent will read them. When using the non-interactive `kilo run` command, you can pass `-f path/to/file.ts` to explicitly include files (this flag is not available in the TUI). The agent also has `glob`, `grep`, and `read` tools to discover files on its own.
+Type `@` in the TUI to get file autocomplete suggestions, or mention file paths directly in your message (e.g., "look at src/utils.ts") and the agent will read them. When using the non-interactive `kilo run` command, you can pass `-f path/to/file.ts` to explicitly include files. The agent can also discover files on its own using its built-in tools.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
@@ -148,51 +148,17 @@ Reference files and other context directly in your message using `@`:
 
 When Kilo Code needs more information to complete a task, it asks a follow-up question and often provides suggested answers to make responding faster.
 
-{% tabs %}
-{% tab label="VSCode" %}
-
 **How it works:**
 
 1. **Question Appears** - Kilo Code asks a question using the `question` tool
 2. **Options Displayed** - Selectable options are presented that you can choose from
 3. **Selection** - Pick an option or type a custom response
 
-{% /tab %}
-{% tab label="CLI" %}
-
-**How it works:**
-
-1. **Question Appears** - Kilo Code asks a question using the `question` tool
-2. **Options Displayed** - Selectable options are presented that you can choose from
-3. **Selection** - Pick an option or type a custom response
-
-{% /tab %}
-{% tab label="VSCode (Legacy)" %}
+{% callout type="info" title="VSCode (Legacy)" collapsed=true %}
+In the legacy extension, Kilo Code uses the `ask_followup_question` tool instead. Suggestions appear as clickable buttons below the question. You can click a button to send the answer directly, or hold `Shift` and click (or click the pencil icon {% codicon name="edit" /%}) to copy the suggestion into the input box for editing before sending.
 
 {% image src="/docs/img/suggested-responses/suggested-responses.png" alt="Example of Kilo Code asking a question with suggested response buttons below it" width="800" caption="Suggested responses appear as clickable buttons below questions" /%}
-
-**How it works:**
-
-1. **Question Appears** - Kilo Code asks a question using the `ask_followup_question` tool
-2. **Suggestions Displayed** - If suggestions are provided, they appear as buttons below the question
-3. **Interaction** - You can interact with these suggestions in two ways
-
-**Interacting with suggestions:**
-
-You have two options for using suggested responses:
-
-1. **Direct Selection**:
-   - **Action**: Simply click the button containing the answer you want to provide
-   - **Result**: The selected answer is immediately sent back to Kilo Code as your response. This is the quickest way to reply if one of the suggestions perfectly matches your intent.
-
-2. **Edit Before Sending**:
-   - **Action**:
-     - Hold down `Shift` and click the suggestion button
-     - _Alternatively_, hover over the suggestion button and click the pencil icon ({% codicon name="edit" /%}) that appears
-   - **Result**: The text of the suggestion is copied into the chat input box. You can then modify the text as needed before pressing Enter to send your customized response. This is useful when a suggestion is close but needs minor adjustments.
-
-{% /tab %}
-{% /tabs %}
+{% /callout %}
 
 **Benefits:**
 
@@ -208,7 +174,7 @@ This feature streamlines the interaction when Kilo Code requires clarification, 
 {% tab label="VSCode" %}
 
 {% callout type="tip" %}
-**Use agents instead of modes.** Switch between agents like Code, Ask, and Plan using the agent dropdown or slash commands. Each agent is tuned for a different type of task.
+**Switch agents for different tasks.** Use the agent dropdown, `/agents` slash command, or `Cmd+.` (`Ctrl+.` on Windows/Linux) to switch between agents like Code, Ask, and Plan. Each agent is tuned for a different type of task — see [Using Agents](/docs/code-with-ai/agents/using-agents) for details.
 {% /callout %}
 
 {% callout type="tip" %}
@@ -223,7 +189,7 @@ This feature streamlines the interaction when Kilo Code requires clarification, 
 {% tab label="CLI" %}
 
 {% callout type="tip" %}
-**Use agents instead of modes.** Switch between agents like Code, Ask, and Plan using keybinds or slash commands. Each agent is tuned for a different type of task.
+**Switch agents for different tasks.** Use `/agents`, press `Tab` to cycle agents, or use `Ctrl+X a` to open the agent picker. Each agent is tuned for a different type of task — see [Using Agents](/docs/code-with-ai/agents/using-agents) for details.
 {% /callout %}
 
 {% callout type="tip" %}

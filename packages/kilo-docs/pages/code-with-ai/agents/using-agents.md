@@ -1,24 +1,24 @@
 ---
-title: "Using Modes"
-description: "Understanding and using different modes in Kilo Code"
+title: "Using Agents"
+description: "Understanding and using different agents in Kilo Code"
 ---
 
-# Using Modes
+# Using Agents
 
-Modes in Kilo Code are specialized personas that tailor the assistant's behavior to your current task. Each mode offers different capabilities, expertise, and access levels to help you accomplish specific goals.
+Agents in Kilo Code are specialized personas that tailor the assistant's behavior to your current task. Each agent offers different capabilities, expertise, and access levels to help you accomplish specific goals.
 
 {% callout type="info" %}
-The **VSCode** extension and **CLI** call these **agents**, while the **VSCode (Legacy)** extension calls them **modes**. The concept is the same — specialized personas with distinct tool access and behavior.
+The **VSCode (Legacy)** extension calls these **modes** instead of agents. The concept is the same — specialized personas with distinct tool access and behavior.
 {% /callout %}
 
-## Why Use Different Modes?
+## Why Use Different Agents?
 
 - **Task specialization:** Get precisely the type of assistance you need for your current task
 - **Safety controls:** Prevent unintended file modifications when focusing on planning or learning
 - **Focused interactions:** Receive responses optimized for your current activity
 - **Workflow optimization:** Seamlessly transition between planning, implementing, debugging, and learning
 
-## Switching Between Modes
+## Switching Agents
 
 {% tabs %}
 {% tab label="VSCode" %}
@@ -26,16 +26,17 @@ The **VSCode** extension and **CLI** call these **agents**, while the **VSCode (
 There are several ways to switch agents:
 
 - **Dropdown menu:** Click the agent selector in the sidebar to switch between agents.
-- **Slash commands:** Type `/` in the chat input to see available commands, including `/agents` to open the agent picker.
-- **Keyboard shortcut:** Use a keyboard shortcut to cycle through available agents.
+- **Slash commands:** Type `/agents` in the chat input to open the agent picker.
+- **Keyboard shortcut:** Press `Cmd+.` (macOS) or `Ctrl+.` (Windows/Linux) to cycle through available agents. Add `Shift` to cycle in reverse.
 
 {% /tab %}
 {% tab label="CLI" %}
 
 There are several ways to switch agents:
 
-- **Keybinds:** Press the displayed key to cycle through available agents.
-- **Slash commands:** Type `/` in the chat input to see available commands, including `/agents` to open the agent picker.
+- **Cycle agents:** Press `Tab` to cycle forward through agents, or `Shift+Tab` to cycle backward.
+- **Agent picker:** Press `Ctrl+X a` (leader key + `a`) to open the full agent list.
+- **Slash commands:** Type `/agents` in the chat input to open the agent picker.
 - **Config file:** Set the `default_agent` key in your configuration to change the default agent on startup.
 
 {% /tab %}
@@ -77,7 +78,7 @@ Users often confuse `/newtask` and `/smol`. Here's the key difference:
 {% /tab %}
 {% /tabs %}
 
-## Built-in Modes
+## Built-in Agents
 
 {% tabs %}
 {% tab label="VSCode" %}
@@ -247,6 +248,6 @@ The VSCode extension and CLI do not include a built-in Review agent. Code review
 {% /tab %}
 {% /tabs %}
 
-## Custom Modes
+## Custom Agents
 
-Create your own specialized assistants by defining tool access, file permissions, and behavior instructions. Custom modes help enforce team standards or create purpose-specific assistants. See [Custom Modes documentation](/docs/customize/custom-modes) for setup instructions.
+Create your own specialized assistants by defining tool access, file permissions, and behavior instructions. Custom agents help enforce team standards or create purpose-specific assistants. See [Custom Modes documentation](/docs/customize/custom-modes) for setup instructions.
