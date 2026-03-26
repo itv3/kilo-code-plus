@@ -1091,6 +1091,7 @@ export const dict = {
   "settings.agentBehaviour.importMode.nameTaken": "Ein Modus mit diesem Namen existiert bereits.",
   "settings.agentBehaviour.importMode.invalidJson":
     "Ungültige JSON-Datei. Bitte wählen Sie eine gültige Agenten-Definitionsdatei aus.",
+  "settings.agentBehaviour.importMode.tooLarge": "Datei ist zu groß. Agentdefinitionen müssen unter 1 MB sein.",
   "settings.agentBehaviour.exportMode": "Agenten-Definition exportieren",
   "settings.agentBehaviour.editMode": "Modus bearbeiten",
   "settings.agentBehaviour.editMode.description": "Beschreibung",

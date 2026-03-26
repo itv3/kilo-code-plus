@@ -1078,6 +1078,7 @@ export const dict = {
   "settings.agentBehaviour.importMode.nameTaken": "Mod s ovim nazivom već postoji.",
   "settings.agentBehaviour.importMode.invalidJson":
     "Nevažeća JSON datoteka. Molimo odaberite važeću datoteku definicije agenta.",
+  "settings.agentBehaviour.importMode.tooLarge": "Datoteka je prevelika. Definicije agenta moraju biti manje od 1 MB.",
   "settings.agentBehaviour.exportMode": "Izvezi definiciju agenta",
   "settings.agentBehaviour.editMode": "Uredi mod",
   "settings.agentBehaviour.editMode.description": "Opis",

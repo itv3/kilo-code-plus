@@ -1066,6 +1066,7 @@ export const dict = {
   "settings.agentBehaviour.importMode.nameTaken": "Er bestaat al een modus met deze naam.",
   "settings.agentBehaviour.importMode.invalidJson":
     "Ongeldig JSON-bestand. Selecteer een geldig agentdefinitiebestand.",
+  "settings.agentBehaviour.importMode.tooLarge": "Bestand is te groot. Agentdefinities moeten kleiner zijn dan 1 MB.",
   "settings.agentBehaviour.exportMode": "Agentdefinitie exporteren",
   "settings.agentBehaviour.removeMode.title": "Verwijder modus",
   "settings.agentBehaviour.removeMode.confirm":

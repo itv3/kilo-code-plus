@@ -1064,6 +1064,7 @@ export const dict = {
     "ชื่อโหมดในไฟล์ไม่ถูกต้อง ชื่อต้องขึ้นต้นด้วยตัวอักษรพิมพ์เล็กและประกอบด้วยตัวอักษรพิมพ์เล็ก ตัวเลข และขีดกลางเท่านั้น",
   "settings.agentBehaviour.importMode.nameTaken": "มีโหมดที่มีชื่อนี้อยู่แล้ว",
   "settings.agentBehaviour.importMode.invalidJson": "ไฟล์ JSON ไม่ถูกต้อง กรุณาเลือกไฟล์นิยามเอเจนต์ที่ถูกต้อง",
+  "settings.agentBehaviour.importMode.tooLarge": "ไฟล์มีขนาดใหญ่เกินไป คำจำกัดความเอเจนต์ต้องมีขนาดไม่เกิน 1 MB",
   "settings.agentBehaviour.exportMode": "ส่งออกนิยามเอเจนต์",
   "settings.agentBehaviour.editMode": "แก้ไขโหมด",
   "settings.agentBehaviour.editMode.description": "คำอธิบาย",

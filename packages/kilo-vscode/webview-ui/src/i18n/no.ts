@@ -1075,6 +1075,7 @@ export const dict = {
     "Ugyldig modusnavn i filen. Navnet må starte med en liten bokstav og bare inneholde små bokstaver, tall og bindestreker.",
   "settings.agentBehaviour.importMode.nameTaken": "En modus med dette navnet eksisterer allerede.",
   "settings.agentBehaviour.importMode.invalidJson": "Ugyldig JSON-fil. Vennligst velg en gyldig agentdefinisjonsfil.",
+  "settings.agentBehaviour.importMode.tooLarge": "Filen er for stor. Agentdefinisjoner må være under 1 MB.",
   "settings.agentBehaviour.exportMode": "Eksporter agentdefinisjon",
   "settings.agentBehaviour.editMode": "Rediger modus",
   "settings.agentBehaviour.editMode.description": "Beskrivelse",

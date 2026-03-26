@@ -1072,6 +1072,7 @@ export const dict = {
     "Ugyldigt tilstandsnavn i filen. Navnet skal starte med et lille bogstav og kun indeholde små bogstaver, tal og bindestreger.",
   "settings.agentBehaviour.importMode.nameTaken": "En tilstand med dette navn eksisterer allerede.",
   "settings.agentBehaviour.importMode.invalidJson": "Ugyldig JSON-fil. Vælg venligst en gyldig agentdefinitionsfil.",
+  "settings.agentBehaviour.importMode.tooLarge": "Filen er for stor. Agentdefinitioner skal være under 1 MB.",
   "settings.agentBehaviour.exportMode": "Eksportér agentdefinition",
   "settings.agentBehaviour.editMode": "Rediger tilstand",
   "settings.agentBehaviour.editMode.description": "Beskrivelse",

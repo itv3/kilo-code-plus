@@ -1065,6 +1065,7 @@ export const dict = {
   "settings.agentBehaviour.importMode.nameTaken": "Bu ada sahip bir mod zaten mevcut.",
   "settings.agentBehaviour.importMode.invalidJson":
     "Geçersiz JSON dosyası. Lütfen geçerli bir ajan tanım dosyası seçin.",
+  "settings.agentBehaviour.importMode.tooLarge": "Dosya çok büyük. Ajan tanımları 1 MB'den küçük olmalıdır.",
   "settings.agentBehaviour.exportMode": "Ajan tanımını dışa aktar",
   "settings.agentBehaviour.removeMode.title": "Modu kaldır",
   "settings.agentBehaviour.removeMode.confirm":

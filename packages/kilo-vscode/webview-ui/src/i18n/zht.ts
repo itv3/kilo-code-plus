@@ -1057,6 +1057,7 @@ export const dict = {
     "檔案中的模式名稱無效。名稱必須以小寫字母開頭，且僅包含小寫字母、數字和連字號。",
   "settings.agentBehaviour.importMode.nameTaken": "此名稱的模式已存在。",
   "settings.agentBehaviour.importMode.invalidJson": "無效的 JSON 檔案。請選擇有效的代理定義檔案。",
+  "settings.agentBehaviour.importMode.tooLarge": "檔案太大。代理定義必須小於 1 MB。",
   "settings.agentBehaviour.exportMode": "匯出代理定義",
   "settings.agentBehaviour.editMode": "編輯模式",
   "settings.agentBehaviour.editMode.description": "描述",

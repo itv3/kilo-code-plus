@@ -1073,6 +1073,8 @@ export const dict = {
   "settings.agentBehaviour.importMode.nameTaken": "この名前のモードはすでに存在します。",
   "settings.agentBehaviour.importMode.invalidJson":
     "無効なJSONファイルです。有効なエージェント定義ファイルを選択してください。",
+  "settings.agentBehaviour.importMode.tooLarge":
+    "ファイルが大きすぎます。エージェント定義は1 MB以下である必要があります。",
   "settings.agentBehaviour.exportMode": "エージェント定義をエクスポート",
   "settings.agentBehaviour.editMode": "モードを編集",
   "settings.agentBehaviour.editMode.description": "説明",

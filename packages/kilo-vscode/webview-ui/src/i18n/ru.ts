@@ -1080,6 +1080,7 @@ export const dict = {
   "settings.agentBehaviour.importMode.nameTaken": "Режим с таким названием уже существует.",
   "settings.agentBehaviour.importMode.invalidJson":
     "Недопустимый файл JSON. Пожалуйста, выберите корректный файл определения агента.",
+  "settings.agentBehaviour.importMode.tooLarge": "Файл слишком большой. Определения агентов должны быть менее 1 МБ.",
   "settings.agentBehaviour.exportMode": "Экспортировать определение агента",
   "settings.agentBehaviour.editMode": "Редактировать режим",
   "settings.agentBehaviour.editMode.description": "Описание",

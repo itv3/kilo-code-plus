@@ -1064,6 +1064,7 @@ export const dict = {
     "اسم الوضع في الملف غير صالح. يجب أن يبدأ الاسم بحرف صغير ويحتوي فقط على أحرف صغيرة وأرقام وشرطات.",
   "settings.agentBehaviour.importMode.nameTaken": "يوجد وضع بهذا الاسم بالفعل.",
   "settings.agentBehaviour.importMode.invalidJson": "ملف JSON غير صالح. يرجى اختيار ملف تعريف وكيل صالح.",
+  "settings.agentBehaviour.importMode.tooLarge": "الملف كبير جدًا. يجب أن تكون تعريفات الوكيل أقل من 1 ميجابايت.",
   "settings.agentBehaviour.exportMode": "تصدير تعريف الوكيل",
   "settings.agentBehaviour.editMode": "تعديل الوضع",
   "settings.agentBehaviour.editMode.description": "الوصف",

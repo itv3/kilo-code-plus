@@ -1077,6 +1077,7 @@ export const dict = {
   "settings.agentBehaviour.importMode.nameTaken": "Tryb o tej nazwie już istnieje.",
   "settings.agentBehaviour.importMode.invalidJson":
     "Nieprawidłowy plik JSON. Proszę wybrać prawidłowy plik definicji agenta.",
+  "settings.agentBehaviour.importMode.tooLarge": "Plik jest za duży. Definicje agentów muszą mieć mniej niż 1 MB.",
   "settings.agentBehaviour.exportMode": "Eksportuj definicję agenta",
   "settings.agentBehaviour.editMode": "Edytuj tryb",
   "settings.agentBehaviour.editMode.description": "Opis",

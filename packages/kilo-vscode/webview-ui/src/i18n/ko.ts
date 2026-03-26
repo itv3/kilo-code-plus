@@ -1068,6 +1068,7 @@ export const dict = {
     "파일의 모드 이름이 잘못되었습니다. 이름은 소문자로 시작하고 소문자, 숫자, 하이픈만 포함해야 합니다.",
   "settings.agentBehaviour.importMode.nameTaken": "이 이름의 모드가 이미 존재합니다.",
   "settings.agentBehaviour.importMode.invalidJson": "잘못된 JSON 파일입니다. 유효한 에이전트 정의 파일을 선택하세요.",
+  "settings.agentBehaviour.importMode.tooLarge": "파일이 너무 큽니다. 에이전트 정의는 1 MB 미만이어야 합니다.",
   "settings.agentBehaviour.exportMode": "에이전트 정의 내보내기",
   "settings.agentBehaviour.editMode": "모드 편집",
   "settings.agentBehaviour.editMode.description": "설명",

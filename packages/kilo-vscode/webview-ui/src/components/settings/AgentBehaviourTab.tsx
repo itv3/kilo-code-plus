@@ -231,6 +231,10 @@ const AgentBehaviourTab: Component = () => {
 
   const importMode = (file: File) => {
     setImportError("")
+    if (file.size > 1_048_576) {
+      setImportError(language.t("settings.agentBehaviour.importMode.tooLarge"))
+      return
+    }
     const reader = new FileReader()
     reader.onload = () => {
       try {
