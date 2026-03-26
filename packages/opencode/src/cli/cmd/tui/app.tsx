@@ -117,7 +117,6 @@ export function tui(input: {
   fetch?: typeof fetch
   headers?: RequestInit["headers"]
   events?: EventSource
-  restart?: () => Promise<void> // kilocode_change — worker restart callback for /new
 }) {
   // promise to prevent immediate exit
   return new Promise<void>(async (resolve) => {
@@ -153,7 +152,6 @@ export function tui(input: {
                           fetch={input.fetch}
                           headers={input.headers}
                           events={input.events}
-                          restart={input.restart}
                         >
                           <SyncProvider>
                             <ThemeProvider mode={mode}>
@@ -430,11 +428,6 @@ function App() {
           initialPrompt: currentPrompt,
         })
         dialog.clear()
-        // kilocode_change start — restart worker to reclaim native/JSC memory.
-        // Fire-and-forget; the sync layer will re-bootstrap when the new worker
-        // emits server.instance.disposed.
-        sdk.restart?.()
-        // kilocode_change end
       },
     },
     {

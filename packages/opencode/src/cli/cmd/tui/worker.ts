@@ -144,10 +144,10 @@ export const rpc = {
     if (eventStream.abort) eventStream.abort.abort()
     await Instance.disposeAll()
     if (server) server.stop(true)
-    // Clear the Rpc message channel so the event loop can drain and exit
-    // naturally.  In subprocess mode there is no global onmessage — the
-    // parent kills the process after this RPC response is sent.
-    if (typeof onmessage !== "undefined") onmessage = null
+    // Clear the Rpc message channel so the worker's event loop can drain and
+    // exit naturally. Without this, the active onmessage handle keeps the
+    // worker alive even after all async work is done.
+    onmessage = null
   },
 }
 

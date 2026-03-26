@@ -16,7 +16,6 @@ export const { use: useSDK, provider: SDKProvider } = createSimpleContext({
     fetch?: typeof fetch
     headers?: RequestInit["headers"]
     events?: EventSource
-    restart?: () => Promise<void> // kilocode_change — worker restart callback
   }) => {
     const abort = new AbortController()
     let workspaceID: string | undefined
@@ -113,7 +112,6 @@ export const { use: useSDK, provider: SDKProvider } = createSimpleContext({
       directory: props.directory,
       event: emitter,
       fetch: props.fetch ?? fetch,
-      restart: props.restart, // kilocode_change — expose worker restart
       setWorkspace(next?: string) {
         if (workspaceID === next) return
         workspaceID = next

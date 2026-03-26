@@ -147,46 +147,16 @@ export const TuiThreadCommand = cmd({
       }
       const cwd = Filesystem.resolve(process.cwd())
 
-      // kilocode_change start — use a child process instead of a Worker thread so
-      // that killing and respawning actually returns native memory to the OS.
-      // Bun Workers are threads within the same process — terminate() frees the
-      // JSC context but mimalloc retains every page process-wide.
-      // See https://github.com/oven-sh/bun/issues/28318
-      const resolved = file instanceof URL ? fileURLToPath(file) : file
-      const env = Object.fromEntries(
-        Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
-      )
-      // Forward runtime flags (e.g. --conditions=browser) + app flags.
-      const execArgs = process.execArgv ?? []
-      const appArgs = process.argv.includes("--print-logs") ? ["--print-logs"] : []
-
-      // IPC relay: messages from the child are forwarded to whatever handler
-      // Rpc.client() installs.  The relay persists across subprocess restarts
-      // so we never need to re-create the RPC client or rebind event listeners.
-      let relay: ((data: string) => void) | undefined
-      const spawn = () =>
-        Bun.spawn({
-          cmd: [process.execPath, ...execArgs, resolved, ...appArgs],
-          cwd,
-          env,
-          ipc(message) {
-            relay?.(message as string)
-          },
-          stdio: ["ignore", "ignore", "ignore"],
-          windowsHide: true,
-        })
-
-      let child = spawn()
-
-      const target_: Rpc.Target = {
-        send: (data) => child.send(data),
-        receive: (handler) => {
-          relay = handler
-        },
+      const worker = new Worker(file, {
+        env: Object.fromEntries(
+          Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
+        ),
+      })
+      worker.onerror = (e) => {
+        Log.Default.error(e)
       }
-      const client = Rpc.client<typeof rpc>(target_)
-      // kilocode_change end
 
+      const client = Rpc.client<typeof rpc>(worker)
       const error = (e: unknown) => {
         Log.Default.error(e)
       }
@@ -213,41 +183,8 @@ export const TuiThreadCommand = cmd({
             error: error instanceof Error ? error.message : String(error),
           })
         })
-        child.kill()
+        worker.terminate()
       }
-
-      // kilocode_change start — restart the subprocess to reclaim native/JSC memory.
-      // Killing the child process returns all its memory to the OS because it is
-      // a separate address space, unlike Worker threads which share the parent's
-      // allocator.
-      let restarting = false
-      const restart = async () => {
-        if (restarting || stopped || external) return
-        restarting = true
-        try {
-          Log.Default.info("restarting worker subprocess to reclaim memory")
-          // 1. Graceful shutdown — let worker flush state to disk.
-          await withTimeout(client.call("shutdown", undefined), 5000).catch((err) => {
-            Log.Default.warn("worker shutdown during restart failed", {
-              error: err instanceof Error ? err.message : String(err),
-            })
-          })
-          // 2. Kill old process and wait for it to exit.
-          child.kill()
-          await withTimeout(child.exited, 5000).catch(() => {
-            child.kill(9) // SIGKILL fallback
-          })
-          // 3. Reject any in-flight RPC calls so callers don't hang.
-          client.rejectAll(new Error("worker restarted"))
-          // 4. Spawn fresh subprocess.  The relay + RPC client persist — event
-          //    listeners stay registered and new calls automatically route to
-          //    the new child through the mutable `child` closure.
-          child = spawn()
-        } finally {
-          restarting = false
-        }
-      }
-      // kilocode_change end
       // kilocode_change start - graceful shutdown on external signals
       // The worker's postMessage for the RPC result may never be delivered
       // after shutdown because the worker's event loop drains. Send the
@@ -370,7 +307,6 @@ export const TuiThreadCommand = cmd({
           directory: cwd,
           fetch: transport.fetch,
           events: transport.events,
-          restart: external ? undefined : restart, // kilocode_change — subprocess restart for /new
           args: {
             continue: args.continue,
             sessionID: args.session,
