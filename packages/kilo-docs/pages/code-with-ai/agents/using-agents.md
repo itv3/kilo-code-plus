@@ -56,7 +56,7 @@ Four ways to switch modes:
 
 ### Understanding /newtask vs /smol
 
-Users often confuse `/newtask` and `/smol`. Here's the key difference:
+Users often confuse `/new` and `/compact`. Here's the key difference:
 
 | Command    | Purpose                                               | When to Use                                                             |
 | ---------- | ----------------------------------------------------- | ----------------------------------------------------------------------- |
