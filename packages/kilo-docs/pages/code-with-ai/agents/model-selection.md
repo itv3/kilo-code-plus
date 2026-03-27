@@ -31,7 +31,7 @@ While the specifics change constantly, some principles stay consistent:
 {% /tab %}
 {% tab label="CLI" %}
 
-- In the TUI, use the **model picker** (`Ctrl+X m` or `/models`) to switch models. Press `F2` to cycle through recently used models.
+- In the TUI, use the **model picker** (`Ctrl+X m` or `/models`) to switch models.
 - For non-interactive use, pass `--model` flag to `kilo run` (e.g., `kilo run --model claude-sonnet-4-20250514`).
 - Set the global default with the `model` key in `kilo.jsonc`, or configure per-agent models in the `agent` section.
 - **Model precedence:** `--model` flag → Per-agent config → Last used in session → Global config → Recent models → First available.
