@@ -50,13 +50,13 @@ Four ways to switch modes:
 
    {% image src="/docs/img/modes/modes.png" alt="Using the dropdown menu to switch modes" width="400" /%}
 
-2. **Slash command:** Type `/agents` or `/modes` to list modes and switch. Type `/new` to create a new task, and `/compact` to condense context. 
+2. **Slash command:** Type `/agents` or `/modes` to list modes and switch. Type `/newtask` to create a new task, or `/smol` to condense your context window.
 
    {% image src="/docs/img/modes/modes-1.png" alt="Using slash commands to switch modes" width="400" /%}
 
 ### Understanding /newtask vs /smol
 
-Users often confuse `/new` and `/compact`. Here's the key difference:
+Users often confuse `/newtask` and `/smol`. Here's the key difference:
 
 | Command    | Purpose                                               | When to Use                                                             |
 | ---------- | ----------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -70,6 +70,8 @@ Users often confuse `/new` and `/compact`. Here's the key difference:
    | macOS            | ⌘ + .    |
    | Windows          | Ctrl + . |
    | Linux            | Ctrl + . |
+
+You can hold `shift` to move backwards through the list of modes, for example ⌘ + shift +  on macOS.
 
 4. **Accept suggestions:** Click on mode switch suggestions that Kilo Code offers when appropriate
 
