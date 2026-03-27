@@ -1,6 +1,6 @@
 # Kilo CLI Configuration Reference
 
-All config lives in `kilo.json` (or `kilo.jsonc`). Precedence low-to-high: remote well-known, global (`~/.config/kilo/kilo.json`), env `KILO_CONFIG`, project `./kilo.json`, `.kilo/kilo.json`, `KILO_CONFIG_CONTENT`, managed (`/etc/kilo/`). Deep-merged; later wins.
+All config lives in `kilo.json` (or `kilo.jsonc`). Precedence low-to-high: remote well-known, global (`~/.config/kilo/kilo.json`), env `KILO_CONFIG`, project `./kilo.json`, `.kilo/kilo.json`, `KILO_CONFIG_CONTENT`, managed (see Config File Locations). Deep-merged; later wins.
 
 ## Commands (`.kilo/command/*.md`)
 
@@ -147,12 +147,12 @@ Skills are markdown files at `skills/<name>/SKILL.md` with `name` and `descripti
 
 ## Config File Locations
 
-| Scope        | Path                                                                    |
-| ------------ | ----------------------------------------------------------------------- |
-| Project      | `./kilo.json`, `./.kilo/kilo.json`                                      |
-| Global       | `~/.config/kilo/kilo.json`                                              |
-| Managed      | `/etc/kilo/kilo.json` (enterprise, highest priority)                    |
-| Commands     | `.kilo/command/*.md` (project), `~/.config/kilo/command/*.md` (global)  |
-| Agents       | `.kilo/agent/*.md` (project), `~/.config/kilo/agent/*.md` (global)      |
-| Skills       | `.kilo/skill/*/SKILL.md`, `.kilo/skills/*/SKILL.md`                     |
-| Instructions | `AGENTS.md`, `.kilo/instructions.md`, glob patterns from `instructions` |
+| Scope        | Path                                                                                                                                                       |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project      | `./kilo.json`, `./.kilo/kilo.json`                                                                                                                         |
+| Global       | `~/.config/kilo/kilo.json`                                                                                                                                 |
+| Managed      | Linux: `/etc/kilo/kilo.json`, macOS: `/Library/Application Support/kilo/kilo.json`, Windows: `%ProgramData%\kilo\kilo.json` (enterprise, highest priority) |
+| Commands     | `.kilo/command/*.md` (project), `~/.config/kilo/command/*.md` (global)                                                                                     |
+| Agents       | `.kilo/agent/*.md` (project), `~/.config/kilo/agent/*.md` (global)                                                                                         |
+| Skills       | `.kilo/skill/*/SKILL.md`, `.kilo/skills/*/SKILL.md`                                                                                                        |
+| Instructions | `AGENTS.md`, `.kilo/instructions.md`, glob patterns from `instructions`                                                                                    |
