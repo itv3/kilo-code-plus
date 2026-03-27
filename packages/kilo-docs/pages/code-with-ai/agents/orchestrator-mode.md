@@ -3,10 +3,10 @@ title: "Orchestrator Mode"
 description: "Orchestrator mode is no longer needed — all agents now support subagents"
 ---
 
-# Orchestrator Mode
+# Orchestrator Mode (Deprecated)
 
-{% callout type="info" title="Orchestrator mode is no longer needed" %}
-In the VSCode extension and CLI, **every agent can now delegate to subagents automatically**. You no longer need a dedicated orchestrator — just pick the agent for your task (e.g. Code, Plan, Debug) and it will coordinate subagents when helpful. The orchestrator agent still exists for backward compatibility, but there is no advantage to using it directly.
+{% callout type="warning" title="Deprecated — scheduled for removal" %}
+Orchestrator mode is deprecated and will be removed in a future release. In the VSCode extension and CLI, **every agent can now delegate to subagents automatically**. You no longer need a dedicated orchestrator — just pick the agent for your task (e.g. Code, Plan, Debug) and it will coordinate subagents when helpful.
 {% /callout %}
 
 ## What Changed
@@ -29,10 +29,6 @@ Now, **subagent support is built into every agent**. When any agent encounters a
 4. When done, the subagent returns a summary to the parent agent, which continues its work.
 
 Agents can launch multiple subagent sessions concurrently for parallel work.
-
-{% callout type="tip" title="Keep Tasks Focused" %}
-Use subtasks to maintain clarity. If a request significantly shifts focus or requires different expertise, the agent can create a subtask rather than overloading its current context.
-{% /callout %}
 
 {% callout type="info" title="VSCode (Legacy)" collapsed=true %}
 In the legacy extension, orchestrator mode uses two dedicated tools:
