@@ -371,9 +371,7 @@ export namespace PermissionNext {
         return
       }
 
-      if (!input.sessionID) {
-        s.approved.push({ permission: "*", pattern: "*", action: "allow" })
-      }
+      s.approved.push({ permission: "*", pattern: "*", action: "allow" })
 
       if (input.requestID) {
         const existing = s.pending[input.requestID]
