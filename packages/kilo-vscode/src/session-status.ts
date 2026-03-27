@@ -25,7 +25,8 @@ export async function seedSessionStatuses(
 ): Promise<void> {
   try {
     const result = await client.session.status({ directory: dir })
-    const active = result.data ?? {}
+    if (!result.data) return
+    const active = result.data
 
     // Seed/update entries the server knows about
     for (const [sid, info] of Object.entries(active) as [string, SessionStatus][]) {

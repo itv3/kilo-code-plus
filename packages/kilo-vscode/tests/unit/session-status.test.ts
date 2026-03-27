@@ -135,15 +135,17 @@ describe("seedSessionStatuses", () => {
     expect(msgs).toEqual([])
   })
 
-  it("handles null data response — clears stale entries", async () => {
+  it("handles null data response — no map changes", async () => {
     const client = createClient({ data: null })
     const map = new Map<string, SessionStatus["type"]>([["s1", "busy"]])
     const { msgs, post } = collect()
 
     await seedSessionStatuses(client, "/repo", map, post)
 
-    expect(map.get("s1")).toBe("idle")
-    expect(msgs).toEqual([{ type: "sessionStatus", sessionID: "s1", status: "idle" }])
+    // Null data could mean a non-2xx response (401/500), not "no active sessions".
+    // Conservative: leave map unchanged to avoid false-clearing busy sessions.
+    expect(map.get("s1")).toBe("busy")
+    expect(msgs).toEqual([])
   })
 })
 
