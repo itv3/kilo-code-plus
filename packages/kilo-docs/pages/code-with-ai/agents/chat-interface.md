@@ -85,6 +85,9 @@ The extension automatically passes context from your editor, including your open
 - **Action buttons** - Approve or reject proposed changes, answer questions
 - **Agent cycling** - Switch between agents using keybinds or slash commands
 - **Session management** - Start new sessions or resume previous ones
+- **New task** buttons -> Start a new task, available using the `+` button at the top or `New Task` button above the chat input
+- **Worktree** -> Continue the current task with it's git state and session history in the Agent Manager in an isolated worktree
+- **File changes** -> Shows the number of lines changed and opens a diff view
 
 **Providing context:**
 
