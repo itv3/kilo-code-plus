@@ -138,7 +138,7 @@ module.exports = [
   },
   {
     source: "/docs/basic-usage/using-modes",
-    destination: "/docs/code-with-ai/agents/using-modes",
+    destination: "/docs/code-with-ai/agents/using-agents",
     basePath: false,
     permanent: true,
   },
