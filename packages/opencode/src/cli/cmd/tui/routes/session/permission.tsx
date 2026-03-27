@@ -6,6 +6,7 @@ import { useKeybind } from "../../context/keybind"
 import { useTheme, selectedForeground } from "../../context/theme"
 import type { PermissionRequest } from "@kilocode/sdk/v2"
 import { useSDK } from "../../context/sdk"
+import { useKV } from "../../context/kv" // kilocode_change
 import { SplitBorder } from "../../component/border"
 import { useSync } from "../../context/sync"
 import { useTextareaKeybindings } from "../../component/textarea-keybindings"
@@ -17,7 +18,7 @@ import { Global } from "@/global"
 import { useDialog } from "../../ui/dialog"
 import { useTuiConfig } from "../../context/tui-config"
 
-type PermissionStage = "permission" | "always" | "reject"
+type PermissionStage = "permission" | "always" | "everything" | "reject" // kilocode_change
 
 function normalizePath(input?: string) {
   if (!input) return ""
@@ -129,6 +130,7 @@ function TextBody(props: { title: string; description?: string; icon?: string })
 export function PermissionPrompt(props: { request: PermissionRequest }) {
   const sdk = useSDK()
   const sync = useSync()
+  const kv = useKV() // kilocode_change
   const [store, setStore] = createStore({
     stage: "permission" as PermissionStage,
   })
@@ -190,6 +192,33 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
           }}
         />
       </Match>
+      {/* kilocode_change start */}
+      <Match when={store.stage === "everything"}>
+        <Prompt
+          title="Allow everything"
+          body={<TextBody title="Allow all tool usage without asking for permission." />}
+          options={{ session: "This session", all: "All sessions", cancel: "Cancel" }}
+          escapeKey="cancel"
+          onSelect={(option) => {
+            setStore("stage", "permission")
+            if (option === "cancel") return
+            if (option === "session") {
+              sdk.client.permission.allowEverything({
+                enable: true,
+                requestID: props.request.id,
+                sessionID: props.request.sessionID,
+              })
+              return
+            }
+            sdk.client.permission.allowEverything({
+              enable: true,
+              requestID: props.request.id,
+            })
+            kv.set("allow_everything_global", true)
+          }}
+        />
+      </Match>
+      {/* kilocode_change end */}
       <Match when={store.stage === "reject"}>
         <RejectPrompt
           onConfirm={(message) => {
@@ -433,7 +462,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               title="Permission required"
               header={header()}
               body={current.body}
-              options={{ once: "Allow once", always: "Allow always", reject: "Reject" }}
+              options={{ once: "Allow once", always: "Allow always", everything: "Allow everything", reject: "Reject" }}
               escapeKey="reject"
               fullscreen
               onSelect={(option) => {
@@ -441,6 +470,12 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
                   setStore("stage", "always")
                   return
                 }
+                // kilocode_change start
+                if (option === "everything") {
+                  setStore("stage", "everything")
+                  return
+                }
+                // kilocode_change end
                 if (option === "reject") {
                   if (session()?.parentID) {
                     setStore("stage", "reject")
