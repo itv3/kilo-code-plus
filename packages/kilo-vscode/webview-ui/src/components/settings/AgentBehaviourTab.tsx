@@ -13,6 +13,7 @@ import { useLanguage } from "../../context/language"
 import type { AgentInfo, SkillInfo } from "../../types/messages"
 import ModeEditView from "./ModeEditView"
 import ModeCreateView from "./ModeCreateView"
+import McpEditView from "./McpEditView"
 import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
 import { parseImport, MAX_IMPORT_SIZE } from "./mode-io"
 import type { ImportError } from "./mode-io"
@@ -70,6 +71,9 @@ const AgentBehaviourTab: Component = () => {
   // Agent view state
   const [agentView, setAgentView] = createSignal<AgentView>("list")
   const [editingAgent, setEditingAgent] = createSignal<string>("")
+
+  // MCP view state
+  const [editingMcp, setEditingMcp] = createSignal<string>("")
 
   // Fetch skills whenever the skills subtab becomes active
   createEffect(() => {
@@ -489,6 +493,19 @@ const AgentBehaviourTab: Component = () => {
       setExpanded((prev) => ({ ...prev, [name]: !prev[name] }))
     }
 
+    if (editingMcp()) {
+      return (
+        <McpEditView
+          name={editingMcp()}
+          onBack={() => setEditingMcp("")}
+          onRemove={(name) => {
+            confirmRemoveMcp(name)
+            setEditingMcp("")
+          }}
+        />
+      )
+    }
+
     return (
       <div>
         <Show
@@ -548,15 +565,26 @@ const AgentBehaviourTab: Component = () => {
                           {mcp.url ? "remote" : "stdio"}
                         </span>
                       </div>
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon="close"
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          confirmRemoveMcp(name)
-                        }}
-                      />
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        <IconButton
+                          size="small"
+                          variant="ghost"
+                          icon="close"
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation()
+                            confirmRemoveMcp(name)
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          variant="ghost"
+                          icon="chevron-right"
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation()
+                            setEditingMcp(name)
+                          }}
+                        />
+                      </div>
                     </div>
 
                     {/* Expandable detail */}
@@ -916,11 +944,12 @@ const AgentBehaviourTab: Component = () => {
             <button
               onClick={() => {
                 setActiveSubtab(subtab.id)
-                // Reset agent view when switching subtabs
+                // Reset views when switching subtabs
                 if (subtab.id === "agents") {
                   setAgentView("list")
                   setEditingAgent("")
                 }
+                setEditingMcp("")
               }}
               style={{
                 padding: "8px 16px",
