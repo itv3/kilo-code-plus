@@ -702,6 +702,19 @@ function App() {
         dialog.clear()
       },
     },
+    // kilocode_change start
+    {
+      title: kv.get("allow_everything_global") ? "Disable allow everything" : "Enable allow everything",
+      value: "permission.allow_everything",
+      category: "System",
+      onSelect: (dialog) => {
+        const enabled = kv.get("allow_everything_global")
+        sdk.client.permission.allowEverything({ enable: !enabled })
+        kv.set("allow_everything_global", !enabled)
+        dialog.clear()
+      },
+    },
+    // kilocode_change end
   ])
 
   // kilocode_change start - Initialize TUI dependencies for kilo-gateway
