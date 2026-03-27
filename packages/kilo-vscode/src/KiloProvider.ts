@@ -87,6 +87,10 @@ type KiloProviderOptions = {
   slimEditMetadata?: boolean
 }
 
+type ConfigPatch = Partial<Config> & {
+  default_agent?: string | null
+}
+
 export class KiloProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "kilo-code.SidebarProvider"
 
@@ -1894,7 +1898,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    * Applies a partial config update via the global config endpoint, then pushes
    * the full merged config back to the webview.
    */
-  private async handleUpdateConfig(partial: Partial<Config>): Promise<void> {
+  private async handleUpdateConfig(partial: ConfigPatch): Promise<void> {
     if (!this.client || this.connectionState !== "connected") {
       this.postMessage({ type: "error", message: "Not connected to CLI backend" })
       return
@@ -1910,7 +1914,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     // races with the async config.update() write on the CLI backend).
     this.pending++
     try {
-      await this.client.global.config.update({ config: partial }, { throwOnError: true })
+      await this.client.global.config.update({ config: partial as Config }, { throwOnError: true })
 
       // Re-fetch the full merged config (global + project + all layers) so the
       // webview receives the complete resolved config, not just global-only data.

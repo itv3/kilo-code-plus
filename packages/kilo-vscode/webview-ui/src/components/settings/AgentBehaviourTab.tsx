@@ -274,8 +274,8 @@ const AgentBehaviourTab: Component = () => {
               label={(o) => o.label}
               onSelect={(o) => {
                 if (!o) return
-                const next = o.value || undefined
-                if (next === (config().default_agent ?? undefined)) return
+                const next = o.value || null
+                if (next === (config().default_agent ?? null)) return
                 updateConfig({ default_agent: next })
               }}
               variant="secondary"

@@ -1181,6 +1181,7 @@ export namespace Config {
       // kilocode_change start - renamed from "build" to "code"
       default_agent: z
         .string()
+        .nullable()
         .optional()
         .describe(
           "Default agent to use when none is specified. Must be a primary agent. Falls back to 'code' if not set or if the specified agent is invalid.",

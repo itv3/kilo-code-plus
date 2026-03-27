@@ -118,6 +118,19 @@ describe("ConfigState", () => {
       expect(s.config.agent?.code?.disable).toBe(false)
       expect(s.config.agent?.code?.hidden).toBe(false)
     })
+
+    it("preserves clearing default_agent when the current default is hidden", () => {
+      const s = new ConfigState()
+      s.handleConfigLoaded({ default_agent: "code", agent: { code: { hidden: false } } })
+
+      s.updateConfig({ agent: { code: { hidden: true } } })
+      s.updateConfig({ default_agent: null })
+
+      s.handleConfigLoaded({ default_agent: "code", agent: { code: { hidden: false } } })
+
+      expect(s.config.agent?.code?.hidden).toBe(true)
+      expect(s.config.default_agent).toBeUndefined()
+    })
   })
 
   describe("configUpdated while draft is pending", () => {

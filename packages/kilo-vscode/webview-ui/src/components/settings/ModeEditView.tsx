@@ -200,7 +200,7 @@ const ModeEditView: Component<Props> = (props) => {
               update({ hidden: val })
               // Clear default_agent if hiding the current default
               if (val && config().default_agent === props.name) {
-                updateConfig({ default_agent: undefined })
+                updateConfig({ default_agent: null })
               }
             }}
             hideLabel
@@ -220,7 +220,7 @@ const ModeEditView: Component<Props> = (props) => {
               update({ disable: val })
               // Clear default_agent if disabling the current default
               if (val && config().default_agent === props.name) {
-                updateConfig({ default_agent: undefined })
+                updateConfig({ default_agent: null })
               }
             }}
             hideLabel
