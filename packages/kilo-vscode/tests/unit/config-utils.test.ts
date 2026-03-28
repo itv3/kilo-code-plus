@@ -131,6 +131,19 @@ describe("ConfigState", () => {
       expect(s.config.agent?.code?.hidden).toBe(true)
       expect(s.config.default_agent).toBeUndefined()
     })
+
+    it("preserves clearing default_agent when the current default is disabled", () => {
+      const s = new ConfigState()
+      s.handleConfigLoaded({ default_agent: "code", agent: { code: { disable: false } } })
+
+      s.updateConfig({ agent: { code: { disable: true } } })
+      s.updateConfig({ default_agent: null })
+
+      s.handleConfigLoaded({ default_agent: "code", agent: { code: { disable: false } } })
+
+      expect(s.config.agent?.code?.disable).toBe(true)
+      expect(s.config.default_agent).toBeUndefined()
+    })
   })
 
   describe("configUpdated while draft is pending", () => {
@@ -157,6 +170,21 @@ describe("ConfigState", () => {
       s.handleConfigUpdated({ snapshot: false })
 
       expect(s.config.snapshot).toBe(false)
+      expect(s.dirty).toBe(false)
+      expect(s.saving).toBe(false)
+      expect(Object.keys(s.draft).length).toBe(0)
+    })
+
+    it("clears default_agent when update confirms a null-sentinel save", () => {
+      const s = new ConfigState()
+      s.handleConfigLoaded({ default_agent: "code" })
+      s.updateConfig({ default_agent: null })
+      s.saveConfig()
+
+      // Server confirms the write by returning config without default_agent.
+      s.handleConfigUpdated({})
+
+      expect(s.config.default_agent).toBeUndefined()
       expect(s.dirty).toBe(false)
       expect(s.saving).toBe(false)
       expect(Object.keys(s.draft).length).toBe(0)
