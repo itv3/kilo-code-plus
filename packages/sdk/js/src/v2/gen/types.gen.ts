@@ -1412,7 +1412,7 @@ export type Config = {
   /**
    * Default agent to use when none is specified. Must be a primary agent. Falls back to 'code' if not set or if the specified agent is invalid.
    */
-  default_agent?: string
+  default_agent?: string | null
   /**
    * Custom username to display in conversations instead of system username
    */
