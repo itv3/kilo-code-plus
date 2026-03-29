@@ -29,6 +29,78 @@ Kilo Code supports two types of custom rules:
 ## Rule Location
 
 {% tabs %}
+{% tab label="VSCode" %}
+
+### Project Rules
+
+Project rules are configured via the `instructions` key in your project's `kilo.jsonc` file. You can edit this file directly or use the **Settings** webview to manage the `instructions` configuration. Each entry points to a file path or glob pattern:
+
+```jsonc
+// kilo.jsonc
+{
+  "instructions": [".kilo/rules/formatting.md", ".kilo/rules/*.md"],
+}
+```
+
+You can also place rule files in the **`.kilo/`** directory structure:
+
+```
+project/
+├── .kilo/
+│   ├── rules/
+│   │   ├── formatting.md
+│   │   ├── restricted_files.md
+│   │   └── naming_conventions.md
+├── kilo.json
+├── src/
+└── ...
+```
+
+### Global Rules
+
+Global rules are configured via the `instructions` key in your global `kilo.jsonc` config file (typically at `~/.config/kilo/kilo.jsonc`).
+
+{% callout type="note" title="Migration" %}
+The extension is backward compatible with `.kilocode/rules/` directories. Existing rules will continue to work, but migrating to `kilo.jsonc` is recommended.
+{% /callout %}
+
+{% /tab %}
+{% tab label="CLI" %}
+
+### Project Rules
+
+Project rules are configured via the `instructions` key in your project's `kilo.jsonc` file. Each entry points to a file path or glob pattern:
+
+```jsonc
+// kilo.jsonc
+{
+  "instructions": [".kilo/rules/formatting.md", ".kilo/rules/*.md"],
+}
+```
+
+You can also place rule files in the **`.kilo/`** directory structure:
+
+```
+project/
+├── .kilo/
+│   ├── rules/
+│   │   ├── formatting.md
+│   │   ├── restricted_files.md
+│   │   └── naming_conventions.md
+├── kilo.json
+├── src/
+└── ...
+```
+
+### Global Rules
+
+Global rules are configured via the `instructions` key in your global `kilo.jsonc` config file (typically at `~/.config/kilo/kilo.jsonc`).
+
+{% callout type="note" title="Migration" %}
+The CLI is backward compatible with `.kilocode/rules/` directories. Existing rules will continue to work, but migrating to `kilo.jsonc` is recommended.
+{% /callout %}
+
+{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 ### Project Rules
@@ -59,83 +131,51 @@ Global rules are stored in your home directory and apply to all projects:
 ```
 
 {% /tab %}
-{% tab label="VSCode (Legacy)" %}
-
-### Project Rules
-
-Project rules are configured via the `instructions` key in your project's `kilo.json` file. You can edit this file directly or use the **Settings** webview to manage the `instructions` configuration. Each entry points to a file path or glob pattern:
-
-```jsonc
-// kilo.json
-{
-  "instructions": [".kilo/rules/formatting.md", ".kilo/rules/*.md"],
-}
-```
-
-You can also place rule files in the **`.kilo/`** directory structure:
-
-```
-project/
-├── .kilo/
-│   ├── rules/
-│   │   ├── formatting.md
-│   │   ├── restricted_files.md
-│   │   └── naming_conventions.md
-├── kilo.json
-├── src/
-└── ...
-```
-
-### Global Rules
-
-Global rules are configured via the `instructions` key in your global `kilo.json` config file (typically at `~/.config/kilo/kilo.json`).
-
-{% callout type="note" title="Migration" %}
-The new extension is backward compatible with `.kilocode/rules/` directories. Existing rules will continue to work, but migrating to `kilo.json` is recommended.
-{% /callout %}
-
-{% /tab %}
-{% tab label="CLI" %}
-
-### Project Rules
-
-Project rules are configured via the `instructions` key in your project's `kilo.json` file. Each entry points to a file path or glob pattern:
-
-```jsonc
-// kilo.json
-{
-  "instructions": [".kilo/rules/formatting.md", ".kilo/rules/*.md"],
-}
-```
-
-You can also place rule files in the **`.kilo/`** directory structure:
-
-```
-project/
-├── .kilo/
-│   ├── rules/
-│   │   ├── formatting.md
-│   │   ├── restricted_files.md
-│   │   └── naming_conventions.md
-├── kilo.json
-├── src/
-└── ...
-```
-
-### Global Rules
-
-Global rules are configured via the `instructions` key in your global `kilo.json` config file (typically at `~/.config/kilo/kilo.json`).
-
-{% callout type="note" title="Migration" %}
-The CLI is backward compatible with `.kilocode/rules/` directories. Existing rules will continue to work, but migrating to `kilo.json` is recommended.
-{% /callout %}
-
-{% /tab %}
 {% /tabs %}
 
 ## Managing Rules Through the UI
 
 {% tabs %}
+{% tab label="VSCode" %}
+
+Rules are managed by editing the `instructions` array in your `kilo.jsonc` config file. You can also use the **Settings** webview in VS Code to edit the configuration.
+
+- **Add a rule**: Add a file path or glob pattern to the `instructions` array
+- **Remove a rule**: Remove the entry from the array
+- **Disable a rule temporarily**: Comment out the line in `kilo.jsonc` (JSONC supports `//` comments)
+
+```jsonc
+// kilo.jsonc
+{
+  "instructions": [
+    ".kilo/rules/formatting.md",
+    // ".kilo/rules/experimental.md"  -- temporarily disabled
+    ".kilo/rules/naming_conventions.md",
+  ],
+}
+```
+
+{% /tab %}
+{% tab label="CLI" %}
+
+Rules are managed by editing the `instructions` array in your `kilo.jsonc` config file directly.
+
+- **Add a rule**: Add a file path or glob pattern to the `instructions` array
+- **Remove a rule**: Remove the entry from the array
+- **Disable a rule temporarily**: Comment out the line in `kilo.jsonc` (JSONC supports `//` comments)
+
+```jsonc
+// kilo.jsonc
+{
+  "instructions": [
+    ".kilo/rules/formatting.md",
+    // ".kilo/rules/experimental.md"  -- temporarily disabled
+    ".kilo/rules/naming_conventions.md",
+  ],
+}
+```
+
+{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 Kilo Code provides a built-in interface for managing your custom rules without manually editing files in the `.kilocode/rules/` directories. To access the UI, click on the <Codicon name="law" /> icon in the **bottom right corner** of the Kilo Code window.
@@ -152,51 +192,39 @@ The built-in rules management UI is available for general rules only. Mode-speci
 {% /callout %}
 
 {% /tab %}
-{% tab label="VSCode (Legacy)" %}
-
-Rules are managed by editing the `instructions` array in your `kilo.json` config file. You can also use the **Settings** webview in VS Code to edit the configuration.
-
-- **Add a rule**: Add a file path or glob pattern to the `instructions` array
-- **Remove a rule**: Remove the entry from the array
-- **Disable a rule temporarily**: Comment out the line in `kilo.json` (JSONC supports `//` comments)
-
-```jsonc
-// kilo.json
-{
-  "instructions": [
-    ".kilo/rules/formatting.md",
-    // ".kilo/rules/experimental.md"  -- temporarily disabled
-    ".kilo/rules/naming_conventions.md",
-  ],
-}
-```
-
-{% /tab %}
-{% tab label="CLI" %}
-
-Rules are managed by editing the `instructions` array in your `kilo.json` config file directly.
-
-- **Add a rule**: Add a file path or glob pattern to the `instructions` array
-- **Remove a rule**: Remove the entry from the array
-- **Disable a rule temporarily**: Comment out the line in `kilo.json` (JSONC supports `//` comments)
-
-```jsonc
-// kilo.json
-{
-  "instructions": [
-    ".kilo/rules/formatting.md",
-    // ".kilo/rules/experimental.md"  -- temporarily disabled
-    ".kilo/rules/naming_conventions.md",
-  ],
-}
-```
-
-{% /tab %}
 {% /tabs %}
 
 ## Rule Loading Order
 
 {% tabs %}
+{% tab label="VSCode" %}
+
+Rules are loaded in the order they appear in the `instructions` array in `kilo.jsonc`:
+
+1. **Global instructions** from the global `kilo.jsonc` config
+2. **Project instructions** from the project's `kilo.jsonc`
+
+Files matched by glob patterns are loaded in filesystem order. Project-level instructions take precedence over global instructions for conflicting directives.
+
+{% callout type="note" title="Backward Compatibility" %}
+If `.kilocode/rules/` directories exist in your project, their contents are automatically included for backward compatibility. To fully migrate, move your rule files and reference them in `kilo.jsonc`.
+{% /callout %}
+
+{% /tab %}
+{% tab label="CLI" %}
+
+Rules are loaded in the order they appear in the `instructions` array in `kilo.jsonc`:
+
+1. **Global instructions** from the global `kilo.jsonc` config
+2. **Project instructions** from the project's `kilo.jsonc`
+
+Files matched by glob patterns are loaded in filesystem order. Project-level instructions take precedence over global instructions for conflicting directives.
+
+{% callout type="note" title="Backward Compatibility" %}
+If `.kilocode/rules/` directories exist in your project, their contents are automatically included for backward compatibility. To fully migrate, move your rule files and reference them in `kilo.jsonc`.
+{% /callout %}
+
+{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 ### General Rules (Any Mode)
@@ -226,25 +254,49 @@ The system also supports mode-specific rules with their own priority order:
 Mode-specific rules are only supported at the project level. When both generic and mode-specific rules exist, mode-specific rules take priority.
 
 {% /tab %}
-{% tab label="VSCode & CLI" %}
-
-Rules are loaded in the order they appear in the `instructions` array in `kilo.json`:
-
-1. **Global instructions** from the global `kilo.json` config
-2. **Project instructions** from the project's `kilo.json`
-
-Files matched by glob patterns are loaded in filesystem order. Project-level instructions take precedence over global instructions for conflicting directives.
-
-{% callout type="note" title="Backward Compatibility" %}
-If `.kilocode/rules/` directories exist in your project, their contents are automatically included for backward compatibility. To fully migrate, move your rule files and reference them in `kilo.json`.
-{% /callout %}
-
-{% /tab %}
 {% /tabs %}
 
 ## Creating Custom Rules
 
 {% tabs %}
+{% tab label="VSCode" %}
+
+### Using the Settings UI or Config File
+
+1. Create a `kilo.jsonc` file in your project root (if it doesn't exist)
+2. Create a `.kilo/rules/` directory (or any directory you prefer)
+3. Write your rule as a Markdown file in that directory
+4. Add the file path or a glob pattern to the `instructions` array in `kilo.jsonc`
+
+```jsonc
+// kilo.jsonc
+{
+  "instructions": [".kilo/rules/my-new-rule.md"],
+}
+```
+
+Rules are applied on the next interaction. You can also edit `kilo.jsonc` through the **Settings** webview in VS Code.
+
+{% /tab %}
+{% tab label="CLI" %}
+
+### Using the Config File
+
+1. Create a `kilo.jsonc` file in your project root (if it doesn't exist)
+2. Create a `.kilo/rules/` directory (or any directory you prefer)
+3. Write your rule as a Markdown file in that directory
+4. Add the file path or a glob pattern to the `instructions` array in `kilo.jsonc`
+
+```jsonc
+// kilo.jsonc
+{
+  "instructions": [".kilo/rules/my-new-rule.md"],
+}
+```
+
+Rules are applied on the next interaction.
+
+{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 ### Using the UI Interface
@@ -277,44 +329,6 @@ To create rules manually:
 4. Save the file
 
 Rules will be automatically applied to all future Kilo Code interactions. Any new changes will be applied immediately.
-
-{% /tab %}
-{% tab label="VSCode (Legacy)" %}
-
-### Using the Settings UI or Config File
-
-1. Create a `kilo.json` file in your project root (if it doesn't exist)
-2. Create a `.kilo/rules/` directory (or any directory you prefer)
-3. Write your rule as a Markdown file in that directory
-4. Add the file path or a glob pattern to the `instructions` array in `kilo.json`
-
-```jsonc
-// kilo.json
-{
-  "instructions": [".kilo/rules/my-new-rule.md"],
-}
-```
-
-Rules are applied on the next interaction. You can also edit `kilo.json` through the **Settings** webview in VS Code.
-
-{% /tab %}
-{% tab label="CLI" %}
-
-### Using the Config File
-
-1. Create a `kilo.json` file in your project root (if it doesn't exist)
-2. Create a `.kilo/rules/` directory (or any directory you prefer)
-3. Write your rule as a Markdown file in that directory
-4. Add the file path or a glob pattern to the `instructions` array in `kilo.json`
-
-```jsonc
-// kilo.json
-{
-  "instructions": [".kilo/rules/my-new-rule.md"],
-}
-```
-
-Rules are applied on the next interaction.
 
 {% /tab %}
 {% /tabs %}
@@ -399,6 +413,22 @@ If your custom rules aren't being properly followed:
 3. **Check rule locations**:
 
 {% tabs %}
+{% tab label="VSCode" %}
+
+- Verify that your `kilo.jsonc` file is valid JSON (with comments)
+- Ensure the `instructions` paths resolve to existing files
+- Check that glob patterns match the intended files
+- Run `kilo` to see if rules are loaded in the output
+
+{% /tab %}
+{% tab label="CLI" %}
+
+- Verify that your `kilo.jsonc` file is valid JSON (with comments)
+- Ensure the `instructions` paths resolve to existing files
+- Check that glob patterns match the intended files
+- Run `kilo` to see if rules are loaded in the output
+
+{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 - **Check rule status in the UI**: Use the rules management interface to verify that your rules are active and properly loaded
@@ -407,14 +437,6 @@ If your custom rules aren't being properly followed:
   - Project rules: `.kilocode/rules/` directory
   - Legacy files: `.kilocoderules`, `.roorules`, or `.clinerules`
 - **Restart VS Code** to ensure the rules are properly loaded
-
-{% /tab %}
-{% tab label="VSCode & CLI" %}
-
-- Verify that your `kilo.json` file is valid JSON (with comments)
-- Ensure the `instructions` paths resolve to existing files
-- Check that glob patterns match the intended files
-- Run `kilo` to see if rules are loaded in the output
 
 {% /tab %}
 {% /tabs %}

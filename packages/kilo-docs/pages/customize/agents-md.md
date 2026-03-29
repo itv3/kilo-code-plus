@@ -139,6 +139,32 @@ When you start a task in Kilo Code:
 ### Interaction with Other Rules
 
 {% tabs %}
+{% tab label="VSCode" %}
+
+In the new platform, AGENTS.md is loaded alongside other instruction sources. The CLI also supports `.claude/` and `.agents/` directories for compatibility with other tools.
+
+| Source                                           | Scope     | Location                                   | Priority         |
+| ------------------------------------------------ | --------- | ------------------------------------------ | ---------------- |
+| **Agent prompt**                                 | Per-agent | `agent.<name>.prompt` in config            | 1 (Highest)      |
+| **[Instructions](/docs/customize/custom-rules)** | Project   | `instructions` key in project `kilo.jsonc` | 2                |
+| **AGENTS.md**                                    | Project   | `AGENTS.md` at project root                | 3                |
+| **[Instructions](/docs/customize/custom-rules)** | Global    | `instructions` key in global `kilo.jsonc`  | 4                |
+| **[Skills](/docs/customize/skills)**             | Both      | `.kilo/skills/`, config `skills` key       | Loaded on demand |
+
+{% /tab %}
+{% tab label="CLI" %}
+
+In the new platform, AGENTS.md is loaded alongside other instruction sources. The CLI also supports `.claude/` and `.agents/` directories for compatibility with other tools.
+
+| Source                                           | Scope     | Location                                   | Priority         |
+| ------------------------------------------------ | --------- | ------------------------------------------ | ---------------- |
+| **Agent prompt**                                 | Per-agent | `agent.<name>.prompt` in config            | 1 (Highest)      |
+| **[Instructions](/docs/customize/custom-rules)** | Project   | `instructions` key in project `kilo.jsonc` | 2                |
+| **AGENTS.md**                                    | Project   | `AGENTS.md` at project root                | 3                |
+| **[Instructions](/docs/customize/custom-rules)** | Global    | `instructions` key in global `kilo.jsonc`  | 4                |
+| **[Skills](/docs/customize/skills)**             | Both      | `.kilo/skills/`, config `skills` key       | Loaded on demand |
+
+{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 AGENTS.md works alongside Kilo Code's other configuration systems:
@@ -152,24 +178,33 @@ AGENTS.md works alongside Kilo Code's other configuration systems:
 | **[Custom Instructions](/docs/customize/custom-instructions)** | Global  | IDE settings              | Personal preferences across all projects  | 5 (Lowest)  |
 
 {% /tab %}
-{% tab label="VSCode & CLI" %}
-
-In the new platform, AGENTS.md is loaded alongside other instruction sources. The CLI also supports `.claude/` and `.agents/` directories for compatibility with other tools.
-
-| Source                                           | Scope     | Location                                  | Priority         |
-| ------------------------------------------------ | --------- | ----------------------------------------- | ---------------- |
-| **Agent prompt**                                 | Per-agent | `agent.<name>.prompt` in config           | 1 (Highest)      |
-| **[Instructions](/docs/customize/custom-rules)** | Project   | `instructions` key in project `kilo.json` | 2                |
-| **AGENTS.md**                                    | Project   | `AGENTS.md` at project root               | 3                |
-| **[Instructions](/docs/customize/custom-rules)** | Global    | `instructions` key in global `kilo.json`  | 4                |
-| **[Skills](/docs/customize/skills)**             | Both      | `.kilo/skills/`, config `skills` key      | Loaded on demand |
-
-{% /tab %}
 {% /tabs %}
 
 ### Enabling/Disabling AGENTS.md
 
 {% tabs %}
+{% tab label="VSCode" %}
+
+AGENTS.md is loaded automatically. To disable external skill directories (`.claude/skills/`, `.agents/skills/`), set the environment variable:
+
+```bash
+export KILO_DISABLE_EXTERNAL_SKILLS=true
+```
+
+AGENTS.md itself cannot be individually disabled — it is always loaded if present. To override its instructions, use higher-priority sources like the `instructions` config key or agent-specific prompts.
+
+{% /tab %}
+{% tab label="CLI" %}
+
+AGENTS.md is loaded automatically. To disable external skill directories (`.claude/skills/`, `.agents/skills/`), set the environment variable:
+
+```bash
+export KILO_DISABLE_EXTERNAL_SKILLS=true
+```
+
+AGENTS.md itself cannot be individually disabled — it is always loaded if present. To override its instructions, use higher-priority sources like the `instructions` config key or agent-specific prompts.
+
+{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 AGENTS.md support is **enabled by default**. To disable it, edit `settings.json`:
@@ -179,17 +214,6 @@ AGENTS.md support is **enabled by default**. To disable it, edit `settings.json`
   "kilocode.useAgentRules": false
 }
 ```
-
-{% /tab %}
-{% tab label="VSCode & CLI" %}
-
-AGENTS.md is loaded automatically. To disable external skill directories (`.claude/skills/`, `.agents/skills/`), set the environment variable:
-
-```bash
-export KILO_DISABLE_EXTERNAL_SKILLS=true
-```
-
-AGENTS.md itself cannot be individually disabled — it is always loaded if present. To override its instructions, use higher-priority sources like the `instructions` config key or agent-specific prompts.
 
 {% /tab %}
 {% /tabs %}
