@@ -185,7 +185,7 @@ Mode-specific instructions can be set using the Modes Tab
 If the mode itself is global (not workspace-specific), any custom instructions you set for it will also apply globally for that mode across all workspaces.
 {% /callout %}
 
-## Mode-Specific Instructions from Files
+#### Mode-Specific Instructions from Files
 
 For version-controlled mode instructions, use the mode rules file paths documented in [Custom Modes](/docs/customize/custom-modes#mode-specific-instructions-via-filesdirectories):
 

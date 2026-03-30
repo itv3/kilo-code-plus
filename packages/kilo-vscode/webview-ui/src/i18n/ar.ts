@@ -266,6 +266,7 @@ export const dict = {
   "mcp.status.connected": "متصل",
   "mcp.status.failed": "فشل",
   "mcp.status.needs_auth": "يحتاج إلى مصادقة",
+  "mcp.status.needs_registration": "يحتاج إلى تسجيل العميل",
   "mcp.status.disabled": "معطل",
 
   "dialog.fork.empty": "لا توجد رسائل للتفرع منها",
@@ -966,7 +967,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "لأسئلة الفوترة أو الحساب، تواصل مع دعم العملاء على",
   "settings.aboutKiloCode.resetSettings.title": "إعادة تعيين الإعدادات",
   "settings.aboutKiloCode.resetSettings.description":
-    "إعادة تعيين جميع إعدادات إضافة Kilo Code إلى قيمها الافتراضية. لا يؤثر هذا على تكوين CLI أو الواجهة الخلفية.",
+    "يؤدي هذا إلى إعادة تعيين الإعدادات الخاصة بامتداد VS Code فقط إلى قيمها الافتراضية. الإعدادات المشتركة مع CLI، مثل الأوضاع وقواعد الموافقة التلقائية، مخزّنة في تكوين CLI ولن تتأثر.",
   "settings.aboutKiloCode.resetSettings.button": "إعادة تعيين جميع الإعدادات",
   "settings.aboutKiloCode.settingsTransfer.title": "نقل الإعدادات",
   "settings.aboutKiloCode.settingsTransfer.description": "تصدير أو استيراد إعداداتك لنقلها بين نُسخ VS Code.",
@@ -1135,7 +1136,9 @@ export const dict = {
   "settings.agentBehaviour.mcpDetail.args": "الوسائط",
   "settings.agentBehaviour.mcpDetail.env": "البيئة",
   "settings.agentBehaviour.mcpDetail.disabled": "هذا الخادم معطّل.",
-  "settings.agentBehaviour.mcpEmpty": "لم يتم تهيئة خوادم MCP. قم بتحرير ملف تهيئة opencode لإضافة خوادم MCP.",
+  "settings.agentBehaviour.mcpBrowseMarketplace": "تصفح Marketplace",
+  "settings.agentBehaviour.mcpEmpty":
+    "لم يتم تهيئة خوادم MCP. أضف خوادم MCP في kilo.jsonc، أو اطلب من الوكيل إضافتها لك.",
   "settings.agentBehaviour.workflowsPlaceholder": "تُدار سير العمل عبر ملفات سير العمل في مساحة العمل.",
   "settings.agentBehaviour.workflows.description":
     "سير العمل هي أوامر شرطة مائلة مخصصة محددة في التهيئة الخاصة بك. اكتب /command-name في الدردشة لتشغيلها. يتم تهيئة الأوامر في opencode.json ضمن قسم 'command'.",

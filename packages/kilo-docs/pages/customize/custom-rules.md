@@ -393,10 +393,6 @@ Custom rules can be applied to a wide variety of scenarios:
 - **Keep It Simple**: Rules should be concise and easy to understand
 - **Update Regularly**: Review and update rules as project requirements change
 
-{% callout type="tip" title="Pro Tip: File-Based Team Standards" %}
-When working in team environments, placing `.kilocode/rules/codestyle.md` files under version control allows you to standardize Kilo's behavior across your entire development team. This ensures consistent code style, documentation practices, and development workflows for everyone on the project.
-{% /callout %}
-
 ## Limitations
 
 - Rules are applied on a best-effort basis by the AI models
@@ -406,37 +402,38 @@ When working in team environments, placing `.kilocode/rules/codestyle.md` files 
 
 ## Troubleshooting
 
+{% tabs %}
+{% tab label="VSCode" %}
+
+If your rules aren't being followed:
+
+1. **Check the `instructions` array** in your config to ensure the file path is correct.
+2. **Verify Markdown formatting**: Ensure the file is valid Markdown.
+3. **Restart the session**: Start a new chat session to pick up config changes.
+
+{% /tab %}
+{% tab label="CLI" %}
+
+If your rules aren't being followed:
+
+1. **Check the `instructions` array** in your config to ensure the file path is correct.
+2. **Verify Markdown formatting**: Ensure the file is valid Markdown.
+3. **Restart the session**: Start a new chat session to pick up config changes.
+
+{% /tab %}
+{% tab label="VSCode (Legacy)" %}
+
 If your custom rules aren't being properly followed:
 
 1. **Verify rule formatting**: Ensure that your rules are properly formatted with clear Markdown structure
 2. **Rule specificity**: Verify that the rules are specific and unambiguous
 3. **Check rule locations**:
-
-{% tabs %}
-{% tab label="VSCode" %}
-
-- Verify that your `kilo.jsonc` file is valid JSON (with comments)
-- Ensure the `instructions` paths resolve to existing files
-- Check that glob patterns match the intended files
-- Run `kilo` to see if rules are loaded in the output
-
-{% /tab %}
-{% tab label="CLI" %}
-
-- Verify that your `kilo.jsonc` file is valid JSON (with comments)
-- Ensure the `instructions` paths resolve to existing files
-- Check that glob patterns match the intended files
-- Run `kilo` to see if rules are loaded in the output
-
-{% /tab %}
-{% tab label="VSCode (Legacy)" %}
-
-- **Check rule status in the UI**: Use the rules management interface to verify that your rules are active and properly loaded
-- Ensure rules are in supported locations:
-  - Global rules: `~/.kilocode/rules/` directory
-  - Project rules: `.kilocode/rules/` directory
-  - Legacy files: `.kilocoderules`, `.roorules`, or `.clinerules`
-- **Restart VS Code** to ensure the rules are properly loaded
+   - **Check rule status in the UI**: Use the rules management interface to verify that your rules are active and properly loaded
+   - Ensure rules are in supported locations:
+     - Global rules: `~/.kilocode/rules/` directory
+     - Project rules: `.kilocode/rules/` directory
+     - Legacy files: `.kilocoderules`, `.roorules`, or `.clinerules`
+   - **Restart VS Code** to ensure the rules are properly loaded
 
 {% /tab %}
 {% /tabs %}
