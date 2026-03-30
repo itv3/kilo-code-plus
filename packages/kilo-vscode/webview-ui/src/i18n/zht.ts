@@ -962,7 +962,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "如有帳單或帳戶問題，請聯繫客戶支援",
   "settings.aboutKiloCode.resetSettings.title": "重置設定",
   "settings.aboutKiloCode.resetSettings.description":
-    "將所有 Kilo Code 擴充功能設定重置為預設值。這不會影響 CLI 或後端設定。",
+    "此操作僅將 VS Code 擴充功能專屬設定重置為預設值。與 CLI 共享的設定（例如模式和自動核准規則）儲存在 CLI 設定中，不會被重置。",
   "settings.aboutKiloCode.resetSettings.button": "重置所有設定",
   "settings.aboutKiloCode.settingsTransfer.title": "設定轉移",
   "settings.aboutKiloCode.settingsTransfer.description": "匯出或匯入設定，以便在 VS Code 實例之間轉移。",

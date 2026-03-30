@@ -980,7 +980,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "По вопросам оплаты или аккаунта обращайтесь в службу поддержки по адресу",
   "settings.aboutKiloCode.resetSettings.title": "Сброс настроек",
   "settings.aboutKiloCode.resetSettings.description":
-    "Сбросить все настройки расширения Kilo Code до значений по умолчанию. Это не влияет на конфигурацию CLI или бэкенда.",
+    "Это сбрасывает только настройки, специфичные для расширения VS Code, до значений по умолчанию. Настройки, общие с CLI, такие как режимы и правила автоматического утверждения, хранятся в конфигурации CLI и не будут сброшены.",
   "settings.aboutKiloCode.resetSettings.button": "Сбросить все настройки",
   "settings.aboutKiloCode.settingsTransfer.title": "Перенос настроек",
   "settings.aboutKiloCode.settingsTransfer.description":

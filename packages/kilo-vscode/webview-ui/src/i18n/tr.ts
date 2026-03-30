@@ -977,7 +977,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "Faturalama veya hesap soruları için Müşteri Desteği ile iletişime geçin:",
   "settings.aboutKiloCode.resetSettings.title": "Ayarları Sıfırla",
   "settings.aboutKiloCode.resetSettings.description":
-    "Tüm Kilo Code uzantı ayarlarını varsayılan değerlerine sıfırla. Bu, CLI veya arka uç yapılandırmasını etkilemez.",
+    "Bu, yalnızca VS Code uzantısına özgü ayarları varsayılan değerlerine sıfırlar. Modlar ve otomatik onay kuralları gibi CLI ile paylaşılan ayarlar, CLI yapılandırmasında depolanır ve sıfırlanmaz.",
   "settings.aboutKiloCode.resetSettings.button": "Tüm Ayarları Sıfırla",
   "settings.aboutKiloCode.settingsTransfer.title": "Ayar Aktarımı",
   "settings.aboutKiloCode.settingsTransfer.description":

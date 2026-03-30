@@ -989,7 +989,7 @@ export const dict = {
     "Pour les questions de facturation ou de compte, contactez le support client à",
   "settings.aboutKiloCode.resetSettings.title": "Réinitialiser les paramètres",
   "settings.aboutKiloCode.resetSettings.description":
-    "Réinitialiser tous les paramètres de l'extension Kilo Code à leurs valeurs par défaut. Cela n'affecte pas la configuration CLI ou backend.",
+    "Ceci réinitialise uniquement les paramètres spécifiques à l'extension VS Code à leurs valeurs par défaut. Les paramètres partagés avec le CLI, tels que les modes et les règles d'approbation automatique, sont stockés dans la configuration du CLI et ne seront pas réinitialisés.",
   "settings.aboutKiloCode.resetSettings.button": "Réinitialiser tous les paramètres",
   "settings.aboutKiloCode.settingsTransfer.title": "Transfert des paramètres",
   "settings.aboutKiloCode.settingsTransfer.description":

@@ -972,7 +972,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "결제 또는 계정 관련 문의는 고객 지원팀에 문의하세요",
   "settings.aboutKiloCode.resetSettings.title": "설정 초기화",
   "settings.aboutKiloCode.resetSettings.description":
-    "Kilo Code 확장 프로그램의 모든 설정을 기본값으로 초기화합니다. CLI 또는 백엔드 구성에는 영향을 미치지 않습니다.",
+    "이 기능은 VS Code 확장 프로그램 전용 설정만 기본값으로 초기화합니다. 모드 및 자동 승인 규칙과 같이 CLI와 공유되는 설정은 CLI 구성에 저장되며 초기화되지 않습니다.",
   "settings.aboutKiloCode.resetSettings.button": "모든 설정 초기화",
   "settings.aboutKiloCode.settingsTransfer.title": "설정 이전",
   "settings.aboutKiloCode.settingsTransfer.description":

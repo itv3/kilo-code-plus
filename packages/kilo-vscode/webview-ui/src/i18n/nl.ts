@@ -974,7 +974,7 @@ export const dict = {
     "Voor vragen over facturering of je account, neem contact op met Klantenservice op",
   "settings.aboutKiloCode.resetSettings.title": "Instellingen resetten",
   "settings.aboutKiloCode.resetSettings.description":
-    "Reset alle instellingen van de Kilo Code extensie naar hun standaardwaarden. Dit heeft geen invloed op CLI of backend configuratie.",
+    "Dit reset alleen VS Code-extensiespecifieke instellingen naar hun standaardwaarden. Instellingen die gedeeld worden met de CLI, zoals modi en regels voor automatisch goedkeuren, worden opgeslagen in de CLI-configuratie en worden niet gereset.",
   "settings.aboutKiloCode.resetSettings.button": "Alle instellingen resetten",
   "settings.aboutKiloCode.settingsTransfer.title": "Instellingen overdragen",
   "settings.aboutKiloCode.settingsTransfer.description":
