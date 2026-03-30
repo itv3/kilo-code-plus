@@ -500,9 +500,19 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
     }
 
     // If this is the first call (no pending debounce), execute immediately
+    // but still track it as a pending request so subsequent calls can reuse it
     if (this.isFirstCall && this.debounceTimer === null) {
       this.isFirstCall = false
-      return this.fetchAndCacheSuggestion(prompt, prefix, suffix, languageId)
+      const leading: PendingRequest = {
+        prefix,
+        suffix,
+        promise: null!,
+      }
+      leading.promise = this.fetchAndCacheSuggestion(prompt, prefix, suffix, languageId).finally(() => {
+        this.removePendingRequest(leading)
+      })
+      this.pendingRequests.push(leading)
+      return leading.promise
     }
 
     // Clear any existing timer (reset the debounce)
