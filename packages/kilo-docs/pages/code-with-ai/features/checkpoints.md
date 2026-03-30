@@ -14,26 +14,12 @@ Checkpoints let you:
 - Compare different implementation approaches
 - Revert to previous project states without losing work
 
-{% callout type="info" title="Important Notes" %}
-
-- **Checkpoints are enabled by default.**
-- **Git must be installed** for checkpoints to function - [see installation instructions](#git-installation)
-- The working directory must be a Git repository for checkpoints to work
-- No GitHub account or repository is required
-- No Git personal information configuration is needed
-- The shadow Git repository operates independently from your project's existing Git configuration
-
-{% /callout %}
-
 ## Configuration Options
 
 {% tabs %}
 {% tab label="VSCode" %}
 
-Checkpoints are controlled by the `snapshot` boolean:
-
-- **Settings UI**: Open Settings → Checkpoints tab and toggle the snapshot setting
-- **Config file**: Set `"snapshot": true` or `"snapshot": false` in your `kilo.jsonc` configuration file
+Checkpoints (called **snapshots** in the new extension) are configured via the `snapshot` key in your config file (`kilo.jsonc` or `~/.config/kilo/kilo.jsonc`):
 
 ```json
 {
@@ -41,7 +27,11 @@ Checkpoints are controlled by the `snapshot` boolean:
 }
 ```
 
-When enabled, the system automatically captures snapshots at each step of a task.
+You can also toggle this in Settings:
+
+1. Open Settings by clicking the gear icon {% codicon name="gear" /%}
+2. Go to the `Checkpoints` tab
+3. Toggle the snapshot setting
 
 {% /tab %}
 {% tab label="CLI" %}
@@ -71,6 +61,29 @@ Access checkpoint settings in Kilo Code settings under the "Checkpoints" section
 
 ## How Checkpoints Work
 
+{% tabs %}
+{% tab label="VSCode" %}
+
+The new extension uses **git-based snapshots** of your working directory. Snapshots are taken before and after agent edits. They integrate with your existing Git repository — no separate shadow repository is created.
+
+**Reverting changes:**
+
+You can revert any message's changes from the chat. A **Revert Banner** appears at the top of the chat when the session is in a reverted state, making it clear that you are viewing an earlier state. Use the banner to unrevert and return to the latest state.
+
+{% /tab %}
+{% tab label="VSCode (Legacy)" %}
+
+{% callout type="info" title="Important Notes" %}
+
+- **Checkpoints are enabled by default.**
+- **Git must be installed** for checkpoints to function - [see installation instructions](#git-installation)
+- The working directory must be a Git repository for checkpoints to work
+- No GitHub account or repository is required
+- No Git personal information configuration is needed
+- The shadow Git repository operates independently from your project's existing Git configuration
+
+{% /callout %}
+
 Kilo Code captures snapshots of your project's state using a shadow Git repository, separate from your main version control system. These snapshots, called checkpoints, automatically record changes throughout your AI-assisted workflow—whenever tasks begin, files change, or commands run.
 
 Checkpoints are stored as Git commits in the shadow repository, capturing:
@@ -81,29 +94,25 @@ Checkpoints are stored as Git commits in the shadow repository, capturing:
 - Renamed files
 - Binary file changes
 
+{% /tab %}
+{% /tabs %}
+
 ## Working with Checkpoints
 
 {% tabs %}
 {% tab label="VSCode" %}
 
-Checkpoints are captured automatically at each step of a task, recording Git tree objects at each step.
+Checkpoints are integrated directly into your workflow through the chat interface. Each message that caused file changes shows a diff summary. You can:
 
-### Reverting Changes
+- Click the diff badge on a message to open the **Diff Viewer** and review what changed
+- Click **Revert** on any message to restore the workspace to its state before that message
 
-- **Full revert**: Revert your workspace to any point in the conversation
-- **Undo a revert**: Restore the state before the last revert
-- **Per-file revert**: Selectively undo changes to specific files while keeping others
-
-### Viewing Differences
-
-Diffs show per-file changes at each step. In the **Agent Manager**, these are displayed in a dedicated diff panel with full before/after file content.
+A **Revert Banner** is shown at the top of the chat whenever you are in a reverted state, with an option to return to the current state.
 
 {% /tab %}
 {% tab label="CLI" %}
 
-Checkpoints are captured automatically at each step of a task, recording Git tree objects at each step.
-
-In the CLI terminal interface, checkpoints appear as revert points in the conversation. You can revert to any point by selecting the corresponding message.
+Checkpoints are captured automatically at each step of a task. In the CLI terminal interface, checkpoints appear as revert points in the conversation. You can revert to any point by selecting the corresponding message.
 
 ### Reverting Changes
 
@@ -162,7 +171,22 @@ To restore a project to a previous checkpoint state:
 {% /tab %}
 {% /tabs %}
 
+### Limitations and Considerations
+
+- **Scope**: Checkpoints only capture changes made during active Kilo Code tasks
+- **External changes**: Modifications made outside of tasks (manual edits, other tools) aren't included
+- **Large files**: Very large binary files may impact performance
+- **Unsaved work**: Restoration will overwrite any unsaved changes in your workspace
+
 ## Technical Implementation
+
+{% tabs %}
+{% tab label="VSCode" %}
+
+The new extension uses the underlying Git repository in your workspace to create snapshot commits. No shadow repository is used.
+
+{% /tab %}
+{% tab label="VSCode (Legacy)" %}
 
 ### Checkpoint Architecture
 
@@ -245,16 +269,12 @@ Checkpoints do not support nested Git repositories. The working directory must b
 
 Operations are queued to prevent concurrent Git operations that might corrupt repository state. This ensures that rapid checkpoint operations complete safely even when requested in quick succession.
 
-### Limitations and Considerations
-
-- **Scope**: Checkpoints only capture changes made during active Kilo Code tasks
-- **External changes**: Modifications made outside of tasks (manual edits, other tools) aren't included
-- **Large files**: Very large binary files may impact performance
-- **Unsaved work**: Restoration will overwrite any unsaved changes in your workspace
+{% /tab %}
+{% /tabs %}
 
 ## Git Installation
 
-Checkpoints require Git to be installed on your system. The implementation uses the `simple-git` library, which relies on Git command-line tools to create and manage shadow repositories.
+Checkpoints require Git to be installed on your system.
 
 ### macOS
 
