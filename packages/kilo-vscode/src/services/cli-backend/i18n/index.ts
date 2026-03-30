@@ -42,6 +42,7 @@ const bundles: Record<string, Record<string, string>> = {
 function resolveLocale(lang: string): string {
   const lower = lang.toLowerCase()
   if (lower.startsWith("zh")) {
+    if (lower === "zht") return "zht"
     const traditional =
       lower.includes("hant") || lower.includes("-tw") || lower.includes("-hk") || lower.includes("-mo")
     return traditional ? "zht" : "zh"
