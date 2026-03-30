@@ -24,7 +24,6 @@ const readOnlyBash: Record<string, "allow" | "ask" | "deny"> = {
   "whoami *": "allow",
   "printenv *": "allow",
   "man *": "allow",
-  "find *": "allow",
   "grep *": "allow",
   "rg *": "allow",
   "ag *": "allow",
@@ -53,6 +52,17 @@ const readOnlyBash: Record<string, "allow" | "ask" | "deny"> = {
   "git clean *": "deny",
   "git mv *": "deny",
   "git rm *": "deny",
+  "git config *": "deny",
+  "git clone *": "deny",
+  "git pull *": "deny",
+  "git init *": "deny",
+  "git worktree *": "deny",
+  "git submodule *": "deny",
+  "git revert *": "deny",
+  "git bisect *": "deny",
+  "git filter-branch *": "deny",
+  "git fetch *": "deny",
+  "git restore *": "deny",
   "gh *": "ask",
 }
 
@@ -115,7 +125,6 @@ describe("Ask agent bash permissions", () => {
       ["ls", "ls -la"],
       ["grep", "grep -r TODO src/"],
       ["rg", "rg pattern"],
-      ["find", "find . -name '*.ts'"],
       ["jq", "jq '.name' package.json"],
       ["head", "head -n 10 file.txt"],
       ["tail", "tail -f log.txt"],
@@ -178,6 +187,17 @@ describe("Ask agent bash permissions", () => {
       "git remote add origin url",
       "git remote remove upstream",
       "git remote set-url origin url",
+      "git config user.name test",
+      "git clone https://example.com/repo",
+      "git pull origin main",
+      "git init",
+      "git worktree add ../branch",
+      "git submodule update --init",
+      "git revert HEAD",
+      "git bisect start",
+      "git filter-branch --all",
+      "git fetch origin",
+      "git restore src/index.ts",
     ]
 
     for (const cmd of denied) {
@@ -190,6 +210,7 @@ describe("Ask agent bash permissions", () => {
 
   describe("denied write/execute commands", () => {
     const denied = [
+      "find . -exec rm {} \\;",
       "touch newfile.ts",
       "mkdir src/new",
       "cp a.ts b.ts",

@@ -138,8 +138,6 @@ export namespace Agent {
       "whoami *": "allow",
       "printenv *": "allow",
       "man *": "allow",
-      // file discovery
-      "find *": "allow",
       // text processing (stdout only, no file modification)
       "grep *": "allow",
       "rg *": "allow",
@@ -170,6 +168,17 @@ export namespace Agent {
       "git clean *": "deny",
       "git mv *": "deny",
       "git rm *": "deny",
+      "git config *": "deny",
+      "git clone *": "deny",
+      "git pull *": "deny",
+      "git init *": "deny",
+      "git worktree *": "deny",
+      "git submodule *": "deny",
+      "git revert *": "deny",
+      "git bisect *": "deny",
+      "git filter-branch *": "deny",
+      "git fetch *": "deny",
+      "git restore *": "deny",
       // gh — require user approval since commands vary widely
       "gh *": "ask",
     }
