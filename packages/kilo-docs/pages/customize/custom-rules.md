@@ -38,7 +38,7 @@ Add an `instructions` array to your project config (`kilo.json` or `.kilo/kilo.j
 
 ### Global Instructions
 
-Add the same `instructions` key to your global config (`~/.config/kilo/opencode.json`):
+Add the same `instructions` key to your global config (`~/.config/kilo/kilo.jsonc`):
 
 ```json
 {

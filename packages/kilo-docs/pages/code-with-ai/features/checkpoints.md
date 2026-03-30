@@ -19,7 +19,7 @@ Checkpoints let you:
 {% tabs %}
 {% tab label="VSCode" %}
 
-Checkpoints (called **snapshots** in the new extension) are configured via the `snapshot` key in your config file (`kilo.json` or `~/.config/kilo/opencode.json`):
+Checkpoints (called **snapshots** in the new extension) are configured via the `snapshot` key in your config file (`kilo.jsonc` or `~/.config/kilo/kilo.jsonc`):
 
 ```json
 {

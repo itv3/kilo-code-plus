@@ -148,7 +148,6 @@ Available experimental toggles include:
 - **LSP integration** — expose language server diagnostics to the agent
 - **Paste summary** — summarize large clipboard pastes before including them
 - **Batch tool** — allow the agent to batch multiple tool calls in one step
-- **Codebase search** — semantic search across your codebase
 
 Advanced options not exposed in the UI can be configured via the `experimental` key in `kilo.jsonc`:
 

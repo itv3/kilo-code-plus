@@ -22,7 +22,7 @@ Custom Instructions are IDE-wide and are applied across all workspaces and maint
 
 In the new extension, global and agent-specific instructions are managed through config files and agent Markdown files rather than a UI text area.
 
-**Global instructions** (applied to all agents) — add an `instructions` array to your global config (`~/.config/kilo/opencode.json`):
+**Global instructions** (applied to all agents) — add an `instructions` array to your global config (`~/.config/kilo/kilo.jsonc`):
 
 ```json
 {
@@ -47,6 +47,12 @@ You can also manage instruction file references from:
 1. Click the {% codicon name="gear" /%} icon in the sidebar toolbar to open Settings.
 2. Click `Agent Behaviour` → `Rules` sub-tab.
 3. Add or remove instruction file paths.
+
+### Agent-Specific Instructions
+
+Agent-specific instructions are written directly in the agent Markdown file body (`.kilo/agents/{agent-name}.md`). The file content after the YAML frontmatter is used as the agent's system prompt.
+
+For version-controlled per-agent instructions, simply commit the `.kilo/agents/` directory.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
@@ -74,20 +80,7 @@ Mode-specific instructions can be set using the Modes Tab
         If the mode itself is global (not workspace-specific), any custom instructions you set for it will also apply globally for that mode across all workspaces.
         {% /callout %}
 
-{% /tab %}
-{% /tabs %}
-
-## Mode-Specific Instructions from Files
-
-{% tabs %}
-{% tab label="VSCode" %}
-
-Agent-specific instructions are written directly in the agent Markdown file body (`.kilo/agents/{agent-name}.md`). The file content after the YAML frontmatter is used as the agent's system prompt.
-
-For version-controlled per-agent instructions, simply commit the `.kilo/agents/` directory.
-
-{% /tab %}
-{% tab label="VSCode (Legacy)" %}
+#### Mode-Specific Instructions from Files
 
 For version-controlled mode instructions, use the mode rules file paths documented in [Custom Modes](/docs/customize/custom-modes#mode-specific-instructions-via-filesdirectories):
 
