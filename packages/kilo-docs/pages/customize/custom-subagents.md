@@ -51,7 +51,7 @@ Add agents to the `agent` section of your `kilo.json` config file. Any key that 
 
 ```json
 {
-  "$schema": "https://kilo.ai/config.json",
+  "$schema": "https://app.kilo.ai/config.json",
   "agent": {
     "code-reviewer": {
       "description": "Reviews code for best practices and potential issues",
@@ -373,5 +373,5 @@ To disable a built-in agent entirely:
 
 - [Custom Modes](/docs/customize/custom-modes) — Create specialized primary agents with tool restrictions
 - [Custom Rules](/docs/customize/custom-rules) — Define rules that apply to specific file types or situations
-- [Orchestrator Mode](/docs/code-with-ai/agents/orchestrator-mode) — Coordinate complex tasks by delegating to subagents
+- [Orchestrator Mode](/docs/code-with-ai/agents/orchestrator-mode) — Legacy mode for task delegation (now built into all agents)
 - [Task Tool](/docs/automate/tools/new-task) — The tool used to invoke subagents

@@ -16,6 +16,7 @@ import { SessionCompaction } from "./compaction"
 import { PermissionNext } from "@/permission/next"
 import { Question } from "@/question"
 import { Telemetry } from "@kilocode/kilo-telemetry" // kilocode_change
+import { Flag } from "@/flag/flag" // kilocode_change
 
 export namespace SessionProcessor {
   const DOOM_LOOP_THRESHOLD = 3
@@ -302,7 +303,10 @@ export namespace SessionProcessor {
                     sessionID: input.sessionID,
                     messageID: input.assistantMessage.parentID,
                   })
-                  if (await SessionCompaction.isOverflow({ tokens: usage.tokens, model: input.model })) {
+                  if (
+                    !input.assistantMessage.summary &&
+                    (await SessionCompaction.isOverflow({ tokens: usage.tokens, model: input.model }))
+                  ) {
                     needsCompaction = true
                   }
                   break
@@ -377,27 +381,36 @@ export namespace SessionProcessor {
             })
             const error = MessageV2.fromError(e, { providerID: input.model.providerID })
             if (MessageV2.ContextOverflowError.isInstance(error)) {
-              // TODO: Handle context overflow error
-            }
-            const retry = SessionRetry.retryable(error)
-            if (retry !== undefined) {
-              attempt++
-              const delay = SessionRetry.delay(attempt, error.name === "APIError" ? error : undefined)
-              SessionStatus.set(input.sessionID, {
-                type: "retry",
-                attempt,
-                message: retry,
-                next: Date.now() + delay,
+              needsCompaction = true
+              Bus.publish(Session.Event.Error, {
+                sessionID: input.sessionID,
+                error,
               })
-              await SessionRetry.sleep(delay, input.abort).catch(() => {})
-              continue
+            } else {
+              const retry = SessionRetry.retryable(error)
+              if (
+                retry !== undefined &&
+                (Flag.KILO_SESSION_RETRY_LIMIT === undefined || attempt < Flag.KILO_SESSION_RETRY_LIMIT)
+              ) {
+                // kilocode_change
+                attempt++
+                const delay = SessionRetry.delay(attempt, error.name === "APIError" ? error : undefined)
+                SessionStatus.set(input.sessionID, {
+                  type: "retry",
+                  attempt,
+                  message: retry,
+                  next: Date.now() + delay,
+                })
+                await SessionRetry.sleep(delay, input.abort).catch(() => {})
+                continue
+              }
+              input.assistantMessage.error = error
+              Bus.publish(Session.Event.Error, {
+                sessionID: input.assistantMessage.sessionID,
+                error: input.assistantMessage.error,
+              })
+              SessionStatus.set(input.sessionID, { type: "idle" })
             }
-            input.assistantMessage.error = error
-            Bus.publish(Session.Event.Error, {
-              sessionID: input.assistantMessage.sessionID,
-              error: input.assistantMessage.error,
-            })
-            SessionStatus.set(input.sessionID, { type: "idle" })
           }
           if (snapshot) {
             const patch = await Snapshot.patch(snapshot)
@@ -430,6 +443,13 @@ export namespace SessionProcessor {
               })
             }
           }
+          // kilocode_change start — guard empty tool-calls (#7756)
+          const empty = input.assistantMessage.finish === "tool-calls" && !p.some((part) => part.type === "tool")
+          if (empty) {
+            log.warn("empty tool-calls", { messageID: input.assistantMessage.id })
+            input.assistantMessage.finish = "stop"
+          }
+          // kilocode_change end
           input.assistantMessage.time.completed = Date.now()
           await Session.updateMessage(input.assistantMessage)
           if (needsCompaction) return "compact"

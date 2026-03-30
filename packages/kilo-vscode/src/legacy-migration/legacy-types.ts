@@ -171,6 +171,24 @@ export interface LegacyProviderSettings {
   // Synthetic
   syntheticApiKey?: string
 
+  // NanoGPT
+  nanoGptApiKey?: string
+  nanoGptModelId?: string
+
+  // Poe
+  poeApiKey?: string
+  poeModelId?: string
+
+  // AiHubMix
+  aihubmixApiKey?: string
+  aihubmixModelId?: string
+  aihubmixBaseUrl?: string
+
+  // ZenMux
+  zenmuxApiKey?: string
+  zenmuxModelId?: string
+  zenmuxBaseUrl?: string
+
   // Allow dynamic property access for provider-mapping lookups
   [key: string]: unknown
 }
@@ -229,7 +247,7 @@ export interface LegacySettings {
 // Custom modes (stored on disk at <globalStorage>/settings/custom_modes.yaml)
 // ---------------------------------------------------------------------------
 
-export interface LegacyCustomModesFile {
+interface LegacyCustomModesFile {
   customModes: LegacyCustomMode[]
 }
 

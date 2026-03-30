@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import type { KiloClient, FileDiff } from "@kilocode/sdk/v2/client"
-import type { Worktree } from "./WorktreeStateManager"
+import { remoteRef, type Worktree } from "./WorktreeStateManager"
 import type { GitOps } from "./GitOps"
 import { normalizePath } from "./git-import"
 
@@ -58,10 +58,19 @@ export class GitStatsPoller {
   > = {}
   private readonly intervalMs: number
   private readonly git: GitOps
+  private skipWorktreeIds = new Set<string>()
 
   constructor(private readonly options: GitStatsPollerOptions) {
     this.intervalMs = options.intervalMs ?? 5000
     this.git = options.git
+  }
+
+  skipWorktree(id: string): void {
+    this.skipWorktreeIds.add(id)
+  }
+
+  unskipWorktree(id: string): void {
+    this.skipWorktreeIds.delete(id)
   }
 
   setEnabled(enabled: boolean): void {
@@ -134,7 +143,7 @@ export class GitStatsPoller {
     const missing = new Set(
       presence.degraded ? [] : presence.worktrees.filter((item) => item.missing).map((item) => item.worktreeId),
     )
-    const active = worktrees.filter((wt) => !missing.has(wt.id))
+    const active = worktrees.filter((wt) => !missing.has(wt.id) && !this.skipWorktreeIds.has(wt.id))
     if (active.length === 0) {
       if (this.lastHash === "") return
       this.lastHash = ""
@@ -147,9 +156,10 @@ export class GitStatsPoller {
       await Promise.all(
         active.map(async (wt) => {
           try {
+            const base = remoteRef(wt)
             const [{ data: diffs }, ab] = await Promise.all([
-              client.worktree.diff({ directory: wt.path, base: wt.parentBranch }, { throwOnError: true }),
-              this.git.aheadBehind(wt.path, wt.parentBranch),
+              client.worktree.diffSummary({ directory: wt.path, base }, { throwOnError: true }),
+              this.git.aheadBehind(wt.path, base, wt.remote),
             ])
             const files = diffs.length
             const additions = diffs.reduce((sum: number, diff: FileDiff) => sum + diff.additions, 0)
@@ -237,8 +247,8 @@ export class GitStatsPoller {
       if (!branch || branch === "HEAD") return
 
       const tracking = await this.git.resolveTrackingBranch(root, branch)
-
       const base = tracking ?? (await this.git.resolveDefaultBranch(root, branch))
+      const remote = await this.git.resolveRemote(root, branch).catch(() => undefined)
 
       let files: number
       let additions: number
@@ -249,8 +259,8 @@ export class GitStatsPoller {
         if (base && client) {
           this.options.log(`Local stats: using HTTP client with base=${base}`)
           const [{ data: diffs }, ab] = await Promise.all([
-            client.worktree.diff({ directory: root, base }, { throwOnError: true }),
-            this.git.aheadBehind(root, base),
+            client.worktree.diffSummary({ directory: root, base }, { throwOnError: true }),
+            this.git.aheadBehind(root, base, remote),
           ])
           files = diffs.length
           additions = diffs.reduce((sum: number, d: FileDiff) => sum + d.additions, 0)

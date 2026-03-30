@@ -1,11 +1,11 @@
 import * as nodePath from "path"
 import * as os from "os"
-import * as cp from "child_process"
 import * as fs from "fs/promises"
+import { spawn } from "../util/process"
 import simpleGit from "simple-git"
 import { parseWorktreeList, normalizePath } from "./git-import"
 
-export interface GitOpsOptions {
+interface GitOpsOptions {
   log: (...args: unknown[]) => void
   refreshMs?: number
   /** Override git command execution for testing. */
@@ -17,13 +17,13 @@ export interface ApplyConflict {
   reason: string
 }
 
-export interface ApplyCheckResult {
+interface ApplyCheckResult {
   ok: boolean
   conflicts: ApplyConflict[]
   message: string
 }
 
-export interface ApplyPatchResult {
+interface ApplyPatchResult {
   ok: boolean
   conflicts: ApplyConflict[]
   message: string
@@ -210,33 +210,14 @@ export class GitOps {
 
   /**
    * Count commits ahead and behind using `rev-list --left-right --count`.
-   * Tries the best available ref in order: upstream tracking branch →
-   * remote/branch → remote/parentBranch → local parentBranch.
+   * Callers are expected to pass a fully-qualified ref (e.g. "origin/main").
+   * Pass `remote` explicitly to refresh the tracking ref before counting;
+   * the remote is NOT inferred from the ref to avoid misinterpreting
+   * branch names that contain slashes (e.g. "release/1.0").
    */
-  async aheadBehind(cwd: string, parentBranch: string): Promise<{ ahead: number; behind: number }> {
-    const upstream = await this.raw(["rev-parse", "--abbrev-ref", "@{upstream}"], cwd).catch(() => "")
-    const branch = await this.raw(["branch", "--show-current"], cwd).catch(() => "")
-    const remote = await this.resolveRemote(cwd, branch)
-    await this.refreshRemote(cwd, remote)
-
-    const ref = (() => {
-      if (upstream) return upstream
-      const remoteBranch = branch ? `${remote}/${branch}` : ""
-      // hasRemoteRef is async, so we can't use it inline — resolve below
-      return { remoteBranch, remoteParent: `${remote}/${parentBranch}`, parentBranch }
-    })()
-
-    if (typeof ref === "string") {
-      return this.parseLeftRight(cwd, ref)
-    }
-
-    if (ref.remoteBranch && (await this.hasRemoteRef(cwd, ref.remoteBranch))) {
-      return this.parseLeftRight(cwd, ref.remoteBranch)
-    }
-    if (await this.hasRemoteRef(cwd, ref.remoteParent)) {
-      return this.parseLeftRight(cwd, ref.remoteParent)
-    }
-    return this.parseLeftRight(cwd, ref.parentBranch)
+  async aheadBehind(cwd: string, base: string, remote?: string): Promise<{ ahead: number; behind: number }> {
+    if (remote) await this.refreshRemote(cwd, remote)
+    return this.parseLeftRight(cwd, base)
   }
 
   private async parseLeftRight(cwd: string, ref: string): Promise<{ ahead: number; behind: number }> {
@@ -368,26 +349,11 @@ export class GitOps {
 
   private exec(args: string[], cwd: string, options?: ExecOptions): Promise<ExecResult> {
     return new Promise((resolve) => {
-      const child = cp.execFile(
-        "git",
-        args,
-        {
-          cwd,
-          env: options?.env,
-          encoding: "utf8",
-          maxBuffer: 64 * 1024 * 1024,
-        },
-        (error, stdout, stderr) => {
-          if (!error) {
-            resolve({ code: 0, stdout, stderr })
-            return
-          }
-          const exec = error as cp.ExecException
-          const code = typeof exec.code === "number" ? exec.code : 1
-          const fallback = exec.message || "Git command failed"
-          resolve({ code, stdout: stdout ?? "", stderr: stderr || fallback })
-        },
-      )
+      const child = spawn("git", args, {
+        cwd,
+        env: options?.env,
+        stdio: ["pipe", "pipe", "pipe"],
+      })
 
       if (options?.stdin !== undefined) {
         if (!child.stdin) {
@@ -396,6 +362,22 @@ export class GitOps {
         }
         child.stdin.end(options.stdin)
       }
+
+      const out: Buffer[] = []
+      const err: Buffer[] = []
+      child.stdout?.on("data", (chunk: Buffer) => out.push(chunk))
+      child.stderr?.on("data", (chunk: Buffer) => err.push(chunk))
+
+      child.on("error", (error) => {
+        resolve({ code: 1, stdout: "", stderr: error.message })
+      })
+      child.on("close", (code) => {
+        resolve({
+          code: code ?? 1,
+          stdout: Buffer.concat(out).toString("utf8"),
+          stderr: Buffer.concat(err).toString("utf8"),
+        })
+      })
     })
   }
 }

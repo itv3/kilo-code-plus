@@ -1,6 +1,7 @@
 import path from "path"
 import os from "os"
 import fs from "fs/promises"
+import { StringDecoder } from "string_decoder" // kilocode_change - fix UTF-8 multi-byte split
 import z from "zod"
 import { Filesystem } from "../util/filesystem"
 import { Identifier } from "../id/id"
@@ -47,6 +48,7 @@ import { Shell } from "@/shell/shell"
 import { Truncate } from "@/tool/truncation"
 import { PlanFollowup } from "@/kilocode/plan-followup" // kilocode_change
 import { ReviewFollowup } from "@/kilocode/review-followup" // kilocode_change
+import { environmentDetails } from "@/kilocode/editor-context" // kilocode_change
 
 // @ts-ignore
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -210,7 +212,6 @@ export namespace SessionPrompt {
         openTabs: z.array(z.string()).optional(),
         activeFile: z.string().optional(),
         shell: z.string().optional(),
-        timezone: z.string().optional(),
       })
       .optional(),
     // kilocode_change end
@@ -403,6 +404,12 @@ export namespace SessionPrompt {
     // Note: On session resumption, state is reset but outputFormat is preserved
     // on the user message and will be retrieved from lastUser below
     let structuredOutput: unknown | undefined
+
+    // kilocode_change — cache environment details per turn so the last user
+    // message stays byte-identical across tool-loop steps (prompt caching).
+    // Keyed by user message ID so it recomputes when a new user message arrives.
+    let envBlock: string | undefined
+    let envUser: string | undefined
 
     let step = 0
     const session = await Session.get(sessionID)
@@ -642,6 +649,7 @@ export namespace SessionPrompt {
             },
             agent: lastUser.agent,
             model: lastUser.model,
+            editorContext: lastUser.editorContext, // kilocode_change — preserve editor context
           }
           await Session.updateMessage(summaryUserMsg)
           await Session.updatePart({
@@ -665,6 +673,7 @@ export namespace SessionPrompt {
           abort,
           sessionID,
           auto: task.auto,
+          overflow: task.overflow,
         })
         if (result === "stop") break
         continue
@@ -779,6 +788,30 @@ export namespace SessionPrompt {
 
       await Plugin.trigger("experimental.chat.messages.transform", {}, { messages: msgs })
 
+      // kilocode_change start — ephemerally inject dynamic editor context into last user message
+      if (envUser !== lastUser.id) {
+        envBlock = environmentDetails(lastUser.editorContext)
+        envUser = lastUser.id
+      }
+      if (envBlock) {
+        const idx = msgs.findLastIndex((m) => m.info.role === "user")
+        if (idx !== -1)
+          msgs[idx] = {
+            ...msgs[idx],
+            parts: [
+              ...msgs[idx].parts,
+              {
+                id: Identifier.ascending("part"),
+                sessionID,
+                messageID: msgs[idx].info.id,
+                type: "text",
+                text: envBlock,
+              } satisfies MessageV2.TextPart,
+            ],
+          }
+      }
+      // kilocode_change end
+
       // Build system prompt, adding structured output instruction if needed
       const system = [
         ...(await SystemPrompt.environment(model, lastUser.editorContext)),
@@ -848,6 +881,7 @@ export namespace SessionPrompt {
           agent: lastUser.agent,
           model: lastUser.model,
           auto: true,
+          overflow: !processor.message.finish,
         })
       }
       continue
@@ -1781,12 +1815,17 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         ...shellEnv.env,
         TERM: "dumb",
       },
+      windowsHide: true, // kilocode_change - prevent CMD window flash on Windows
     })
 
     let output = ""
+    // kilocode_change start - use StringDecoder to handle multi-byte UTF-8 characters split across chunks
+    // separate decoder per stream so partial bytes from one pipe don't corrupt the other
+    const stdoutDecoder = new StringDecoder("utf8")
+    const stderrDecoder = new StringDecoder("utf8")
 
     proc.stdout?.on("data", (chunk) => {
-      output += chunk.toString()
+      output += stdoutDecoder.write(chunk)
       if (part.state.status === "running") {
         part.state.metadata = {
           output: output,
@@ -1797,7 +1836,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
     })
 
     proc.stderr?.on("data", (chunk) => {
-      output += chunk.toString()
+      output += stderrDecoder.write(chunk)
       if (part.state.status === "running") {
         part.state.metadata = {
           output: output,
@@ -1806,6 +1845,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         Session.updatePart(part)
       }
     })
+    // kilocode_change end
 
     let aborted = false
     let exited = false
@@ -1831,6 +1871,10 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         resolve()
       })
     })
+
+    // kilocode_change - flush any trailing buffered bytes from decoders
+    output += stdoutDecoder.end()
+    output += stderrDecoder.end()
 
     if (aborted) {
       output += "\n\n" + ["<metadata>", "User aborted the command", "</metadata>"].join("\n")
@@ -2080,7 +2124,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       tools: {},
       model,
       abort: new AbortController().signal,
-      sessionID: input.session.id,
+      sessionID: `title-${input.session.id}`, // kilocode_change - separate taskID to prevent small-model leak (#6552)
       retries: 2,
       messages: [
         {
