@@ -974,7 +974,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "For fakturerings- eller kontospørgsmål, kontakt kundesupport på",
   "settings.aboutKiloCode.resetSettings.title": "Nulstil indstillinger",
   "settings.aboutKiloCode.resetSettings.description":
-    "Nulstil alle Kilo Code-udvidelsesindstillinger til standardværdierne. Dette påvirker ikke CLI- eller backend-konfiguration.",
+    "Dette nulstiller kun VS Code-udvidelsesspecifikke indstillinger til deres standardværdier. Indstillinger der deles med CLI, såsom tilstande og regler for automatisk godkendelse, er gemt i CLI-konfigurationen og vil ikke blive nulstillet.",
   "settings.aboutKiloCode.resetSettings.button": "Nulstil alle indstillinger",
   "settings.aboutKiloCode.settingsTransfer.title": "Overførsel af indstillinger",
   "settings.aboutKiloCode.settingsTransfer.description":

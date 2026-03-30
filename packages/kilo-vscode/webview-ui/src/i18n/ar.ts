@@ -967,7 +967,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "لأسئلة الفوترة أو الحساب، تواصل مع دعم العملاء على",
   "settings.aboutKiloCode.resetSettings.title": "إعادة تعيين الإعدادات",
   "settings.aboutKiloCode.resetSettings.description":
-    "إعادة تعيين جميع إعدادات إضافة Kilo Code إلى قيمها الافتراضية. لا يؤثر هذا على تكوين CLI أو الواجهة الخلفية.",
+    "يؤدي هذا إلى إعادة تعيين الإعدادات الخاصة بامتداد VS Code فقط إلى قيمها الافتراضية. الإعدادات المشتركة مع CLI، مثل الأوضاع وقواعد الموافقة التلقائية، مخزّنة في تكوين CLI ولن تتأثر.",
   "settings.aboutKiloCode.resetSettings.button": "إعادة تعيين جميع الإعدادات",
   "settings.aboutKiloCode.settingsTransfer.title": "نقل الإعدادات",
   "settings.aboutKiloCode.settingsTransfer.description": "تصدير أو استيراد إعداداتك لنقلها بين نُسخ VS Code.",

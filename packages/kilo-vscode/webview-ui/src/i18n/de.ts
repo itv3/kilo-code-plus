@@ -987,7 +987,7 @@ export const dict = {
     "Bei Abrechnungs- oder Kontofragen wenden Sie sich an den Kundensupport unter",
   "settings.aboutKiloCode.resetSettings.title": "Einstellungen zurücksetzen",
   "settings.aboutKiloCode.resetSettings.description":
-    "Alle Kilo Code-Erweiterungseinstellungen auf Standardwerte zurücksetzen. Dies hat keinen Einfluss auf die CLI- oder Backend-Konfiguration.",
+    "Dies setzt nur VS Code-erweiterungsspezifische Einstellungen auf ihre Standardwerte zurück. Einstellungen, die mit der CLI geteilt werden, wie Modi und Regeln für die automatische Genehmigung, werden in der CLI-Konfiguration gespeichert und nicht zurückgesetzt.",
   "settings.aboutKiloCode.resetSettings.button": "Alle Einstellungen zurücksetzen",
   "settings.aboutKiloCode.settingsTransfer.title": "Einstellungen übertragen",
   "settings.aboutKiloCode.settingsTransfer.description":
