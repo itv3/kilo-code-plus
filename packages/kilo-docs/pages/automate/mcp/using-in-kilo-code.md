@@ -16,8 +16,8 @@ Model Context Protocol (MCP) extends Kilo Code's capabilities by connecting to e
 
 MCP server configurations are stored inside the main Kilo config file. There are two levels:
 
-1. **Global Configuration**: `~/.config/kilo/opencode.json` — applies to all projects.
-2. **Project-level Configuration**: `kilo.json` or `.kilo/kilo.jsonc` in your project root.
+1. **Global Configuration**: `~/.config/kilo/kilo.jsonc` — applies to all projects.
+2. **Project-level Configuration**: `kilo.jsonc` in your project root, or `.kilo/kilo.jsonc` for a cleaner setup.
 
 **Precedence**: Project-level configuration takes precedence over global configuration.
 
@@ -33,7 +33,7 @@ From here you can add, edit, enable/disable, and delete MCP servers. Changes are
 
 ### Config Format
 
-MCP servers are configured under the `mcp` key in `opencode.json` / `kilo.jsonc`:
+MCP servers are configured under the `mcp` key in `kilo.jsonc`:
 
 **Local (STDIO) server:**
 
@@ -282,17 +282,20 @@ To set the maximum time to wait for a response after a tool call to the MCP serv
 {% tabs %}
 {% tab label="VSCode" %}
 
-Tool permissions in the new extension are managed through the permission system. In your config file, set a tool's permission to `"allow"` to auto-approve it:
+MCP tool calls use the same permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `my_server_do_something`).
+
+**At runtime:** When an MCP tool is called, the Permission Dock shows an approval prompt. Click **Approve Always** to save an allow rule to your config so future calls to that tool are auto-approved.
+
+**In your config file:** Add the tool name (or a wildcard pattern) to the `permission` key in `kilo.jsonc`:
 
 ```json
 {
   "permission": {
-    "bash": "allow"
+    "my_server_do_something": "allow",
+    "my_server_*": "allow"
   }
 }
 ```
-
-You can also approve individual MCP tool calls as "always allow" directly from the Permission Dock in the chat UI.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}

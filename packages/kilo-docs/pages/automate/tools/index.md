@@ -22,6 +22,7 @@ Tools are organized into logical groups based on their functionality:
 | **Edit Group**     | File system modifications         | `edit`, `multiedit`, `write`, `apply_patch`                  | Code changes and file manipulation      |
 | **Execute Group**  | Shell command execution           | `bash`                                                       | Running scripts, building projects      |
 | **Web Group**      | Fetch and search web content      | `webfetch`, `websearch`, `codesearch`                        | Research, documentation lookup          |
+| **Browser Group**  | Web browser automation            | `kilo-playwright_*` (via built-in Playwright MCP)            | Browser testing and interaction         |
 | **MCP Group**      | External tool integration         | MCP server tools (namespaced as `{server}_{tool}`)           | Specialized functionality via MCP       |
 | **Workflow Group** | Sub-agents and task management    | `question`, `task`, `todowrite`, `todoread`, `plan`, `skill` | Context switching and task organization |
 
@@ -65,6 +66,18 @@ These tools help Kilo Code access web content:
 - `webfetch` - Fetches a URL and returns the content
 - `websearch` - Searches the web (available to Kilo/OpenRouter users)
 - `codesearch` - Semantic code search (available to Kilo/OpenRouter users)
+
+### Browser Tools
+
+The VS Code extension has a built-in browser automation tool powered by [Playwright MCP](https://www.npmjs.com/package/@playwright/mcp). Enable it in Settings → Browser Automation. When enabled, it registers an MCP server named `kilo-playwright` and exposes tools such as:
+
+- `kilo-playwright_browser_navigate` - Navigate to a URL
+- `kilo-playwright_browser_click` - Click an element
+- `kilo-playwright_browser_type` - Type text into an element
+- `kilo-playwright_browser_screenshot` - Capture a screenshot
+- `kilo-playwright_browser_snapshot` - Capture an accessibility snapshot
+
+These follow the same permission model as all MCP tools (see below).
 
 ### MCP Tools
 
