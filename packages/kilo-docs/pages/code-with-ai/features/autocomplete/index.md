@@ -44,13 +44,6 @@ You can temporarily disable autocomplete by clicking the status bar item to **sn
 The extension automatically detects if **GitHub Copilot** inline suggestions are enabled and warns you about potential conflicts. Disable Copilot's inline completions for the best experience with Kilo Code autocomplete.
 
 {% /tab %}
-{% tab label="CLI" %}
-
-{% callout type="info" %}
-Autocomplete is an **extension-only** feature. It is not available in the CLI/TUI.
-{% /callout %}
-
-{% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
 ## How Autocomplete Works
