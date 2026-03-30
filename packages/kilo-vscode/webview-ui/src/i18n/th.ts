@@ -968,7 +968,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "สำหรับคำถามเกี่ยวกับการเรียกเก็บเงินหรือบัญชี ติดต่อฝ่ายสนับสนุนลูกค้าที่",
   "settings.aboutKiloCode.resetSettings.title": "รีเซ็ตการตั้งค่า",
   "settings.aboutKiloCode.resetSettings.description":
-    "รีเซ็ตการตั้งค่าส่วนขยาย Kilo Code ทั้งหมดเป็นค่าเริ่มต้น ไม่ส่งผลกระทบต่อการกำหนดค่า CLI หรือแบ็กเอนด์",
+    "การดำเนินการนี้จะรีเซ็ตเฉพาะการตั้งค่าเฉพาะของส่วนขยาย VS Code กลับเป็นค่าเริ่มต้นเท่านั้น การตั้งค่าที่ใช้ร่วมกับ CLI เช่น โหมดและกฎการอนุมัติอัตโนมัติ จะถูกเก็บไว้ในการกำหนดค่า CLI และจะไม่ถูกรีเซ็ต",
   "settings.aboutKiloCode.resetSettings.button": "รีเซ็ตการตั้งค่าทั้งหมด",
   "settings.aboutKiloCode.settingsTransfer.title": "ถ่ายโอนการตั้งค่า",
   "settings.aboutKiloCode.settingsTransfer.description":

@@ -973,7 +973,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "For billing or account questions, contact Customer Support at",
   "settings.aboutKiloCode.resetSettings.title": "Reset Settings",
   "settings.aboutKiloCode.resetSettings.description":
-    "Reset all Kilo Code extension settings to their default values. This does not affect CLI or backend configuration.",
+    "This resets only VS Code extension-specific settings to their default values. Settings shared with the CLI, such as modes and auto-approve rules, are stored in the CLI configuration and will not be reset.",
   "settings.aboutKiloCode.resetSettings.button": "Reset All Settings",
   "settings.aboutKiloCode.settingsTransfer.title": "Settings Transfer",
   "settings.aboutKiloCode.settingsTransfer.description":
