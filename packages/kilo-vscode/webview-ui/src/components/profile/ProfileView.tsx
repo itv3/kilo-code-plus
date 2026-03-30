@@ -110,7 +110,7 @@ const ProfileView: Component<ProfileViewProps> = (props) => {
       >
         <h2 style={{ "font-size": "16px", "font-weight": "600", margin: 0 }}>{language.t("profile.title")}</h2>
       </div>
-      <div style={{ padding: "16px" }}>
+      <div style={{ padding: "16px", "max-width": "480px", margin: "0 auto", width: "100%" }}>
         <Show
           when={props.profileData}
           fallback={
