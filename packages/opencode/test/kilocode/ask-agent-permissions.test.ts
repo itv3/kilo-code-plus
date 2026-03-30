@@ -88,32 +88,37 @@ function askRuleset() {
   })
 }
 
-/** Build the Ask agent ruleset WITH MCP servers */
-function askRulesetWithMcp(servers: string[]) {
+/** Build the Ask agent ruleset WITH MCP servers and optional user config */
+function askRulesetWithMcp(servers: string[], user: PermissionNext.Ruleset = []) {
   const mcpRules: Record<string, "allow" | "ask" | "deny"> = {}
   for (const key of servers) {
     const sanitized = key.replace(/[^a-zA-Z0-9_-]/g, "_")
     mcpRules[sanitized + "_*"] = "ask"
   }
-  return PermissionNext.fromConfig({
-    "*": "deny",
-    bash: readOnlyBash,
-    read: {
-      "*": "allow",
-      "*.env": "ask",
-      "*.env.*": "ask",
-      "*.env.example": "allow",
-    },
-    grep: "allow",
-    glob: "allow",
-    list: "allow",
-    question: "allow",
-    webfetch: "allow",
-    websearch: "allow",
-    codesearch: "allow",
-    codebase_search: "allow",
-    ...mcpRules,
-  })
+  // Mirrors agent.ts merge order: user, ask-specific (with mcpRules), user denies last
+  return PermissionNext.merge(
+    user,
+    PermissionNext.fromConfig({
+      "*": "deny",
+      bash: readOnlyBash,
+      read: {
+        "*": "allow",
+        "*.env": "ask",
+        "*.env.*": "ask",
+        "*.env.example": "allow",
+      },
+      grep: "allow",
+      glob: "allow",
+      list: "allow",
+      question: "allow",
+      webfetch: "allow",
+      websearch: "allow",
+      codesearch: "allow",
+      codebase_search: "allow",
+      ...mcpRules,
+    }),
+    user.filter((r) => r.action === "deny"),
+  )
 }
 
 describe("Ask agent bash permissions", () => {
@@ -317,5 +322,13 @@ describe("Ask agent MCP permissions", () => {
     const disabled = PermissionNext.disabled(["edit", "write"], ruleset)
     expect(disabled.has("edit")).toBe(true)
     expect(disabled.has("write")).toBe(true)
+  })
+
+  test("user config deny overrides MCP ask rules", () => {
+    const deny = PermissionNext.fromConfig({ "my-server_*": "deny" })
+    const ruleset = askRulesetWithMcp(["my-server"], deny)
+    // User explicitly denied this server — should stay denied
+    const result = PermissionNext.disabled(["my-server_sometool"], ruleset)
+    expect(result.has("my-server_sometool")).toBe(true)
   })
 })

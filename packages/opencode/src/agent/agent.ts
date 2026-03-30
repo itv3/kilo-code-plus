@@ -338,6 +338,7 @@ export namespace Agent {
             },
             ...mcpRules,
           }),
+          user.filter((r) => r.action === "deny"), // kilocode_change: re-apply user denies so explicit MCP blocks win over mcpRules
         ),
         mode: "primary",
         native: true,
