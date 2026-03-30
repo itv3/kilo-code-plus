@@ -27,20 +27,7 @@ Browser automation is auto-configured in the extension:
 {% /tab %}
 {% tab label="CLI" %}
 
-Kilo Code uses [Playwright](https://playwright.dev/) via MCP (`@playwright/mcp@latest`) for browser automation. Add the MCP server to your `kilo.jsonc` configuration:
-
-```json
-{
-  "mcp": {
-    "playwright": {
-      "type": "local",
-      "command": ["npx", "-y", "@playwright/mcp@latest"]
-    }
-  }
-}
-```
-
-Playwright downloads Chromium automatically on first use.
+Browser automation is built into Kilo and requires no manual setup. Enable it from **Settings → Browser** and Kilo handles the rest automatically.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
@@ -162,20 +149,11 @@ Browser automation settings are available under **Settings → Browser**:
 {% /tab %}
 {% tab label="CLI" %}
 
-Browser automation requires manual MCP configuration in your `kilo.jsonc` file:
+Browser automation settings are available under **Settings → Browser**:
 
-```json
-{
-  "mcp": {
-    "playwright": {
-      "type": "local",
-      "command": ["npx", "-y", "@playwright/mcp@latest"]
-    }
-  }
-}
-```
-
-No additional settings are needed — the Playwright MCP server manages the browser lifecycle automatically. Chromium is downloaded on first use.
+- **Enable browser automation**: Toggle to enable or disable browser automation
+- **Headless mode**: Run the browser without a visible window (default: disabled)
+- **Use system Chrome**: Use your installed Chrome instead of the bundled browser
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
