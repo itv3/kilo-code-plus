@@ -165,7 +165,7 @@ export namespace Agent {
       "git name-rev *": "allow",
       "git stash list *": "allow",
       "git tag -l *": "allow",
-      "git branch -l *": "allow",
+      "git branch --list *": "allow",
       "git branch -a *": "allow",
       "git branch -r *": "allow",
       "git remote -v *": "allow",
