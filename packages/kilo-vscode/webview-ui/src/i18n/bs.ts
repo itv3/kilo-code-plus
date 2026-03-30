@@ -980,7 +980,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "Za pitanja o naplati ili računu, kontaktirajte korisničku podršku na",
   "settings.aboutKiloCode.resetSettings.title": "Resetovanje postavki",
   "settings.aboutKiloCode.resetSettings.description":
-    "Resetujte sve postavke Kilo Code ekstenzije na zadane vrijednosti. Ovo ne utiče na CLI ili backend konfiguraciju.",
+    "Ovo resetuje samo postavke specifične za VS Code ekstenziju na njihove zadane vrijednosti. Postavke koje se dijele s CLI-jem, kao što su načini rada i pravila automatskog odobravanja, pohranjene su u CLI konfiguraciji i neće biti resetovane.",
   "settings.aboutKiloCode.resetSettings.button": "Resetuj sve postavke",
   "settings.aboutKiloCode.settingsTransfer.title": "Prijenos postavki",
   "settings.aboutKiloCode.settingsTransfer.description":

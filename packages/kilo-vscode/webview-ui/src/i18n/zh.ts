@@ -960,7 +960,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "如有账单或账户问题，请联系客户支持",
   "settings.aboutKiloCode.resetSettings.title": "重置设置",
   "settings.aboutKiloCode.resetSettings.description":
-    "将所有 Kilo Code 扩展设置重置为默认值。这不会影响 CLI 或后端配置。",
+    "此操作仅将 VS Code 扩展专属设置重置为默认值。与 CLI 共享的设置（如模式和自动审批规则）存储在 CLI 配置中，不会被重置。",
   "settings.aboutKiloCode.resetSettings.button": "重置所有设置",
   "settings.aboutKiloCode.settingsTransfer.title": "设置迁移",
   "settings.aboutKiloCode.settingsTransfer.description": "导出或导入设置，以便在 VS Code 实例之间传输。",

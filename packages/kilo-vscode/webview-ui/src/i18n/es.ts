@@ -981,7 +981,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "Para preguntas de facturación o cuenta, contacta al Soporte al Cliente en",
   "settings.aboutKiloCode.resetSettings.title": "Restablecer configuración",
   "settings.aboutKiloCode.resetSettings.description":
-    "Restablecer todas las configuraciones de la extensión Kilo Code a sus valores predeterminados. Esto no afecta la configuración del CLI o del backend.",
+    "Esto restablece únicamente las configuraciones específicas de la extensión VS Code a sus valores predeterminados. Las configuraciones compartidas con el CLI, como los modos y las reglas de aprobación automática, se almacenan en la configuración del CLI y no serán restablecidas.",
   "settings.aboutKiloCode.resetSettings.button": "Restablecer toda la configuración",
   "settings.aboutKiloCode.settingsTransfer.title": "Transferencia de ajustes",
   "settings.aboutKiloCode.settingsTransfer.description":

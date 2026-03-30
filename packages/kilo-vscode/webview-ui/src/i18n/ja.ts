@@ -973,7 +973,7 @@ export const dict = {
     "請求やアカウントに関するご質問は、カスタマーサポートまでお問い合わせください",
   "settings.aboutKiloCode.resetSettings.title": "設定をリセット",
   "settings.aboutKiloCode.resetSettings.description":
-    "Kilo Code拡張機能のすべての設定をデフォルト値にリセットします。CLIやバックエンドの設定には影響しません。",
+    "これはVS Code拡張機能固有の設定のみをデフォルト値にリセットします。モードや自動承認ルールなど、CLIと共有される設定はCLI設定ファイルに保存されており、リセットされません。",
   "settings.aboutKiloCode.resetSettings.button": "すべての設定をリセット",
   "settings.aboutKiloCode.settingsTransfer.title": "設定の移行",
   "settings.aboutKiloCode.settingsTransfer.description":
