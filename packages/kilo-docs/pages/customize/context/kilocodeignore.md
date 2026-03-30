@@ -29,7 +29,7 @@ The primary mechanism for controlling file access is the **permission system** i
 
 If you have an existing `.kilocodeignore` file, it is still supported. The **IgnoreMigrator** automatically converts `.kilocodeignore` patterns into permission `deny` rules on `read` and `edit` tools, so your existing rules continue to work without manual changes.
 
-You can also exclude paths from the file watcher separately using `config.watcher.ignore`:
+You can also exclude paths from the file watcher separately using `watcher.ignore`:
 
 ```json
 {
@@ -55,7 +55,7 @@ The primary mechanism for controlling file access is the **permission system** i
 
 If you have an existing `.kilocodeignore` file, it is still supported. The **IgnoreMigrator** automatically converts `.kilocodeignore` patterns into permission `deny` rules on `read` and `edit` tools, so your existing rules continue to work without manual changes.
 
-You can also exclude paths from the file watcher separately using `config.watcher.ignore`:
+You can also exclude paths from the file watcher separately using `watcher.ignore`:
 
 ```json
 {
@@ -180,7 +180,7 @@ If you already have a `.kilocodeignore` file, you don't need to do anything — 
 
 ### File Watcher Exclusions
 
-The `config.watcher.ignore` setting controls which paths the file watcher skips. This is separate from tool permissions and only affects change detection:
+The `watcher.ignore` setting controls which paths the file watcher skips. This is separate from tool permissions and only affects change detection:
 
 ```json
 {
@@ -220,7 +220,7 @@ If you already have a `.kilocodeignore` file, you don't need to do anything — 
 
 ### File Watcher Exclusions
 
-The `config.watcher.ignore` setting controls which paths the file watcher skips. This is separate from tool permissions and only affects change detection:
+The `watcher.ignore` setting controls which paths the file watcher skips. This is separate from tool permissions and only affects change detection:
 
 ```json
 {

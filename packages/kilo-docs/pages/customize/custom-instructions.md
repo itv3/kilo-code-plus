@@ -44,7 +44,7 @@ For instructions that apply across all your projects, place an `AGENTS.md` file 
 - **Kilo:** `~/.config/kilo/AGENTS.md`
 - **Claude-compatible:** `~/.claude/CLAUDE.md`
 
-Global instructions are loaded before project-level instructions and apply to every session.
+Project-level instructions are loaded before global instructions and apply to every session.
 
 ### Per-Directory Instructions
 
@@ -54,7 +54,7 @@ This is useful for providing context-specific guidance for different parts of a 
 
 ## Additional Instruction Sources
 
-The `config.instructions` setting accepts an array of paths, globs, or URLs pointing to additional instruction files. You can manage these in **Settings → Agent Behaviour → Rules** subtab.
+The `instructions` key in `kilo.jsonc` accepts an array of paths, globs, or URLs pointing to additional instruction files. You can manage these in **Settings → Agent Behaviour → Rules** subtab.
 
 ```yaml
 # Examples of instruction sources
@@ -121,7 +121,7 @@ For instructions that apply across all your projects, place an `AGENTS.md` file 
 - **Kilo:** `~/.config/kilo/AGENTS.md`
 - **Claude-compatible:** `~/.claude/CLAUDE.md`
 
-Global instructions are loaded before project-level instructions and apply to every session.
+Project-level instructions are loaded before global instructions and apply to every session.
 
 ### Per-Directory Instructions
 
@@ -131,7 +131,7 @@ This is useful for providing context-specific guidance for different parts of a 
 
 ## Additional Instruction Sources
 
-The `config.instructions` setting accepts an array of paths, globs, or URLs pointing to additional instruction files. Configure these in your `kilo.jsonc`:
+The `instructions` key in `kilo.jsonc` accepts an array of paths, globs, or URLs pointing to additional instruction files. Configure these in your `kilo.jsonc`:
 
 ```jsonc
 // kilo.jsonc
@@ -190,10 +190,10 @@ If the mode itself is global (not workspace-specific), any custom instructions y
 For version-controlled mode instructions, use the mode rules file paths documented in [Custom Modes](/docs/customize/custom-modes#mode-specific-instructions-via-filesdirectories):
 
 - Preferred: `.kilo/rules-{mode-slug}/` (directory)
-- Fallback: `.kilorules-{mode-slug}` (single file)
+- Fallback: `.kilocoderules-{mode-slug}` (single file)
 
 {% callout type="info" title="Legacy Naming Note" %}
-Older naming like `.clinerules-{mode-slug}` is not the recommended path for current Kilo mode-specific instructions.
+Only `.kilocoderules-{mode-slug}` is recognized as the legacy fallback. Older naming like `.clinerules-{mode-slug}` is not supported.
 {% /callout %}
 
 {% /tab %}

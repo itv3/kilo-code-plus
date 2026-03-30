@@ -246,8 +246,8 @@ Agent configurations are merged from multiple sources. Later sources override ea
 
 1. **Built-in agent defaults** (native agents defined in the codebase)
 2. **Global config** (`~/.config/kilo/config.json`)
-3. **Global agent markdown files** (`~/.config/kilo/agents/*.md`)
-4. **Project config** (`kilo.jsonc` in the project root)
+3. **Project config** (`kilo.jsonc` in the project root)
+4. **Global agent markdown files** (`~/.config/kilo/agents/*.md`)
 5. **Project agent markdown files** (`.kilo/agents/*.md`)
 
 When overriding a built-in agent, properties are merged — only the fields you specify are overridden. When creating a new custom agent, unspecified fields use sensible defaults (`mode: "all"`, full permissions inherited from global config).
