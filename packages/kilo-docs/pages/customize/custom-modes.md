@@ -228,7 +228,7 @@ If you have existing `.kilocodemodes` or `custom_modes.yaml` files from the VSCo
 - `whenToUse` / `description` to `description`
 - Mode is set to `primary`
 
-Built-in mode slugs (`code`, `build`, `architect`, `ask`, `debug`, `orchestrator`) are skipped since they have native agent equivalents.
+Default legacy mode slugs (`code`, `build`, `architect`, `ask`, `debug`, `orchestrator`) are skipped during migration since they map to built-in agents (`build` → `code`, `architect` → `plan`).
 
 {% /tab %}
 {% tab label="CLI" %}
@@ -446,7 +446,7 @@ If you have existing `.kilocodemodes` or `custom_modes.yaml` files from the VSCo
 - `whenToUse` / `description` to `description`
 - Mode is set to `primary`
 
-Built-in mode slugs (`code`, `build`, `architect`, `ask`, `debug`, `orchestrator`) are skipped since they have native agent equivalents.
+Default legacy mode slugs (`code`, `build`, `architect`, `ask`, `debug`, `orchestrator`) are skipped during migration since they map to built-in agents (`build` → `code`, `architect` → `plan`).
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
