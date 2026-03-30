@@ -1,4 +1,4 @@
-import { describe, expect, spyOn, test } from "bun:test"
+import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test"
 import { Identifier } from "../../src/id/id"
 import { ReviewFollowup } from "../../src/kilocode/review-followup"
 import { Review } from "../../src/kilocode/review/review"
@@ -10,6 +10,16 @@ import { Log } from "../../src/util/log"
 import { tmpdir } from "../fixture/fixture"
 
 Log.init({ print: false })
+
+// Flag.KILO_CLIENT reads process.env at access time — set it so blocking is false
+const prev = process.env["KILO_CLIENT"]
+beforeAll(() => {
+  process.env["KILO_CLIENT"] = "vscode"
+})
+afterAll(() => {
+  if (prev === undefined) delete process.env["KILO_CLIENT"]
+  else process.env["KILO_CLIENT"] = prev
+})
 
 const model = {
   providerID: "openai",
