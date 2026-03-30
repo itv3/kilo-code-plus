@@ -153,7 +153,6 @@ export namespace Agent {
       "git show *": "allow",
       "git diff *": "allow",
       "git status *": "allow",
-      "git branch *": "allow",
       "git blame *": "allow",
       "git rev-parse *": "allow",
       "git rev-list *": "allow",
@@ -164,9 +163,12 @@ export namespace Agent {
       "git describe *": "allow",
       "git cat-file *": "allow",
       "git name-rev *": "allow",
-      "git remote *": "allow",
-      "git tag *": "allow",
       "git stash list *": "allow",
+      "git tag -l *": "allow",
+      "git branch -l *": "allow",
+      "git branch -a *": "allow",
+      "git branch -r *": "allow",
+      "git remote -v *": "allow",
       // gh — require user approval since commands vary widely
       "gh *": "ask",
     }
