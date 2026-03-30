@@ -111,6 +111,70 @@ export namespace Agent {
       "gunzip *": "allow",
     }
     // kilocode_change end
+
+    // kilocode_change start — read-only bash commands for the ask agent.
+    // Unlike the default bash allowlist, unknown commands are DENIED (not "ask")
+    // because the ask agent must never modify the filesystem.
+    const readOnlyBash: Record<string, "allow" | "ask" | "deny"> = {
+      "*": "deny",
+      // read-only / informational
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "less *": "allow",
+      "ls *": "allow",
+      "tree *": "allow",
+      "pwd *": "allow",
+      "echo *": "allow",
+      "wc *": "allow",
+      "which *": "allow",
+      "type *": "allow",
+      "file *": "allow",
+      "diff *": "allow",
+      "du *": "allow",
+      "df *": "allow",
+      "date *": "allow",
+      "uname *": "allow",
+      "whoami *": "allow",
+      "printenv *": "allow",
+      "man *": "allow",
+      // file discovery
+      "find *": "allow",
+      // text processing (stdout only, no file modification)
+      "grep *": "allow",
+      "rg *": "allow",
+      "ag *": "allow",
+      "sort *": "allow",
+      "uniq *": "allow",
+      "cut *": "allow",
+      "tr *": "allow",
+      "jq *": "allow",
+      // git — allow read operations, deny all write operations
+      "git *": "allow",
+      "git add *": "deny",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "git merge *": "deny",
+      "git rebase *": "deny",
+      "git cherry-pick *": "deny",
+      "git reset *": "deny",
+      "git checkout *": "deny",
+      "git switch *": "deny",
+      "git stash *": "deny",
+      "git tag *": "deny",
+      "git am *": "deny",
+      "git apply *": "deny",
+      "git remote set-url *": "deny",
+      "git remote add *": "deny",
+      "git remote remove *": "deny",
+      "git clean *": "deny",
+      "git mv *": "deny",
+      "git rm *": "deny",
+      // gh — require user approval since commands vary widely
+      "gh *": "ask",
+    }
+    // kilocode_change end
+
     const defaults = PermissionNext.fromConfig({
       "*": "allow",
       bash, // kilocode_change
@@ -237,6 +301,7 @@ export namespace Agent {
           user, // kilocode_change: user before ask-specific so ask's deny+allowlist wins
           PermissionNext.fromConfig({
             "*": "deny",
+            bash: readOnlyBash,
             read: {
               "*": "allow",
               "*.env": "ask",
