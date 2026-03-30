@@ -616,6 +616,14 @@ Example: "Analyze the performance of my API" might use an MCP tool that tests AP
 - **Slow Performance:** Try adjusting the network timeout value for the specific MCP server
 
 {% /tab %}
+{% tab label="CLI" %}
+
+- **Server Not Responding:** Check if the server process is running. Use `kilo mcp debug <server-name>` to inspect the connection.
+- **Permission Errors:** Ensure API keys and credentials are set in your `kilo.jsonc` config or via `{env:VARIABLE_NAME}` references.
+- **Tool Not Available:** Confirm the server is properly implementing the tool and it is not disabled (`"enabled": false`) in your config.
+- **Slow Performance:** Increase the `timeout` value for the specific MCP server in your config.
+
+{% /tab %}
 {% /tabs %}
 
 {% callout type="tip" %}
