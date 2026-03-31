@@ -1068,6 +1068,7 @@ export const dict = {
   "settings.agentBehaviour.disable.description": "ปิดใช้งานเอเจนต์นี้อย่างสมบูรณ์ — จะไม่ปรากฏที่ใดเลย",
   "settings.agentBehaviour.badge.hidden": "ซ่อน",
   "settings.agentBehaviour.badge.disabled": "ปิดใช้งาน",
+  "settings.agentBehaviour.badge.deprecated": "เลิกใช้",
   "settings.agentBehaviour.discoveredSkills": "ทักษะที่ค้นพบ",
   "settings.agentBehaviour.noSkillsFound": "ไม่พบทักษะ เพิ่มเส้นทางโฟลเดอร์หรือ URL ด้านล่างเพื่อทำให้ทักษะพร้อมใช้งาน",
   "settings.agentBehaviour.availableModes": "โหมดกำหนดเองที่ใช้ได้",
@@ -1137,6 +1138,7 @@ export const dict = {
   "settings.agentBehaviour.mcpDetail.args": "อาร์กิวเมนต์",
   "settings.agentBehaviour.mcpDetail.env": "สภาพแวดล้อม",
   "settings.agentBehaviour.mcpDetail.disabled": "เซิร์ฟเวอร์นี้ถูกปิดใช้งาน",
+  "settings.agentBehaviour.mcpBrowseMarketplace": "เรียกดู Marketplace",
   "settings.agentBehaviour.mcpEmpty":
     "ไม่ได้กำหนดค่าเซิร์ฟเวอร์ MCP เพิ่มเซิร์ฟเวอร์ MCP ใน kilo.jsonc หรือขอให้เอเจนต์เพิ่มให้คุณ",
   "settings.agentBehaviour.workflowsPlaceholder": "เวิร์กโฟลว์จัดการผ่านไฟล์เวิร์กโฟลว์ในพื้นที่ทำงาน",
@@ -1217,7 +1219,6 @@ export const dict = {
 
   // Screen 1 — What's New
   "migration.whatsNew.title": "มีอะไรใหม่ใน Kilo Code",
-  "migration.whatsNew.badge": "Beta",
   "migration.whatsNew.subtitle": "เราได้สร้างส่วนขยายใหม่บนรากฐานที่เร็วและมีประสิทธิภาพมากขึ้น",
   "migration.whatsNew.features.performance.title": "ประสิทธิภาพเอเจนต์ที่เร็วขึ้น",
   "migration.whatsNew.features.performance.detail":
@@ -1276,8 +1277,8 @@ export const dict = {
   "settings.saveBar.warning.many": "มีหลายเซสชันกำลังทำงานและจะถูกขัดจังหวะ",
   "settings.saveBar.saveAnyway": "บันทึกต่อไป",
   "settings.saveBar.cancel": "ยกเลิก",
-  "notifications.action.previous": "Previous",
-  "notifications.action.next": "Next",
-  "notifications.action.close": "Close",
-  "notifications.action.tryModel": "Try model",
+  "notifications.action.previous": "ก่อนหน้า",
+  "notifications.action.next": "ถัดไป",
+  "notifications.action.close": "ปิด",
+  "notifications.action.tryModel": "ลองใช้ {{model}}",
 }

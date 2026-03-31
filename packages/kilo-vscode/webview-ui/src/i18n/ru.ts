@@ -1082,6 +1082,7 @@ export const dict = {
   "settings.agentBehaviour.disable.description": "Полностью отключить этого агента — он не будет отображаться нигде",
   "settings.agentBehaviour.badge.hidden": "скрытый",
   "settings.agentBehaviour.badge.disabled": "отключён",
+  "settings.agentBehaviour.badge.deprecated": "Устаревший",
   "settings.agentBehaviour.discoveredSkills": "Обнаруженные навыки",
   "settings.agentBehaviour.noSkillsFound":
     "Навыки не обнаружены. Добавьте пути к папкам навыков или URL-адреса ниже, чтобы сделать навыки доступными.",
@@ -1154,6 +1155,7 @@ export const dict = {
   "settings.agentBehaviour.mcpDetail.args": "Аргументы",
   "settings.agentBehaviour.mcpDetail.env": "Окружение",
   "settings.agentBehaviour.mcpDetail.disabled": "Этот сервер отключён.",
+  "settings.agentBehaviour.mcpBrowseMarketplace": "Обзор Marketplace",
   "settings.agentBehaviour.mcpEmpty":
     "MCP-серверы не настроены. Добавьте MCP-серверы в kilo.jsonc или попросите агента добавить их.",
   "settings.agentBehaviour.workflowsPlaceholder": "Рабочие процессы управляются через файлы рабочих процессов.",
@@ -1241,7 +1243,6 @@ export const dict = {
 
   // Screen 1 — What's New
   "migration.whatsNew.title": "Что нового в Kilo Code",
-  "migration.whatsNew.badge": "Beta",
   "migration.whatsNew.subtitle": "Мы перестроили расширение на более быстрой и эффективной основе.",
   "migration.whatsNew.features.performance.title": "Более быстрая работа агента",
   "migration.whatsNew.features.performance.detail":
@@ -1300,8 +1301,8 @@ export const dict = {
   "settings.saveBar.warning.many": "Несколько сеансов выполняются и будут прерваны",
   "settings.saveBar.saveAnyway": "Сохранить в любом случае",
   "settings.saveBar.cancel": "Отмена",
-  "notifications.action.previous": "Previous",
-  "notifications.action.next": "Next",
-  "notifications.action.close": "Close",
-  "notifications.action.tryModel": "Try model",
+  "notifications.action.previous": "Назад",
+  "notifications.action.next": "Далее",
+  "notifications.action.close": "Закрыть",
+  "notifications.action.tryModel": "Попробовать {{model}}",
 }

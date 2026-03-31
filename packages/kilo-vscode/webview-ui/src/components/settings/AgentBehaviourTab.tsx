@@ -11,6 +11,7 @@ import { Switch } from "@kilocode/kilo-ui/switch"
 import { useConfig } from "../../context/config"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
+import { useVSCode } from "../../context/vscode"
 import type { AgentInfo, SkillInfo } from "../../types/messages"
 import ModeEditView from "./ModeEditView"
 import ModeCreateView from "./ModeCreateView"
@@ -49,10 +50,12 @@ const AgentBehaviourTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const session = useSession()
   const dialog = useDialog()
+  const vscode = useVSCode()
   const [activeSubtab, setActiveSubtab] = createSignal<SubtabId>("agents")
   const [newSkillPath, setNewSkillPath] = createSignal("")
   const [newSkillUrl, setNewSkillUrl] = createSignal("")
   const [newInstruction, setNewInstruction] = createSignal("")
+  const browse = () => vscode.postMessage({ type: "openMarketplacePanel" })
 
   // Agent view state
   const [agentView, setAgentView] = createSignal<AgentView>("list")
@@ -301,6 +304,9 @@ const AgentBehaviourTab: Component = () => {
             <Button variant="ghost" size="small" onClick={triggerImport}>
               {language.t("settings.agentBehaviour.importMode")}
             </Button>
+            <Button variant="ghost" size="small" onClick={browse}>
+              {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
+            </Button>
             <Button variant="secondary" size="small" onClick={() => setAgentView("create")}>
               {language.t("settings.agentBehaviour.createMode")}
             </Button>
@@ -343,6 +349,7 @@ const AgentBehaviourTab: Component = () => {
                 const agentCfg = () => config().agent?.[name] ?? {}
                 const disabled = () => agentCfg().disable ?? false
                 const hidden = () => agentCfg().hidden ?? false
+                const deprecated = () => agent()?.deprecated ?? false
                 return (
                   <div
                     style={{
@@ -403,6 +410,19 @@ const AgentBehaviourTab: Component = () => {
                             }}
                           >
                             {language.t("settings.agentBehaviour.badge.disabled")}
+                          </span>
+                        </Show>
+                        <Show when={deprecated()}>
+                          <span
+                            style={{
+                              "font-size": "10px",
+                              padding: "1px 5px",
+                              "border-radius": "3px",
+                              background: "var(--vscode-editorWarning-foreground, #cca700)",
+                              color: "var(--vscode-editorWarning-foreground-text, #1e1e1e)",
+                            }}
+                          >
+                            {language.t("settings.agentBehaviour.badge.deprecated")}
                           </span>
                         </Show>
                       </div>
@@ -519,6 +539,18 @@ const AgentBehaviourTab: Component = () => {
 
     return (
       <div>
+        <div
+          style={{
+            display: "flex",
+            "align-items": "center",
+            "justify-content": "flex-end",
+            "margin-bottom": "8px",
+          }}
+        >
+          <Button variant="secondary" size="small" onClick={browse}>
+            {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
+          </Button>
+        </div>
         <Show
           when={mcpEntries().length > 0}
           fallback={
@@ -722,6 +754,18 @@ const AgentBehaviourTab: Component = () => {
 
   const renderSkillsSubtab = () => (
     <div>
+      <div
+        style={{
+          display: "flex",
+          "align-items": "center",
+          "justify-content": "flex-end",
+          "margin-bottom": "8px",
+        }}
+      >
+        <Button variant="secondary" size="small" onClick={browse}>
+          {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
+        </Button>
+      </div>
       {/* Discovered skills */}
       <h4 style={{ "margin-top": "0", "margin-bottom": "8px" }}>
         {language.t("settings.agentBehaviour.discoveredSkills")}
