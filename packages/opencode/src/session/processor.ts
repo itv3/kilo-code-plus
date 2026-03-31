@@ -136,10 +136,8 @@ export namespace SessionProcessor {
 
                 case "tool-call": {
                   // kilocode_change start
-                  // If tool-input-start was never emitted for a non-provider-executed
-                  // tool (e.g. provider skipped it for unparseable arguments), create
-                  // the tool part now so it is persisted and included in future
-                  // conversation history.
+                  // If tool-input-start was never emitted, this can happen if arguments are unparseable,
+                  // create the tool part now to prevent missing tool results down the line.
                   if (!toolcalls[value.toolCallId] && !value.providerExecuted) {
                     log.warn("tool-call without prior tool-input-start", {
                       toolCallId: value.toolCallId,
