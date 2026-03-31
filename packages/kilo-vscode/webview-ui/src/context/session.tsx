@@ -1659,7 +1659,8 @@ export const SessionProvider: ParentComponent = (props) => {
           }
           const child = tp.state?.metadata?.sessionId
           if (!child || !family.has(child)) continue
-          const desc = tp.state?.input?.description || tp.state?.input?.subagent_type || tp.tool
+          const raw = tp.state?.input?.subagent_type || tp.state?.input?.description || tp.tool
+          const desc = raw.length > 24 ? raw.slice(0, 22) + "…" : raw
           if (!labels.has(child)) labels.set(child, desc)
         }
       }

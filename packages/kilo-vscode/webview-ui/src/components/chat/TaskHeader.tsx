@@ -37,8 +37,12 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
 
   const costTooltip = createMemo(() => {
     const breakdown = session.costBreakdown()
-    if (breakdown.length <= 1) return language.t("context.usage.sessionCost")
-    return breakdown.map((e) => `${e.label}: ${fmt(e.cost)}`).join("\n")
+    if (breakdown.length <= 1) return <span>{language.t("context.usage.sessionCost")}</span>
+    return (
+      <div style={{ "text-align": "left", "white-space": "nowrap" }}>
+        <For each={breakdown}>{(e) => <div>{`${e.label}: ${fmt(e.cost)}`}</div>}</For>
+      </div>
+    )
   })
 
   const context = createMemo(() => {
