@@ -127,6 +127,7 @@ interface SessionContextValue {
 
   // Cost and context usage for the current session
   totalCost: Accessor<number>
+  costBreakdown: Accessor<Array<{ label: string; cost: number }>>
   contextUsage: Accessor<ContextUsage | undefined>
 
   // Skills loaded from the CLI backend
@@ -1631,6 +1632,49 @@ export const SessionProvider: ParentComponent = (props) => {
     return total
   })
 
+  /**
+   * Per-session cost breakdown for the current session family.
+   * Returns entries only for sessions with non-zero cost.
+   * Child session labels come from the task tool part that spawned them.
+   */
+  const costBreakdown = createMemo<Array<{ label: string; cost: number }>>(() => {
+    const id = currentSessionID()
+    if (!id) return []
+    const family = sessionFamily(id)
+    if (family.size <= 1) return []
+
+    // Build label map: child sessionID → label from the parent's task tool input
+    const labels = new Map<string, string>()
+    for (const sid of family) {
+      const msgs = store.messages[sid]
+      if (!msgs) continue
+      for (const msg of msgs) {
+        const parts = store.parts[msg.id]
+        if (!parts) continue
+        for (const p of parts) {
+          if (p.type !== "tool") continue
+          const tp = p as {
+            tool: string
+            state?: { input?: { description?: string; subagent_type?: string }; metadata?: { sessionId?: string } }
+          }
+          const child = tp.state?.metadata?.sessionId
+          if (!child || !family.has(child)) continue
+          const desc = tp.state?.input?.description || tp.state?.input?.subagent_type || tp.tool
+          if (!labels.has(child)) labels.set(child, desc)
+        }
+      }
+    }
+
+    const items: Array<{ label: string; cost: number }> = []
+    for (const sid of family) {
+      const cost = calcTotalCost(store.messages[sid] ?? [])
+      if (cost === 0) continue
+      const label = sid === id ? language.t("context.stats.parentSession") : (labels.get(sid) ?? sid.slice(0, 8))
+      items.push({ label, cost })
+    }
+    return items
+  })
+
   // Status text derived from last assistant message parts
   const statusText = createMemo<string | undefined>(() => {
     if (status() === "idle") return undefined
@@ -1685,6 +1729,7 @@ export const SessionProvider: ParentComponent = (props) => {
     hasModelOverride,
     clearModelOverride,
     totalCost,
+    costBreakdown,
     contextUsage,
     agents,
     skills,

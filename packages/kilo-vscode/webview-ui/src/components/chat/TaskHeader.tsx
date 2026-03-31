@@ -27,13 +27,18 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
   const busy = createMemo(() => session.status() === "busy")
   const canCompact = createMemo(() => !busy() && hasMessages() && !!session.selected())
 
+  const fmt = (n: number) => new Intl.NumberFormat(language.locale(), { style: "currency", currency: "USD" }).format(n)
+
   const cost = createMemo(() => {
     const total = session.totalCost()
     if (total === 0) return undefined
-    return new Intl.NumberFormat(language.locale(), {
-      style: "currency",
-      currency: "USD",
-    }).format(total)
+    return fmt(total)
+  })
+
+  const costTooltip = createMemo(() => {
+    const breakdown = session.costBreakdown()
+    if (breakdown.length <= 1) return language.t("context.usage.sessionCost")
+    return breakdown.map((e) => `${e.label}: ${fmt(e.cost)}`).join("\n")
   })
 
   const context = createMemo(() => {
@@ -69,7 +74,7 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
         <div data-slot="task-header-stats">
           <Show when={cost()}>
             {(c) => (
-              <Tooltip value={language.t("context.usage.sessionCost")} placement="bottom">
+              <Tooltip value={costTooltip()} placement="bottom">
                 <span>{c()}</span>
               </Tooltip>
             )}
