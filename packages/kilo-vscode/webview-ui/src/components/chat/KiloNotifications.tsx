@@ -1,4 +1,4 @@
-import { Component, Show, createEffect, createMemo, createSignal } from "solid-js"
+import { Component, For, Show, createEffect, createMemo, createSignal } from "solid-js"
 import { useNotifications } from "../../context/notifications"
 import { useVSCode } from "../../context/vscode"
 import { useSession } from "../../context/session"
@@ -95,18 +95,27 @@ export const KiloNotifications: Component = () => {
           </div>
           <p class="kilo-notifications-message">{current()?.message}</p>
           <div class="kilo-notifications-footer">
-            <Show when={canSwitchModel()}>
-              <button class="kilo-notifications-action-btn" onClick={handleTryModel}>
-                {language.t("notifications.action.tryModel", { model: suggestedName() ?? "" })}
-              </button>
-            </Show>
-            <Show when={current()?.action}>
-              {(action) => (
-                <button class="kilo-notifications-action-btn" onClick={() => handleAction(action().actionURL)}>
-                  {action().actionText}
+            <div class="kilo-notifications-cta-group">
+              <Show when={canSwitchModel()}>
+                <button class="kilo-notifications-action-btn" onClick={handleTryModel}>
+                  {language.t("notifications.action.tryModel", { model: suggestedName() ?? "" })}
                 </button>
-              )}
-            </Show>
+              </Show>
+              <Show when={current()?.action}>
+                {(action) => (
+                  <button class="kilo-notifications-action-btn" onClick={() => handleAction(action().actionURL)}>
+                    {action().actionText}
+                  </button>
+                )}
+              </Show>
+              <For each={current()?.actions}>
+                {(action) => (
+                  <button class="kilo-notifications-action-btn" onClick={() => handleAction(action.actionURL)}>
+                    {action.actionText}
+                  </button>
+                )}
+              </For>
+            </div>
             <div class="kilo-notifications-next-group">
               <Show when={safeIndex() > 0}>
                 <button class="kilo-notifications-back-link" onClick={() => setIndex(safeIndex() - 1)}>

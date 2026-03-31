@@ -1306,7 +1306,7 @@ export const dict = {
   "settings.saveBar.saveAnyway": "Save anyway",
   "settings.saveBar.cancel": "Cancel",
 
-  "notifications.action.previous": "Previous",
+  "notifications.action.previous": "Back",
   "notifications.action.next": "Next",
   "notifications.action.close": "Close",
   "notifications.action.tryModel": "Try {{model}}",

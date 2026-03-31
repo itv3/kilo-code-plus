@@ -252,6 +252,7 @@ export interface KilocodeNotification {
   title: string
   message: string
   action?: KilocodeNotificationAction
+  actions?: KilocodeNotificationAction[]
   showIn?: string[]
   suggestModelId?: string
 }
