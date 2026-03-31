@@ -1268,7 +1268,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Несовместимы с новой архитектурой",
   "migration.migrate.button": "Перенести настройки",
   "migration.migrate.skip": "Пропустить",
-  "migration.migrate.back": "Назад",
   "migration.migrate.keysDetected": "Обнаружено ключей: {{count}}",
   "migration.migrate.serversConfigured": "Настроено серверов: {{count}}",
   "migration.migrate.modesFound": "Найдено режимов: {{count}}",

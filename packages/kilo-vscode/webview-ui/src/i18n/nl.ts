@@ -1265,7 +1265,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Niet compatibel met de nieuwe architectuur",
   "migration.migrate.button": "Migreer Instellingen",
   "migration.migrate.skip": "Overslaan",
-  "migration.migrate.back": "Terug",
   "migration.migrate.keysDetected": "{{count}} sleutels gedetecteerd",
   "migration.migrate.serversConfigured": "{{count}} server(s) geconfigureerd",
   "migration.migrate.modesFound": "{{count}} modus(sen) gevonden",

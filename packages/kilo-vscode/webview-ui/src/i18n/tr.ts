@@ -1258,7 +1258,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Yeni mimariyle uyumsuz",
   "migration.migrate.button": "Ayarları Taşı",
   "migration.migrate.skip": "Atla",
-  "migration.migrate.back": "Geri",
   "migration.migrate.keysDetected": "{{count}} anahtar algılandı",
   "migration.migrate.serversConfigured": "{{count}} sunucu yapılandırıldı",
   "migration.migrate.modesFound": "{{count}} mod bulundu",

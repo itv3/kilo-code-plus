@@ -1244,7 +1244,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "เข้ากันไม่ได้กับสถาปัตยกรรมใหม่",
   "migration.migrate.button": "ย้ายการตั้งค่า",
   "migration.migrate.skip": "ข้าม",
-  "migration.migrate.back": "ย้อนกลับ",
   "migration.migrate.keysDetected": "ตรวจพบ {{count}} คีย์",
   "migration.migrate.serversConfigured": "กำหนดค่า {{count}} เซิร์ฟเวอร์",
   "migration.migrate.modesFound": "พบ {{count}} โหมด",

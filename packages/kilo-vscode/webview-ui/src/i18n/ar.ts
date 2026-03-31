@@ -1245,7 +1245,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "غير متوافق مع البنية الجديدة",
   "migration.migrate.button": "ترحيل الإعدادات",
   "migration.migrate.skip": "تخطي",
-  "migration.migrate.back": "رجوع",
   "migration.migrate.keysDetected": "تم اكتشاف {{count}} مفاتيح",
   "migration.migrate.serversConfigured": "تم تكوين {{count}} خادم(خوادم)",
   "migration.migrate.modesFound": "تم العثور على {{count}} وضع(أوضاع)",

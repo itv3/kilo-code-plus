@@ -1248,7 +1248,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "새 아키텍처와 호환되지 않음",
   "migration.migrate.button": "설정 마이그레이션",
   "migration.migrate.skip": "건너뛰기",
-  "migration.migrate.back": "뒤로",
   "migration.migrate.keysDetected": "{{count}}개의 키 감지됨",
   "migration.migrate.serversConfigured": "{{count}}개의 서버 구성됨",
   "migration.migrate.modesFound": "{{count}}개의 모드 발견됨",

@@ -1260,7 +1260,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "新しいアーキテクチャと互換性がありません",
   "migration.migrate.button": "設定を移行",
   "migration.migrate.skip": "スキップ",
-  "migration.migrate.back": "戻る",
   "migration.migrate.keysDetected": "{{count}}個のキーを検出",
   "migration.migrate.serversConfigured": "{{count}}個のサーバーが設定済み",
   "migration.migrate.modesFound": "{{count}}個のモードが見つかりました",

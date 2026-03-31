@@ -1270,7 +1270,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Nekompatibilno sa novom arhitekturom",
   "migration.migrate.button": "Migriraj postavke",
   "migration.migrate.skip": "Preskoči",
-  "migration.migrate.back": "Nazad",
   "migration.migrate.keysDetected": "{{count}} ključeva otkriveno",
   "migration.migrate.serversConfigured": "{{count}} server(a) konfigurisano",
   "migration.migrate.modesFound": "{{count}} režim(a) pronađeno",

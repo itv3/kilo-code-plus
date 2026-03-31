@@ -1225,7 +1225,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "與新架構不相容",
   "migration.migrate.button": "遷移設定",
   "migration.migrate.skip": "略過",
-  "migration.migrate.back": "返回",
   "migration.migrate.keysDetected": "偵測到 {{count}} 個金鑰",
   "migration.migrate.serversConfigured": "已設定 {{count}} 個伺服器",
   "migration.migrate.modesFound": "發現 {{count}} 個模式",
