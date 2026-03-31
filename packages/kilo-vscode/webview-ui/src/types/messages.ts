@@ -1053,6 +1053,7 @@ export interface MigrationStateMessage {
     providers: MigrationProviderInfo[]
     mcpServers: MigrationMcpServerInfo[]
     customModes: MigrationCustomModeInfo[]
+    sessions?: string[]
     defaultModel?: { provider: string; model: string }
     settings?: LegacySettings
   }
@@ -1064,6 +1065,7 @@ export interface LegacyMigrationDataMessage {
     providers: MigrationProviderInfo[]
     mcpServers: MigrationMcpServerInfo[]
     customModes: MigrationCustomModeInfo[]
+    sessions?: string[]
     defaultModel?: { provider: string; model: string }
     settings?: LegacySettings
   }
@@ -1100,6 +1102,7 @@ export interface StartLegacyMigrationMessage {
     providers: string[]
     mcpServers: string[]
     customModes: string[]
+    sessions?: string[]
     defaultModel: boolean
     settings: {
       autoApproval: MigrationAutoApprovalSelections

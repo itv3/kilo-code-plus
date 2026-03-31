@@ -28,6 +28,7 @@ export interface MigrationContext {
   readonly client: KiloClient | null
   readonly extensionContext: MigrationExtensionContext | undefined
   postMessage(msg: unknown): void
+  refreshSessions(): void
   cachedLegacyData: LegacyMigrationData | null
   migrationCheckInFlight: boolean
   disposeGlobal(): Promise<void>
@@ -69,6 +70,7 @@ export async function checkAndShowMigrationWizard(ctx: MigrationContext): Promis
       providers: data.providers,
       mcpServers: data.mcpServers,
       customModes: data.customModes,
+      sessions: data.sessions,
       defaultModel: data.defaultModel,
       settings: data.settings,
     },
@@ -88,6 +90,7 @@ export async function handleRequestLegacyMigrationData(ctx: MigrationContext): P
       providers: data.providers,
       mcpServers: data.mcpServers,
       customModes: data.customModes,
+      sessions: data.sessions,
       defaultModel: data.defaultModel,
       settings: data.settings,
     },
@@ -125,6 +128,7 @@ export async function handleStartLegacyMigration(
         "completed",
       )
       ctx.broadcastComplete()
+      ctx.refreshSessions()
     }
 
     ctx.postMessage({ type: "legacyMigrationComplete", results })

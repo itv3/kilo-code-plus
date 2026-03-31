@@ -2802,6 +2802,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       set migrationCheckInFlight(val) {
         self.migrationCheckInFlight = val
       },
+      refreshSessions: () => this.refreshSessions(),
       disposeGlobal: () => this.disposeGlobal(),
       broadcastComplete: () => this.connectionService.notifyMigrationComplete(),
     }
