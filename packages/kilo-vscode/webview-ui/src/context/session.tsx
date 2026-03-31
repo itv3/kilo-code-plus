@@ -1657,7 +1657,7 @@ export const SessionProvider: ParentComponent = (props) => {
     for (const sid of family) {
       const cost = calcTotalCost(store.messages[sid] ?? [])
       if (cost === 0) continue
-      const label = sid === id ? language.t("context.stats.parentSession") : (labels.get(sid) ?? sid.slice(0, 8))
+      const label = sid === id ? language.t("context.stats.thisSession") : (labels.get(sid) ?? sid.slice(0, 8))
       items.push({ label, cost })
     }
     return items

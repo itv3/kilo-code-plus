@@ -958,7 +958,7 @@ export const dict = {
   "prompt.placeholder.default": "Nachricht eingeben... (Enter zum Senden, Shift+Enter für neue Zeile)",
 
   "context.usage.sessionCost": "Sitzungskosten",
-  "context.stats.parentSession": "Übergeordnete Sitzung",
+  "context.stats.thisSession": "Diese Sitzung",
 
   "time.justNow": "gerade eben",
   "time.minutesAgo": "vor {{count}} Min.",
