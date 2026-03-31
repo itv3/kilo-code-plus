@@ -830,11 +830,22 @@ function convertCustomModePermissions(groups: LegacyCustomMode["groups"]): Permi
 }
 
 function convertCustomMode(mode: LegacyCustomMode): AgentConfig {
-  const prompt = [mode.roleDefinition, mode.customInstructions].filter(Boolean).join("\n\n")
+  const parts = [mode.roleDefinition]
+  if (mode.customInstructions?.trim()) {
+    parts.push(
+      [
+        "USER'S CUSTOM INSTRUCTIONS",
+        "",
+        "The following additional instructions are provided by the user, and should be followed to the best of your ability.",
+        "",
+        `Mode-specific Instructions:\n${mode.customInstructions.trim()}`,
+      ].join("\n"),
+    )
+  }
   return {
     mode: "primary",
     description: mode.description ?? mode.whenToUse ?? mode.roleDefinition?.slice(0, 120),
-    prompt,
+    prompt: parts.filter(Boolean).join("\n\n"),
     permission: convertCustomModePermissions(mode.groups),
   }
 }
