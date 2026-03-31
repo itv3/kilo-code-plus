@@ -409,13 +409,13 @@ async function seedHandoverSession() {
 }
 
 describe("review follow-up detection", () => {
-  test("does not trigger without plan context even with implementation tool", () =>
+  test("triggers for code agent with implementation tool", () =>
     withInstance(async () => {
       const messages = await seed({
         agent: "code",
         tools: [{ tool: "edit" }],
       })
-      expect(SessionPrompt.shouldAskReviewFollowup({ messages, abort: AbortSignal.any([]) })).toBe(false)
+      expect(SessionPrompt.shouldAskReviewFollowup({ messages, abort: AbortSignal.any([]) })).toBe(true)
     }))
 
   test("does not trigger for orchestrator turns without plan context", () =>
@@ -432,6 +432,132 @@ describe("review follow-up detection", () => {
       const messages = await seed({
         agent: "orchestrator",
       })
+      expect(SessionPrompt.shouldAskReviewFollowup({ messages, abort: AbortSignal.any([]) })).toBe(false)
+    }))
+
+  test("does not trigger for orchestrator even with plan context", () =>
+    withInstance(async () => {
+      const session = await Session.create({})
+
+      // Turn 1: plan turn that ends with plan_exit
+      const planUser = await Session.updateMessage({
+        id: Identifier.ascending("message"),
+        role: "user",
+        sessionID: session.id,
+        time: { created: Date.now() },
+        agent: "code",
+        model,
+      })
+      await Session.updatePart({
+        id: Identifier.ascending("part"),
+        messageID: planUser.id,
+        sessionID: session.id,
+        type: "text",
+        text: "Plan the feature",
+      })
+
+      const planAssistant: MessageV2.Assistant = {
+        id: Identifier.ascending("message"),
+        role: "assistant",
+        sessionID: session.id,
+        time: { created: Date.now() },
+        parentID: planUser.id,
+        modelID: model.modelID,
+        providerID: model.providerID,
+        mode: "code",
+        agent: "code",
+        path: {
+          cwd: Instance.directory,
+          root: Instance.worktree,
+        },
+        cost: 0,
+        tokens: {
+          total: 0,
+          input: 0,
+          output: 0,
+          reasoning: 0,
+          cache: { read: 0, write: 0 },
+        },
+        finish: "end_turn",
+      }
+      await Session.updateMessage(planAssistant)
+      await Session.updatePart({
+        id: Identifier.ascending("part"),
+        messageID: planAssistant.id,
+        sessionID: session.id,
+        type: "tool",
+        callID: Identifier.ascending("tool"),
+        tool: "plan_exit",
+        state: {
+          status: "completed",
+          input: {},
+          output: "ok",
+          title: "plan_exit",
+          metadata: {},
+          time: { start: Date.now(), end: Date.now() },
+        },
+      } satisfies MessageV2.ToolPart)
+
+      // Turn 2: orchestrator turn with task tool
+      const orchUser = await Session.updateMessage({
+        id: Identifier.ascending("message"),
+        role: "user",
+        sessionID: session.id,
+        time: { created: Date.now() },
+        agent: "orchestrator",
+        model,
+      })
+      await Session.updatePart({
+        id: Identifier.ascending("part"),
+        messageID: orchUser.id,
+        sessionID: session.id,
+        type: "text",
+        text: "Implement it",
+      })
+
+      const orchAssistant: MessageV2.Assistant = {
+        id: Identifier.ascending("message"),
+        role: "assistant",
+        sessionID: session.id,
+        time: { created: Date.now() },
+        parentID: orchUser.id,
+        modelID: model.modelID,
+        providerID: model.providerID,
+        mode: "orchestrator",
+        agent: "orchestrator",
+        path: {
+          cwd: Instance.directory,
+          root: Instance.worktree,
+        },
+        cost: 0,
+        tokens: {
+          total: 0,
+          input: 0,
+          output: 0,
+          reasoning: 0,
+          cache: { read: 0, write: 0 },
+        },
+        finish: "end_turn",
+      }
+      await Session.updateMessage(orchAssistant)
+      await Session.updatePart({
+        id: Identifier.ascending("part"),
+        messageID: orchAssistant.id,
+        sessionID: session.id,
+        type: "tool",
+        callID: Identifier.ascending("tool"),
+        tool: "task",
+        state: {
+          status: "completed",
+          input: {},
+          output: "ok",
+          title: "task",
+          metadata: {},
+          time: { start: Date.now(), end: Date.now() },
+        },
+      } satisfies MessageV2.ToolPart)
+
+      const messages = await Session.messages({ sessionID: session.id })
       expect(SessionPrompt.shouldAskReviewFollowup({ messages, abort: AbortSignal.any([]) })).toBe(false)
     }))
 

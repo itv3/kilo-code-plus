@@ -76,7 +76,7 @@ export namespace SessionPrompt {
       )
   }
 
-  const reviewTools = new Set(["edit", "write", "multiedit", "apply_patch", "task"]) // kilocode_change
+  const reviewTools = new Set(["edit", "write", "multiedit", "apply_patch"]) // kilocode_change
 
   // kilocode_change start - ask review follow-up only after first implementation turn per session
   function reviewTurns(messages: MessageV2.WithParts[]) {
@@ -100,7 +100,7 @@ export namespace SessionPrompt {
   }
 
   function isImplementationTurn(input: { user: MessageV2.User; turn: MessageV2.WithParts[] }) {
-    if (!["code", "orchestrator"].includes(input.user.agent)) return false
+    if (!["code"].includes(input.user.agent)) return false
 
     const hasPlanExit = input.turn.some((msg) =>
       msg.parts.some((part) => part.type === "tool" && part.tool === "plan_exit" && part.state.status === "completed"),
@@ -111,32 +111,6 @@ export namespace SessionPrompt {
       msg.parts.some((part) => part.type === "tool" && part.state.status === "completed" && reviewTools.has(part.tool)),
     )
   }
-
-  function hasPlanningContext(input: { turns: ReturnType<typeof reviewTurns>; messages: MessageV2.WithParts[] }) {
-    // Same-session plan → code: a prior turn contains a completed plan_exit
-    const priorHasPlanExit = input.turns
-      .slice(0, -1)
-      .some((t) =>
-        t.turn.some((msg) =>
-          msg.parts.some((p) => p.type === "tool" && p.tool === "plan_exit" && p.state.status === "completed"),
-        ),
-      )
-    if (priorHasPlanExit) return true
-
-    // Cross-session handover: first user message starts with the plan prefix
-    const first = input.messages.find((m) => m.info.role === "user")
-    if (first) {
-      const text = first.parts
-        .filter((p): p is MessageV2.TextPart => p.type === "text" && !p.synthetic)
-        .map((p) => p.text)
-        .join("\n")
-        .trimStart()
-      if (text.startsWith(PlanFollowup.PLAN_PREFIX)) return true
-    }
-
-    return false
-  }
-  // kilocode_change end
 
   // kilocode_change start - share review follow-up trigger logic with tests
   export function shouldAskReviewFollowup(input: { messages: MessageV2.WithParts[]; abort: AbortSignal }) {
@@ -150,8 +124,6 @@ export namespace SessionPrompt {
 
     const alreadyImplemented = turns.slice(0, -1).some(isImplementationTurn)
     if (alreadyImplemented) return false
-
-    if (!hasPlanningContext({ turns, messages: input.messages })) return false
 
     return true
   }
