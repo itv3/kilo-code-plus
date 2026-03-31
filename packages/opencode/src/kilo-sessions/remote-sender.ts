@@ -24,11 +24,17 @@ const PermissionData = z.object({
   message: z.string().optional(),
 })
 
-const RemotePromptInput = SessionPrompt.PromptInput.extend({
-  model: z.string().optional(),
-})
+// kilocode_change start — lazy init to avoid circular dependency
+// (Server → RemoteRoutes → RemoteSender → SessionPrompt at module load time)
+let _remotePromptInput: ReturnType<typeof SessionPrompt.PromptInput.extend> | undefined
+function getRemotePromptInput() {
+  return (_remotePromptInput ??= SessionPrompt.PromptInput.extend({
+    model: z.string().optional(),
+  }))
+}
+// kilocode_change end
 
-function normalizeModel(model: z.infer<typeof RemotePromptInput.shape.model>) {
+function normalizeModel(model: string | undefined) {
   if (!model) return undefined
   return {
     providerID: ProviderID.make("kilo"),
@@ -36,7 +42,7 @@ function normalizeModel(model: z.infer<typeof RemotePromptInput.shape.model>) {
   }
 }
 
-function normalizePrompt(input: z.infer<typeof RemotePromptInput>): SessionPrompt.PromptInput {
+function normalizePrompt(input: SessionPrompt.PromptInput & { model?: string }): SessionPrompt.PromptInput {
   return {
     ...input,
     model: normalizeModel(input.model),
@@ -213,7 +219,7 @@ export namespace RemoteSender {
 
     function dispatch(msg: RemoteProtocol.Command) {
       if (msg.command === "send_message") {
-        const parsed = RemotePromptInput.safeParse(msg.data)
+        const parsed = getRemotePromptInput().safeParse(msg.data)
         if (!parsed.success) {
           options.conn.send({
             type: "response",
@@ -222,7 +228,7 @@ export namespace RemoteSender {
           })
           return
         }
-        const input = SessionPrompt.PromptInput.safeParse(normalizePrompt(parsed.data))
+        const input = SessionPrompt.PromptInput.safeParse(normalizePrompt(parsed.data as SessionPrompt.PromptInput & { model?: string }))
         if (!input.success) {
           options.conn.send({
             type: "response",
