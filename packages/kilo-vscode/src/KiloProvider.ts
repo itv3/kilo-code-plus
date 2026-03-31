@@ -113,6 +113,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private cachedCommandsMessage: unknown = null
   /** Cached configLoaded payload so requestConfig can be served before client is ready */
   private cachedConfigMessage: unknown = null
+  /** Cached mcpStatusLoaded payload so requestMcpStatus can be served before client is ready */
+  private cachedMcpStatusMessage: unknown = null
   /** Ref-count of in-flight handleUpdateConfig calls; prevents fetchAndSendConfig from sending stale data */
   private pending = 0
   /** Cached notificationsLoaded payload */
@@ -279,7 +281,12 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
       // Seed session status map so the Settings panel knows about already-running sessions.
       // Must run after webview is ready (postMessage is a no-op before that).
-      void this.seedSessionStatusMap()
+      // Only reconcile (reset missing busy→idle) when the map is empty, i.e.
+      // on the very first seed before any real-time SSE events have arrived.
+      // On SSE reconnects or webview recreations the live SSE data is
+      // authoritative and reconciliation risks race-resetting busy sessions.
+      const reconcile = this.sessionStatusMap.size === 0
+      void this.seedSessionStatusMap(reconcile)
     }
 
     // legacy-migration start
@@ -573,6 +580,9 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "openSettingsPanel":
           vscode.commands.executeCommand("kilo-code.new.settingsButtonClicked", message.tab)
           break
+        case "openMarketplacePanel":
+          vscode.commands.executeCommand("kilo-code.new.marketplaceButtonClicked", this.projectDirectory)
+          break
         case "openChanges":
           vscode.commands.executeCommand("kilo-code.new.showChanges")
           break
@@ -644,6 +654,17 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           break
         case "removeMcp":
           this.handleRemoveMcp(message.name).catch((e) => console.error("[Kilo New] handleRemoveMcp failed:", e))
+          break
+        case "requestMcpStatus":
+          this.fetchAndSendMcpStatus().catch((e) => console.error("[Kilo New] fetchAndSendMcpStatus failed:", e))
+          break
+        case "connectMcp":
+          this.handleConnectMcp(message.name).catch((e) => console.error("[Kilo New] handleConnectMcp failed:", e))
+          break
+        case "disconnectMcp":
+          this.handleDisconnectMcp(message.name).catch((e) =>
+            console.error("[Kilo New] handleDisconnectMcp failed:", e),
+          )
           break
 
         case "questionReply":
@@ -1664,6 +1685,51 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     }
   }
 
+  private async fetchAndSendMcpStatus(): Promise<void> {
+    if (!this.client) {
+      if (this.cachedMcpStatusMessage) {
+        this.postMessage(this.cachedMcpStatusMessage)
+      }
+      return
+    }
+
+    try {
+      const directory = this.getWorkspaceDirectory()
+      const { data } = await this.client.mcp.status({ directory })
+      if (data) {
+        const message = { type: "mcpStatusLoaded", status: data }
+        this.cachedMcpStatusMessage = message
+        this.postMessage(message)
+      }
+    } catch (error) {
+      console.error("[Kilo New] KiloProvider: Failed to fetch MCP status:", error)
+    }
+  }
+
+  private async handleConnectMcp(name: string): Promise<void> {
+    if (!this.client) return
+    try {
+      const directory = this.getWorkspaceDirectory()
+      await this.client.mcp.connect({ name, directory })
+      await this.fetchAndSendMcpStatus()
+    } catch (error) {
+      console.error("[Kilo New] KiloProvider: Failed to connect MCP:", name, error)
+      await this.fetchAndSendMcpStatus()
+    }
+  }
+
+  private async handleDisconnectMcp(name: string): Promise<void> {
+    if (!this.client) return
+    try {
+      const directory = this.getWorkspaceDirectory()
+      await this.client.mcp.disconnect({ name, directory })
+      await this.fetchAndSendMcpStatus()
+    } catch (error) {
+      console.error("[Kilo New] KiloProvider: Failed to disconnect MCP:", name, error)
+      await this.fetchAndSendMcpStatus()
+    }
+  }
+
   /**
    * Dispose the CLI backend instance so it re-reads config from disk.
    * Call after any marketplace install/remove that writes config files directly.
@@ -1768,11 +1834,15 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    * Seed sessionStatusMap with current session statuses on connect.
    * Without this, the Settings panel (which has no tracked sessions) would see
    * busyCount() = 0 for sessions that were already running before it opened.
+   *
+   * @param reconcile When true, reset locally-busy sessions absent from the
+   *   server response to idle (crash recovery). Set to false on SSE reconnects
+   *   to avoid a race where a brief HTTP fetch gap causes the spinner to vanish.
    */
-  private async seedSessionStatusMap(): Promise<void> {
+  private async seedSessionStatusMap(reconcile = true): Promise<void> {
     if (!this.client || this.connectionState !== "connected") return
     const dir = this.getWorkspaceDirectory()
-    await seedSessionStatuses(this.client, dir, this.sessionStatusMap, (msg) => this.postMessage(msg))
+    await seedSessionStatuses(this.client, dir, this.sessionStatusMap, (msg) => this.postMessage(msg), reconcile)
   }
 
   /**
@@ -2367,10 +2437,24 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       await config.update(leaf, undefined, vscode.ConfigurationTarget.Global)
     }
 
+    // Clear globalState items that are not part of the configuration
+    await this.extensionContext?.globalState.update("variantSelections", undefined)
+    await this.extensionContext?.globalState.update("recentModels", undefined)
+    await this.extensionContext?.globalState.update("kilo.dismissedNotificationIds", undefined)
+
     // Re-send all settings to the webview so the UI reflects the reset
     this.sendAutocompleteSettings()
     this.sendBrowserSettings()
     this.sendNotificationSettings()
+
+    // Re-send globalState items to the webview
+    this.postMessage({ type: "variantsLoaded", variants: {} })
+    this.postMessage({ type: "recentsLoaded", recents: [] })
+
+    // Re-fetch notifications to reflect cleared dismissed IDs
+    await this.fetchAndSendNotifications()
+
+    vscode.window.showInformationMessage("Kilo Code settings have been reset to defaults.")
   }
 
   /**

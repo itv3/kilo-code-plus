@@ -267,6 +267,7 @@ export const dict = {
   "mcp.status.connected": "เชื่อมต่อแล้ว",
   "mcp.status.failed": "ล้มเหลว",
   "mcp.status.needs_auth": "ต้องการการตรวจสอบสิทธิ์",
+  "mcp.status.needs_registration": "ต้องการลงทะเบียนไคลเอนต์",
   "mcp.status.disabled": "ปิดใช้งาน",
 
   "dialog.fork.empty": "ไม่มีข้อความให้แตกแขนง",
@@ -967,7 +968,7 @@ export const dict = {
   "settings.aboutKiloCode.support.prefix": "สำหรับคำถามเกี่ยวกับการเรียกเก็บเงินหรือบัญชี ติดต่อฝ่ายสนับสนุนลูกค้าที่",
   "settings.aboutKiloCode.resetSettings.title": "รีเซ็ตการตั้งค่า",
   "settings.aboutKiloCode.resetSettings.description":
-    "รีเซ็ตการตั้งค่าส่วนขยาย Kilo Code ทั้งหมดเป็นค่าเริ่มต้น ไม่ส่งผลกระทบต่อการกำหนดค่า CLI หรือแบ็กเอนด์",
+    "การดำเนินการนี้จะรีเซ็ตเฉพาะการตั้งค่าเฉพาะของส่วนขยาย VS Code กลับเป็นค่าเริ่มต้นเท่านั้น การตั้งค่าที่ใช้ร่วมกับ CLI เช่น โหมดและกฎการอนุมัติอัตโนมัติ จะถูกเก็บไว้ในการกำหนดค่า CLI และจะไม่ถูกรีเซ็ต",
   "settings.aboutKiloCode.resetSettings.button": "รีเซ็ตการตั้งค่าทั้งหมด",
   "settings.aboutKiloCode.settingsTransfer.title": "ถ่ายโอนการตั้งค่า",
   "settings.aboutKiloCode.settingsTransfer.description":
@@ -1137,8 +1138,9 @@ export const dict = {
   "settings.agentBehaviour.mcpDetail.args": "อาร์กิวเมนต์",
   "settings.agentBehaviour.mcpDetail.env": "สภาพแวดล้อม",
   "settings.agentBehaviour.mcpDetail.disabled": "เซิร์ฟเวอร์นี้ถูกปิดใช้งาน",
+  "settings.agentBehaviour.mcpBrowseMarketplace": "เรียกดู Marketplace",
   "settings.agentBehaviour.mcpEmpty":
-    "ไม่ได้กำหนดค่าเซิร์ฟเวอร์ MCP แก้ไขไฟล์กำหนดค่า opencode เพื่อเพิ่มเซิร์ฟเวอร์ MCP",
+    "ไม่ได้กำหนดค่าเซิร์ฟเวอร์ MCP เพิ่มเซิร์ฟเวอร์ MCP ใน kilo.jsonc หรือขอให้เอเจนต์เพิ่มให้คุณ",
   "settings.agentBehaviour.workflowsPlaceholder": "เวิร์กโฟลว์จัดการผ่านไฟล์เวิร์กโฟลว์ในพื้นที่ทำงาน",
   "settings.agentBehaviour.workflows.description":
     "เวิร์กโฟลว์คือคำสั่งสแลชแบบกำหนดเองที่กำหนดไว้ในการตั้งค่าของคุณ พิมพ์ /command-name ในแชทเพื่อเรียกใช้ คำสั่งถูกกำหนดค่าใน opencode.json ภายใต้ส่วน 'command'",
