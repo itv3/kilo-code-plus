@@ -145,7 +145,7 @@ export namespace SessionProcessor {
                       toolName: value.toolName,
                     })
                     const created = await Session.updatePart({
-                      id: Identifier.ascending("part"),
+                      id: PartID.ascending(),
                       messageID: input.assistantMessage.id,
                       sessionID: input.assistantMessage.sessionID,
                       type: "tool",
