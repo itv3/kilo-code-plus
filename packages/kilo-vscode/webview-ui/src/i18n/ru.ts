@@ -952,6 +952,7 @@ export const dict = {
   "prompt.placeholder.default": "Введите сообщение... (Enter для отправки, Shift+Enter для новой строки)",
 
   "context.usage.sessionCost": "Стоимость сессии",
+  "context.stats.thisSession": "Эта сессия",
 
   "time.justNow": "только что",
   "time.minutesAgo": "{{count}} мин. назад",
@@ -1267,7 +1268,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Несовместимы с новой архитектурой",
   "migration.migrate.button": "Перенести настройки",
   "migration.migrate.skip": "Пропустить",
-  "migration.migrate.back": "Назад",
   "migration.migrate.keysDetected": "Обнаружено ключей: {{count}}",
   "migration.migrate.serversConfigured": "Настроено серверов: {{count}}",
   "migration.migrate.modesFound": "Найдено режимов: {{count}}",
@@ -1306,7 +1306,6 @@ export const dict = {
   "settings.saveBar.warning.many": "Несколько сеансов выполняются и будут прерваны",
   "settings.saveBar.saveAnyway": "Сохранить в любом случае",
   "settings.saveBar.cancel": "Отмена",
-  "notifications.action.previous": "Назад",
   "notifications.action.next": "Далее",
   "notifications.action.close": "Закрыть",
   "notifications.action.tryModel": "Попробовать {{model}}",

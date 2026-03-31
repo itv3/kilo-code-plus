@@ -944,6 +944,7 @@ export const dict = {
   "prompt.placeholder.default": "メッセージを入力... (Enterで送信、Shift+Enterで改行)",
 
   "context.usage.sessionCost": "セッションコスト",
+  "context.stats.thisSession": "このセッション",
 
   "time.justNow": "たった今",
   "time.minutesAgo": "{{count}}分前",
@@ -1259,7 +1260,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "新しいアーキテクチャと互換性がありません",
   "migration.migrate.button": "設定を移行",
   "migration.migrate.skip": "スキップ",
-  "migration.migrate.back": "戻る",
   "migration.migrate.keysDetected": "{{count}}個のキーを検出",
   "migration.migrate.serversConfigured": "{{count}}個のサーバーが設定済み",
   "migration.migrate.modesFound": "{{count}}個のモードが見つかりました",
@@ -1298,7 +1298,6 @@ export const dict = {
   "settings.saveBar.warning.many": "複数のセッションが実行中で中断されます",
   "settings.saveBar.saveAnyway": "それでも保存",
   "settings.saveBar.cancel": "キャンセル",
-  "notifications.action.previous": "前へ",
   "notifications.action.next": "次へ",
   "notifications.action.close": "閉じる",
   "notifications.action.tryModel": "{{model}}を試す",

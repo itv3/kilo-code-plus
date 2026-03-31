@@ -949,6 +949,7 @@ export const dict = {
   "prompt.placeholder.default": "Wpisz wiadomość... (Enter, aby wysłać, Shift+Enter dla nowej linii)",
 
   "context.usage.sessionCost": "Koszt sesji",
+  "context.stats.thisSession": "Ta sesja",
 
   "time.justNow": "przed chwilą",
   "time.minutesAgo": "{{count}} min temu",
@@ -1268,7 +1269,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Niekompatybilne z nową architekturą",
   "migration.migrate.button": "Migruj ustawienia",
   "migration.migrate.skip": "Pomiń",
-  "migration.migrate.back": "Wstecz",
   "migration.migrate.keysDetected": "Wykryto {{count}} kluczy",
   "migration.migrate.serversConfigured": "Skonfigurowano {{count}} serwer(ów)",
   "migration.migrate.modesFound": "Znaleziono {{count}} tryb(ów)",
@@ -1307,7 +1307,6 @@ export const dict = {
   "settings.saveBar.warning.many": "Kilka sesji jest uruchomionych i zostanie przerwanych",
   "settings.saveBar.saveAnyway": "Zapisz mimo to",
   "settings.saveBar.cancel": "Anuluj",
-  "notifications.action.previous": "Poprzedni",
   "notifications.action.next": "Następny",
   "notifications.action.close": "Zamknij",
   "notifications.action.tryModel": "Wypróbuj {{model}}",

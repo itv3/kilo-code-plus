@@ -945,6 +945,7 @@ export const dict = {
   "prompt.placeholder.default": "Skriv en besked... (Enter for at sende, Shift+Enter for ny linje)",
 
   "context.usage.sessionCost": "Sessionsomkostning",
+  "context.stats.thisSession": "Denne session",
 
   "time.justNow": "lige nu",
   "time.minutesAgo": "{{count}} min. siden",
@@ -1260,7 +1261,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Ikke kompatibel med den nye arkitektur",
   "migration.migrate.button": "Migrer indstillinger",
   "migration.migrate.skip": "Spring over",
-  "migration.migrate.back": "Tilbage",
   "migration.migrate.keysDetected": "{{count}} nøgler fundet",
   "migration.migrate.serversConfigured": "{{count}} server(e) konfigureret",
   "migration.migrate.modesFound": "{{count}} tilstand(e) fundet",
@@ -1299,7 +1299,6 @@ export const dict = {
   "settings.saveBar.warning.many": "Flere sessioner kører og vil blive afbrudt",
   "settings.saveBar.saveAnyway": "Gem alligevel",
   "settings.saveBar.cancel": "Annuller",
-  "notifications.action.previous": "Forrige",
   "notifications.action.next": "Næste",
   "notifications.action.close": "Luk",
   "notifications.action.tryModel": "Prøv {{model}}",

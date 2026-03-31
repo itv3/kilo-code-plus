@@ -952,6 +952,7 @@ export const dict = {
   "prompt.placeholder.default": "Unesite poruku... (Enter za slanje, Shift+Enter za novi red)",
 
   "context.usage.sessionCost": "Cijena sesije",
+  "context.stats.thisSession": "Ova sesija",
 
   "time.justNow": "upravo sada",
   "time.minutesAgo": "prije {{count}} min",
@@ -1269,7 +1270,6 @@ export const dict = {
   "migration.migrate.chatHistoryDesc": "Nekompatibilno sa novom arhitekturom",
   "migration.migrate.button": "Migriraj postavke",
   "migration.migrate.skip": "Preskoči",
-  "migration.migrate.back": "Nazad",
   "migration.migrate.keysDetected": "{{count}} ključeva otkriveno",
   "migration.migrate.serversConfigured": "{{count}} server(a) konfigurisano",
   "migration.migrate.modesFound": "{{count}} režim(a) pronađeno",
@@ -1308,7 +1308,6 @@ export const dict = {
   "settings.saveBar.warning.many": "Nekoliko sesija je pokrenuto i bit će prekinuto",
   "settings.saveBar.saveAnyway": "Spremi svejedno",
   "settings.saveBar.cancel": "Otkaži",
-  "notifications.action.previous": "Prethodni",
   "notifications.action.next": "Sljedeći",
   "notifications.action.close": "Zatvori",
   "notifications.action.tryModel": "Probaj {{model}}",
