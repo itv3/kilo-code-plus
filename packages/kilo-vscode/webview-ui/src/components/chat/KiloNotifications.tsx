@@ -6,7 +6,7 @@ import { useProvider } from "../../context/provider"
 import { useLanguage } from "../../context/language"
 import { KILO_PROVIDER_ID } from "../../../../src/shared/provider-model"
 import { TelemetryEventName } from "../../../../src/services/telemetry/types"
-import { sanitizeName, stripSubProviderPrefix } from "../shared/model-selector-utils"
+import { stripSubProviderPrefix } from "../shared/model-selector-utils"
 
 export const KiloNotifications: Component = () => {
   const { filteredNotifications, dismiss } = useNotifications()
@@ -67,7 +67,7 @@ export const KiloNotifications: Component = () => {
     if (!suggestion) return undefined
     const model = provider.findModel(suggestion)
     if (!model?.name) return undefined
-    return stripSubProviderPrefix(sanitizeName(model.name))
+    return stripSubProviderPrefix(model.name)
   })
 
   const handleTryModel = () => {
