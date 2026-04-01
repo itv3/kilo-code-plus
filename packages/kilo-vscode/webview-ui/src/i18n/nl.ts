@@ -1308,7 +1308,6 @@ export const dict = {
   "notifications.action.close": "Sluiten",
   "notifications.action.tryModel": "Probeer {{model}}",
   // Missing translations - English fallbacks until translated
-  "profile.switchingAccount": "Switching account…",
   "settings.agentBehaviour.createMode": "Create New Mode",
   "settings.agentBehaviour.createMode.button": "Create",
   "settings.agentBehaviour.createMode.cancel": "Cancel",
