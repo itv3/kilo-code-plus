@@ -65,8 +65,8 @@ export const dict = {
   "marketplace.install": "Встановити",
   "marketplace.filter.installed": "Встановлено",
   "marketplace.error.dismiss": "Закрити",
-  "marketplace.warning.busyOne": "Одна сесія виконується і буде перервана",
-  "marketplace.warning.busyMany": "Кілька сесій виконуються і будуть перервані",
+  "marketplace.warning.busyOne": "Виконується одна сесія, її буде перервано",
+  "marketplace.warning.busyMany": "Виконується кілька сесій, їх буде перервано",
   "marketplace.warning.installAnyway": "Встановити все одно",
   "marketplace.warning.cancel": "Скасувати",
 }

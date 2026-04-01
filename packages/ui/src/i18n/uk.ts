@@ -24,10 +24,10 @@ export const dict = {
 
   "ui.fileMedia.kind.image": "зображення",
   "ui.fileMedia.kind.audio": "аудіо",
-  "ui.fileMedia.state.removed": "{{kind}} видалено",
+  "ui.fileMedia.state.removed": "Файл {{kind}} видалено.",
   "ui.fileMedia.state.loading": "{{kind}} завантажується...",
-  "ui.fileMedia.state.error": "{{kind}} не вдалося завантажити",
-  "ui.fileMedia.state.unavailable": "попередній перегляд {{kind}} недоступний",
+  "ui.fileMedia.state.error": "Не вдалося завантажити {{kind}}.",
+  "ui.fileMedia.state.unavailable": "Попередній перегляд {{kind}} недоступний.",
   "ui.fileMedia.binary.title": "Бінарний файл",
   "ui.fileMedia.binary.description.path": "{{path}} є бінарним файлом.",
   "ui.fileMedia.binary.description.default": "Бінарний вміст",
@@ -48,7 +48,7 @@ export const dict = {
   "ui.sessionTurn.retry.inSeconds": "через {{seconds}}с",
   "ui.sessionTurn.retry.attempt": "спроба №{{attempt}}",
   "ui.sessionTurn.retry.attemptLine": "{{line}} - спроба №{{attempt}}",
-  "ui.sessionTurn.retry.geminiHot": "gemini зараз перевантажений",
+  "ui.sessionTurn.retry.geminiHot": "Gemini зараз перевантажений",
   "ui.sessionTurn.error.freeUsageExceeded": "Безкоштовний ліміт вичерпано",
   "ui.sessionTurn.error.addCredits": "Поповнити кредити",
 
@@ -67,8 +67,8 @@ export const dict = {
 
   "ui.messagePart.questions.dismissed": "Питання відхилено",
   "ui.messagePart.compaction": "Історію стиснуто",
-  "ui.messagePart.context.read.one": "{{count}} читання",
-  "ui.messagePart.context.read.other": "{{count}} читань",
+  "ui.messagePart.context.read.one": "{{count}} прочитання",
+  "ui.messagePart.context.read.other": "{{count}} прочитань",
   "ui.messagePart.context.search.one": "{{count}} пошук",
   "ui.messagePart.context.search.other": "{{count}} пошуків",
   "ui.messagePart.context.list.one": "{{count}} список",
