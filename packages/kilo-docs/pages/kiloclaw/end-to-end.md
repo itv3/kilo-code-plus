@@ -134,7 +134,9 @@ By default, KiloClaw asks for confirmation before every tool call. To let it act
 
 > Schedule a daily cron job at 7am to summarize my emails and send me a digest.
 
+{% callout type="tip" %}
 Mentioning "cron job" helps it understand you want a recurring scheduled task.
+{% /callout %}
 
 - **Skills:** the OpenClaw Skills hub has pre-built capabilities you can add. The easiest way to install a skill is to just ask your Claw by name:
 
