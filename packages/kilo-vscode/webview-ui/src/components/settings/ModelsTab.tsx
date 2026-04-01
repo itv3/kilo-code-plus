@@ -99,8 +99,7 @@ const ModelsTab: Component = () => {
                 vscode.postMessage({ type: "updateAutocompleteSetting", key: "model", value: opt })
               }
             }}
-            variant="secondary"
-            size="normal"
+            triggerVariant="settings"
           />
         </SettingsRow>
       </Card>
