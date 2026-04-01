@@ -65,7 +65,6 @@ import {
 import {
   handlePermissionResponse,
   fetchAndSendPendingPermissions,
-  recoveryDirs,
   type PermissionContext,
 } from "./kilo-provider/handlers/permission-handler"
 import { handleQuestionReply, handleQuestionReject } from "./kilo-provider/handlers/question"
@@ -145,6 +144,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private unsubscribeLanguageChange: (() => void) | null = null
   private unsubscribeProfileChange: (() => void) | null = null
   private unsubscribeMigrationComplete: (() => void) | null = null // legacy-migration
+  private unsubscribeClearPendingPrompts: (() => void) | null = null
+  private unsubscribeDirectoryProvider: (() => void) | null = null
   private initConnectionPromise: Promise<void> | null = null
   private webviewMessageDisposable: vscode.Disposable | null = null
 
@@ -956,6 +957,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.unsubscribeNotificationDismiss?.()
     this.unsubscribeLanguageChange?.()
     this.unsubscribeProfileChange?.()
+    this.unsubscribeClearPendingPrompts?.()
+    this.unsubscribeDirectoryProvider?.()
 
     try {
       const workspaceDir = this.getWorkspaceDirectory()
@@ -1033,6 +1036,16 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         this.postMessage({ type: "migrationState", needed: false })
       })
       // legacy-migration end
+
+      // Subscribe to clear-pending-prompts broadcast (fired after config save drains prompts)
+      this.unsubscribeClearPendingPrompts = this.connectionService.onClearPendingPrompts(() => {
+        this.postMessage({ type: "clearPendingPrompts" })
+      })
+
+      // Register this provider's directories so drainPendingPrompts() covers all instances
+      this.unsubscribeDirectoryProvider = this.connectionService.registerDirectoryProvider(() => {
+        return [this.getWorkspaceDirectory(), ...this.sessionDirectories.values()]
+      })
 
       // Get current state and push to webview
       const serverInfo = this.connectionService.getServerInfo()
@@ -1989,9 +2002,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     // races with the async config.update() write on the CLI backend).
     this.pending++
     try {
-      // Reject all pending permissions and questions so their CLI-side
-      // Promises resolve before disposeAll() wipes Instance state.
-      await this.drainPendingPrompts()
+      // Reject all pending permissions and questions across every provider
+      // so their CLI-side Promises resolve before disposeAll() wipes
+      // Instance state.  Throws on failure to abort the config save.
+      await this.connectionService.drainPendingPrompts()
 
       await this.client.global.config.update({ config: partial }, { throwOnError: true })
 
@@ -2004,11 +2018,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
       this.cachedConfigMessage = { type: "configLoaded", config: merged }
       this.postMessage({ type: "configUpdated", config: merged })
-
-      // Clear stale permission/question UI after the dispose cycle.
-      // The drain above resolved them on the CLI side, but SSE events
-      // may race with the dispose — this ensures the webview is clean.
-      this.postMessage({ type: "clearPendingPrompts" })
 
       if (refreshProviders) {
         await this.fetchAndSendProviders()
@@ -2026,30 +2035,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       }
     } finally {
       this.pending--
-    }
-  }
-
-  /**
-   * Reject all pending permission requests and questions across all tracked
-   * directories. Called before config saves that trigger Instance.disposeAll()
-   * on the CLI backend, to prevent orphaned Promises from freezing sessions.
-   */
-  private async drainPendingPrompts(): Promise<void> {
-    if (!this.client) return
-    const dirs = recoveryDirs(this.getWorkspaceDirectory(), this.sessionDirectories)
-    for (const dir of dirs) {
-      const { data: perms } = await this.client.permission.list({ directory: dir })
-      if (perms) {
-        for (const perm of perms) {
-          await this.client.permission.reply({ requestID: perm.id, reply: "reject", directory: dir })
-        }
-      }
-      const { data: qs } = await this.client.question.list({ directory: dir })
-      if (qs) {
-        for (const q of qs) {
-          await this.client.question.reject({ requestID: q.id, directory: dir })
-        }
-      }
     }
   }
 
@@ -2890,6 +2875,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.unsubscribeLanguageChange?.()
     this.unsubscribeProfileChange?.()
     this.unsubscribeMigrationComplete?.()
+    this.unsubscribeClearPendingPrompts?.()
+    this.unsubscribeDirectoryProvider?.()
     this.webviewMessageDisposable?.dispose()
     this.trackedSessionIds.clear()
     this.syncedChildSessions.clear()
