@@ -45,7 +45,10 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })
 
-  // Track all open tab panel providers so toolbar button commands can target them
+  // Track all open tab panel providers so toolbar button commands can target them.
+  // NOTE: The editor/title toolbar for tab panels intentionally omits Agent Manager
+  // and Marketplace buttons (unlike the sidebar). Too many icons causes VS Code to
+  // collapse them into a "..." overflow menu, hiding important buttons like Settings.
   const tabPanels = new Map<vscode.WebviewPanel, KiloProvider>()
   const activeTabProvider = () => {
     for (const [panel, p] of tabPanels) {
