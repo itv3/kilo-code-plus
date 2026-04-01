@@ -385,23 +385,13 @@
           "when": "activeWebviewPanelId == kilo-code.new.TabPanel"
         },
         {
-          "command": "kilo-code.new.agentManagerOpen",
+          "command": "kilo-code.new.profileButtonClicked",
           "group": "navigation@2",
           "when": "activeWebviewPanelId == kilo-code.new.TabPanel"
         },
         {
-          "command": "kilo-code.new.marketplaceButtonClicked",
-          "group": "navigation@3",
-          "when": "activeWebviewPanelId == kilo-code.new.TabPanel"
-        },
-        {
-          "command": "kilo-code.new.profileButtonClicked",
-          "group": "navigation@4",
-          "when": "activeWebviewPanelId == kilo-code.new.TabPanel"
-        },
-        {
           "command": "kilo-code.new.settingsButtonClicked",
-          "group": "navigation@5",
+          "group": "navigation@3",
           "when": "activeWebviewPanelId == kilo-code.new.TabPanel"
         }
       ],
