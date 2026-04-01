@@ -18,6 +18,9 @@ export type Locale =
   | "tr"
   | "nl"
 
+/** Locales that use right-to-left script. */
+export const RTL_LOCALES = new Set<Locale>(["ar"])
+
 export const LOCALES: readonly Locale[] = [
   "en",
   "zh",
