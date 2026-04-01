@@ -283,7 +283,8 @@ export class KiloConnectionService {
 
     // Also include every project directory the CLI backend knows about.
     // This covers worktree sessions whose KiloProvider was already disposed.
-    const { data: projects } = await this.client.project.list()
+    const { data: projects, error: projectsErr } = await this.client.project.list()
+    if (projectsErr) throw new Error(`Failed to list projects: ${String(projectsErr)}`)
     if (projects) {
       for (const p of projects) {
         dirs.add(p.worktree)
