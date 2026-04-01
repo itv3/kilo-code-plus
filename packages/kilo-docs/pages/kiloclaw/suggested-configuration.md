@@ -38,7 +38,7 @@ The steps below walk you through this configuration.
 
 ## Preflight Steps
 
-Take these steps before configuring your Claw. 
+Take these steps before configuring your Claw.
 
 If you are doing a [1-1 configuration call with Kilo](https://kilo.ai/kiloclaw/config-service), please complete these steps before the call.
 
@@ -85,7 +85,7 @@ This lets your Claw act as the bot Google account — sending email, reading cal
 Prerequisites: Docker is installed and running, and your bot Google account is already created.
 
 1. In the KiloClaw dashboard, go to **Settings → Google Account** and copy the Docker command shown.
-2. Open a terminal and run the command. 
+2. Open a terminal and run the command.
 3. Follow the steps in the console:
    - At each step, confirm you're logged in to the bot account (check the top-right corner of the screen).
    - After project creation, confirm you're in the correct project.
@@ -110,7 +110,9 @@ For full details, see the [GitHub setup guide](/docs/kiloclaw/development-tools/
 
 Once GitHub is connected, ask your Claw to back up its workspace:
 
-> "Use your GitHub access to back up your workspace. Make it a GitHub repo and push it as a private repo. Add me as a member so I can see it. Then set up a cron job to pull, rebase, and push any changes at least once an hour."
+```
+Use your GitHub access to back up your workspace. Make it a GitHub repo and push it as a private repo. Add me as a member so I can see it. Then set up a cron job to pull, rebase, and push any changes at least once an hour.
+```
 
 After sending that, redeploy from the dashboard to pick up the changes.
 
@@ -163,13 +165,17 @@ This setting can be wiped on redeploy. If auto-approval stops working after a re
 
 **Scheduling jobs:** tell your Claw when and what to do — for example:
 
-> "Every day at 7am, summarize my emails and send me a digest."
+```
+Every day at 7am, summarize my emails and send me a digest.
+```
 
 Mentioning "cron job" helps it understand you want a recurring scheduled task.
 
 **Skills:** the OpenClaw Skills hub has pre-built capabilities you can add. The easiest way to install a skill is to just ask your Claw by name:
 
-> "Install the [skill name] skill."
+```
+Install the [skill name] skill.
+```
 
 ---
 
