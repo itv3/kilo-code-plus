@@ -140,22 +140,7 @@ Email forwarding is configured from the **destination** (bot) account. Account d
 
 ## Enable auto-approval
 
-By default, KiloClaw asks for confirmation before every tool call. To let it act freely:
-
-1. In the dashboard, go to **Settings**, scroll to the bottom, and click **Edit Files → openclaw.json**.
-2. Find the `Tools` section and set `security` to `full`:
-
-```json
-"exec": {
-  "security": "full"
-}
-```
-
-3. Save the file, then click **Restart** at the top of the page. Use Restart, not Redeploy.
-
-{% callout type="warning" %}
-This setting can be wiped on redeploy. If auto-approval stops working after a redeploy, re-apply this change.
-{% /callout %}
+By default, KiloClaw asks for confirmation before every tool call. To let it act freely, go to the [KiloClaw dashboard](https://app.kilo.ai/claw) and enable auto-approval in the **Default Permissions** section.
 
 ---
 
