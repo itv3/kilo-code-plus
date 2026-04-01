@@ -91,7 +91,7 @@ import { normalizeLocale as _normalizeLocale, resolveTemplate as _resolveTemplat
 export type { Locale } from "./language-utils"
 export { LOCALES } from "./language-utils"
 import type { Locale } from "./language-utils"
-import { LOCALES } from "./language-utils"
+import { LOCALES, RTL_LOCALES, localeToBcp47 } from "./language-utils"
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",
@@ -181,6 +181,13 @@ export const LanguageProvider: ParentComponent<LanguageProviderProps> = (props) 
   })
 
   const dict = createMemo(() => dicts[locale()] ?? dicts.en)
+
+  // Update <html lang> and <html dir> when locale changes
+  createEffect(() => {
+    const loc = locale()
+    document.documentElement.lang = localeToBcp47(loc)
+    document.documentElement.dir = RTL_LOCALES.has(loc) ? "rtl" : "ltr"
+  })
 
   const t = (key: UiI18nKey, params?: UiI18nParams) => {
     const text = (dict() as Record<string, string>)[key] ?? String(key)
