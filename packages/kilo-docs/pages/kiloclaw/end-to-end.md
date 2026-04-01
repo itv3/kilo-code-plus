@@ -138,11 +138,11 @@ By default, KiloClaw asks for confirmation before every tool call. To let it act
 Mentioning "cron job" helps it understand you want a recurring scheduled task.
 {% /callout %}
 
-- **Skills:** Pre-configured capabilities designed to extend what your Claw can do — things like triaging email, summarizing documents, or managing GitHub issues. The easiest way to install a skill is to just ask your Claw by name:
+- **Skills:** Reusable capabilities that extend what your Claw can do — things like triaging email, summarizing documents, or managing GitHub issues. You can install a pre-built skill by asking your Claw:
 
 > Install the [skill name] skill.
 
-You can explore popular skills and use case inspiration at the [KiloClaw Bytes library](https://kilo.ai/kiloclaw/bytes).
+Or ask your Claw to build a custom skill from scratch — it has a built-in skill-builder skill for exactly this. You can explore popular skills and use case inspiration at the [KiloClaw Bytes library](https://kilo.ai/kiloclaw/bytes).
 
 ## Manage inference
 
