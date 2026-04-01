@@ -25,7 +25,7 @@ export type ClawChatClient = {
   onPresence: (cb: (online: boolean) => void) => () => void
 }
 
-function botId(creds: ChatCredentials): string {
+export function botId(creds: ChatCredentials): string {
   return `bot-${creds.channelId.replace(/^default-/, "")}`
 }
 

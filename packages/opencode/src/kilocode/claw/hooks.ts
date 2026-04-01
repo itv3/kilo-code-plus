@@ -9,7 +9,7 @@
 
 import { createSignal, onMount, onCleanup } from "solid-js"
 import type { ClawStatus, ChatCredentials, ChatMessage } from "./types"
-import { connect, history, presence, type ClawChatClient } from "./client"
+import { botId, connect, history, presence, type ClawChatClient } from "./client"
 import { Log } from "@/util/log"
 
 const log = Log.create({ service: "claw-chat" })
@@ -31,6 +31,8 @@ export function createClawStatus(sdk: any, interval = 10_000) {
         setError(null)
       } else if (res?.error) {
         setError(typeof res.error === "string" ? res.error : (res.error?.error ?? "Unknown error"))
+      } else {
+        setError("Network error")
       }
       setLoading(false)
     }
@@ -116,7 +118,7 @@ export function createClawChat(sdk: any) {
       log.info("connect() succeeded")
 
       // Load existing messages
-      const bot = `bot-${creds.channelId.replace(/^default-/, "")}`
+      const bot = botId(creds)
       const existing = await history(chat.channel, bot)
       log.info("loaded history", { count: existing.length })
       setMessages(existing)
