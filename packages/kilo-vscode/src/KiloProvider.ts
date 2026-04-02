@@ -35,7 +35,7 @@ import {
 import { GitOps } from "./agent-manager/GitOps"
 import { GitStatsPoller, type LocalStats } from "./agent-manager/GitStatsPoller"
 import { getWorkspaceRoot } from "./review-utils"
-import { MarketplaceService } from "./services/marketplace"
+import { MarketplaceService, type MarketplaceItem, type RemoveResult } from "./services/marketplace"
 import { resolveProjectDirectory } from "./project-directory"
 import { getBusySessionCount, seedSessionStatuses } from "./session-status"
 import { slimPart, slimParts } from "./kilo-provider/slim-metadata"
@@ -949,12 +949,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           break
         }
         case "removeInstalledMarketplaceItem": {
-          const workspace = this.getProjectDirectory(this.currentSession?.id)
           const scope = message.mpInstallOptions?.target ?? "project"
-          const result = await this.getMarketplace().remove(message.mpItem, scope, workspace)
-          if (result.success) {
-            await this.invalidateAfterMarketplaceChange(scope)
-          }
+          const result = await this.removeMarketplaceItem(message.mpItem, scope)
           this.postMessage({
             type: "marketplaceRemoveResult",
             success: result.success,
@@ -1714,37 +1710,18 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       // CLI removal failed — agent may be in kilo.json instead
     }
 
-    // 2. Try removing from kilo.json (handles marketplace-installed modes).
-    //    mp.remove returns success even when the entry doesn't exist (no-op),
-    //    so we must attempt both scopes to cover dual-scope installations.
-    const workspace = this.getProjectDirectory(this.currentSession?.id)
-    const mp = this.getMarketplace()
+    // 2. Try removing from kilo.json (handles marketplace-installed modes)
     const stub = { id: name, type: "mode" as const, name, description: "", content: "" }
-    const project = await mp.remove(stub, "project", workspace)
-    const global = await mp.remove(stub, "global", workspace)
-
-    if (project.success || global.success) {
-      const scope = global.success ? "global" : "project"
-      await this.invalidateAfterMarketplaceChange(scope)
-    } else {
+    const removed = await this.removeMarketplaceItemFromAllScopes(stub)
+    if (!removed) {
       console.error("[Kilo New] KiloProvider: Failed to remove mode:", name)
     }
   }
 
   private async handleRemoveMcp(name: string): Promise<void> {
-    // mp.remove returns success even when the entry doesn't exist (no-op),
-    // so we must attempt both scopes to cover dual-scope installations.
-    const workspace = this.getProjectDirectory(this.currentSession?.id)
-    const mp = this.getMarketplace()
     const stub = { id: name, type: "mcp" as const, name, description: "", url: "", content: "" }
-
-    const project = await mp.remove(stub, "project", workspace)
-    const global = await mp.remove(stub, "global", workspace)
-
-    if (project.success || global.success) {
-      const scope = global.success ? "global" : "project"
-      await this.invalidateAfterMarketplaceChange(scope)
-    } else {
+    const removed = await this.removeMarketplaceItemFromAllScopes(stub)
+    if (!removed) {
       console.error("[Kilo New] KiloProvider: Failed to remove MCP server:", name)
     }
   }
@@ -1792,6 +1769,38 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       console.error("[Kilo New] KiloProvider: Failed to disconnect MCP:", name, error)
       await this.fetchAndSendMcpStatus()
     }
+  }
+
+  /**
+   * Remove a marketplace item from a single scope and invalidate CLI caches.
+   */
+  private async removeMarketplaceItem(item: MarketplaceItem, scope: "project" | "global"): Promise<RemoveResult> {
+    const workspace = this.getProjectDirectory(this.currentSession?.id)
+    const result = await this.getMarketplace().remove(item, scope, workspace)
+    if (result.success) {
+      await this.invalidateAfterMarketplaceChange(scope)
+    }
+    return result
+  }
+
+  /**
+   * Remove a marketplace item from both project and global scopes.
+   * mp.remove returns success even when the entry doesn't exist (no-op),
+   * so we must attempt both scopes to cover dual-scope installations.
+   * Returns true if at least one scope removal succeeded.
+   */
+  private async removeMarketplaceItemFromAllScopes(item: MarketplaceItem): Promise<boolean> {
+    const workspace = this.getProjectDirectory(this.currentSession?.id)
+    const mp = this.getMarketplace()
+    const project = await mp.remove(item, "project", workspace)
+    const global = await mp.remove(item, "global", workspace)
+
+    if (project.success || global.success) {
+      const scope = global.success ? "global" : "project"
+      await this.invalidateAfterMarketplaceChange(scope)
+      return true
+    }
+    return false
   }
 
   /**
