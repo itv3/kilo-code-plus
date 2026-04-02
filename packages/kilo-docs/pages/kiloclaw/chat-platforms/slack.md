@@ -5,11 +5,7 @@ description: "Connect your KiloClaw agent to Slack"
 
 # Slack
 
-{% callout type="info" title="Setup Video Guide" %}
-Watch this video to see how to connect your KiloClaw agent to Slack step by step.
-
-**[▶ Watch Setup Video](https://screen.studio/share/lPVmA6Ld)**
-{% /callout %}
+{% youtube url="https://youtu.be/Q5bt-qH-_pY" title="Slack Setup Guide" caption="How to connect your KiloClaw agent to Slack" /%}
 
 Connect your KiloClaw agent to Slack by creating a Slack app from the OpenClaw manifest and linking it to your KiloClaw dashboard.
 
