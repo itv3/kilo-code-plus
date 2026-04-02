@@ -1714,35 +1714,39 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       // CLI removal failed — agent may be in kilo.json instead
     }
 
-    // 2. Try removing from kilo.json (handles marketplace-installed modes)
+    // 2. Try removing from kilo.json (handles marketplace-installed modes).
+    //    mp.remove returns success even when the entry doesn't exist (no-op),
+    //    so we must attempt both scopes to cover dual-scope installations.
     const workspace = this.getProjectDirectory(this.currentSession?.id)
     const mp = this.getMarketplace()
     const stub = { id: name, type: "mode" as const, name, description: "", content: "" }
-    for (const scope of ["project", "global"] as const) {
-      const result = await mp.remove(stub, scope, workspace)
-      if (result.success) {
-        await this.invalidateAfterMarketplaceChange(scope)
-        return
-      }
-    }
+    const project = await mp.remove(stub, "project", workspace)
+    const global = await mp.remove(stub, "global", workspace)
 
-    console.error("[Kilo New] KiloProvider: Failed to remove mode:", name)
+    if (project.success || global.success) {
+      const scope = global.success ? "global" : "project"
+      await this.invalidateAfterMarketplaceChange(scope)
+    } else {
+      console.error("[Kilo New] KiloProvider: Failed to remove mode:", name)
+    }
   }
 
   private async handleRemoveMcp(name: string): Promise<void> {
+    // mp.remove returns success even when the entry doesn't exist (no-op),
+    // so we must attempt both scopes to cover dual-scope installations.
     const workspace = this.getProjectDirectory(this.currentSession?.id)
     const mp = this.getMarketplace()
     const stub = { id: name, type: "mcp" as const, name, description: "", url: "", content: "" }
 
-    for (const scope of ["project", "global"] as const) {
-      const result = await mp.remove(stub, scope, workspace)
-      if (result.success) {
-        await this.invalidateAfterMarketplaceChange(scope)
-        return
-      }
-    }
+    const project = await mp.remove(stub, "project", workspace)
+    const global = await mp.remove(stub, "global", workspace)
 
-    console.error("[Kilo New] KiloProvider: Failed to remove MCP server:", name)
+    if (project.success || global.success) {
+      const scope = global.success ? "global" : "project"
+      await this.invalidateAfterMarketplaceChange(scope)
+    } else {
+      console.error("[Kilo New] KiloProvider: Failed to remove MCP server:", name)
+    }
   }
 
   private async fetchAndSendMcpStatus(): Promise<void> {
