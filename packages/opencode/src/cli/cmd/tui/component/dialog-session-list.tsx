@@ -23,12 +23,26 @@ export function DialogSessionList() {
 
   const [toDelete, setToDelete] = createSignal<string>()
   const [search, setSearch] = createDebouncedSignal("", 150)
+  const [global, setGlobal] = createSignal(false) // kilocode_change
 
-  const [searchResults] = createResource(search, async (query) => {
-    if (!query) return undefined
-    const result = await sdk.client.session.list({ search: query, limit: 30 })
-    return result.data ?? []
-  })
+  // kilocode_change start
+  const [searchResults] = createResource(
+    () => ({ query: search(), global: global() }),
+    async ({ query, global: all }) => {
+      if (!query && !all) return undefined
+      if (all) {
+        const result = await sdk.client.experimental.session.list({
+          search: query || undefined,
+          roots: true,
+          limit: 30,
+        })
+        return result.data ?? []
+      }
+      const result = await sdk.client.session.list({ search: query, limit: 30 })
+      return result.data ?? []
+    },
+  )
+  // kilocode_change end
 
   const currentSessionID = createMemo(() => (route.data.type === "session" ? route.data.sessionID : undefined))
 
@@ -36,6 +50,7 @@ export function DialogSessionList() {
 
   const options = createMemo(() => {
     const today = new Date().toDateString()
+    const all = global() // kilocode_change
     return sessions()
       .filter((x) => x.parentID === undefined)
       .toSorted((a, b) => b.time.updated - a.time.updated)
@@ -48,8 +63,12 @@ export function DialogSessionList() {
         const isDeleting = toDelete() === x.id
         const status = sync.data.session_status?.[x.id]
         const isWorking = status?.type === "busy"
+        // kilocode_change start
+        const project = all && "project" in x ? (x as any).project : undefined
+        const suffix = project ? ` [${project.name ?? project.worktree ?? ""}]` : ""
+        // kilocode_change end
         return {
-          title: isDeleting ? `Press ${keybind.print("session_delete")} again to confirm` : x.title,
+          title: isDeleting ? `Press ${keybind.print("session_delete")} again to confirm` : x.title + suffix, // kilocode_change
           bg: isDeleting ? theme.error : undefined,
           value: x.id,
           category,
@@ -65,7 +84,7 @@ export function DialogSessionList() {
 
   return (
     <DialogSelect
-      title="Sessions"
+      title={global() ? "Sessions (all projects)" : "Sessions"}
       options={options()}
       skipFilter={true}
       current={currentSessionID()}
@@ -84,7 +103,11 @@ export function DialogSessionList() {
         {
           keybind: keybind.all.session_delete?.[0],
           title: "delete",
+          // kilocode_change start
+          disabled: global(),
+          // kilocode_change end
           onTrigger: async (option) => {
+            if (global()) return // kilocode_change
             if (toDelete() === option.value) {
               sdk.client.session.delete({
                 sessionID: option.value,
@@ -98,10 +121,23 @@ export function DialogSessionList() {
         {
           keybind: keybind.all.session_rename?.[0],
           title: "rename",
+          // kilocode_change start
+          disabled: global(),
+          // kilocode_change end
           onTrigger: async (option) => {
+            if (global()) return // kilocode_change
             dialog.replace(() => <DialogSessionRename session={option.value} />)
           },
         },
+        // kilocode_change start
+        {
+          keybind: { name: "a", ctrl: true, meta: false, shift: false, leader: false },
+          title: global() ? "project" : "all",
+          onTrigger: async () => {
+            setGlobal((v) => !v)
+          },
+        },
+        // kilocode_change end
       ]}
     />
   )
