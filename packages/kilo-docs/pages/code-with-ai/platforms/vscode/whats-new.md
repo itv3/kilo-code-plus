@@ -48,7 +48,6 @@ The Agent Manager also includes a built-in diff reviewer that shows every change
 ### How do I do code reviews in the new extension?
 
 You can now trigger local AI-powered code reviews directly by using two commands: **`/local-review`** to review all changes on your current branch vs the base branch, and **`/local-review-uncommitted`** to review staged and unstaged changes.
-In VS Code, select "Review" from the mode dropdown and click "Send".
 See the [Code Reviews](/docs/automate/code-reviews/overview) documentation for the full setup and options.
 
 ### Where did orchestrator mode go?
