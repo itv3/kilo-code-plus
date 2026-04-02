@@ -468,10 +468,34 @@ The CLI supports overriding config values with environment variables. The suppor
 - For `kilocode` provider: `KILOCODE_<FIELD_NAME>` (e.g., `KILOCODE_MODEL` → `kilocodeModel`)
 - For other providers: `KILO_<FIELD_NAME>` (e.g., `KILO_API_KEY` → `apiKey`)
 
-## Switching into an Organization from the CLI
+## Using the CLI in an Organization
 
-Use the `/teams` command to see a list of all organizations you can switch into.
+If you belong to a Kilo organization (Team or Enterprise), you can route CLI requests through that organization. The process differs slightly between interactive and non-interactive usage.
 
-Use `/teams` and select a team to switch teams.
+### Interactive Usage
+
+In an interactive CLI session, use the `/teams` command to see a list of all organizations you can switch into. Select an organization from the list to switch into it. Your selection is persisted locally so it carries over to future sessions.
 
 The process is the same when switching into a Team or Enterprise organization.
+
+### Non-Interactive Usage (`kilo run`)
+
+There is no `--org` or `--team` flag on `kilo run`. Instead, the organization is determined from the following sources, in order of priority (highest first):
+
+1. **`KILO_ORG_ID` environment variable** — Best for non-interactive and CI environments. Set it alongside your API key:
+
+   ```bash
+   KILO_ORG_ID=<org-uuid> kilo run "your message"
+   ```
+
+   In CI (e.g., GitHub Actions), set it as a repository secret:
+
+   ```yaml
+   env:
+     KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
+     KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
+   ```
+
+2. **Persisted selection from the last `/teams` pick** — If you've run an interactive session and selected an organization via `/teams`, that selection is stored in the CLI's local state file and reused automatically.
+
+3. **Default organization on your account** — If your account belongs to only one organization, it is used automatically without any additional configuration.
