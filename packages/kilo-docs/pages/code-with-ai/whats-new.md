@@ -49,7 +49,7 @@ Copy functionality is available in the chat interface. Hover over a message or c
 
 ### Where did the in-chat UI for skills, commands, and MCPs go?
 
-MCP configuration has been migrated to the new settings panel. If you had MCPs configured in the old extension, they are automatically migrated to the new version. You can manage MCP servers, skills, and commands through the settings panel. See [MCP Overview](/docs/customize/mcp/overview) for more information.
+MCP configuration has been migrated to the new settings panel. If you had MCPs configured in the old extension, they are automatically migrated to the new version. You can manage MCP servers, skills, and commands through the settings panel. See [MCP Overview](/docs/automate/mcp/overview) for more information.
 
 ### Where is the diff view for file changes?
 
