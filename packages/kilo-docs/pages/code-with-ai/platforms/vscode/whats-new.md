@@ -15,7 +15,7 @@ Whether you're writing features in VS Code, debugging over SSH, or reviewing cod
 
 A lot has changed under the hood, and some things have moved around. If you're coming from the previous extension, you might have questions about where to find certain features or how things work now. We've collected the most common questions below.
 
-Still stumped after reading this? Come find us in discord at [#channel].
+Still stumped after reading this? Come find us in discord at #vscode.
 
 ### Where did code indexing go?
 
