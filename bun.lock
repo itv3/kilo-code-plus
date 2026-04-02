@@ -214,6 +214,9 @@
         "typescript": "catalog:",
       },
     },
+    "packages/kilo-jetbrains": {
+      "name": "@kilocode/kilo-jetbrains",
+    },
     "packages/kilo-telemetry": {
       "name": "@kilocode/kilo-telemetry",
       "version": "7.1.20",
@@ -1212,6 +1215,8 @@
     "@kilocode/kilo-gateway": ["@kilocode/kilo-gateway@workspace:packages/kilo-gateway"],
 
     "@kilocode/kilo-i18n": ["@kilocode/kilo-i18n@workspace:packages/kilo-i18n"],
+
+    "@kilocode/kilo-jetbrains": ["@kilocode/kilo-jetbrains@workspace:packages/kilo-jetbrains"],
 
     "@kilocode/kilo-telemetry": ["@kilocode/kilo-telemetry@workspace:packages/kilo-telemetry"],
 
