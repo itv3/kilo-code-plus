@@ -484,4 +484,4 @@ There is no `--org` or `--team` flag on `kilo run`. Instead, the organization is
 
 1. **`KILO_ORG_ID` environment variable** — Best for non-interactive and CI environments. 
 
-2. **Persisted selection from the last `/teams` pick** — If you've run an interactive session and selected an organization via `/teams`, that selection is stored in the CLI's local state file and reused automatically.
+2. **`Persisted selection from the last `/teams` pick`** — If you've run an interactive session and selected an organization via `/teams`, that selection is stored in the CLI auth file and reused automatically.
