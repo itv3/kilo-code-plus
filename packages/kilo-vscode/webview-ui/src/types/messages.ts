@@ -1977,6 +1977,7 @@ export interface SaveCustomProviderMessage {
   providerID: string
   config: ProviderConfig
   apiKey?: string
+  apiKeyChanged?: boolean
 }
 
 export interface FetchCustomProviderModelsMessage {
