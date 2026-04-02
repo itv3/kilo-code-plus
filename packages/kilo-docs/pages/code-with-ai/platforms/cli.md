@@ -468,10 +468,20 @@ The CLI supports overriding config values with environment variables. The suppor
 - For `kilocode` provider: `KILOCODE_<FIELD_NAME>` (e.g., `KILOCODE_MODEL` → `kilocodeModel`)
 - For other providers: `KILO_<FIELD_NAME>` (e.g., `KILO_API_KEY` → `apiKey`)
 
-## Switching into an Organization from the CLI
+## Using the CLI in an Organization
 
-Use the `/teams` command to see a list of all organizations you can switch into.
+If you belong to a Kilo organization (Team or Enterprise), you can route CLI requests through that organization. The process differs slightly between interactive and non-interactive usage.
 
-Use `/teams` and select a team to switch teams.
+### Interactive Usage
 
-The process is the same when switching into a Team or Enterprise organization.
+In an interactive CLI session, use the `/teams` command to select an organization from your membership list.
+
+Your selection is persisted locally so it carries over to future sessions.
+
+### Non-Interactive Usage (`kilo run`)
+
+There is no `--org` or `--team` flag on `kilo run`. Instead, the organization is determined from the following sources, in order of priority (highest first):
+
+1. **`KILO_ORG_ID` environment variable** — Best for non-interactive and CI environments. 
+
+2. **`Persisted selection from the last `/teams` pick`** — If you've run an interactive session and selected an organization via `/teams`, that selection is stored in the CLI auth file and reused automatically.
