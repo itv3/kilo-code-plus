@@ -1719,11 +1719,62 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   }
 
   private async handleRemoveMcp(name: string): Promise<void> {
+    // Remove from legacy files first so that the subsequent invalidation
+    // causes the CLI to re-read config without the legacy entry.
+    await this.removeLegacyMcp(name)
+
     const stub = { id: name, type: "mcp" as const, name, description: "", url: "", content: "" }
     const removed = await this.removeMarketplaceItemFromAllScopes(stub)
     if (!removed) {
       console.error("[Kilo New] KiloProvider: Failed to remove MCP server:", name)
     }
+  }
+
+  /**
+   * Remove an MCP server from legacy config files (.kilo/mcp.json, .kilocode/mcp.json,
+   * and the VS Code global storage mcp_settings.json). These files are read by the
+   * CLI-side McpMigrator and merged into config at the lowest precedence level.
+   * Returns true if the entry was found and removed from at least one file.
+   */
+  private async removeLegacyMcp(name: string): Promise<boolean> {
+    const workspace = this.getProjectDirectory(this.currentSession?.id)
+    const files: vscode.Uri[] = []
+
+    // Project-level legacy files
+    if (workspace) {
+      files.push(vscode.Uri.file(path.join(workspace, ".kilo", "mcp.json")))
+      files.push(vscode.Uri.file(path.join(workspace, ".kilocode", "mcp.json")))
+    }
+
+    // Global legacy file (VS Code extension global storage)
+    const storage = this.extensionContext?.globalStorageUri
+    if (storage) {
+      files.push(vscode.Uri.joinPath(storage, "settings", "mcp_settings.json"))
+    }
+
+    let removed = false
+    for (const uri of files) {
+      const bytes = await vscode.workspace.fs.readFile(uri).then(
+        (b) => b,
+        () => null,
+      )
+      if (!bytes) continue
+
+      try {
+        const parsed = JSON.parse(Buffer.from(bytes).toString("utf8")) as Record<string, unknown>
+        const servers = parsed.mcpServers as Record<string, unknown> | undefined
+        if (!servers?.[name]) continue
+
+        delete servers[name]
+        const content = Buffer.from(JSON.stringify(parsed, null, 2), "utf8")
+        await vscode.workspace.fs.writeFile(uri, content)
+        removed = true
+      } catch (err) {
+        console.warn("[Kilo New] KiloProvider: Failed to remove legacy MCP from", uri.fsPath, err)
+      }
+    }
+
+    return removed
   }
 
   private async fetchAndSendMcpStatus(): Promise<void> {
