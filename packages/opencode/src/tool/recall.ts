@@ -22,7 +22,7 @@ export const RecallTool = Tool.define("kilo_local_recall", {
   },
 })
 
-async function search(params: { query?: string; limit?: number }, _ctx: Tool.Context) {
+async function search(params: { query?: string; limit?: number }, ctx: Tool.Context) {
   if (!params.query) {
     throw new Error("The 'query' parameter is required when mode is 'search'")
   }
@@ -51,6 +51,19 @@ async function search(params: { query?: string; limit?: number }, _ctx: Tool.Con
       directory: session.directory,
       updated: Locale.todayTimeOrDateTime(session.time.updated),
       current: session.projectID === current,
+    })
+  }
+
+  const dirs = [...new Set(results.filter((r) => !r.current).map((r) => r.directory))]
+  if (dirs.length > 0) {
+    await ctx.ask({
+      permission: "recall",
+      patterns: dirs,
+      always: dirs,
+      metadata: {
+        mode: "search",
+        query: params.query,
+      },
     })
   }
 
