@@ -1315,19 +1315,23 @@ export const dict = {
   "settings.agentBehaviour.createMode.description.help": "Короткий опис того, що робить цей режим.",
   "settings.agentBehaviour.createMode.description.placeholder": "e.g. Reviews code for quality and best practices",
   "settings.agentBehaviour.createMode.name": "Назва",
-  "settings.agentBehaviour.createMode.name.description": "Унікальний ідентифікатор режиму. Використовуйте лише малі літери, цифри та дефіси.",
+  "settings.agentBehaviour.createMode.name.description":
+    "Унікальний ідентифікатор режиму. Використовуйте лише малі літери, цифри та дефіси.",
   "settings.agentBehaviour.createMode.name.placeholder": "e.g. reviewer",
-  "settings.agentBehaviour.createMode.nameInvalid": "Назва повинна починатися з малої літери і містити лише малі літери, цифри та дефіси",
+  "settings.agentBehaviour.createMode.nameInvalid":
+    "Назва повинна починатися з малої літери і містити лише малі літери, цифри та дефіси",
   "settings.agentBehaviour.createMode.nameRequired": "Назва обов'язкова",
   "settings.agentBehaviour.createMode.nameTaken": "Режим з такою назвою вже існує",
   "settings.agentBehaviour.createMode.prompt": "Системний запит",
   "settings.agentBehaviour.createMode.prompt.help": "Інструкції для агента ШІ при використанні цього режиму.",
-  "settings.agentBehaviour.createMode.prompt.placeholder": "e.g. You are a code reviewer. Focus on code quality, best practices, and potential bugs.",
+  "settings.agentBehaviour.createMode.prompt.placeholder":
+    "e.g. You are a code reviewer. Focus on code quality, best practices, and potential bugs.",
   "settings.agentBehaviour.editMode": "Редагувати режим",
   "settings.agentBehaviour.editMode.back": "Назад до списку",
   "settings.agentBehaviour.editMode.description": "Опис",
   "settings.agentBehaviour.editMode.native": "Вбудований режим (визначення лише для читання)",
   "settings.agentBehaviour.editMode.prompt": "Системний запит",
-  "settings.agentBehaviour.editMode.promptOverride": "Власне перевизначення системного запиту для цього вбудованого режиму",
+  "settings.agentBehaviour.editMode.promptOverride":
+    "Власне перевизначення системного запиту для цього вбудованого режиму",
   "settings.agentBehaviour.editMode.save": "Готово",
 }
