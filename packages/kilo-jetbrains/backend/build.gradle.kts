@@ -38,8 +38,11 @@ val checkCli by tasks.registering {
             )
         }
         if (prod) {
-            val present = resolved.listFiles()?.map { it.name }?.toSet() ?: emptySet()
-            val missing = platforms.filter { it !in present }
+            val missing = platforms.filter { platform ->
+                val dir = File(resolved, platform)
+                val exe = if (platform.startsWith("windows")) "kilo.exe" else "kilo"
+                !File(dir, exe).exists()
+            }
             if (missing.isNotEmpty()) {
                 throw GradleException(
                     "Production build requires all platform CLI binaries.\n" +
