@@ -19,7 +19,7 @@ Still stumped after reading this? Come find us in discord at #vscode.
 
 ### Where did code indexing go?
 
-Code indexing is temporarily unavailable in the new extension. It is actively being worked on and is expected to return soon. Please follow [this issue]
+Code indexing is temporarily unavailable in the new extension. It is actively being worked on and is expected to return soon. Please follow [this issue](https://github.com/Kilo-Org/kilocode/issues/6144)
 
 ### How do checkpoints work in the new extension?
 
