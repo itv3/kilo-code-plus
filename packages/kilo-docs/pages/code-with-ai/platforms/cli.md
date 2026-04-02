@@ -474,28 +474,14 @@ If you belong to a Kilo organization (Team or Enterprise), you can route CLI req
 
 ### Interactive Usage
 
-In an interactive CLI session, use the `/teams` command to see a list of all organizations you can switch into. Select an organization from the list to switch into it. Your selection is persisted locally so it carries over to future sessions.
+In an interactive CLI session, use the `/teams` command to select an organization from your membership list.
 
-The process is the same when switching into a Team or Enterprise organization.
+Your selection is persisted locally so it carries over to future sessions.
 
 ### Non-Interactive Usage (`kilo run`)
 
 There is no `--org` or `--team` flag on `kilo run`. Instead, the organization is determined from the following sources, in order of priority (highest first):
 
-1. **`KILO_ORG_ID` environment variable** — Best for non-interactive and CI environments. Set it alongside your API key:
-
-   ```bash
-   KILO_ORG_ID=<org-uuid> kilo run "your message"
-   ```
-
-   In CI (e.g., GitHub Actions), set it as a repository secret:
-
-   ```yaml
-   env:
-     KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-     KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
-   ```
+1. **`KILO_ORG_ID` environment variable** — Best for non-interactive and CI environments. 
 
 2. **Persisted selection from the last `/teams` pick** — If you've run an interactive session and selected an organization via `/teams`, that selection is stored in the CLI's local state file and reused automatically.
-
-3. **Default organization on your account** — If your account belongs to only one organization, it is used automatically without any additional configuration.
