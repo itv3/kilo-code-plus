@@ -1700,36 +1700,33 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    */
   private async handleRemoveMode(name: string): Promise<void> {
     if (!this.client) return
-    let removed = false
 
     // 1. Try CLI removal (handles .md files and legacy .kilocodemodes)
     try {
       const dir = this.getWorkspaceDirectory()
       const result = await this.client.kilocode.removeAgent({ name, directory: dir })
-      if (!result.error) removed = true
+      if (!result.error) {
+        this.cachedAgentsMessage = null
+        await this.fetchAndSendAgents()
+        return
+      }
     } catch {
       // CLI removal failed — agent may be in kilo.json instead
     }
 
     // 2. Try removing from kilo.json (handles marketplace-installed modes)
-    if (!removed) {
-      const workspace = this.getProjectDirectory(this.currentSession?.id)
-      const mp = this.getMarketplace()
-      const stub = { id: name, type: "mode" as const, name, description: "", content: "" }
-      const project = await mp.remove(stub, "project", workspace)
-      const global = await mp.remove(stub, "global", workspace)
-      if (project.success || global.success) {
-        await this.disposeCliInstance("global")
-        removed = true
+    const workspace = this.getProjectDirectory(this.currentSession?.id)
+    const mp = this.getMarketplace()
+    const stub = { id: name, type: "mode" as const, name, description: "", content: "" }
+    for (const scope of ["project", "global"] as const) {
+      const result = await mp.remove(stub, scope, workspace)
+      if (result.success) {
+        await this.invalidateAfterMarketplaceChange(scope)
+        return
       }
     }
 
-    if (!removed) {
-      console.error("[Kilo New] KiloProvider: Failed to remove mode:", name)
-    }
-
-    this.cachedAgentsMessage = null
-    await this.fetchAndSendAgents()
+    console.error("[Kilo New] KiloProvider: Failed to remove mode:", name)
   }
 
   private async handleRemoveMcp(name: string): Promise<void> {
@@ -1737,15 +1734,15 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     const mp = this.getMarketplace()
     const stub = { id: name, type: "mcp" as const, name, description: "", url: "", content: "" }
 
-    const project = await mp.remove(stub, "project", workspace)
-    const global = await mp.remove(stub, "global", workspace)
-
-    if (project.success || global.success) {
-      const scope = global.success ? "global" : "project"
-      await this.invalidateAfterMarketplaceChange(scope)
-    } else {
-      console.error("[Kilo New] KiloProvider: Failed to remove MCP server:", name)
+    for (const scope of ["project", "global"] as const) {
+      const result = await mp.remove(stub, scope, workspace)
+      if (result.success) {
+        await this.invalidateAfterMarketplaceChange(scope)
+        return
+      }
     }
+
+    console.error("[Kilo New] KiloProvider: Failed to remove MCP server:", name)
   }
 
   private async fetchAndSendMcpStatus(): Promise<void> {
@@ -1791,26 +1788,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       console.error("[Kilo New] KiloProvider: Failed to disconnect MCP:", name, error)
       await this.fetchAndSendMcpStatus()
     }
-  }
-
-  /**
-   * Dispose the CLI backend instance so it re-reads config from disk.
-   * Call after any marketplace install/remove that writes config files directly.
-   * Global-scope changes need global.dispose() to also reset the global config cache.
-   */
-  private async disposeCliInstance(scope: "project" | "global"): Promise<void> {
-    if (!this.client) return
-    if (scope === "global") {
-      await this.client.global.dispose().catch((e: unknown) => {
-        console.warn("[Kilo New] global.dispose() after marketplace change failed:", e)
-      })
-    }
-    // Always dispose the per-project instance so it rebuilds state from
-    // the (possibly updated) global + project config on the next request.
-    const dir = this.getWorkspaceDirectory()
-    await this.client.instance.dispose({ directory: dir }).catch((e: unknown) => {
-      console.warn("[Kilo New] instance.dispose() after marketplace change failed:", e)
-    })
   }
 
   /**
