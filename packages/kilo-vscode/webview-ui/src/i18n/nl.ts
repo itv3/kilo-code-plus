@@ -1321,14 +1321,17 @@ export const dict = {
   "settings.agentBehaviour.createMode.description.help": "Korte beschrijving van wat deze modus doet.",
   "settings.agentBehaviour.createMode.description.placeholder": "e.g. Reviews code for quality and best practices",
   "settings.agentBehaviour.createMode.name": "Naam",
-  "settings.agentBehaviour.createMode.name.description": "Unieke identifier voor de modus. Gebruik alleen kleine letters, cijfers en koppeltekens.",
+  "settings.agentBehaviour.createMode.name.description":
+    "Unieke identifier voor de modus. Gebruik alleen kleine letters, cijfers en koppeltekens.",
   "settings.agentBehaviour.createMode.name.placeholder": "e.g. reviewer",
-  "settings.agentBehaviour.createMode.nameInvalid": "Naam moet beginnen met een kleine letter en mag alleen kleine letters, cijfers en koppeltekens bevatten",
+  "settings.agentBehaviour.createMode.nameInvalid":
+    "Naam moet beginnen met een kleine letter en mag alleen kleine letters, cijfers en koppeltekens bevatten",
   "settings.agentBehaviour.createMode.nameRequired": "Naam is verplicht",
   "settings.agentBehaviour.createMode.nameTaken": "Er bestaat al een modus met deze naam",
   "settings.agentBehaviour.createMode.prompt": "Systeemprompt",
   "settings.agentBehaviour.createMode.prompt.help": "Instructies voor de AI-agent bij gebruik van deze modus.",
-  "settings.agentBehaviour.createMode.prompt.placeholder": "e.g. You are a code reviewer. Focus on code quality, best practices, and potential bugs.",
+  "settings.agentBehaviour.createMode.prompt.placeholder":
+    "e.g. You are a code reviewer. Focus on code quality, best practices, and potential bugs.",
   "settings.agentBehaviour.editMode": "Modus bewerken",
   "settings.agentBehaviour.editMode.back": "Terug naar lijst",
   "settings.agentBehaviour.editMode.description": "Beschrijving",
