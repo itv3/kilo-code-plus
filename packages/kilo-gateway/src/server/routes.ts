@@ -537,13 +537,13 @@ export function createKiloRoutes(deps: KiloRoutesDeps) {
           if (!token) return c.json({ error: "No valid token found" }, 401)
 
           // kilocode_change start - pass org context for org-scoped instances
-          const orgId = auth.type === "oauth" ? auth.accountId : undefined
+          const organizationId = auth.type === "oauth" ? auth.accountId : undefined
           const headers: Record<string, string> = {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           }
-          if (orgId) {
-            headers[HEADER_ORGANIZATIONID] = orgId
+          if (organizationId) {
+            headers[HEADER_ORGANIZATIONID] = organizationId
           }
           // kilocode_change end
 
@@ -596,13 +596,13 @@ export function createKiloRoutes(deps: KiloRoutesDeps) {
           if (!token) return c.json({ error: "No valid token found" }, 401)
 
           // kilocode_change start - pass org context for org-scoped instances
-          const orgId = auth.type === "oauth" ? auth.accountId : undefined
+          const organizationId = auth.type === "oauth" ? auth.accountId : undefined
           const headers: Record<string, string> = {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           }
-          if (orgId) {
-            headers[HEADER_ORGANIZATIONID] = orgId
+          if (organizationId) {
+            headers[HEADER_ORGANIZATIONID] = organizationId
           }
           // kilocode_change end
 
