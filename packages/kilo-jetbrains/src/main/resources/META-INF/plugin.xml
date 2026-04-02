@@ -1,7 +1,5 @@
 <idea-plugin>
-    <id>ai.kilocode.jetbrains</id>
     <name>Kilo Code</name>
-    <version>7.0.1</version>
     <vendor url="https://kilo.ai">Kilo Code</vendor>
 
     <description><![CDATA[
