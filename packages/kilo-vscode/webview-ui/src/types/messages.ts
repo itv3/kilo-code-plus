@@ -453,6 +453,7 @@ export interface SendMessageFailedMessage {
   error: string
   text: string
   sessionID?: string
+  draftID?: string
   messageID?: string
   files?: FileAttachment[]
 }
@@ -505,6 +506,7 @@ export interface TodoUpdatedMessage {
 export interface SessionCreatedMessage {
   type: "sessionCreated"
   session: SessionInfo
+  draftID?: string
 }
 
 export interface SessionUpdatedMessage {
@@ -854,6 +856,11 @@ export interface RecentsLoadedMessage {
   recents: ModelSelection[]
 }
 
+export interface FavoritesLoadedMessage {
+  type: "favoritesLoaded"
+  favorites: ModelSelection[]
+}
+
 export interface BranchInfo {
   name: string
   isLocal: boolean
@@ -1152,6 +1159,10 @@ export interface DiffViewerLoadingMessage {
   loading: boolean
 }
 
+export interface ClearPendingPromptsMessage {
+  type: "clearPendingPrompts"
+}
+
 // ============================================
 // Marketplace Messages
 // ============================================
@@ -1334,10 +1345,12 @@ export type ExtensionMessage =
   | ProviderActionErrorMessage
   | CustomProviderModelsFetchedMessage
   | RecentsLoadedMessage
+  | FavoritesLoadedMessage
   | LanguageChangedMessage
   | ContinueInWorktreeProgressMessage
   | WorktreeStatsLoadedMessage
   | McpStatusLoadedMessage
+  | ClearPendingPromptsMessage
 
 // ============================================
 // Messages FROM webview TO extension
@@ -1354,6 +1367,7 @@ export interface SendMessageRequest {
   text: string
   messageID?: string
   sessionID?: string
+  draftID?: string
   providerID?: string
   modelID?: string
   agent?: string
@@ -1486,6 +1500,11 @@ export interface OpenSettingsPanelRequest {
   tab?: string
 }
 
+export interface OpenVSCodeSettingsRequest {
+  type: "openVSCodeSettings"
+  query: string
+}
+
 export interface OpenMarketplacePanelRequest {
   type: "openMarketplacePanel"
 }
@@ -1508,6 +1527,7 @@ export interface SendCommandRequest {
   arguments: string
   messageID?: string
   sessionID?: string
+  draftID?: string
   providerID?: string
   modelID?: string
   agent?: string
@@ -1562,12 +1582,14 @@ export interface SetLanguageRequest {
 export interface QuestionReplyRequest {
   type: "questionReply"
   requestID: string
+  sessionID?: string
   answers: string[][]
 }
 
 export interface QuestionRejectRequest {
   type: "questionReject"
   requestID: string
+  sessionID?: string
 }
 
 export interface DeleteSessionRequest {
@@ -1759,6 +1781,12 @@ export interface ShowLocalTerminalRequest {
 export interface OpenWorktreeRequest {
   type: "agentManager.openWorktree"
   worktreeId: string
+}
+
+// Copy text to the system clipboard via the extension host
+export interface CopyToClipboardRequest {
+  type: "agentManager.copyToClipboard"
+  text: string
 }
 
 // Show existing local terminal when switching to local context (no-op if none exists)
@@ -1970,6 +1998,7 @@ export interface SaveCustomProviderMessage {
   providerID: string
   config: ProviderConfig
   apiKey?: string
+  apiKeyChanged?: boolean
 }
 
 export interface FetchCustomProviderModelsMessage {
@@ -1987,6 +2016,17 @@ export interface PersistRecentsRequest {
 
 export interface RequestRecentsMessage {
   type: "requestRecents"
+}
+
+export interface ToggleFavoriteRequest {
+  type: "toggleFavorite"
+  action: "add" | "remove"
+  providerID: string
+  modelID: string
+}
+
+export interface RequestFavoritesMessage {
+  type: "requestFavorites"
 }
 
 // Continue in Worktree: transfer sidebar session + git state to an isolated worktree
@@ -2029,6 +2069,7 @@ export type WebviewMessage =
   | RefreshProfileRequest
   | OpenExternalRequest
   | OpenSettingsPanelRequest
+  | OpenVSCodeSettingsRequest
   | OpenMarketplacePanelRequest
   | OpenFileRequest
   | CancelLoginRequest
@@ -2084,6 +2125,7 @@ export type WebviewMessage =
   | ShowTerminalRequest
   | ShowLocalTerminalRequest
   | OpenWorktreeRequest
+  | CopyToClipboardRequest
   | ShowExistingLocalTerminalRequest
   | AgentManagerOpenFileRequest
   | CreateMultiVersionRequest
@@ -2130,6 +2172,8 @@ export type WebviewMessage =
   | FetchCustomProviderModelsMessage
   | PersistRecentsRequest
   | RequestRecentsMessage
+  | ToggleFavoriteRequest
+  | RequestFavoritesMessage
   | ContinueInWorktreeRequest
 
 // ============================================
