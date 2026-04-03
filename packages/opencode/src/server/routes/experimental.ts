@@ -326,6 +326,8 @@ export const ExperimentalRoutes = lazy(() =>
       validator(
         "query",
         z.object({
+          // kilocode_change
+          projectID: z.string().optional().meta({ description: "Filter sessions by project ID" }),
           directory: z.string().optional().meta({ description: "Filter sessions by project directory" }),
           roots: z.coerce.boolean().optional().meta({ description: "Only return root sessions (no parentID)" }),
           start: z.coerce
@@ -346,6 +348,7 @@ export const ExperimentalRoutes = lazy(() =>
         const limit = query.limit ?? 100
         const sessions: Session.GlobalInfo[] = []
         for await (const session of Session.listGlobal({
+          projectID: query.projectID, // kilocode_change
           directory: query.directory,
           roots: query.roots,
           start: query.start,

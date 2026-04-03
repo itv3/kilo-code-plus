@@ -622,6 +622,7 @@ export namespace Session {
   }
 
   export function* listGlobal(input?: {
+    projectID?: string
     directory?: string
     roots?: boolean
     start?: number
@@ -631,6 +632,12 @@ export namespace Session {
     archived?: boolean
   }) {
     const conditions: SQL[] = []
+
+    // kilocode_change start
+    if (input?.projectID) {
+      conditions.push(eq(SessionTable.project_id, input.projectID))
+    }
+    // kilocode_change end
 
     if (input?.directory) {
       // kilocode_change start: vscode uri.fsPath gives lowercase drive letter on Windows; resolve() canonicalises to match stored path

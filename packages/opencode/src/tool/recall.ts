@@ -1,7 +1,6 @@
 // kilocode_change - new file
 import z from "zod"
 import { Tool } from "./tool"
-import { Session } from "../session"
 import { Instance } from "../project/instance"
 import { Locale } from "../util/locale"
 import DESCRIPTION from "./recall.txt"
@@ -39,17 +38,17 @@ async function search(params: { query?: string; limit?: number }, ctx: Tool.Cont
 
   const limit = Math.min(params.limit ?? 20, 50)
   const current = Instance.project.id
+  const { Session } = await import("../session/index") // kilocode_change
 
   const results: Array<{
     id: string
     title: string
-    project: string
     directory: string
     updated: string
-    current: boolean
   }> = []
 
   for (const session of Session.listGlobal({
+    projectID: current, // kilocode_change
     search: params.query,
     roots: true,
     limit,
@@ -57,10 +56,8 @@ async function search(params: { query?: string; limit?: number }, ctx: Tool.Cont
     results.push({
       id: session.id,
       title: session.title,
-      project: session.project?.name ?? session.project?.worktree ?? "unknown",
       directory: session.directory,
       updated: Locale.todayTimeOrDateTime(session.time.updated),
-      current: session.projectID === current,
     })
   }
 
@@ -72,10 +69,7 @@ async function search(params: { query?: string; limit?: number }, ctx: Tool.Cont
     }
   }
 
-  const lines = results.map(
-    (r) =>
-      `- **${r.title}** (${r.current ? "current project" : r.project})\n  ID: ${r.id} | Updated: ${r.updated} | Dir: ${r.directory}`,
-  )
+  const lines = results.map((r) => `- **${r.title}**\n  ID: ${r.id} | Updated: ${r.updated} | Dir: ${r.directory}`)
 
   return {
     title: `Search: "${params.query}" (${results.length} results)`,
@@ -89,9 +83,17 @@ async function read(params: { sessionID?: string }, ctx: Tool.Context) {
     throw new Error("The 'sessionID' parameter is required when mode is 'read'")
   }
 
+  const { Session } = await import("../session/index") // kilocode_change
   const session = await Session.get(params.sessionID).catch(() => {
     throw new Error(`Session "${params.sessionID}" not found. Use search mode first to find valid session IDs.`)
   })
+  // kilocode_change start
+  if (session.projectID !== Instance.project.id) {
+    throw new Error(
+      `Session "${params.sessionID}" belongs to a different project and cannot be read from this workspace.`,
+    )
+  }
+  // kilocode_change end
 
   await ctx.ask({
     permission: "recall",
@@ -107,7 +109,7 @@ async function read(params: { sessionID?: string }, ctx: Tool.Context) {
   const msgs = await Session.messages({ sessionID: session.id })
   const lines: string[] = [
     `# Session: ${session.title}`,
-    `Project: ${session.directory}`,
+    `Directory: ${session.directory}`,
     `Created: ${Locale.todayTimeOrDateTime(session.time.created)}`,
     "",
   ]

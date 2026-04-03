@@ -3,7 +3,7 @@ import { DialogSelect } from "@tui/ui/dialog-select"
 import { useRoute } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
 import path from "path"
-import { createMemo, createSignal, createResource, onMount, Show } from "solid-js"
+import { createMemo, createSignal, createResource, onMount } from "solid-js"
 import { Locale } from "@/util/locale"
 import { useKeybind } from "../context/keybind"
 import { useTheme } from "../context/theme"
@@ -11,7 +11,6 @@ import { useSDK } from "../context/sdk"
 import { DialogSessionRename } from "./dialog-session-rename"
 import { createDebouncedSignal } from "../util/signal"
 import { Spinner } from "./spinner"
-import { useToast } from "../ui/toast"
 
 export function DialogSessionList() {
   const dialog = useDialog()
@@ -20,26 +19,30 @@ export function DialogSessionList() {
   const keybind = useKeybind()
   const { theme } = useTheme()
   const sdk = useSDK()
-  const toast = useToast()
 
   const [toDelete, setToDelete] = createSignal<string>()
   const [search, setSearch] = createDebouncedSignal("", 150)
   const [global, setGlobal] = createSignal(false) // kilocode_change
 
   // kilocode_change start
-  const [searchResults] = createResource(
+  const [searchResults, searchActions] = createResource(
     () => ({ query: search(), global: global() }),
     async ({ query, global: all }) => {
       if (!query && !all) return undefined
       if (all) {
-        const result = await sdk.client.experimental.session.list({
-          search: query || undefined,
-          roots: true,
-          limit: 30,
-        })
+        const project = await sdk.client.project.current({}, { throwOnError: true })
+        const result = await sdk.client.experimental.session.list(
+          {
+            projectID: project.data?.id,
+            search: query || undefined,
+            roots: true,
+            limit: 30,
+          },
+          { throwOnError: true },
+        )
         return result.data ?? []
       }
-      const result = await sdk.client.session.list({ search: query, limit: 30 })
+      const result = await sdk.client.session.list({ search: query || undefined, limit: 30 }, { throwOnError: true })
       return result.data ?? []
     },
   )
@@ -47,7 +50,10 @@ export function DialogSessionList() {
 
   const currentSessionID = createMemo(() => (route.data.type === "session" ? route.data.sessionID : undefined))
 
-  const sessions = createMemo(() => searchResults() ?? sync.data.session)
+  const sessions = createMemo(() => {
+    if (global() || search()) return searchResults() ?? [] // kilocode_change
+    return searchResults() ?? sync.data.session
+  })
 
   const options = createMemo(() => {
     const today = new Date().toDateString()
@@ -64,12 +70,8 @@ export function DialogSessionList() {
         const isDeleting = toDelete() === x.id
         const status = sync.data.session_status?.[x.id]
         const isWorking = status?.type === "busy"
-        // kilocode_change start
-        const project =
-          all && "project" in x ? (x as { project?: { name?: string; worktree: string } | null }).project : undefined
-        const root = project?.name ?? (project ? path.basename(project.worktree) || project.worktree : "")
+        const root = all ? path.basename(x.directory) || x.directory : "" // kilocode_change
         const suffix = root ? ` [${root}]` : ""
-        // kilocode_change end
         return {
           title: isDeleting ? `Press ${keybind.print("session_delete")} again to confirm` : x.title + suffix, // kilocode_change
           bg: isDeleting ? theme.error : undefined,
@@ -87,7 +89,7 @@ export function DialogSessionList() {
 
   return (
     <DialogSelect
-      title={global() ? "Sessions (all projects)" : "Sessions"}
+      title={global() ? "Sessions (all worktrees)" : "Sessions"} // kilocode_change
       options={options()}
       skipFilter={true}
       current={currentSessionID()}
@@ -96,20 +98,6 @@ export function DialogSessionList() {
         setToDelete(undefined)
       }}
       onSelect={(option) => {
-        const item = sessions().find((x) => x.id === option.value)
-        const project =
-          global() && item && "project" in item
-            ? (item as { project?: { worktree?: string } | null }).project
-            : undefined
-        const cross =
-          global() && item && project?.worktree !== undefined && project.worktree !== sync.data.path.worktree
-        if (cross) {
-          toast.show({
-            message: "Open this session from its own project",
-            variant: "error",
-          })
-          return
-        }
         route.navigate({
           type: "session",
           sessionID: option.value,
@@ -120,16 +108,13 @@ export function DialogSessionList() {
         {
           keybind: keybind.all.session_delete?.[0],
           title: "delete",
-          // kilocode_change start
-          disabled: global(),
-          // kilocode_change end
           onTrigger: async (option) => {
-            if (global()) return // kilocode_change
             if (toDelete() === option.value) {
-              sdk.client.session.delete({
+              await sdk.client.session.delete({
                 sessionID: option.value,
               })
               setToDelete(undefined)
+              if (global() || search()) void searchActions.refetch() // kilocode_change
               return
             }
             setToDelete(option.value)
@@ -138,19 +123,25 @@ export function DialogSessionList() {
         {
           keybind: keybind.all.session_rename?.[0],
           title: "rename",
-          // kilocode_change start
-          disabled: global(),
-          // kilocode_change end
           onTrigger: async (option) => {
-            if (global()) return // kilocode_change
-            dialog.replace(() => <DialogSessionRename session={option.value} />)
+            const item = sessions().find((x) => x.id === option.value)
+            dialog.replace(() => (
+              <DialogSessionRename
+                session={option.value}
+                title={item?.title}
+                onConfirm={() => {
+                  if (global() || search()) void searchActions.refetch() // kilocode_change
+                }}
+              />
+            ))
           },
         },
         // kilocode_change start
         {
           keybind: { name: "a", ctrl: true, meta: false, shift: false, leader: false },
-          title: global() ? "project" : "all",
+          title: global() ? "recent" : "all",
           onTrigger: async () => {
+            setToDelete(undefined)
             setGlobal((v) => !v)
           },
         },

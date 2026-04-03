@@ -1065,6 +1065,7 @@ export class Session extends HeyApiClient {
     parameters?: {
       directory?: string
       workspace?: string
+      projectID?: string
       roots?: boolean
       start?: number
       cursor?: number
@@ -1081,6 +1082,7 @@ export class Session extends HeyApiClient {
           args: [
             { in: "query", key: "directory" },
             { in: "query", key: "workspace" },
+            { in: "query", key: "projectID" },
             { in: "query", key: "roots" },
             { in: "query", key: "start" },
             { in: "query", key: "cursor" },

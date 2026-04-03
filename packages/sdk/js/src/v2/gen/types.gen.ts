@@ -2844,6 +2844,10 @@ export type ExperimentalSessionListData = {
     directory?: string
     workspace?: string
     /**
+     * Filter sessions by project ID
+     */
+    projectID?: string
+    /**
      * Only return root sessions (no parentID)
      */
     roots?: boolean

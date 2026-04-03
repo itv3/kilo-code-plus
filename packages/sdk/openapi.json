@@ -1792,6 +1792,14 @@
           },
           {
             "in": "query",
+            "name": "projectID",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter sessions by project ID"
+          },
+          {
+            "in": "query",
             "name": "roots",
             "schema": {
               "type": "boolean"
