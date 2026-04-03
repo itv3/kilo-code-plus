@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { Bus } from "../../src/bus"
 import { Instance } from "../../src/project/instance"
 import { tmpdir } from "../fixture/fixture"
 import { SessionNetwork } from "../../src/session/network"
@@ -45,6 +46,36 @@ describe("session.network", () => {
         const req = pending[0]!
         await SessionNetwork.reject({ requestID: req.id })
         await expect(ask).rejects.toBeInstanceOf(SessionNetwork.RejectedError)
+      },
+    })
+  })
+
+  test("aborted signal rejects without publishing asked", async () => {
+    await using tmp = await tmpdir({ git: true })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const abort = new AbortController()
+        const seen: string[] = []
+        const offAsked = Bus.subscribe(SessionNetwork.Event.Asked, () => seen.push("asked"))
+        const offRejected = Bus.subscribe(SessionNetwork.Event.Rejected, () => seen.push("rejected"))
+        abort.abort()
+
+        try {
+          const err = await SessionNetwork.ask({
+            sessionID: "ses_test",
+            message: "Connection timed out",
+            abort: abort.signal,
+          }).catch((err) => err)
+
+          expect(err).toBeInstanceOf(DOMException)
+          expect(err.name).toBe("AbortError")
+          expect(await SessionNetwork.list()).toHaveLength(0)
+          expect(seen).toStrictEqual(["rejected"])
+        } finally {
+          offAsked()
+          offRejected()
+        }
       },
     })
   })

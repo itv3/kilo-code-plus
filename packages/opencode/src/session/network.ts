@@ -97,6 +97,8 @@ export namespace SessionNetwork {
 
     return new Promise<void>((resolve, reject) => {
       const onAbort = () => {
+        if (!s.pending[id]) return
+        input.abort.removeEventListener("abort", onAbort)
         delete s.pending[id]
         Bus.publish(Event.Rejected, {
           sessionID: input.sessionID,
@@ -116,6 +118,10 @@ export namespace SessionNetwork {
         },
       }
       input.abort.addEventListener("abort", onAbort, { once: true })
+      if (input.abort.aborted) {
+        onAbort()
+        return
+      }
       Bus.publish(Event.Asked, info)
     })
   }
