@@ -430,13 +430,25 @@ export namespace SessionProcessor {
                       message: match.message,
                     })
                   }
+                  let aborted = false
                   await wait.catch((err) => {
                     if (err instanceof SessionNetwork.RejectedError) {
                       blocked = true
                       return
                     }
+                    if (err instanceof DOMException && err.name === "AbortError") {
+                      aborted = true
+                      return
+                    }
                     throw err
                   })
+                  if (aborted) {
+                    input.assistantMessage.error = MessageV2.fromError(new DOMException("Aborted", "AbortError"), {
+                      providerID: input.model.providerID,
+                    })
+                    SessionStatus.set(input.sessionID, { type: "idle" })
+                    break
+                  }
                   if (blocked) {
                     input.assistantMessage.error = error
                     Bus.publish(Session.Event.Error, {

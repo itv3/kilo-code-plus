@@ -79,4 +79,31 @@ describe("session.network", () => {
       },
     })
   })
+
+  test("abort during pending ask rejects with AbortError and cleans up", async () => {
+    await using tmp = await tmpdir({ git: true })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const abort = new AbortController()
+        const pending = SessionNetwork.ask({
+          sessionID: "ses_test",
+          message: "Connection refused",
+          abort: abort.signal,
+        })
+        // wait for the ask to register
+        const list = await SessionNetwork.list()
+        expect(list).toHaveLength(1)
+
+        // abort while waiting
+        abort.abort()
+        const err = await pending.catch((e: unknown) => e)
+        expect(err).toBeInstanceOf(DOMException)
+        expect((err as DOMException).name).toBe("AbortError")
+
+        // pending entry should be cleaned up
+        expect(await SessionNetwork.list()).toHaveLength(0)
+      },
+    })
+  })
 })
