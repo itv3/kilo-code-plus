@@ -54,3 +54,121 @@
 - `plugin.xml` `<content>` entries ↔ module XML descriptors (`kilo.jetbrains.{shared,frontend,backend}.xml`)
 - Service classes ↔ `<applicationService>`/`<projectService>` entries in the corresponding module XML
 - `script/build.ts` platform list ↔ `backend/build.gradle.kts` `requiredPlatforms` list
+
+## UI Design Guidelines
+
+Official references:
+
+- [IntelliJ Platform UI Guidelines](https://jetbrains.design/intellij/)
+- [User Interface Components](https://plugins.jetbrains.com/docs/intellij/user-interface-components.html)
+- [UI FAQ (colors, borders, icons)](https://plugins.jetbrains.com/docs/intellij/ui-faq.html)
+
+### Do Not Use JCEF (Embedded Browser)
+
+**Do not use JCEF (`JBCefBrowser`) in this plugin.** JCEF does not work in JetBrains remote development (split mode): the frontend process runs on the client machine but JCEF requires a display on the host, making it effectively unusable for remote users. Use standard Swing with IntelliJ Platform components for all UI.
+
+### When to Use What
+
+| Need                                                        | API                                                                                                                          |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Dialogs and settings pages with input fields bound to state | [Kotlin UI DSL v2](https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html) (`com.intellij.ui.dsl.builder`) |
+| Tool window panels, action-driven UI, custom components     | Standard Swing with IntelliJ Platform component replacements (see below)                                                     |
+| Menus and toolbars                                          | [Action System](https://plugins.jetbrains.com/docs/intellij/action-system.html)                                              |
+
+### Kotlin UI DSL v2
+
+Use `panel { }` as the top-level builder — returns a `DialogPanel`. Structure: `panel` → `row` → cells (factory methods like `textField()`, `checkBox()`, `label()`). The DSL is for forms with bindings (`bindText`, `bindSelected`, etc.) and is **not** intended for general tool window UI.
+
+```kotlin
+// Settings/dialog example
+panel {
+    row("Label:") { textField().bindText(model::value) }
+    group("Section") {
+        row { checkBox("Enable feature").bindSelected(model::enabled) }
+    }
+}
+```
+
+Key patterns: `group {}` for titled sections, `indent {}` for left indent, `collapsibleGroup {}` for expandable sections, `buttonsGroup {}` for radio groups, `enabledIf()`/`visibleIf()` for reactive visibility, `.align(AlignX.FILL)` to stretch components.
+
+To explore DSL capabilities interactively: **Tools → Internal Actions → UI → Kotlin UI DSL → UI DSL Showcase** (requires internal mode).
+
+### Tool Windows
+
+- Register declaratively in module XML via `com.intellij.toolWindow` extension point (already done in `kilo.jetbrains.frontend.xml`).
+- Implement `ToolWindowFactory.createToolWindowContent()` — called lazily on first click (zero overhead if unused).
+- Use `SimpleToolWindowPanel(vertical = true)` as a convenient base — supports toolbar + content layout.
+- Add tabs via `ToolWindow.contentManager`: create content with `ContentFactory.getInstance().createContent(component, title, isLockable)`, then `contentManager.addContent()`.
+- For conditional display, implement `ToolWindowFactory.isApplicableAsync(project)`.
+- Always use `ToolWindowManager.invokeLater()` instead of `Application.invokeLater()` for tool-window-related EDT tasks.
+
+### Dialogs
+
+- Extend `DialogWrapper`. Call `init()` from the constructor. Override `createCenterPanel()` to return UI content — prefer Kotlin UI DSL v2 for the panel contents.
+- Override `getPreferredFocusedComponent()` for initial focus, `getDimensionServiceKey()` for size persistence.
+- Show with `showAndGet()` (modal, returns boolean) or `show()` (then use `getExitCode()`).
+- Input validation: call `initValidation()` in constructor, override `doValidate()` → return `null` if valid or `ValidationInfo(message, component)` if not.
+
+### Platform Components — Always Use Instead of Raw Swing
+
+| Instead of            | Use                    | Package                         |
+| --------------------- | ---------------------- | ------------------------------- |
+| `JLabel`              | `JBLabel`              | `com.intellij.ui.components`    |
+| `JTextField`          | `JBTextField`          | `com.intellij.ui.components`    |
+| `JTextArea`           | `JBTextArea`           | `com.intellij.ui.components`    |
+| `JList`               | `JBList`               | `com.intellij.ui.components`    |
+| `JScrollPane`         | `JBScrollPane`         | `com.intellij.ui.components`    |
+| `JTable`              | `JBTable`              | `com.intellij.ui.table`         |
+| `JTree`               | `Tree`                 | `com.intellij.ui.treeStructure` |
+| `JSplitPane`          | `JBSplitter`           | `com.intellij.ui`               |
+| `JTabbedPane`         | `JBTabs`               | `com.intellij.ui.tabs`          |
+| `JCheckBox`           | `JBCheckBox`           | `com.intellij.ui.components`    |
+| `Color`               | `JBColor`              | `com.intellij.ui`               |
+| `EmptyBorder`         | `JBUI.Borders.empty()` | `com.intellij.util.ui`          |
+| Hardcoded pixel sizes | `JBUI.scale(px)`       | `com.intellij.util.ui`          |
+
+Inspection `Plugin DevKit | Code | Undesirable class usage` highlights when you use raw Swing where a platform replacement exists.
+
+### Colors and Theming
+
+- **Never** use `java.awt.Color` directly. Use `JBColor(lightColor, darkColor)` or `JBColor.namedColor("key", fallback)` for theme-aware colors.
+- For lazy color retrieval (e.g. in painting), use `JBColor.lazy { UIManager.getColor("key") }`.
+- Check current theme: `JBColor.isBright()` returns `true` for light themes.
+- Generic UI colors: `UIUtil.getContextHelpForeground()`, `UIUtil.getLabelForeground()`, `UIUtil.getPanelBackground()`, etc.
+
+### Borders, Insets, and Spacing
+
+- Always create via `JBUI.Borders.empty(top, left, bottom, right)` and `JBUI.insets()` — DPI-aware and auto-update on zoom.
+- Use `JBUI.scale(int)` for any pixel dimension to ensure proper HiDPI scaling.
+
+### Icons
+
+- **Reuse platform icons**: browse at https://intellij-icons.jetbrains.design. Access via `AllIcons.*` constants.
+- Custom icons: SVG files in `resources/icons/`. Load via `IconLoader.getIcon("/icons/foo.svg", MyClass::class.java)`.
+- Organize in an `icons` package or a `*Icons` object with `@JvmField` on each constant.
+- **Sizing**: actions/nodes = 16×16, tool window = 13×13 (classic) or 20×20 + 16×16 compact (New UI), editor gutter = 12×12 (classic) / 14×14 (New UI).
+- **Dark variants**: `icon.svg` + `icon_dark.svg`. HiDPI: `icon@2x.svg` + `icon@2x_dark.svg`.
+- **New UI support**: place New UI icons in `expui/` directory, create `*IconMappings.json`, register via `com.intellij.iconMapper` extension point. New UI icon colors: light `#6C707E`, dark `#CED0D6`.
+
+### Notifications
+
+- Declare in module XML: `<notificationGroup id="Kilo Code" displayType="BALLOON"/>`.
+- Show: `Notification("Kilo Code", "message", NotificationType.INFORMATION).notify(project)`.
+- Add actions: `.addAction(NotificationAction.createSimpleExpiring("Label") { ... })`.
+- Sticky (user must dismiss): `displayType="STICKY_BALLOON"` + `.setSuggestionType(true)`.
+- Tool-window-bound: `displayType="TOOL_WINDOW" toolWindowId="Kilo Code"`.
+- Prefer non-modal notifications over `Messages.show*()` dialogs.
+
+### Popups
+
+- Use `JBPopupFactory.getInstance()` for lightweight floating UI (no chrome, auto-dismiss on focus loss).
+- `createComponentPopupBuilder(component, focusable)` for arbitrary Swing content; `createPopupChooserBuilder(list)` for item selection; `createActionGroupPopup()` for action menus.
+- Show with `showInBestPositionFor(editor)`, `showUnderneathOf(component)`, or `showInCenterOf(component)`.
+
+### Lists and Trees
+
+- `JBList` not `JList` — adds empty text, busy indicator, tooltip truncation.
+- `Tree` not `JTree` — adds wide selection painting, auto-scroll on DnD.
+- Custom renderers: `ColoredListCellRenderer` / `ColoredTreeCellRenderer` — `append()` for styled text, `setIcon()` for icons.
+- Speed search: `ListSpeedSearch(list)` / `TreeSpeedSearch(tree)`.
+- Editable list with add/remove/reorder toolbar: `ToolbarDecorator.createDecorator(list).setAddAction { }.setRemoveAction { }.createPanel()`.
