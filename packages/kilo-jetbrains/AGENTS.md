@@ -5,11 +5,30 @@
 - **Split-mode plugin** with three Gradle modules: `shared/`, `frontend/`, `backend/`. The module descriptors are `kilo.jetbrains.shared.xml`, `kilo.jetbrains.frontend.xml`, `kilo.jetbrains.backend.xml` — these must stay in sync with `plugin.xml`'s `<content>` block.
 - Reference template for the split-mode structure: https://github.com/nicewith/intellij-platform-modular-plugin-template
 - Official docs: https://plugins.jetbrains.com/docs/intellij/split-mode-for-remote-development.html
+- The JetBrains reference template mirrors our overall structure well: root project assembles the final plugin, `shared` holds contracts, `frontend` holds UI, and `backend` holds project-local logic. Copy its split-mode wiring and RPC layout, but **do not** copy its Compose UI approach.
 - Kotlin source goes under `{module}/src/main/kotlin/ai/kilocode/jetbrains/`. Package name is `ai.kilocode.jetbrains` (matches `group` in root `build.gradle.kts`).
 - **Module placement rules**: backend modules host project model, indexing, analysis, execution, and CLI process management. Frontend modules host UI, typing assistance, and latency-sensitive features. Shared modules define RPC interfaces and data types used by both sides.
 - In monolithic IDE mode (non-remote), all three modules load in one process — split plugins work fine without remote dev.
 - Frontend ↔ backend communication uses RPC interfaces defined in `shared/`. Data sent over RPC must use `kotlinx.serialization`. In monolithic mode RPC is just an in-process suspend call.
 - **Testing split mode**: run `./gradlew generateSplitModeRunConfigurations` to create a "Run IDE (Split Mode)" config that starts both frontend and backend processes locally. Emulate latency via the Split Mode widget (requires internal mode: `-Didea.is.internal=true`).
+- The root `plugin.xml` is wiring only: keep plugin metadata and the `<content>` block there. Register services, extensions, listeners, and actions in the module XML descriptors, not in root `plugin.xml`.
+- Module descriptor files must live directly in `{module}/src/main/resources/`, not in `META-INF/`.
+- Module XMLs use `<dependencies>`, not `<depends>`. The allowed top-level registration tags are limited; keep module XMLs focused on `<resource-bundle>`, `<extensions>`, `<extensionPoints>`, `<actions>`, `<applicationListeners>`, and `<projectListeners>`.
+- Module dependencies determine where code loads. In monolith mode both frontend and backend dependencies are satisfied, so both modules load together.
+- Run inspection `Plugin DevKit | Code | Frontend and Backend API Usage` when adding or moving split-mode code.
+
+## Split Feature Development
+
+- For any new split feature, follow this flow: put UI in `frontend`, heavy/project-local logic in `backend`, and shared contracts in `shared`.
+- Shared cross-process payloads must be `@Serializable`. Keep `shared` lightweight and avoid pulling frontend-only or backend-only APIs into it.
+- Define RPC APIs in `shared` with `@Rpc`, `RemoteApi<Unit>`, and `suspend` methods only.
+- Implement RPC providers in `backend` and register them via `com.intellij.platform.rpc.backend.remoteApiProvider` when RPC is introduced.
+- Call RPC from `frontend` coroutines only. Never call RPC on the EDT; do not paper over this with blocking wrappers.
+- Wrap long-lived RPC calls and flows in `durable {}` so they survive reconnects and backend restarts.
+- For backend -> frontend push events, prefer Remote Topics over ad-hoc polling.
+- Render empty state immediately and progressively fill data from the backend. Do not block first paint on backend state.
+- Avoid chatty RPC. Debounce UI events, batch requests, cache results where appropriate, and page large datasets instead of sending everything at once.
+- If a new split feature requires RPC support similar to the JetBrains template, mirror the template's wiring: `shared` and `frontend` use the RPC/serialization plugins, and the backend adds the required backend RPC platform modules.
 
 ## CLI Binary Bundling
 
@@ -62,6 +81,10 @@ Official references:
 - [IntelliJ Platform UI Guidelines](https://jetbrains.design/intellij/)
 - [User Interface Components](https://plugins.jetbrains.com/docs/intellij/user-interface-components.html)
 - [UI FAQ (colors, borders, icons)](https://plugins.jetbrains.com/docs/intellij/ui-faq.html)
+
+### Do Not Use Kotlin Compose
+
+**Do not use Kotlin Compose or `intellij.platform.compose` in this plugin.** The JetBrains modular template uses Compose for its demo tool window, but Kilo should use standard Swing with IntelliJ Platform components only. Keep all plugin UI in the existing Swing-based stack.
 
 ### Do Not Use JCEF (Embedded Browser)
 
