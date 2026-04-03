@@ -1,4 +1,5 @@
 /** @jsxImportSource @opentui/solid */
+import { Show } from "solid-js"
 import { useKeyboard } from "@opentui/solid"
 import { useTheme } from "../../context/theme"
 import { SplitBorder } from "../../component/border"
@@ -42,10 +43,22 @@ export function NetworkPrompt(props: { request: SessionNetworkWait }) {
       customBorderChars={SplitBorder.customBorderChars}
     >
       <box flexDirection="column" gap={1} paddingLeft={1} paddingRight={3} paddingTop={1} paddingBottom={1}>
-        <text fg={theme.warning}>Network reconnect required</text>
-        <text fg={theme.text}>{props.request.message}</text>
-        <text fg={theme.textMuted}>Reconnect the network-dependent service, then press Enter to resume.</text>
-        <text fg={theme.textMuted}>Press Esc to stop this turn.</text>
+        <Show
+          when={props.request.restored}
+          fallback={
+            <>
+              <text fg={theme.warning}>Network disconnected</text>
+              <text fg={theme.text}>{props.request.message}</text>
+              <text fg={theme.textMuted}>Waiting for network...</text>
+              <text fg={theme.textMuted}>Press Esc to stop this turn.</text>
+            </>
+          }
+        >
+          <text fg={theme.success}>Network reconnected</text>
+          <text fg={theme.text}>Connection restored.</text>
+          <text fg={theme.textMuted}>Press Enter to resume this turn.</text>
+          <text fg={theme.textMuted}>Press Esc to stop.</text>
+        </Show>
       </box>
     </box>
   )

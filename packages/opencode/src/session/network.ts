@@ -10,12 +10,14 @@ import z from "zod"
 export namespace SessionNetwork {
   const log = Log.create({ service: "session.network" })
   const codes = new Set(["ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "ETIMEDOUT", "ENETUNREACH"])
+  const POLL_MS = 3_000
 
   export const Wait = z
     .object({
       id: Identifier.schema("question"),
       sessionID: Identifier.schema("session"),
       message: z.string(),
+      restored: z.boolean(),
       time: z.object({
         created: z.number(),
       }),
@@ -36,6 +38,13 @@ export namespace SessionNetwork {
     ),
     Rejected: BusEvent.define(
       "session.network.rejected",
+      z.object({
+        sessionID: z.string(),
+        requestID: z.string(),
+      }),
+    ),
+    Restored: BusEvent.define(
+      "session.network.restored",
       z.object({
         sessionID: z.string(),
         requestID: z.string(),
@@ -83,6 +92,25 @@ export namespace SessionNetwork {
     return "Network connection failed"
   }
 
+  async function probe() {
+    const info = await Bun.dns.lookup("dns.google")
+    return info.length > 0
+  }
+
+  async function watch(input: { requestID: string; abort: AbortSignal }) {
+    while (!input.abort.aborted) {
+      await Bun.sleep(POLL_MS)
+      if (input.abort.aborted) return
+      const s = await state()
+      const req = s.pending[input.requestID]
+      if (!req || req.info.restored) return
+      const ok = await probe().catch(() => false)
+      if (!ok) continue
+      await restore({ requestID: input.requestID })
+      return
+    }
+  }
+
   export async function ask(input: { sessionID: string; message: string; abort: AbortSignal }) {
     const s = await state()
     const id = Identifier.ascending("question")
@@ -90,6 +118,7 @@ export namespace SessionNetwork {
       id,
       sessionID: input.sessionID,
       message: input.message,
+      restored: false,
       time: {
         created: Date.now(),
       },
@@ -123,8 +152,27 @@ export namespace SessionNetwork {
         return
       }
       Bus.publish(Event.Asked, info)
+      void watch({ requestID: id, abort: input.abort }).catch((err) => {
+        log.error("restore watch failed", { err, requestID: id })
+      })
     })
   }
+
+  export const restore = fn(
+    z.object({
+      requestID: z.string(),
+    }),
+    async (input) => {
+      const s = await state()
+      const req = s.pending[input.requestID]
+      if (!req || req.info.restored) return
+      req.info.restored = true
+      Bus.publish(Event.Restored, {
+        sessionID: req.info.sessionID,
+        requestID: req.info.id,
+      })
+    },
+  )
 
   export const reply = fn(
     z.object({

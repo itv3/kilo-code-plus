@@ -246,6 +246,16 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
+        case "session.network.restored": {
+          const requests = store.network[event.properties.sessionID]
+          if (!requests) break
+          const match = Binary.search(requests, event.properties.requestID, (r) => r.id)
+          if (match.found) {
+            setStore("network", event.properties.sessionID, match.index, "restored", true)
+          }
+          break
+        }
+
         case "session.network.asked": {
           const request = event.properties
           const requests = store.network[request.sessionID]
