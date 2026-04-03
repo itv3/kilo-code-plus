@@ -3,4 +3,11 @@
         <module name="intellij.platform.frontend"/>
         <module name="kilo.jetbrains.shared"/>
     </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Kilo Code"
+                    anchor="left"
+                    icon="/icons/kilo.svg"
+                    factoryClass="ai.kilocode.jetbrains.KiloToolWindowFactory"/>
+    </extensions>
 </idea-plugin>
