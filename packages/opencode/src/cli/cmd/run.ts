@@ -573,6 +573,14 @@ export const RunCommand = cmd({
           if (
             event.type === "session.status" &&
             event.properties.sessionID === sessionID &&
+            event.properties.status.type === "busy"
+          ) {
+            retries = 0
+          }
+
+          if (
+            event.type === "session.status" &&
+            event.properties.sessionID === sessionID &&
             event.properties.status.type === "idle"
           ) {
             break
@@ -621,7 +629,6 @@ export const RunCommand = cmd({
             await sdk.network.reply({
               requestID: request.id,
             })
-            retries = 0
           }
         }
       }
