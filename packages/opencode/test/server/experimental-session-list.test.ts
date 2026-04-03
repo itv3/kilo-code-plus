@@ -25,13 +25,14 @@ afterEach(async () => {
 })
 
 describe("experimental.session.list", () => {
-  test("filters sessions by project ID across worktrees", async () => {
+  test("filters sessions by repo worktree family even when project IDs drift", async () => {
     await using first = await tmpdir({ git: true })
     await using second = await tmpdir({ git: true })
     const worktree = path.join(first.path, "..", path.basename(first.path) + "-worktree")
 
     try {
       await $`git worktree add ${worktree} -b test-branch-${Date.now()}`.cwd(first.path).quiet()
+      await Bun.write(path.join(first.path, ".git", "opencode"), "stale-project-id")
 
       const share = Config.get
       Config.get = async () => ({ share: "manual" }) as Awaited<ReturnType<typeof Config.get>>
@@ -63,7 +64,7 @@ describe("experimental.session.list", () => {
         const app = root.app
         const project = await root.project.json()
         const response = await app.request(
-          `/experimental/session?projectID=${encodeURIComponent(project.id)}&roots=true`,
+          `/experimental/session?projectID=${encodeURIComponent(project.id)}&roots=true&worktrees=true`,
           {
             headers: { "x-kilo-directory": first.path },
           },
@@ -74,6 +75,8 @@ describe("experimental.session.list", () => {
         const ids = body.map((item: { id: string }) => item.id)
         const dirs = body.map((item: { directory: string }) => item.directory)
 
+        expect(root.session.projectID).not.toBe(branch.projectID)
+        expect(project.id).toBe(root.session.projectID)
         expect(ids).toContain(root.session.id)
         expect(ids).toContain(branch.id)
         expect(dirs).toContain(worktree)

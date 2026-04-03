@@ -42,6 +42,7 @@ describe("tool.recall", () => {
 
     try {
       await $`git worktree add ${worktree} -b test-branch-${Date.now()}`.cwd(first.path).quiet()
+      await Bun.write(path.join(first.path, ".git", "opencode"), "stale-project-id")
 
       const share = Config.get
       Config.get = async () => ({ share: "manual" }) as Awaited<ReturnType<typeof Config.get>>
@@ -103,9 +104,44 @@ describe("tool.recall", () => {
       })
 
       expect(err).toBeInstanceOf(Error)
-      expect((err as Error).message).toContain("belongs to a different project")
+      expect((err as Error).message).toContain("belongs to a different workspace")
     } finally {
       Config.get = share
+    }
+  })
+
+  test("read allows sessions from sibling worktrees when project IDs drift", async () => {
+    await using first = await tmpdir({ git: true })
+    const worktree = path.join(first.path, "..", path.basename(first.path) + "-worktree")
+
+    try {
+      await $`git worktree add ${worktree} -b test-branch-${Date.now()}`.cwd(first.path).quiet()
+      await Bun.write(path.join(first.path, ".git", "opencode"), "stale-project-id")
+
+      const share = Config.get
+      Config.get = async () => ({ share: "manual" }) as Awaited<ReturnType<typeof Config.get>>
+
+      try {
+        const { Session } = await import("../../src/session/index")
+        const session = await Instance.provide({
+          directory: worktree,
+          fn: async () => Session.create({ title: "worktree readable" }),
+        })
+
+        const result = await Instance.provide({
+          directory: first.path,
+          fn: async () => {
+            const tool = await RecallTool.init()
+            return tool.execute({ mode: "read", sessionID: session.id }, ctx)
+          },
+        })
+
+        expect(result.output).toContain("# Session: worktree readable")
+      } finally {
+        Config.get = share
+      }
+    } finally {
+      await $`git worktree remove ${worktree}`.cwd(first.path).quiet().nothrow()
     }
   })
 })

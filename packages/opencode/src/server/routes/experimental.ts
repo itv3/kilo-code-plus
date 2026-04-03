@@ -13,6 +13,7 @@ import { lazy } from "../../util/lazy"
 import { Snapshot } from "../../snapshot" // kilocode_change
 import { Review } from "../../kilocode/review/review" // kilocode_change
 import { WorktreeDiff } from "../../kilocode/review/worktree-diff" // kilocode_change
+import { WorktreeFamily } from "../../kilocode/worktree-family" // kilocode_change
 import { Log } from "../../util/log" // kilocode_change
 import { WorkspaceRoutes } from "./workspace"
 
@@ -329,6 +330,10 @@ export const ExperimentalRoutes = lazy(() =>
           // kilocode_change
           projectID: z.string().optional().meta({ description: "Filter sessions by project ID" }),
           directory: z.string().optional().meta({ description: "Filter sessions by project directory" }),
+          worktrees: z.coerce
+            .boolean()
+            .optional()
+            .meta({ description: "Restrict sessions to the current repo worktree family or current directory" }),
           roots: z.coerce.boolean().optional().meta({ description: "Only return root sessions (no parentID)" }),
           start: z.coerce
             .number()
@@ -346,10 +351,16 @@ export const ExperimentalRoutes = lazy(() =>
       async (c) => {
         const query = c.req.valid("query")
         const limit = query.limit ?? 100
+        const projectID =
+          query.worktrees && !query.projectID
+            ? Instance.project.id // kilocode_change
+            : query.projectID
+        const directories = query.worktrees ? await WorktreeFamily.list() : undefined // kilocode_change
         const sessions: Session.GlobalInfo[] = []
         for await (const session of Session.listGlobal({
-          projectID: query.projectID, // kilocode_change
+          projectID, // kilocode_change
           directory: query.directory,
+          directories, // kilocode_change
           roots: query.roots,
           start: query.start,
           cursor: query.cursor,

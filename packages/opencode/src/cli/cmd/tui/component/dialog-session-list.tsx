@@ -29,12 +29,11 @@ export function DialogSessionList() {
     async ({ query, global: all }) => {
       if (!query && !all) return undefined
       if (all) {
-        const project = await sdk.client.project.current({}, { throwOnError: true })
         const result = await sdk.client.experimental.session.list(
           {
-            projectID: project.data?.id,
             search: query || undefined,
             roots: true,
+            worktrees: true,
             limit: 30,
           },
           { throwOnError: true },

@@ -107,7 +107,7 @@ describe("Session.listGlobal", () => {
     expect(ids).not.toContain(second.id)
   })
 
-  test("filters by project ID across worktrees", async () => {
+  test("filters by project family across worktrees when project IDs drift", async () => {
     const { Session } = await import("../../src/session/index")
     await using first = await tmpdir({ git: true })
     await using second = await tmpdir({ git: true })
@@ -115,6 +115,7 @@ describe("Session.listGlobal", () => {
 
     try {
       await $`git worktree add ${worktree} -b test-branch-${Date.now()}`.cwd(first.path).quiet()
+      await Bun.write(path.join(first.path, ".git", "opencode"), "stale-project-id")
 
       const root = await Instance.provide({
         directory: first.path,
@@ -132,6 +133,7 @@ describe("Session.listGlobal", () => {
       const sessions = [...Session.listGlobal({ projectID: root.projectID, roots: true, limit: 200 })]
       const ids = sessions.map((session) => session.id)
 
+      expect(root.projectID).not.toBe(branch.projectID)
       expect(ids).toContain(root.id)
       expect(ids).toContain(branch.id)
       expect(ids).not.toContain(other.id)

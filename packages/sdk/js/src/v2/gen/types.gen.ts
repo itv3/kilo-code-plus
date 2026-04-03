@@ -2848,6 +2848,10 @@ export type ExperimentalSessionListData = {
      */
     projectID?: string
     /**
+     * Restrict sessions to the current repo worktree family or current directory
+     */
+    worktrees?: boolean
+    /**
      * Only return root sessions (no parentID)
      */
     roots?: boolean

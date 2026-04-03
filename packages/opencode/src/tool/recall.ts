@@ -3,6 +3,8 @@ import z from "zod"
 import { Tool } from "./tool"
 import { Instance } from "../project/instance"
 import { Locale } from "../util/locale"
+import { Filesystem } from "../util/filesystem" // kilocode_change
+import { WorktreeFamily } from "../kilocode/worktree-family" // kilocode_change
 import DESCRIPTION from "./recall.txt"
 
 export const RecallTool = Tool.define("kilo_local_recall", {
@@ -37,7 +39,7 @@ async function search(params: { query?: string; limit?: number }, ctx: Tool.Cont
   })
 
   const limit = Math.min(params.limit ?? 20, 50)
-  const current = Instance.project.id
+  const dirs = await WorktreeFamily.list() // kilocode_change
   const { Session } = await import("../session/index") // kilocode_change
 
   const results: Array<{
@@ -48,7 +50,8 @@ async function search(params: { query?: string; limit?: number }, ctx: Tool.Cont
   }> = []
 
   for (const session of Session.listGlobal({
-    projectID: current, // kilocode_change
+    projectID: Instance.project.id, // kilocode_change
+    directories: dirs, // kilocode_change
     search: params.query,
     roots: true,
     limit,
@@ -87,10 +90,12 @@ async function read(params: { sessionID?: string }, ctx: Tool.Context) {
   const session = await Session.get(params.sessionID).catch(() => {
     throw new Error(`Session "${params.sessionID}" not found. Use search mode first to find valid session IDs.`)
   })
+  const dirs = await WorktreeFamily.list() // kilocode_change
   // kilocode_change start
-  if (session.projectID !== Instance.project.id) {
+  const dir = Filesystem.resolve(session.directory)
+  if (!dirs.some((root) => Filesystem.contains(root, dir))) {
     throw new Error(
-      `Session "${params.sessionID}" belongs to a different project and cannot be read from this workspace.`,
+      `Session "${params.sessionID}" belongs to a different workspace and cannot be read from this directory.`,
     )
   }
   // kilocode_change end

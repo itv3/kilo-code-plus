@@ -117,6 +117,25 @@ export namespace Session {
     return `${title} (fork #1)`
   }
 
+  // kilocode_change start
+  function family(id: string) {
+    const row = Database.use((db) =>
+      db.select({ worktree: ProjectTable.worktree }).from(ProjectTable).where(eq(ProjectTable.id, id)).get(),
+    )
+    const root = row?.worktree ? Filesystem.resolve(row.worktree) : undefined
+    if (!root || root === "/") return [id]
+    const ids = Database.use((db) =>
+      db
+        .select({ id: ProjectTable.id })
+        .from(ProjectTable)
+        .where(eq(ProjectTable.worktree, root))
+        .all()
+        .map((item) => item.id),
+    )
+    return ids.length ? ids : [id]
+  }
+  // kilocode_change end
+
   export const Info = z
     .object({
       id: Identifier.schema("session"),
@@ -624,6 +643,7 @@ export namespace Session {
   export function* listGlobal(input?: {
     projectID?: string
     directory?: string
+    directories?: string[]
     roots?: boolean
     start?: number
     cursor?: number
@@ -635,7 +655,12 @@ export namespace Session {
 
     // kilocode_change start
     if (input?.projectID) {
-      conditions.push(eq(SessionTable.project_id, input.projectID))
+      const ids = family(input.projectID)
+      if (ids.length === 1 && ids[0] === input.projectID) {
+        conditions.push(eq(SessionTable.project_id, input.projectID))
+      } else {
+        conditions.push(inArray(SessionTable.project_id, ids))
+      }
     }
     // kilocode_change end
 
@@ -661,6 +686,7 @@ export namespace Session {
     }
 
     const limit = input?.limit ?? 100
+    const dirs = [...new Set((input?.directories ?? []).map((dir) => Filesystem.resolve(dir)))]
 
     const rows = Database.use((db) => {
       const query =
@@ -670,10 +696,19 @@ export namespace Session {
               .from(SessionTable)
               .where(and(...conditions))
           : db.select().from(SessionTable)
-      return query.orderBy(desc(SessionTable.time_updated), desc(SessionTable.id)).limit(limit).all()
+      const sorted = query.orderBy(desc(SessionTable.time_updated), desc(SessionTable.id))
+      return dirs.length ? sorted.all() : sorted.limit(limit).all()
     })
 
-    const ids = [...new Set(rows.map((row) => row.project_id))]
+    const list =
+      dirs.length > 0
+        ? rows.filter((row) => {
+            const dir = Filesystem.resolve(row.directory)
+            return dirs.some((root) => Filesystem.contains(root, dir))
+          })
+        : rows
+
+    const ids = [...new Set(list.slice(0, limit).map((row) => row.project_id))]
     const projects = new Map<string, ProjectInfo>()
 
     if (ids.length > 0) {
@@ -693,7 +728,7 @@ export namespace Session {
       }
     }
 
-    for (const row of rows) {
+    for (const row of list.slice(0, limit)) {
       const project = projects.get(row.project_id) ?? null
       yield { ...fromRow(row), project }
     }
