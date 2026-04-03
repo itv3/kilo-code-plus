@@ -1,11 +1,11 @@
 <idea-plugin>
     <dependencies>
         <module name="intellij.platform.backend"/>
+        <module name="intellij.platform.kernel.backend"/>
         <module name="kilo.jetbrains.shared"/>
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService
-            serviceImplementation="ai.kilocode.server.ServerManager"/>
+        <platform.rpc.backend.remoteApiProvider implementation="ai.kilocode.rpc.KiloBackendRpcApiProvider"/>
     </extensions>
 </idea-plugin>

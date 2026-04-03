@@ -32,165 +32,189 @@ import java.util.concurrent.TimeUnit
 @Service(Service.Level.APP)
 class ServerManager(private val cs: CoroutineScope) : Disposable {
 
-    sealed class ServerState {
-        data class Ready(val port: Int, val password: String) : ServerState()
-        data class Error(val message: String, val details: String? = null) : ServerState()
+  sealed class ServerState {
+    data class Ready(val port: Int, val password: String) : ServerState()
+    data class Error(val message: String, val details: String? = null) :
+      ServerState()
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(ServerManager::class.java)
+    private const val STARTUP_TIMEOUT_MS = 30_000L
+    private const val KILL_TIMEOUT_SECONDS = 5L
+    private val PORT_REGEX = Regex("""listening on http://[\w.]+:(\d+)""")
+  }
+
+  private val mutex = Mutex()
+  private var pending: Deferred<ServerState>? = null
+  private var process: Process? = null
+
+  fun process(): Process? = process
+
+  suspend fun init(): ServerState {
+    val wait = mutex.withLock {
+      val curr = pending
+      if (curr != null && (!curr.isCompleted || process?.isAlive == true)) {
+        return@withLock curr
+      }
+
+      cs.async(Dispatchers.IO) { start() }.also {
+        pending = it
+      }
+    }
+    return wait.await()
+  }
+
+  suspend fun exited(proc: Process) {
+    mutex.withLock {
+      if (process != proc) return@withLock
+      process = null
+      pending = null
+    }
+  }
+
+  private suspend fun start(): ServerState {
+    return try {
+      val path = extractCli()
+      withTimeout(STARTUP_TIMEOUT_MS) {
+        spawn(path)
+      }
+    } catch (e: Exception) {
+      LOG.warn("CLI startup failed", e)
+      ServerState.Error(
+        message = e.message ?: "Unknown error",
+        details = e.stackTraceToString(),
+      )
+    }
+  }
+
+  private fun extractCli(): File {
+    val platform = platform()
+    val exe = if (SystemInfo.isWindows) "kilo.exe" else "kilo"
+    val resource = "cli/$platform/$exe"
+    val loader = javaClass.classLoader
+
+    val target = File(PathManager.getSystemPath(), "kilo/bin/$exe")
+
+    val url = loader.getResource(resource)
+      ?: throw IllegalStateException("CLI binary not found in JAR resources at $resource")
+
+    val size = url.openConnection().contentLengthLong
+    if (size >= 0 && target.exists() && target.length() == size) {
+      LOG.info("CLI binary up-to-date at ${target.absolutePath}")
+      return target
     }
 
-    companion object {
-        private val LOG = Logger.getInstance(ServerManager::class.java)
-        private const val STARTUP_TIMEOUT_MS = 30_000L
-        private const val KILL_TIMEOUT_SECONDS = 5L
-        private val PORT_REGEX = Regex("""listening on http://[\w.]+:(\d+)""")
+    LOG.info("Extracting CLI binary to ${target.absolutePath}")
+    target.parentFile.mkdirs()
+
+    url.openStream().use { input ->
+      target.outputStream().use { output ->
+        input.copyTo(output)
+      }
     }
 
-    private val mutex = Mutex()
-    private var pending: Deferred<ServerState>? = null
-    private var process: Process? = null
-
-    fun process(): Process? = process
-
-    suspend fun init(): ServerState {
-        mutex.withLock {
-            pending?.let { return@withLock }
-            pending = cs.async(Dispatchers.IO) { start() }
-        }
-        return pending!!.await()
+    if (!SystemInfo.isWindows) {
+      target.setExecutable(true)
     }
 
-    private suspend fun start(): ServerState {
-        return try {
-            val path = extractCli()
-            withTimeout(STARTUP_TIMEOUT_MS) {
-                spawn(path)
-            }
-        } catch (e: Exception) {
-            LOG.warn("CLI startup failed", e)
-            ServerState.Error(
-                message = e.message ?: "Unknown error",
-                details = e.stackTraceToString(),
-            )
+    return target
+  }
+
+  private suspend fun spawn(cli: File): ServerState =
+    withContext(Dispatchers.IO) {
+      val pwd = generatePassword()
+
+      val env = buildMap {
+        putAll(System.getenv())
+        put("KILO_SERVER_PASSWORD", pwd)
+        put("KILO_CLIENT", "jetbrains")
+        put("KILO_ENABLE_QUESTION_TOOL", "true")
+        put("KILO_PLATFORM", "jetbrains")
+        put("KILO_APP_NAME", "kilo-code")
+      }
+
+      val builder = ProcessBuilder(cli.absolutePath, "serve", "--port", "0")
+      builder.environment().clear()
+      builder.environment().putAll(env)
+      builder.redirectErrorStream(false)
+
+      LOG.info("Spawning: ${cli.absolutePath} serve --port 0")
+      val proc = builder.start()
+      process = proc
+
+      val stderr = StringBuilder()
+
+      Thread({
+        BufferedReader(InputStreamReader(proc.errorStream)).use { reader ->
+          reader.lineSequence().forEach { line ->
+            LOG.warn("CLI stderr: $line")
+            synchronized(stderr) { stderr.appendLine(line) }
+          }
         }
+      }, "kilo-cli-stderr").apply { isDaemon = true; start() }
+
+      BufferedReader(InputStreamReader(proc.inputStream)).use { reader ->
+        for (line in reader.lineSequence()) {
+          LOG.info("CLI stdout: $line")
+          val match = PORT_REGEX.find(line)
+          if (match != null) {
+            val p = match.groupValues[1].toInt()
+            LOG.info("CLI server ready on port $p")
+            return@withContext ServerState.Ready(port = p, password = pwd)
+          }
+
+          if (!proc.isAlive) break
+        }
+      }
+
+      val code = proc.waitFor()
+      val details = synchronized(stderr) { stderr.toString().trim() }
+      process = null
+      ServerState.Error(
+        message = "CLI process exited with code $code before announcing a port",
+        details = details.ifEmpty { null },
+      )
     }
 
-    private suspend fun extractCli(): File = withContext(Dispatchers.IO) {
-        val platform = platform()
-        val exe = if (SystemInfo.isWindows) "kilo.exe" else "kilo"
-        val resource = "/cli/$platform/$exe"
-        val target = File(PathManager.getSystemPath(), "kilo/bin/$exe")
+  override fun dispose() {
+    val proc = process ?: return
+    process = null
+    pending = null
 
-        val stream = javaClass.getResourceAsStream(resource)
-            ?: throw IllegalStateException("CLI binary not found in JAR resources at $resource")
+    LOG.info("Disposing — killing CLI process (pid ${proc.pid()})")
+    proc.destroy()
 
-        val size = stream.use { it.available().toLong() }
-        if (target.exists() && target.length() == size) {
-            LOG.info("CLI binary up-to-date at ${target.absolutePath}")
-            return@withContext target
-        }
-
-        LOG.info("Extracting CLI binary to ${target.absolutePath}")
-        target.parentFile.mkdirs()
-
-        javaClass.getResourceAsStream(resource)!!.use { input ->
-            target.outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
-
-        if (!SystemInfo.isWindows) {
-            target.setExecutable(true)
-        }
-
-        target
+    if (!proc.waitFor(KILL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+      LOG.warn("CLI process did not exit after SIGTERM, sending SIGKILL")
+      proc.destroyForcibly()
     }
+  }
 
-    private suspend fun spawn(cli: File): ServerState = withContext(Dispatchers.IO) {
-        val pwd = generatePassword()
-
-        val env = buildMap {
-            putAll(System.getenv())
-            put("KILO_SERVER_PASSWORD", pwd)
-            put("KILO_CLIENT", "jetbrains")
-            put("KILO_ENABLE_QUESTION_TOOL", "true")
-            put("KILO_PLATFORM", "jetbrains")
-            put("KILO_APP_NAME", "kilo-code")
-        }
-
-        val builder = ProcessBuilder(cli.absolutePath, "serve", "--port", "0")
-        builder.environment().clear()
-        builder.environment().putAll(env)
-        builder.redirectErrorStream(false)
-
-        LOG.info("Spawning: ${cli.absolutePath} serve --port 0")
-        val proc = builder.start()
-        process = proc
-
-        val stderr = StringBuilder()
-
-        Thread({
-            BufferedReader(InputStreamReader(proc.errorStream)).use { reader ->
-                reader.lineSequence().forEach { line ->
-                    LOG.warn("CLI stderr: $line")
-                    synchronized(stderr) { stderr.appendLine(line) }
-                }
-            }
-        }, "kilo-cli-stderr").apply { isDaemon = true; start() }
-
-        BufferedReader(InputStreamReader(proc.inputStream)).use { reader ->
-            for (line in reader.lineSequence()) {
-                LOG.info("CLI stdout: $line")
-                val match = PORT_REGEX.find(line)
-                if (match != null) {
-                    val p = match.groupValues[1].toInt()
-                    LOG.info("CLI server ready on port $p")
-                    return@withContext ServerState.Ready(port = p, password = pwd)
-                }
-
-                if (!proc.isAlive) break
-            }
-        }
-
-        val code = proc.waitFor()
-        val details = synchronized(stderr) { stderr.toString().trim() }
-        process = null
-        ServerState.Error(
-            message = "CLI process exited with code $code before announcing a port",
-            details = details.ifEmpty { null },
-        )
+  private fun platform(): String {
+    val os = when {
+      SystemInfo.isMac -> "darwin"
+      SystemInfo.isLinux -> "linux"
+      SystemInfo.isWindows -> "windows"
+      else -> throw IllegalStateException(
+        "Unsupported OS: ${
+          System.getProperty(
+            "os.name"
+          )
+        }"
+      )
     }
-
-    override fun dispose() {
-        val proc = process ?: return
-        process = null
-        pending = null
-
-        LOG.info("Disposing — killing CLI process (pid ${proc.pid()})")
-        proc.destroy()
-
-        if (!proc.waitFor(KILL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-            LOG.warn("CLI process did not exit after SIGTERM, sending SIGKILL")
-            proc.destroyForcibly()
-        }
+    val arch = when (CpuArch.CURRENT) {
+      CpuArch.ARM64 -> "arm64"
+      CpuArch.X86_64 -> "x64"
+      else -> throw IllegalStateException("Unsupported architecture: ${CpuArch.CURRENT}")
     }
+    return "$os-$arch"
+  }
 
-    private fun platform(): String {
-        val os = when {
-            SystemInfo.isMac -> "darwin"
-            SystemInfo.isLinux -> "linux"
-            SystemInfo.isWindows -> "windows"
-            else -> throw IllegalStateException("Unsupported OS: ${System.getProperty("os.name")}")
-        }
-        val arch = when (CpuArch.CURRENT) {
-            CpuArch.ARM64 -> "arm64"
-            CpuArch.X86_64 -> "x64"
-            else -> throw IllegalStateException("Unsupported architecture: ${CpuArch.CURRENT}")
-        }
-        return "$os-$arch"
-    }
-
-    private fun generatePassword(): String {
-        val bytes = ByteArray(32)
-        SecureRandom().nextBytes(bytes)
-        return bytes.joinToString("") { "%02x".format(it) }
-    }
+  private fun generatePassword(): String {
+    val bytes = ByteArray(32)
+    SecureRandom().nextBytes(bytes)
+    return bytes.joinToString("") { "%02x".format(it) }
+  }
 }

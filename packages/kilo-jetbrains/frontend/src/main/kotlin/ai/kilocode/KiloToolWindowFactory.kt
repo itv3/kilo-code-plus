@@ -1,8 +1,10 @@
-package ai.kilocode.jetbrains
+package ai.kilocode
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.components.JBLabel
@@ -18,6 +20,7 @@ import javax.swing.SwingConstants
 
 class KiloToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        val svc = project.service<KiloApiService>()
         val icon = JBLabel(
             IconLoader.getIcon("/icons/kilo-content.svg", KiloToolWindowFactory::class.java),
         ).apply {
@@ -25,13 +28,11 @@ class KiloToolWindowFactory : ToolWindowFactory {
             alignmentX = JPanel.CENTER_ALIGNMENT
         }
 
-        val msg = HtmlChunk.div()
-            .style("text-align:center; width:${JBUI.scale(260)}px")
-            .addText("Kilo Code is an AI coding assistant. Ask it to build features, fix bugs, or explain your codebase.")
-        val text = JBLabel(HtmlChunk.html().child(msg).toString(), SwingConstants.CENTER).apply {
+        val text = JBLabel(KiloBundle.message("toolwindow.status.disconnected"), SwingConstants.CENTER).apply {
             alignmentX = JPanel.CENTER_ALIGNMENT
             font = JBUI.Fonts.label(13f)
             foreground = UIUtil.getContextHelpForeground()
+            setAllowAutoWrapping(true)
         }
 
         val body = JPanel().apply {
@@ -48,6 +49,13 @@ class KiloToolWindowFactory : ToolWindowFactory {
         }
 
         val content = ContentFactory.getInstance().createContent(panel, "", false)
+        val ui = Disposer.newDisposable()
+        val job = svc.watch { msg ->
+            text.text = msg
+        }
+        Disposer.register(ui, Disposable { job.cancel() })
+        content.setDisposer(ui)
         toolWindow.contentManager.addContent(content)
+        svc.connect()
     }
 }

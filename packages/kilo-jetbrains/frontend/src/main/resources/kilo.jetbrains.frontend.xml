@@ -4,10 +4,12 @@
         <module name="kilo.jetbrains.shared"/>
     </dependencies>
 
+    <resource-bundle>messages.KiloBundle</resource-bundle>
+
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Kilo Code"
                     anchor="left"
                     icon="/icons/kilo.svg"
-                    factoryClass="ai.kilocode.jetbrains.KiloToolWindowFactory"/>
+                    factoryClass="ai.kilocode.KiloToolWindowFactory"/>
     </extensions>
 </idea-plugin>

@@ -1,5 +1,7 @@
 package ai.kilocode.server
 
+import ai.kilocode.rpc.dto.ConnectionStateDto
+import ai.kilocode.rpc.dto.ConnectionStatusDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -14,8 +16,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -65,13 +69,24 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
     private var processJob: Job? = null
     private var reconnectJob: Job? = null
 
+    fun stream() = state.map(::dto).distinctUntilChanged()
+
     suspend fun connect() {
         if (_state.value is ConnectionState.Connected || _state.value is ConnectionState.Connecting) return
 
+        open()
+    }
+
+    private suspend fun open() {
+        source.getAndSet(null)?.cancel()
+        close()
+        processJob?.cancel()
+        healthJob?.cancel()
+        
         setState(ConnectionState.Connecting)
 
-        val cliService = service<ServerManager>()
-        val processState = cliService.init()
+        val cli = service<ServerManager>()
+        val processState = cli.init()
 
         if (processState is ServerManager.ServerState.Error) {
             setState(ConnectionState.Error(processState.message))
@@ -97,7 +112,7 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
         startSse()
         startHeartbeatWatcher()
         healthJob = healthLoop()
-        cliService.process()?.let { proc ->
+        cli.process()?.let { proc ->
             processJob = monitorProcess(proc)
         }
     }
@@ -152,11 +167,21 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
         if (reconnectJob?.isActive == true) return
         reconnectJob = cs.launch {
             delay(RECONNECT_DELAY_MS)
-            if (isActive) {
+            if (!isActive) return@launch
+
+            val cli = service<ServerManager>()
+            val proc = cli.process()
+
+            if (proc?.isAlive == true) {
                 LOG.info("SSE: reconnecting")
+                source.getAndSet(null)?.cancel()
                 setState(ConnectionState.Connecting)
                 startSse()
+                return@launch
             }
+
+            LOG.warn("CLI process not running — restarting")
+            open()
         }
     }
 
@@ -204,14 +229,33 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
 
     private fun monitorProcess(proc: Process) = cs.launch(Dispatchers.IO) {
         proc.waitFor()
+        service<ServerManager>().exited(proc)
         val code = proc.exitValue()
         LOG.warn("CLI process exited with code $code")
         source.getAndSet(null)?.cancel()
         setState(ConnectionState.Error("CLI process exited with code $code"))
+        scheduleReconnect()
+    }
+
+    private fun close() {
+        client?.let { http ->
+            http.dispatcher.executorService.shutdown()
+            http.connectionPool.evictAll()
+        }
+        client = null
     }
 
     private fun setState(next: ConnectionState) {
         _state.value = next
+    }
+
+    private fun dto(state: ConnectionState): ConnectionStateDto {
+        return when (state) {
+            ConnectionState.Disconnected -> ConnectionStateDto(ConnectionStatusDto.DISCONNECTED)
+            ConnectionState.Connecting -> ConnectionStateDto(ConnectionStatusDto.CONNECTING)
+            is ConnectionState.Connected -> ConnectionStateDto(ConnectionStatusDto.CONNECTED)
+            is ConnectionState.Error -> ConnectionStateDto(ConnectionStatusDto.ERROR, state.message)
+        }
     }
 
     private fun extractType(data: String): String =
@@ -223,11 +267,7 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
         healthJob?.cancel()
         processJob?.cancel()
         reconnectJob?.cancel()
-        client?.let { http ->
-            http.dispatcher.executorService.shutdown()
-            http.connectionPool.evictAll()
-        }
-        client = null
+        close()
         setState(ConnectionState.Disconnected)
         LOG.info("KiloConnectionService disposed")
     }

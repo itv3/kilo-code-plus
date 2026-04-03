@@ -1,5 +1,7 @@
 plugins {
+    alias(libs.plugins.rpc)
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -61,6 +63,8 @@ tasks.processResources {
 dependencies {
     intellijPlatform {
         intellijIdea(libs.versions.intellij.platform)
+        bundledModule("intellij.platform.kernel.backend")
+        bundledModule("intellij.platform.rpc.backend")
         bundledModule("intellij.platform.backend")
     }
 
