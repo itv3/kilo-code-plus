@@ -85,4 +85,32 @@ describe("agent {file:...} syntax in markdown body", () => {
       },
     })
   })
+
+  test("preserves multiline content without escaping", async () => {
+    await using tmp = await tmpdir({
+      git: true,
+      init: async (dir) => {
+        const multilineContent = ["Line 1", "Line 2", "Line 3"].join("\n")
+        await Bun.write(path.join(dir, "multiline.md"), multilineContent)
+
+        const agentsDir = path.join(dir, ".kilo", "agents")
+        await fs.mkdir(agentsDir, { recursive: true })
+        await Bun.write(
+          path.join(agentsDir, "test.md"),
+          ["---", "description: Test", "---", "Base", "", "{file:../../multiline.md}", ""].join("\n"),
+        )
+      },
+    })
+
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const agent = await Agent.get("test")
+
+        expect(agent).toBeDefined()
+        expect(agent?.prompt).toContain("Line 1\nLine 2\nLine 3")
+        expect(agent?.prompt).not.toContain("Line 1\\nLine 2\\nLine 3")
+      },
+    })
+  })
 })

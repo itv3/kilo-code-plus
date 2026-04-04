@@ -169,6 +169,7 @@ export async function load(dir: string, warnings?: Warning[]) {
       dir: path.dirname(item),
       source: item,
       missing: "empty",
+      escapeJson: false,
     })
 
     const config = {
