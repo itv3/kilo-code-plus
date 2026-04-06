@@ -63,6 +63,12 @@ export const TaskTool = Tool.define("task", async (ctx) => {
 
       const allowsTask = agent.permission.some((rule) => rule.permission === "task" && rule.action === "allow") // kilocode_change
 
+      // kilocode_change start — inherit edit restrictions from the calling agent so sub-agents
+      // cannot perform actions the parent agent is not allowed to perform.
+      const caller = await Agent.get(ctx.agent)
+      const editRules = caller?.permission.filter((r) => r.permission === "edit") ?? []
+      // kilocode_change end
+
       const session = await iife(async () => {
         if (params.task_id) {
           const found = await Session.get(params.task_id).catch(() => {})
@@ -97,6 +103,7 @@ export const TaskTool = Tool.define("task", async (ctx) => {
               action: "allow" as const,
               permission: t,
             })) ?? []),
+            ...editRules, // kilocode_change — propagate caller's edit restrictions
           ],
         })
       })
