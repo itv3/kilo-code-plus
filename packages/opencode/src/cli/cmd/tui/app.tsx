@@ -707,10 +707,18 @@ function App() {
       title: kv.get("allow_everything_global") ? "Disable auto-approve mode" : "Enable auto-approve mode",
       value: "permission.allow_everything",
       category: "System",
-      onSelect: (dialog) => {
+      onSelect: async (dialog) => {
         const enabled = kv.get("allow_everything_global")
-        sdk.client.permission.allowEverything({ enable: !enabled })
-        kv.set("allow_everything_global", !enabled)
+        const next = !enabled
+        const result = await sdk.client.permission.allowEverything({ enable: next })
+        if (result.error) {
+          toast.show({
+            variant: "error",
+            message: `Failed to ${next ? "enable" : "disable"} auto-approve mode`,
+          })
+          return
+        }
+        kv.set("allow_everything_global", next)
         dialog.clear()
       },
     },
