@@ -4599,6 +4599,7 @@ export type KilocodeSessionImportSessionData = {
   body?: {
     id: string
     projectID: string
+    force?: boolean
     workspaceID?: string
     parentID?: string
     slug: string
