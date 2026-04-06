@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test"
-import { toggleAnswer } from "../../webview-ui/src/components/chat/question-dock-utils"
+import { resolveQuestionMode, toggleAnswer } from "../../webview-ui/src/components/chat/question-dock-utils"
 
 describe("toggleAnswer", () => {
   it("adds answer when not present", () => {
@@ -34,5 +34,29 @@ describe("toggleAnswer", () => {
   it("only removes the first occurrence (deduplication edge case)", () => {
     const result = toggleAnswer(["a", "a"], "a")
     expect(result).toEqual(["a"])
+  })
+})
+
+describe("resolveQuestionMode", () => {
+  it("returns mode for matching predefined option", () => {
+    const result = resolveQuestionMode(
+      [
+        { label: "Implement", description: "Switch to code", mode: "code" },
+        { label: "Stay", description: "Remain here" },
+      ],
+      "Implement",
+    )
+
+    expect(result).toBe("code")
+  })
+
+  it("returns undefined for unknown answer", () => {
+    const result = resolveQuestionMode([{ label: "Implement", description: "Switch", mode: "code" }], "Custom")
+    expect(result).toBeUndefined()
+  })
+
+  it("returns undefined when option has no mode", () => {
+    const result = resolveQuestionMode([{ label: "Stay", description: "Remain here" }], "Stay")
+    expect(result).toBeUndefined()
   })
 })

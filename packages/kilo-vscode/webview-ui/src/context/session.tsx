@@ -42,6 +42,7 @@ import {
 } from "./session-utils"
 import { Identifier } from "../utils/id"
 import { resolveModelSelection } from "./model-selection"
+import { resolveSessionAgent } from "./session-agent"
 import { KILO_AUTO, parseModelString } from "../../../src/shared/provider-model"
 
 const RECENT_LIMIT = 5
@@ -341,6 +342,8 @@ export const SessionProvider: ParentComponent = (props) => {
     }
     return pendingAgentSelection() ?? defaultAgent()
   })
+
+  const agentNames = createMemo(() => new Set(agents().map((agent) => agent.name)))
 
   /** Per-mode model from config (e.g. config.agent.code.model). */
   function getModeModel(agentName: string): ModelSelection | null {
@@ -801,6 +804,11 @@ export const SessionProvider: ParentComponent = (props) => {
           setStore("parts", msg.id, reconcile(msg.parts, { key: "id" }))
         }
       }
+
+      const agent = resolveSessionAgent(messages, agentNames())
+      if (agent) {
+        setStore("agentSelections", sessionID, agent)
+      }
     })
   }
 
@@ -834,6 +842,13 @@ export const SessionProvider: ParentComponent = (props) => {
       }
       return [...msgs, message]
     })
+
+    if (message.role === "user") {
+      const agent = message.agent?.trim()
+      if (agent && agentNames().has(agent)) {
+        setStore("agentSelections", message.sessionID, agent)
+      }
+    }
 
     if (message.parts && message.parts.length > 0) {
       setStore("parts", message.id, message.parts)

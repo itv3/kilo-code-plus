@@ -11,7 +11,7 @@ import { Icon } from "@kilocode/kilo-ui/icon"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import type { QuestionRequest } from "../../types/messages"
-import { toggleAnswer } from "./question-dock-utils"
+import { resolveQuestionMode, toggleAnswer } from "./question-dock-utils"
 
 export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => {
   const session = useSession()
@@ -84,6 +84,7 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
   }
 
   const pick = (answer: string, custom = false) => {
+    const mode = resolveQuestionMode(options(), answer)
     const answers = [...store.answers]
     answers[store.tab] = [answer]
     setStore("answers", answers)
@@ -92,6 +93,10 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
       const inputs = [...store.custom]
       inputs[store.tab] = answer
       setStore("custom", inputs)
+    }
+
+    if (mode && !custom) {
+      session.selectAgent(mode)
     }
 
     if (!single() && !multi()) {
