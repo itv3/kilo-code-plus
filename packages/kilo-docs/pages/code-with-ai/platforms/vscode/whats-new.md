@@ -49,7 +49,7 @@ In the meantime we suggest exploring:
 
 ### How can I control which models each agent/mode uses?
 
-Modes have been renamed to Agents in the new extension. You can set the default mode for each agent in `Settings -> Models -> Model per Mode`. For more information please check the [agents documentation](https://kilo.ai/docs/code-with-ai/agents/using-agents).
+Modes have been renamed to Agents in the new extension. You can set the default model for each agent in `Settings -> Models -> Model per Mode`. For more information please check the [agents documentation](https://kilo.ai/docs/code-with-ai/agents/using-agents).
 
 ### Where is the diff view for file changes?
 
