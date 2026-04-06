@@ -26,33 +26,33 @@ Do **not** click **Update Now** inside the OpenClaw Control UI — this is not s
 
 Updates are managed by the KiloClaw platform team to ensure stability. When a new version is available, it will be announced in the **Changelog** on your dashboard. To apply the update, click **Upgrade & Redeploy** from the [KiloClaw Dashboard](/docs/kiloclaw/dashboard#redeploy).
 
-## How do I migrate my workspace?
+## How do I migrate my OpenClaw?
 
-Whether you're migrating from another OpenClaw provider to KiloClaw, moving between KiloClaw instances (e.g., individual to org or vice versa), or leaving KiloClaw for another OpenClaw provider, the process is the same:
+Whether you're migrating from another OpenClaw provider to KiloClaw, moving between KiloClaw instances (e.g., individual to org or vice versa), or leaving KiloClaw for another OpenClaw provider, you should plan to migrate your workspace, memory, and context so your new Claw retains the same knowledge as before. 
 
-1. **Back up** your workspace files from your current Claw.
-2. **Set up** your new provider or KiloClaw instance.
-3. **Restore** the workspace files on the new Claw.
-4. **Reconfigure** your integrations on the new instance.
+You should plan to reconfigure integrations in the new instance as these are often tied to the instance and will break if you attempt migration.
 
-### What migrates automatically vs. what doesn't
+### 1. Back up your workspace
 
-- **Migrates via backup/restore** — Workspace files, memory, and context. Your new Claw retains the same knowledge and preferences as before.
-- **Requires manual reconfiguration** — Integrations and authentication tokens (Google, GitHub, GitLab, Linear, Telegram, Discord, Slack, etc.). These are tied to the instance and must be set up fresh.
+Have your current instance export the workspace. We recommend creating a GitHub repo or `tar` archive file for easy loading.
 
-### Backing up your workspace
+If you are on KiloClaw, you can use
 
-Have your current Claw export the workspace before switching. Two options:
-
-**GitHub export** — Ask your Claw:
+**GitHub export** — make sure [GitHub is configured](/docs/kiloclaw/development-tools/github) and ask your instance:
 
 > Create a new GitHub repo and push your entire workspace there with the `gh` CLI. Tell me the URL of the repo you used.
 
-**Manual download** — Ask your Claw:
+**Google Drive** — make sure [Google Drive is configured](/docs/kiloclaw/development-tools/google) and ask your instance:
 
 > Tar compress your workspace and push the file to Google Drive with the `gog` CLI. Then share the filename you used.
 
-### Restoring on the new instance
+### 2. Stand up the new instance
+
+### 3. Reconfigure integrations on the new instance
+
+If you are using GitHub or Google Drive for the migration, prioritize that configuration.
+
+### 4. Restore the workspace on the new instance
 
 On your new Claw, restore the workspace from whichever backup method you used:
 
@@ -67,15 +67,3 @@ On your new Claw, restore the workspace from whichever backup method you used:
 {% callout type="note" %}
 Replace `<repo>` or `<filename>` with the actual repository URL or filename from the backup step.
 {% /callout %}
-
-### Reconfiguring integrations
-
-After restoring your workspace, set up each integration on the new instance:
-
-- **Google Workspace** — Re-authenticate with Google. See [Google integration setup](/docs/kiloclaw/development-tools/google).
-- **GitHub** — Re-authenticate with GitHub. See [GitHub integration setup](/docs/kiloclaw/development-tools/github).
-- **GitLab** — Re-add your GitLab token or SSH key.
-- **Linear** — Re-add your Linear API token.
-- **Telegram / Discord / Slack** — Re-enter your bot tokens in the [KiloClaw Dashboard Settings](/docs/kiloclaw/dashboard#channels) and redeploy.
-
-See [Development Tools](/docs/kiloclaw/development-tools) and [Chat Platforms](/docs/kiloclaw/chat-platforms) for full setup guides.
