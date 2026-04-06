@@ -71,17 +71,15 @@ export const TaskTool = Tool.define("task", async (ctx) => {
       // were themselves inherited from a grandparent, so both sources are needed.
       const caller = await Agent.get(ctx.agent)
       const callerSession = await Session.get(ctx.sessionID)
-      const callerRules = PermissionNext.merge(
-        caller?.permission ?? [],
-        callerSession.permission ?? [],
-      )
-      // Build the set of MCP permission identifiers (e.g. "servername_*") so we can
-      // include them in the inherited ruleset — same sanitisation logic as agent.ts.
-      const mcpPermissions = new Set(
-        Object.keys(config.mcp ?? {}).map((k) => k.replace(/[^a-zA-Z0-9_-]/g, "_") + "_*"),
-      )
+      const callerRules = PermissionNext.merge(caller?.permission ?? [], callerSession.permission ?? [])
+      // Build the set of MCP server prefixes (e.g. "servername_") so we can
+      // include both server-wide wildcards ("servername_*") and specific MCP tool
+      // permissions ("servername_create_issue") in the inherited ruleset.
+      // Same sanitisation logic as agent.ts.
+      const mcpPrefixes = Object.keys(config.mcp ?? {}).map((k) => k.replace(/[^a-zA-Z0-9_-]/g, "_") + "_")
+      const isMcpRule = (p: string) => mcpPrefixes.some((prefix) => p.startsWith(prefix))
       const inherited = callerRules.filter(
-        (r) => r.permission === "edit" || r.permission === "bash" || mcpPermissions.has(r.permission),
+        (r) => r.permission === "edit" || r.permission === "bash" || isMcpRule(r.permission),
       )
       // kilocode_change end
 
