@@ -231,6 +231,8 @@ export namespace Agent {
           PermissionNext.fromConfig({
             question: "allow",
             plan_exit: "allow",
+            bash: readOnlyBash, // kilocode_change: read-only bash for plan mode (mirrors ask agent)
+            ...mcpRules, // kilocode_change: MCP with user approval for plan mode
             external_directory: {
               [path.join(Global.Path.data, "plans", "*")]: "allow",
             },
