@@ -483,6 +483,17 @@ export const SessionProvider: ParentComponent = (props) => {
         }
       }),
     )
+
+    // Rescan already-loaded message history so sessions whose messagesLoaded
+    // arrived before agentsLoaded (and therefore got no agent selection) are
+    // backfilled now that we know the valid agent names.
+    batch(() => {
+      for (const [sid, msgs] of Object.entries(store.messages)) {
+        if (store.agentSelections[sid]) continue
+        const agent = resolveSessionAgent(msgs, names)
+        if (agent) setStore("agentSelections", sid, agent)
+      }
+    })
   })
 
   // Request agents in case the initial push was missed.
