@@ -30,11 +30,16 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
   })
 
   let root!: HTMLDivElement
+  let prevAgent: string | undefined
 
-  // Reset sending state when an error occurs for this question
+  // Reset sending state and roll back the optimistic agent change on error
   createEffect(() => {
     if (session.questionErrors().has(props.request.id)) {
       setStore("sending", false)
+      if (prevAgent !== undefined) {
+        session.selectAgent(prevAgent)
+        prevAgent = undefined
+      }
     }
   })
 
@@ -64,6 +69,8 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
     setStore("sending", true)
     session.replyToQuestion(props.request.id, answers)
     focusPrompt()
+    // prevAgent is intentionally left set until either questionError (rollback)
+    // or the question is dismissed (success — the question unmounts, so no cleanup needed)
   }
 
   const reject = () => {
@@ -96,6 +103,7 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
     }
 
     if (mode && !custom) {
+      prevAgent = session.selectedAgent()
       session.selectAgent(mode)
     }
 
