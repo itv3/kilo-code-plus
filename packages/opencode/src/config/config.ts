@@ -1109,18 +1109,14 @@ export namespace Config {
           setCacheKey: z.boolean().optional().describe("Enable promptCacheKey for this provider (default false)"),
           timeout: z
             .union([
-              z
-                .number()
-                .int()
-                .positive()
-                .describe(
-                  "Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.",
-                ),
+              z.number().int().positive().describe(
+                "Timeout in milliseconds for requests to this provider. Default is 120000 (2 minutes). Set to false to disable timeout.", // kilocode_change
+              ),
               z.literal(false).describe("Disable timeout for this provider entirely."),
             ])
             .optional()
             .describe(
-              "Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.",
+              "Timeout in milliseconds for requests to this provider. Default is 120000 (2 minutes). Set to false to disable timeout.", // kilocode_change
             ),
         })
         .catchall(z.any())

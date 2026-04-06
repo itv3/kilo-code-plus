@@ -49,6 +49,9 @@ import { Installation } from "../installation"
 
 import { DEFAULT_HEADERS } from "@/kilocode/const" // kilocode_change
 
+/** Default timeout (ms) for provider HTTP requests. kilocode_change */
+export const REQUEST_TIMEOUT_MS = 120_000 // 2 minutes
+
 export namespace Provider {
   const log = Log.create({ service: "provider" })
 
@@ -1140,14 +1143,13 @@ export namespace Provider {
         const fetchFn = customFetch ?? fetch
         const opts = init ?? {}
 
-        if (options["timeout"] !== undefined && options["timeout"] !== null) {
+        // kilocode_change - apply default timeout when not explicitly configured
+        const ms = options["timeout"] ?? REQUEST_TIMEOUT_MS
+        if (ms !== false) {
           const signals: AbortSignal[] = []
           if (opts.signal) signals.push(opts.signal)
-          if (options["timeout"] !== false) signals.push(AbortSignal.timeout(options["timeout"]))
-
-          const combined = signals.length > 1 ? AbortSignal.any(signals) : signals[0]
-
-          opts.signal = combined
+          signals.push(AbortSignal.timeout(ms))
+          opts.signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0]
         }
 
         // Strip openai itemId metadata following what codex does

@@ -98,6 +98,10 @@ export namespace SessionNetwork {
   export function disconnected(err: unknown) {
     const match = code(err)
     if (match && codes.has(match)) return true
+    // kilocode_change - recognize AbortSignal.timeout() errors
+    for (const item of chain(err)) {
+      if (item instanceof DOMException && item.name === "TimeoutError") return true
+    }
     return msgs(err).some((item) => {
       const msg = item.toLowerCase()
       if (msg.includes("fetch failed")) return true
@@ -109,6 +113,10 @@ export namespace SessionNetwork {
   }
 
   export function message(err: unknown) {
+    // kilocode_change - check for timeout first
+    for (const item of chain(err)) {
+      if (item instanceof DOMException && item.name === "TimeoutError") return "Request timed out"
+    }
     const match = code(err)
     if (match === "ECONNRESET") return "Connection reset by server"
     if (match === "ECONNREFUSED") return "Connection refused"

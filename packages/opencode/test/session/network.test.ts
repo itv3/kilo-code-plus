@@ -25,6 +25,19 @@ describe("session.network", () => {
     expect(SessionNetwork.message(err)).toBe("Connection timed out")
   })
 
+  test("detects TimeoutError as disconnected", () => {
+    const err = new DOMException("The operation was aborted due to timeout", "TimeoutError")
+    expect(SessionNetwork.disconnected(err)).toBe(true)
+    expect(SessionNetwork.message(err)).toBe("Request timed out")
+  })
+
+  test("detects wrapped TimeoutError in cause chain", () => {
+    const timeout = new DOMException("signal timed out", "TimeoutError")
+    const err = new Error("request failed", { cause: timeout })
+    expect(SessionNetwork.disconnected(err)).toBe(true)
+    expect(SessionNetwork.message(err)).toBe("Request timed out")
+  })
+
   test("reply resolves pending request", async () => {
     await using tmp = await tmpdir({ git: true })
     await Instance.provide({
