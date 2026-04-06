@@ -12,7 +12,6 @@ const target = (input: unknown) => input as never
 
 export namespace SessionImportService {
   export async function project(input: SessionImportType.Project): Promise<SessionImportType.Result> {
-
     // Do not resolve an empty legacy worktree, because that would fall back to the current
     // process directory and silently attach the migrated session to the wrong project.
     if (!input.worktree.trim()) {
@@ -25,9 +24,14 @@ export namespace SessionImportService {
 
   export async function session(input: SessionImportType.Session): Promise<SessionImportType.Result> {
     const row = Database.use((db) => db.select().from(SessionTable).where(eq(target(SessionTable.id), input.id)).get())
-    if (row) return { ok: true, id: input.id, skipped: true }
+    if (row && !input.force) return { ok: true, id: input.id, skipped: true }
 
     Database.use((db) => {
+      if (row && input.force) {
+        db.delete(SessionTable).where(eq(target(SessionTable.id), input.id)).run()
+      }
+      // We still keep onConflictDoUpdate here so forced reimports can recreate the session row
+      // and non-forced calls remain idempotent if they reach the DB after the existence guard.
       db.insert(SessionTable)
         .values({
           id: SessionID.make(input.id),
@@ -50,8 +54,28 @@ export namespace SessionImportService {
           time_compacting: input.timeCompacting,
           time_archived: input.timeArchived,
         })
-        .onConflictDoNothing({
+        .onConflictDoUpdate({
           target: key(SessionTable.id),
+          set: {
+            project_id: ProjectID.make(input.projectID),
+            workspace_id: input.workspaceID ? WorkspaceID.make(input.workspaceID) : undefined,
+            parent_id: input.parentID ? SessionID.make(input.parentID) : undefined,
+            slug: input.slug,
+            directory: input.directory,
+            title: input.title,
+            version: input.version,
+            share_url: input.shareURL,
+            summary_additions: input.summary?.additions,
+            summary_deletions: input.summary?.deletions,
+            summary_files: input.summary?.files,
+            summary_diffs: input.summary?.diffs as never,
+            revert: input.revert ? { ...input.revert, messageID: MessageID.make(input.revert.messageID), partID: input.revert.partID ? PartID.make(input.revert.partID) : undefined } : undefined,
+            permission: input.permission as never,
+            time_created: input.timeCreated,
+            time_updated: input.timeUpdated,
+            time_compacting: input.timeCompacting,
+            time_archived: input.timeArchived,
+          },
         })
         .run()
     })

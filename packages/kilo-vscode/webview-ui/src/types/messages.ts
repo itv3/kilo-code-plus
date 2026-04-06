@@ -453,6 +453,7 @@ export interface SendMessageFailedMessage {
   error: string
   text: string
   sessionID?: string
+  draftID?: string
   messageID?: string
   files?: FileAttachment[]
 }
@@ -505,6 +506,7 @@ export interface TodoUpdatedMessage {
 export interface SessionCreatedMessage {
   type: "sessionCreated"
   session: SessionInfo
+  draftID?: string
 }
 
 export interface SessionUpdatedMessage {
@@ -854,6 +856,11 @@ export interface RecentsLoadedMessage {
   recents: ModelSelection[]
 }
 
+export interface FavoritesLoadedMessage {
+  type: "favoritesLoaded"
+  favorites: ModelSelection[]
+}
+
 export interface BranchInfo {
   name: string
   isLocal: boolean
@@ -1040,9 +1047,16 @@ export interface LegacySettings {
   autocomplete?: LegacyAutocompleteSettings
 }
 
+export interface MigrationSessionInfo {
+  id: string
+  title: string
+  directory: string
+  time: number
+}
+
 export interface MigrationResultItem {
   item: string
-  category: "provider" | "mcpServer" | "customMode" | "defaultModel" | "settings"
+  category: "provider" | "mcpServer" | "customMode" | "session" | "defaultModel" | "settings"
   status: "success" | "warning" | "error"
   message?: string
 }
@@ -1054,7 +1068,7 @@ export interface MigrationStateMessage {
     providers: MigrationProviderInfo[]
     mcpServers: MigrationMcpServerInfo[]
     customModes: MigrationCustomModeInfo[]
-    sessions?: string[]
+    sessions?: MigrationSessionInfo[]
     defaultModel?: { provider: string; model: string }
     settings?: LegacySettings
   }
@@ -1066,7 +1080,7 @@ export interface LegacyMigrationDataMessage {
     providers: MigrationProviderInfo[]
     mcpServers: MigrationMcpServerInfo[]
     customModes: MigrationCustomModeInfo[]
-    sessions?: string[]
+    sessions?: MigrationSessionInfo[]
     defaultModel?: { provider: string; model: string }
     settings?: LegacySettings
   }
@@ -1077,6 +1091,17 @@ export interface LegacyMigrationProgressMessage {
   item: string
   status: "migrating" | "success" | "warning" | "error"
   message?: string
+}
+
+export type LegacyMigrationSessionPhase = "preparing" | "storing" | "skipped" | "done" | "summary" | "error"
+
+export interface LegacyMigrationSessionProgressMessage {
+  type: "legacyMigrationSessionProgress"
+  session: MigrationSessionInfo
+  index: number
+  total: number
+  phase: LegacyMigrationSessionPhase
+  error?: string
 }
 
 export interface LegacyMigrationCompleteMessage {
@@ -1097,13 +1122,18 @@ export interface MigrationAutoApprovalSelections {
   taskPermission: boolean
 }
 
+export interface MigrationSessionSelection {
+  id: string
+  force?: boolean
+}
+
 export interface StartLegacyMigrationMessage {
   type: "startLegacyMigration"
   selections: {
     providers: string[]
     mcpServers: string[]
     customModes: string[]
-    sessions?: string[]
+    sessions?: MigrationSessionSelection[]
     defaultModel: boolean
     settings: {
       autoApproval: MigrationAutoApprovalSelections
@@ -1119,6 +1149,10 @@ export interface SkipLegacyMigrationMessage {
 
 export interface ClearLegacyDataMessage {
   type: "clearLegacyData"
+}
+
+export interface FinalizeLegacyMigrationMessage {
+  type: "finalizeLegacyMigration"
 }
 // legacy-migration end
 
@@ -1150,6 +1184,10 @@ export interface DiffViewerDiffsMessage {
 export interface DiffViewerLoadingMessage {
   type: "diffViewer.loading"
   loading: boolean
+}
+
+export interface ClearPendingPromptsMessage {
+  type: "clearPendingPrompts"
 }
 
 // ============================================
@@ -1280,6 +1318,7 @@ export type ExtensionMessage =
   | QuestionResolvedMessage
   | QuestionErrorMessage
   | BrowserSettingsLoadedMessage
+  | ClaudeCompatSettingLoadedMessage
   | ConfigLoadedMessage
   | ConfigUpdatedMessage
   | GlobalConfigLoadedMessage
@@ -1318,6 +1357,7 @@ export type ExtensionMessage =
   | MigrationStateMessage
   | LegacyMigrationDataMessage
   | LegacyMigrationProgressMessage
+  | LegacyMigrationSessionProgressMessage
   | LegacyMigrationCompleteMessage
   // legacy-migration end
   | EnhancePromptResultMessage
@@ -1334,10 +1374,12 @@ export type ExtensionMessage =
   | ProviderActionErrorMessage
   | CustomProviderModelsFetchedMessage
   | RecentsLoadedMessage
+  | FavoritesLoadedMessage
   | LanguageChangedMessage
   | ContinueInWorktreeProgressMessage
   | WorktreeStatsLoadedMessage
   | McpStatusLoadedMessage
+  | ClearPendingPromptsMessage
 
 // ============================================
 // Messages FROM webview TO extension
@@ -1354,6 +1396,7 @@ export interface SendMessageRequest {
   text: string
   messageID?: string
   sessionID?: string
+  draftID?: string
   providerID?: string
   modelID?: string
   agent?: string
@@ -1486,6 +1529,11 @@ export interface OpenSettingsPanelRequest {
   tab?: string
 }
 
+export interface OpenVSCodeSettingsRequest {
+  type: "openVSCodeSettings"
+  query: string
+}
+
 export interface OpenMarketplacePanelRequest {
   type: "openMarketplacePanel"
 }
@@ -1508,6 +1556,7 @@ export interface SendCommandRequest {
   arguments: string
   messageID?: string
   sessionID?: string
+  draftID?: string
   providerID?: string
   modelID?: string
   agent?: string
@@ -1562,12 +1611,14 @@ export interface SetLanguageRequest {
 export interface QuestionReplyRequest {
   type: "questionReply"
   requestID: string
+  sessionID?: string
   answers: string[][]
 }
 
 export interface QuestionRejectRequest {
   type: "questionReject"
   requestID: string
+  sessionID?: string
 }
 
 export interface DeleteSessionRequest {
@@ -1615,6 +1666,15 @@ export interface UpdateSettingRequest {
 
 export interface RequestBrowserSettingsMessage {
   type: "requestBrowserSettings"
+}
+
+export interface RequestClaudeCompatSettingMessage {
+  type: "requestClaudeCompatSetting"
+}
+
+export interface ClaudeCompatSettingLoadedMessage {
+  type: "claudeCompatSettingLoaded"
+  enabled: boolean
 }
 
 export interface RequestConfigMessage {
@@ -1759,6 +1819,12 @@ export interface ShowLocalTerminalRequest {
 export interface OpenWorktreeRequest {
   type: "agentManager.openWorktree"
   worktreeId: string
+}
+
+// Copy text to the system clipboard via the extension host
+export interface CopyToClipboardRequest {
+  type: "agentManager.copyToClipboard"
+  text: string
 }
 
 // Show existing local terminal when switching to local context (no-op if none exists)
@@ -1970,6 +2036,7 @@ export interface SaveCustomProviderMessage {
   providerID: string
   config: ProviderConfig
   apiKey?: string
+  apiKeyChanged?: boolean
 }
 
 export interface FetchCustomProviderModelsMessage {
@@ -1987,6 +2054,17 @@ export interface PersistRecentsRequest {
 
 export interface RequestRecentsMessage {
   type: "requestRecents"
+}
+
+export interface ToggleFavoriteRequest {
+  type: "toggleFavorite"
+  action: "add" | "remove"
+  providerID: string
+  modelID: string
+}
+
+export interface RequestFavoritesMessage {
+  type: "requestFavorites"
 }
 
 // Continue in Worktree: transfer sidebar session + git state to an isolated worktree
@@ -2029,6 +2107,7 @@ export type WebviewMessage =
   | RefreshProfileRequest
   | OpenExternalRequest
   | OpenSettingsPanelRequest
+  | OpenVSCodeSettingsRequest
   | OpenMarketplacePanelRequest
   | OpenFileRequest
   | CancelLoginRequest
@@ -2058,6 +2137,7 @@ export type WebviewMessage =
   | ChatCompletionAcceptedMessage
   | UpdateSettingRequest
   | RequestBrowserSettingsMessage
+  | RequestClaudeCompatSettingMessage
   | RequestConfigMessage
   | RequestGlobalConfigMessage
   | UpdateConfigMessage
@@ -2084,6 +2164,7 @@ export type WebviewMessage =
   | ShowTerminalRequest
   | ShowLocalTerminalRequest
   | OpenWorktreeRequest
+  | CopyToClipboardRequest
   | ShowExistingLocalTerminalRequest
   | AgentManagerOpenFileRequest
   | CreateMultiVersionRequest
@@ -2110,6 +2191,7 @@ export type WebviewMessage =
   | StartLegacyMigrationMessage
   | SkipLegacyMigrationMessage
   | ClearLegacyDataMessage
+  | FinalizeLegacyMigrationMessage
   // legacy-migration end
   | ApplyWorktreeDiffMessage
   | EnhancePromptRequest
@@ -2130,6 +2212,8 @@ export type WebviewMessage =
   | FetchCustomProviderModelsMessage
   | PersistRecentsRequest
   | RequestRecentsMessage
+  | ToggleFavoriteRequest
+  | RequestFavoritesMessage
   | ContinueInWorktreeRequest
 
 // ============================================
