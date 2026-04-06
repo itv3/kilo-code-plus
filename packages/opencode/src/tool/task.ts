@@ -65,8 +65,17 @@ export const TaskTool = Tool.define("task", async (ctx) => {
 
       // kilocode_change start — inherit edit and bash restrictions from the calling agent so
       // sub-agents cannot perform actions the parent agent is not allowed to perform.
+      // We merge the static agent definition with the current session's accumulated permissions
+      // so that restrictions survive multi-hop chains (plan → general → explore).
+      // Agent.get() gives the base definition; session.permission carries restrictions that
+      // were themselves inherited from a grandparent, so both sources are needed.
       const caller = await Agent.get(ctx.agent)
-      const inherited = caller?.permission.filter((r) => r.permission === "edit" || r.permission === "bash") ?? []
+      const callerSession = await Session.get(ctx.sessionID)
+      const callerRules = PermissionNext.merge(
+        caller?.permission ?? [],
+        callerSession.permission ?? [],
+      )
+      const inherited = callerRules.filter((r) => r.permission === "edit" || r.permission === "bash")
       // kilocode_change end
 
       const session = await iife(async () => {
