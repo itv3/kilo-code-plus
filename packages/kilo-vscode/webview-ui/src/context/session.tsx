@@ -1715,12 +1715,23 @@ export const SessionProvider: ParentComponent = (props) => {
   const statusText = createMemo<string | undefined>(() => {
     if (status() === "idle") return undefined
     const fallback = language.t("ui.sessionTurn.status.consideringNextSteps")
+    const id = currentSessionID()
     const msgs = messages()
     for (let i = msgs.length - 1; i >= 0; i--) {
       if (msgs[i].role !== "assistant") continue
       const parts = getParts(msgs[i].id)
       if (parts.length === 0) break
-      return computeStatus(parts[parts.length - 1], language.t) ?? fallback
+      const raw = computeStatus(parts[parts.length - 1], language.t) ?? fallback
+      // When delegating to a subagent and that subagent is blocked on a prompt,
+      // replace the generic "Delegating work" label with a more informative one
+      // so the user understands why nothing appears to be happening.
+      if (raw === language.t("ui.sessionTurn.status.delegating")) {
+        const scoped = scopedPermissions(id)
+        if (scoped.length > 0) return language.t("ui.sessionTurn.status.delegatingWaitingPermission")
+        const scopedQ = scopedQuestions(id)
+        if (scopedQ.length > 0) return language.t("ui.sessionTurn.status.delegatingWaitingQuestion")
+      }
+      return raw
     }
     return fallback
   })
