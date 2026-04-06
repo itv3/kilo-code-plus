@@ -12,6 +12,19 @@ describe("session.network", () => {
     expect(SessionNetwork.disconnected({ code: "ENOENT" })).toBe(false)
   })
 
+  test("detects provider unable to connect message", () => {
+    const err = new Error("Unable to connect. Is the computer able to access the url?")
+    expect(SessionNetwork.disconnected(err)).toBe(true)
+    expect(SessionNetwork.message(err)).toBe("Unable to connect. Is the computer able to access the url?")
+  })
+
+  test("detects wrapped network cause", () => {
+    const err = new Error("top") as Error & { cause?: unknown }
+    err.cause = { code: "ETIMEDOUT" }
+    expect(SessionNetwork.disconnected(err)).toBe(true)
+    expect(SessionNetwork.message(err)).toBe("Connection timed out")
+  })
+
   test("reply resolves pending request", async () => {
     await using tmp = await tmpdir({ git: true })
     await Instance.provide({

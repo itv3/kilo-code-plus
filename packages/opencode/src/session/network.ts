@@ -12,6 +12,30 @@ export namespace SessionNetwork {
   const codes = new Set(["ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "ETIMEDOUT", "ENETUNREACH"])
   const POLL_MS = 3_000
 
+  function chain(err: unknown, seen = new Set<unknown>()): unknown[] {
+    if (err === undefined) return []
+    if (typeof err === "object" && err !== null) {
+      if (seen.has(err)) return []
+      seen.add(err)
+    }
+    const cause = typeof err === "object" && err !== null ? (err as { cause?: unknown }).cause : undefined
+    return [err, ...chain(cause, seen)]
+  }
+
+  function msgs(err: unknown) {
+    return chain(err).flatMap((item) => {
+      const msg =
+        item instanceof Error
+          ? item.message
+          : typeof item === "string"
+            ? item
+            : typeof item === "object" && item !== null && typeof (item as { message?: unknown }).message === "string"
+              ? (item as { message: string }).message
+              : undefined
+      return msg ? [msg] : []
+    })
+  }
+
   export const Wait = z
     .object({
       id: Identifier.schema("question"),
@@ -65,18 +89,23 @@ export namespace SessionNetwork {
   })
 
   export function code(err: unknown) {
-    const code = (err as { code?: unknown })?.code
-    return typeof code === "string" ? code : undefined
+    for (const item of chain(err)) {
+      const code = (item as { code?: unknown })?.code
+      if (typeof code === "string") return code
+    }
   }
 
   export function disconnected(err: unknown) {
     const match = code(err)
     if (match && codes.has(match)) return true
-    const msg = err instanceof Error ? err.message : String(err)
-    if (msg.includes("fetch failed")) return true
-    if (msg.includes("network is unreachable")) return true
-    if (msg.includes("socket connection")) return true
-    return false
+    return msgs(err).some((item) => {
+      const msg = item.toLowerCase()
+      if (msg.includes("fetch failed")) return true
+      if (msg.includes("network is unreachable")) return true
+      if (msg.includes("socket connection")) return true
+      if (msg.includes("unable to connect") && msg.includes("access the url")) return true
+      return false
+    })
   }
 
   export function message(err: unknown) {
@@ -87,8 +116,12 @@ export namespace SessionNetwork {
     if (match === "EAI_AGAIN") return "DNS lookup failed"
     if (match === "ETIMEDOUT") return "Connection timed out"
     if (match === "ENETUNREACH") return "Network is unreachable"
-    const msg = err instanceof Error ? err.message : String(err)
-    if (msg.includes("fetch failed")) return "Network request failed"
+    const matchMsg = msgs(err).find((item) => {
+      const msg = item.toLowerCase()
+      return msg.includes("unable to connect") && msg.includes("access the url")
+    })
+    if (matchMsg) return matchMsg
+    if (msgs(err).some((item) => item.toLowerCase().includes("fetch failed"))) return "Network request failed"
     return "Network connection failed"
   }
 
@@ -151,6 +184,7 @@ export namespace SessionNetwork {
         onAbort()
         return
       }
+      log.warn("waiting for network", { sessionID: input.sessionID, requestID: id, message: input.message })
       Bus.publish(Event.Asked, info)
       void watch({ requestID: id, abort: input.abort }).catch((err) => {
         log.error("restore watch failed", { err, requestID: id })
@@ -167,6 +201,7 @@ export namespace SessionNetwork {
       const req = s.pending[input.requestID]
       if (!req || req.info.restored) return
       req.info.restored = true
+      log.info("network restored", { sessionID: req.info.sessionID, requestID: input.requestID })
       Bus.publish(Event.Restored, {
         sessionID: req.info.sessionID,
         requestID: req.info.id,

@@ -414,7 +414,16 @@ export namespace SessionProcessor {
             } else {
               const retry = SessionRetry.retryable(error)
               if (retry !== undefined) {
-                if (SessionNetwork.disconnected(e)) {
+                const offline = SessionNetwork.disconnected(e)
+                log.warn("retryable error", {
+                  sessionID: input.sessionID,
+                  name: e instanceof Error ? e.name : undefined,
+                  message: e instanceof Error ? e.message : String(e),
+                  code: SessionNetwork.code(e),
+                  offline,
+                  retry,
+                })
+                if (offline) {
                   const msg = SessionNetwork.message(e)
                   const wait = SessionNetwork.ask({
                     sessionID: input.sessionID,
@@ -424,6 +433,11 @@ export namespace SessionProcessor {
                   const list = await SessionNetwork.list()
                   const match = list.findLast((item) => item.sessionID === input.sessionID)
                   if (match) {
+                    log.warn("session offline", {
+                      sessionID: input.sessionID,
+                      requestID: match.id,
+                      message: match.message,
+                    })
                     SessionStatus.set(input.sessionID, {
                       type: "offline",
                       requestID: match.id,
@@ -466,6 +480,12 @@ export namespace SessionProcessor {
                   // kilocode_change
                   attempt++
                   const delay = SessionRetry.delay(attempt, error.name === "APIError" ? error : undefined)
+                  log.warn("retry scheduled", {
+                    sessionID: input.sessionID,
+                    attempt,
+                    delay,
+                    message: retry,
+                  })
                   SessionStatus.set(input.sessionID, {
                     type: "retry",
                     attempt,
