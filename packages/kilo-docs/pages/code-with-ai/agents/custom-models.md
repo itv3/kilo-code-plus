@@ -97,8 +97,8 @@ The `limit` object controls how Kilo manages the model's context window and outp
 
 | Sub-field | Type     | Required | Description                                                                                                                                                                                        |
 | --------- | -------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `context` | `number` | Yes      | The model's total context window size (e.g., `131072` for a 128K model). Used to determine when conversation history should be compacted to stay within the window.                                |
-| `output`  | `number` | Yes      | The maximum number of tokens the model can generate in a single response. Sent to the provider as `max_tokens` or equivalent. Capped at 32,000 by default.                                         |
+| `context` | `number` | No      | The model's total context window size (e.g., `131072` for a 128K model). Used to determine when conversation history should be compacted to stay within the window.                                |
+| `output`  | `number` |  No      | The maximum number of tokens the model can generate in a single response. Sent to the provider as `max_tokens` or equivalent. Capped at 32,000 by default.                                         |
 | `input`   | `number` | No       | An optional stricter input limit. Some providers enforce an input token ceiling that is lower than the full context window. When set, compaction triggers against this value instead of `context`. |
 
 ```jsonc
