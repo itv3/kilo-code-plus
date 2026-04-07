@@ -20,6 +20,7 @@
 | `kilo import <file>` | import session data from JSON file or URL |
 | `kilo pr <number>` | fetch and checkout a GitHub PR branch, then run kilo |
 | `kilo session` | manage sessions |
+| `kilo remote` | enable remote connection for real-time session relay |
 | `kilo db` | database tools |
 | `kilo help [command]` | show full CLI reference |
 | `kilo completion` | generate shell completion script |

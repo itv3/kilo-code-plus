@@ -18,6 +18,7 @@ import { ExportCommand } from "./cmd/export"
 import { ImportCommand } from "./cmd/import"
 import { PrCommand } from "./cmd/pr"
 import { SessionCommand } from "./cmd/session"
+import { RemoteCommand } from "./cmd/remote" // kilocode_change
 import { DbCommand } from "./cmd/db"
 import { HelpCommand } from "../kilocode/help-command" // kilocode_change
 
@@ -41,6 +42,7 @@ export const commands = [
   ImportCommand,
   PrCommand,
   SessionCommand,
+  RemoteCommand, // kilocode_change
   DbCommand,
   HelpCommand, // kilocode_change
 ]

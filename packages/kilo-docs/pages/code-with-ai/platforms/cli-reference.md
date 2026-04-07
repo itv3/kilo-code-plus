@@ -18,7 +18,7 @@ Options:
   --port         port to listen on  [number] [default: 0]
   --hostname     hostname to listen on  [string] [default: "127.0.0.1"]
   --mdns         enable mDNS service discovery (defaults hostname to 0.0.0.0)  [boolean] [default: false]
-  --mdns-domain  custom domain name for mDNS service (default: opencode.local)  [string] [default: "opencode.local"]
+  --mdns-domain  custom domain name for mDNS service (default: kilo.local)  [string] [default: "kilo.local"]
   --cors         additional domains to allow for CORS  [array] [default: []]
   --cwd          working directory  [string] [default: "."]
 ```
@@ -76,6 +76,16 @@ Options:
   --version  Show version number  [boolean]
 ```
 
+### kilo mcp auth list
+
+```
+list OAuth-capable MCP servers and their auth status
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
 ### kilo mcp logout
 
 ```
@@ -102,14 +112,48 @@ Options:
   --version  Show version number  [boolean]
 ```
 
+## kilo [project]
+
+```
+start kilo tui
+
+Positionals:
+  project  path to start kilo in  [string]
+
+Options:
+      --help         Show help  [boolean]
+      --version      Show version number  [boolean]
+      --port         port to listen on  [number] [default: 0]
+      --hostname     hostname to listen on  [string] [default: "127.0.0.1"]
+      --mdns         enable mDNS service discovery (defaults hostname to 0.0.0.0)  [boolean] [default: false]
+      --mdns-domain  custom domain name for mDNS service (default: kilo.local)  [string] [default: "kilo.local"]
+      --cors         additional domains to allow for CORS  [array] [default: []]
+  -m, --model        model to use in the format of provider/model  [string]
+  -c, --continue     continue the last session  [boolean]
+  -s, --session      session id to continue  [string]
+      --fork         fork the session when continuing (use with --continue or --session)  [boolean]
+      --cloud-fork   fetch session from cloud and continue locally (use with --session)  [boolean]
+      --prompt       prompt to use  [string]
+      --agent        agent to use  [string]
+```
+
 ## kilo attach
 
 ```
 attach to a running kilo server
 
+Positionals:
+  url  http://localhost:4096  [string]
+
 Options:
-  --help     Show help  [boolean]
-  --version  Show version number  [boolean]
+      --help        Show help  [boolean]
+      --version     Show version number  [boolean]
+      --dir         directory to run in  [string]
+  -c, --continue    continue the last session  [boolean]
+  -s, --session     session id to continue  [string]
+      --fork        fork the session when continuing (use with --continue or --session)  [boolean]
+      --cloud-fork  fetch session from cloud and continue locally (use with --session)  [boolean]
+  -p, --password    basic auth password (defaults to KILO_SERVER_PASSWORD)  [string]
 ```
 
 ## kilo run
@@ -121,24 +165,26 @@ Positionals:
   message  message to send  [string] [default: []]
 
 Options:
-      --help      Show help  [boolean]
-      --version   Show version number  [boolean]
-      --command   the command to run, use message for args  [string]
-  -c, --continue  continue the last session  [boolean]
-  -s, --session   session id to continue  [string]
-      --fork      fork the session before continuing (requires --continue or --session)  [boolean]
-      --share     share the session  [boolean]
-  -m, --model     model to use in the format of provider/model  [string]
-      --agent     agent to use  [string]
-      --format    format: default (formatted) or json (raw JSON events)  [string] [choices: "default", "json"] [default: "default"]
-  -f, --file      file(s) to attach to message  [array]
-      --title     title for the session (uses truncated prompt if no value provided)  [string]
-      --attach    attach to a running opencode server (e.g., http://localhost:4096)  [string]
-      --dir       directory to run in, path on remote server if attaching  [string]
-      --port      port for the local server (defaults to random port if no value provided)  [number]
-      --variant   model variant (provider-specific reasoning effort, e.g., high, max, minimal)  [string]
-      --thinking  show thinking blocks  [boolean] [default: false]
-      --auto      auto-approve all permissions (for autonomous/pipeline usage)  [boolean] [default: false]
+      --help        Show help  [boolean]
+      --version     Show version number  [boolean]
+      --command     the command to run, use message for args  [string]
+  -c, --continue    continue the last session  [boolean]
+  -s, --session     session id to continue  [string]
+      --fork        fork the session before continuing (requires --continue or --session)  [boolean]
+      --cloud-fork  fetch session from cloud and continue locally (requires --session)  [boolean]
+      --share       share the session  [boolean]
+  -m, --model       model to use in the format of provider/model  [string]
+      --agent       agent to use  [string]
+      --format      format: default (formatted) or json (raw JSON events)  [string] [choices: "default", "json"] [default: "default"]
+  -f, --file        file(s) to attach to message  [array]
+      --title       title for the session (uses truncated prompt if no value provided)  [string]
+      --attach      attach to a running opencode server (e.g., http://localhost:4096)  [string]
+  -p, --password    basic auth password (defaults to KILO_SERVER_PASSWORD)  [string]
+      --dir         directory to run in, path on remote server if attaching  [string]
+      --port        port for the local server (defaults to random port if no value provided)  [number]
+      --variant     model variant (provider-specific reasoning effort, e.g., high, max, minimal)  [string]
+      --thinking    show thinking blocks  [boolean] [default: false]
+      --auto        auto-approve all permissions (for autonomous/pipeline usage)  [boolean] [default: false]
 ```
 
 ## kilo debug
@@ -188,6 +234,45 @@ Options:
   --version  Show version number  [boolean]
 ```
 
+### kilo debug lsp diagnostics
+
+```
+get diagnostics for a file
+
+Positionals:
+  file  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug lsp symbols
+
+```
+search workspace symbols
+
+Positionals:
+  query  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug lsp document-symbols
+
+```
+get symbols from a document
+
+Positionals:
+  uri  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
 ### kilo debug rg
 
 ```
@@ -203,6 +288,45 @@ Options:
   --version  Show version number  [boolean]
 ```
 
+### kilo debug rg tree
+
+```
+show file tree using ripgrep
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+  --limit  [number]
+```
+
+### kilo debug rg files
+
+```
+list files using ripgrep
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+  --query    Filter files by query  [string]
+  --glob     Glob pattern to match files  [string]
+  --limit    Limit number of results  [number]
+```
+
+### kilo debug rg search
+
+```
+search file contents using ripgrep
+
+Positionals:
+  pattern  Search pattern  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+  --glob     File glob patterns  [array]
+  --limit    Limit number of results  [number]
+```
+
 ### kilo debug file
 
 ```
@@ -214,6 +338,68 @@ Commands:
   kilo debug file list <path>     list files in a directory
   kilo debug file search <query>  search files by query
   kilo debug file tree [dir]      show directory tree
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug file read
+
+```
+read file contents as JSON
+
+Positionals:
+  path  File path to read  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug file status
+
+```
+show file status information
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug file list
+
+```
+list files in a directory
+
+Positionals:
+  path  File path to list  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug file search
+
+```
+search files by query
+
+Positionals:
+  query  Search query  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug file tree
+
+```
+show directory tree
+
+Positionals:
+  dir  Directory to tree  [string] [default: "."]
 
 Options:
   --help     Show help  [boolean]
@@ -249,6 +435,42 @@ Commands:
   kilo debug snapshot track         track current snapshot state
   kilo debug snapshot patch <hash>  show patch for a snapshot hash
   kilo debug snapshot diff <hash>   show diff for a snapshot hash
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug snapshot track
+
+```
+track current snapshot state
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug snapshot patch
+
+```
+show patch for a snapshot hash
+
+Positionals:
+  hash  hash  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+### kilo debug snapshot diff
+
+```
+show diff for a snapshot hash
+
+Positionals:
+  hash  hash  [string]
 
 Options:
   --help     Show help  [boolean]
@@ -314,8 +536,10 @@ Positionals:
   url  kilo auth provider  [string]
 
 Options:
-  --help     Show help  [boolean]
-  --version  Show version number  [boolean]
+      --help      Show help  [boolean]
+      --version   Show version number  [boolean]
+  -p, --provider  provider id or name to log in to (skips provider selection)  [string]
+  -m, --method    login method label (skips method selection)  [string]
 ```
 
 ### kilo auth logout
@@ -416,7 +640,7 @@ Options:
   --port         port to listen on  [number] [default: 0]
   --hostname     hostname to listen on  [string] [default: "127.0.0.1"]
   --mdns         enable mDNS service discovery (defaults hostname to 0.0.0.0)  [boolean] [default: false]
-  --mdns-domain  custom domain name for mDNS service (default: opencode.local)  [string] [default: "opencode.local"]
+  --mdns-domain  custom domain name for mDNS service (default: kilo.local)  [string] [default: "kilo.local"]
   --cors         additional domains to allow for CORS  [array] [default: []]
 ```
 
@@ -431,7 +655,7 @@ Options:
   --port         port to listen on  [number] [default: 0]
   --hostname     hostname to listen on  [string] [default: "127.0.0.1"]
   --mdns         enable mDNS service discovery (defaults hostname to 0.0.0.0)  [boolean] [default: false]
-  --mdns-domain  custom domain name for mDNS service (default: opencode.local)  [string] [default: "opencode.local"]
+  --mdns-domain  custom domain name for mDNS service (default: kilo.local)  [string] [default: "kilo.local"]
   --cors         additional domains to allow for CORS  [array] [default: []]
 ```
 
@@ -536,6 +760,16 @@ delete a session
 
 Positionals:
   sessionID  session ID to delete  [string]
+
+Options:
+  --help     Show help  [boolean]
+  --version  Show version number  [boolean]
+```
+
+## kilo remote
+
+```
+enable remote connection for real-time session relay
 
 Options:
   --help     Show help  [boolean]

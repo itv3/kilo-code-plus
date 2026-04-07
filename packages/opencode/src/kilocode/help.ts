@@ -13,12 +13,14 @@ function strip(text: string): string {
 function extractCommandName(cmd: Cmd): string | undefined {
   const raw = typeof cmd.command === "string" ? cmd.command : cmd.command?.[0]
   if (!raw) return undefined
-  if (raw.startsWith("$0")) return undefined
+  if (raw.startsWith("$0")) return raw.slice(2).trim() || ""
   return raw.split(/[\s[<]/)[0]
 }
 
 async function getHelpText(name: string, cmd: Cmd): Promise<string> {
-  const inst = yargs([]).scriptName(`kilo ${name}`).wrap(null)
+  const inst = yargs([])
+    .scriptName(name ? `kilo ${name}` : "kilo")
+    .wrap(null)
   if (cmd.builder) {
     if (typeof cmd.builder === "function") {
       ;(cmd.builder as any)(inst)
@@ -33,11 +35,16 @@ async function getHelpText(name: string, cmd: Cmd): Promise<string> {
   return strip(help)
 }
 
-async function getSubcommands(name: string, cmd: Cmd): Promise<Array<{ name: string; hidden: boolean; help: string }>> {
-  if (!cmd.builder || typeof cmd.builder !== "function") return []
+async function getSubcommands(
+  name: string,
+  builder: ((y: any) => any) | undefined,
+  depth = 0,
+): Promise<Array<{ name: string; hidden: boolean; help: string }>> {
+  if (!builder || typeof builder !== "function") return []
+  if (depth > 4) return [] // guard against infinite recursion
 
   const inst = yargs([]).scriptName(`kilo ${name}`).wrap(null)
-  ;(cmd.builder as any)(inst)
+  builder(inst)
 
   const result: Array<{ name: string; hidden: boolean; help: string }> = []
 
@@ -71,6 +78,14 @@ async function getSubcommands(name: string, cmd: Cmd): Promise<Array<{ name: str
         hidden: handler.description === false,
         help,
       })
+
+      // recurse into sub-subcommands
+      const deeper = await getSubcommands(
+        full,
+        typeof handler.builder === "function" ? handler.builder : undefined,
+        depth + 1,
+      )
+      result.push(...deeper)
     }
   } catch (err) {
     Log.Default.warn("failed to extract subcommands via yargs internals", { err })
@@ -90,7 +105,7 @@ function formatMarkdown(
   const parts: string[] = []
 
   for (const section of sections) {
-    parts.push(`## kilo ${section.name}`)
+    parts.push(`## ${section.name ? `kilo ${section.name}` : "kilo"}`)
     parts.push("")
     if (section.hidden) {
       parts.push("> **Internal command** — not intended for direct use.")
@@ -131,7 +146,8 @@ function formatText(
 
   for (const section of sections) {
     parts.push(rule)
-    const label = section.hidden ? `kilo ${section.name} [internal]` : `kilo ${section.name}`
+    const display = section.name ? `kilo ${section.name}` : "kilo"
+    const label = section.hidden ? `${display} [internal]` : display
     parts.push(label)
     parts.push(rule)
     parts.push("")
@@ -185,7 +201,7 @@ export async function generateHelp(options: {
     const name = extractCommandName(cmd)!
     const help = await getHelpText(name, cmd)
     const hidden = (cmd as any).hidden === true
-    const subs = await getSubcommands(name, cmd)
+    const subs = await getSubcommands(name, typeof cmd.builder === "function" ? cmd.builder : undefined)
 
     sections.push({ name, hidden, help, subs })
   }
