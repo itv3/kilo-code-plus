@@ -363,11 +363,7 @@ export namespace Config {
       // kilocode_change start
       for (const file of ["kilo.jsonc", "kilo.json", "opencode.jsonc", "opencode.json"]) {
         // kilocode_change end
-        try {
-          result = mergeConfigConcatArrays(result, await loadFile(path.join(managedDir, file)))
-        } catch (err) {
-          caught(err, path.join(managedDir, file))
-        }
+        result = mergeConfigConcatArrays(result, await loadFile(path.join(managedDir, file)))
       }
     }
 
