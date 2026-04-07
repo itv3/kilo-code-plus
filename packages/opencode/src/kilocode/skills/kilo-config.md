@@ -254,10 +254,10 @@ Example: `~/.config/kilo/command/*.md` (modern global), `~/.kilocode/command/*.m
 
 ### Skills and instructions
 
-| Scope        | Path                                                                    |
-| ------------ | ----------------------------------------------------------------------- |
-| Skills       | `{skill,skills}/<name>/SKILL.md` inside any config directory            |
-| Instructions | `AGENTS.md`, `.kilo/instructions.md`, glob patterns from `instructions` |
+| Scope        | Path                                                                     |
+| ------------ | ------------------------------------------------------------------------ |
+| Skills       | `{skill,skills}/<name>/SKILL.md` inside any config directory             |
+| Instructions | `AGENTS.md`, `CLAUDE.md`, glob patterns from `instructions` config field |
 
 ### Environment variable overrides
 
