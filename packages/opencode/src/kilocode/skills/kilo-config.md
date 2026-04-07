@@ -6,7 +6,7 @@ This also covers where Kilo looks for config files, commands, agents, and skills
 
 ## Commands (`.kilo/command/*.md`)
 
-Markdown files with YAML frontmatter. The filename (minus `.md`) becomes the command name invoked via `/name`. Also loaded from `.kilocode/` and `.opencode/` directories (legacy), and plural `commands/` variants. See Config File Locations for the full search order.
+Markdown files with YAML frontmatter. The filename (minus `.md`) becomes the command name invoked via `/name`. Commands can live in `.kilo/`, `.kilocode/`, `.opencode/`, and global config roots, with both `command/` and `commands/` directory names supported. See Config File Locations for the full search order.
 
 ```yaml
 ---
@@ -21,6 +21,23 @@ Reference files with @file and shell output with !`cmd`.
 ```
 
 Template variables: `$1`-`$N` (positional args), `$ARGUMENTS` (full string), `@file` (file contents), `` !`cmd` `` (shell output).
+
+### Finding a named command
+
+When asked where `/name` lives, do not search only the repo root. Search these roots explicitly, and use an explicit search `path` for each one:
+
+1. `~/.config/kilo/`
+2. `~/.kilo/`
+3. `~/.kilocode/`
+4. `~/.opencode/`
+5. project `.kilo/`, `.kilocode/`, and `.opencode/` directories from the current working directory up to the worktree root
+
+Use exact patterns first:
+
+- `**/command/<name>.md`
+- `**/commands/<name>.md`
+
+If found, return the full path. If not found in those roots, explain that the command is not present in the loaded config paths.
 
 ## Agents (`.kilo/agent/*.md`)
 
