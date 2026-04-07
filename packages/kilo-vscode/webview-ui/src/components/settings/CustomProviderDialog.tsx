@@ -158,32 +158,36 @@ function validateCustomProvider(input: ValidateArgs) {
           })()
     const modelNameError = !m.name.trim() ? input.t("provider.custom.error.required") : undefined
     const seenVariants = new Set<string>()
-    const variantErrors = m.variants.map((v) => {
-      const n = v.name.trim()
-      const nameError = !n
-        ? input.t("provider.custom.error.required")
-        : seenVariants.has(n)
-          ? input.t("provider.custom.error.duplicate")
-          : (() => {
-              seenVariants.add(n)
-              return undefined
-            })()
-      return { name: nameError }
-    })
+    const variantErrors = m.reasoning
+      ? m.variants.map((v) => {
+          const n = v.name.trim()
+          const nameError = !n
+            ? input.t("provider.custom.error.required")
+            : seenVariants.has(n)
+              ? input.t("provider.custom.error.duplicate")
+              : (() => {
+                  seenVariants.add(n)
+                  return undefined
+                })()
+          return { name: nameError }
+        })
+      : []
     return { id: modelIdError, name: modelNameError, variants: variantErrors }
   })
   const modelsValid = modelErrors.every((m) => !m.id && !m.name && m.variants.every((v) => !v.name))
   const models = Object.fromEntries(
     input.form.models.map((m) => {
-      const variantEntries = m.variants
-        .filter((v) => v.name.trim())
-        .map((v) => {
-          const cfg: Record<string, unknown> = {}
-          if (v.enableThinking !== undefined) cfg.enable_thinking = v.enableThinking
-          if (v.thinking !== undefined) cfg.thinking = { type: v.thinking }
-          if (v.reasoningEffort !== undefined) cfg.reasoningEffort = v.reasoningEffort
-          return [v.name.trim(), cfg]
-        })
+      const variantEntries = m.reasoning
+        ? m.variants
+            .filter((v) => v.name.trim())
+            .map((v) => {
+              const cfg: Record<string, unknown> = {}
+              if (v.enableThinking !== undefined) cfg.enable_thinking = v.enableThinking
+              if (v.thinking !== undefined) cfg.thinking = { type: v.thinking }
+              if (v.reasoningEffort !== undefined) cfg.reasoningEffort = v.reasoningEffort
+              return [v.name.trim(), cfg]
+            })
+        : []
       const entry: Record<string, unknown> = { name: m.name.trim() }
       if (m.reasoning) entry.reasoning = true
       if (variantEntries.length > 0) entry.variants = Object.fromEntries(variantEntries)
