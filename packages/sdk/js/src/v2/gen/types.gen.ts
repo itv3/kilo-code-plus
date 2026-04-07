@@ -2479,6 +2479,7 @@ export type ConfigWarningsResponses = {
   200: Array<{
     path: string
     message: string
+    detail?: string
   }>
 }
 

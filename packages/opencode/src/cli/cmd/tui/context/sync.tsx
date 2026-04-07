@@ -466,7 +466,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
             sdk.client.vcs.get().then((x) => setStore("vcs", reconcile(x.data))),
             sdk.client.path.get().then((x) => setStore("path", reconcile(x.data!))),
             syncWorkspaces(),
-            // kilocode_change start - show config warnings as toasts
+            // kilocode_change start - show config warnings as persistent toast
             sdk.client.config
               .warnings()
               .then((x) => {
@@ -478,7 +478,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
                   title: "Config Warning",
                   message: first.message + suffix,
                   variant: "warning",
-                  duration: 8000,
+                  duration: 0,
                 })
               })
               .catch(() => {}),

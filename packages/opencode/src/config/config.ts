@@ -56,6 +56,7 @@ export namespace Config {
   export const Warning = z.object({
     path: z.string(),
     message: z.string(),
+    detail: z.string().optional(),
   })
   export type Warning = z.infer<typeof Warning>
   // kilocode_change end
@@ -527,8 +528,8 @@ export namespace Config {
     if (ConfigPaths.JsonError.isInstance(err))
       return {
         path: err.data.path,
-        message:
-          `Config file at ${err.data.path} is not valid JSON(C)` + (err.data.message ? `: ${err.data.message}` : ""),
+        message: `Config file at ${err.data.path} is not valid JSON(C)`,
+        detail: err.data.message || undefined,
       }
     if (ConfigPaths.InvalidError.isInstance(err)) {
       const text = err.data.issues ? detail(err.data.issues) : err.data.message
@@ -560,9 +561,9 @@ export namespace Config {
     warnings?: Warning[],
   ) {
     const text = detail(issues)
-    const message = text ? `Config file at ${item} is invalid: ${text}` : `Config file at ${item} is invalid`
+    const message = `Config file at ${item} is invalid`
     const err = new InvalidError({ path: item, issues }, { cause })
-    if (warnings) warnings.push({ path: item, message })
+    if (warnings) warnings.push({ path: item, message, detail: text || undefined })
     const { Session } = await import("@/session")
     Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
     if (kind === "command") {

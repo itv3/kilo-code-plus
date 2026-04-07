@@ -60,9 +60,18 @@ function init() {
       const { duration, ...currentToast } = parsedOptions
       setStore("currentToast", currentToast)
       if (timeoutHandle) clearTimeout(timeoutHandle)
-      timeoutHandle = setTimeout(() => {
-        setStore("currentToast", null)
-      }, duration).unref()
+      timeoutHandle = null
+      if (duration && duration > 0) {
+        timeoutHandle = setTimeout(() => {
+          setStore("currentToast", null)
+          timeoutHandle = null
+        }, duration).unref()
+      }
+    },
+    dismiss() {
+      if (timeoutHandle) clearTimeout(timeoutHandle)
+      timeoutHandle = null
+      setStore("currentToast", null)
     },
     error: (err: any) => {
       if (err instanceof Error)

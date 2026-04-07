@@ -1048,6 +1048,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         this.postMessage({ type: "connectionState", state })
 
         if (state === "connected") {
+          // kilocode_change start - fire config warnings independently so a failure in the
+          // sequential await chain doesn't prevent warnings from being shown
+          void this.checkConfigWarnings()
+          // kilocode_change end
           try {
             // Profile fetch is best-effort — returns 401 when user isn't logged into gateway.
             const sdkClient = this.client
@@ -1059,7 +1063,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
             await this.flushPendingSessionRefresh("sse-connected")
             await fetchAndSendPendingPermissions(this.permissionCtx)
             await fetchAndSendPendingQuestions(this.questionCtx)
-            await this.checkConfigWarnings() // kilocode_change
           } catch (error) {
             console.error("[Kilo New] KiloProvider: ❌ Failed during connected state handling:", error)
             this.postMessage({
@@ -1951,7 +1954,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
   // kilocode_change start
   /**
-   * Fetch config warnings from the server and display them as VS Code warning messages.
+   * Fetch config warnings from the server and display a single consolidated
+   * VS Code warning with a "Show Details" action button.
    * Only shown once per provider lifecycle (flag resets on dispose/re-create, not on SSE reconnect).
    */
   private async checkConfigWarnings(): Promise<void> {
@@ -1962,11 +1966,23 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       const list = result?.data ?? []
       if (list.length === 0) return
       this.configWarningsShown = true
-      for (const warning of list) {
-        vscode.window.showWarningMessage(`Config: ${warning.message}`)
+
+      const first = list[0]!
+      const summary = list.length === 1 ? first.message : `${first.message} (and ${list.length - 1} more)`
+
+      const action = await vscode.window.showWarningMessage(`Config: ${summary}`, "Show Details")
+      if (action === "Show Details") {
+        const lines = list.map((w) => {
+          const base = `${w.path}\n  ${w.message}`
+          return w.detail ? `${base}\n  ${w.detail}` : base
+        })
+        const channel = vscode.window.createOutputChannel("Kilo Config Warnings")
+        channel.clear()
+        channel.appendLine(lines.join("\n\n"))
+        channel.show()
       }
-    } catch {
-      // Endpoint may not exist on older CLI versions — silently ignore
+    } catch (err) {
+      console.warn("[Kilo New] KiloProvider: checkConfigWarnings failed:", err)
     }
   }
   // kilocode_change end
