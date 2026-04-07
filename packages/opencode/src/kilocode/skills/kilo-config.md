@@ -266,4 +266,4 @@ Example: `~/.config/kilo/command/*.md` (modern global), `~/.kilocode/command/*.m
 | `KILO_CONFIG`                 | Path to an additional config file (loaded after global)          |
 | `KILO_CONFIG_DIR`             | Path to an additional config directory (appended to search list) |
 | `KILO_CONFIG_CONTENT`         | Inline JSON config string (high precedence, after project dirs)  |
-| `KILO_DISABLE_PROJECT_CONFIG` | Skip project-level `.kilo`/`.kilocode`/`.opencode` directories   |
+| `KILO_DISABLE_PROJECT_CONFIG` | Skip all project-level config (files and directories)            |
