@@ -484,6 +484,8 @@ export namespace Config {
     const text = detail(issues)
     const message = text ? `Config file at ${item} is invalid: ${text}` : `Config file at ${item} is invalid`
     const err = new InvalidError({ path: item, issues }, { cause })
+    const { Session } = await import("@/session")
+    Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
     if (kind === "command") {
       log.error("failed to load command", { command: item, err, message })
       return
