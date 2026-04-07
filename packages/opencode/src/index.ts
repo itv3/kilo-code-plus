@@ -29,9 +29,6 @@ import { EOL } from "os"
 import { PrCommand } from "./cli/cmd/pr"
 import { SessionCommand } from "./cli/cmd/session"
 import { RemoteCommand } from "./cli/cmd/remote" // kilocode_change
-import { DbCommand } from "./cli/cmd/db"
-import { HelpCommand } from "./kilocode/help-command" // kilocode_change
-
 // kilocode_change start - Import telemetry, instance disposal, and legacy migration
 import { Telemetry } from "@kilocode/kilo-telemetry"
 import { Instance } from "./project/instance" // kilocode_change
@@ -45,7 +42,6 @@ if (!process.env[ENV_FEATURE]) {
   const isServe = process.argv.includes("serve")
   process.env[ENV_FEATURE] = isServe ? "unknown" : "cli"
 }
-import { Global } from "./global"
 
 // kilocode_change - set version so kilo-gateway can include it in the editor name header
 if (!process.env[ENV_VERSION]) {
@@ -54,7 +50,10 @@ if (!process.env[ENV_VERSION]) {
 import { Config } from "./config/config"
 import { Auth } from "./auth"
 // kilocode_change end
+import { DbCommand } from "./cli/cmd/db"
 import path from "path"
+import { Global } from "./global"
+import { HelpCommand } from "./kilocode/help-command" // kilocode_change
 import { JsonMigration } from "./storage/json-migration"
 import { Database } from "./storage/db"
 
@@ -200,10 +199,10 @@ let cli = yargs(hideBin(process.argv))
   .command(HelpCommand) // kilocode_change
 
 if (Installation.isLocal()) {
-  cli = cli.command(WorkspaceServeCommand as any)
+  cli = cli.command(WorkspaceServeCommand)
 }
 
-cli
+cli = cli
   .fail((msg, err) => {
     if (
       msg?.startsWith("Unknown argument") ||
