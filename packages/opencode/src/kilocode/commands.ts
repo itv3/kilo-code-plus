@@ -24,6 +24,14 @@ import { RemoteCommand } from "../cli/cmd/remote"
 import { DbCommand } from "../cli/cmd/db"
 import { HelpCommand } from "./help-command"
 
+// Synthetic entry for the yargs built-in .completion() command so that
+// generateHelp --all and cli-reference.md include it automatically.
+const CompletionCommand: CommandModule<any, any> = {
+  command: "completion",
+  describe: "generate shell completion script",
+  handler: () => {},
+}
+
 export const commands: CommandModule<any, any>[] = [
   AcpCommand,
   McpCommand,
@@ -46,4 +54,5 @@ export const commands: CommandModule<any, any>[] = [
   RemoteCommand,
   DbCommand,
   HelpCommand,
+  CompletionCommand,
 ]

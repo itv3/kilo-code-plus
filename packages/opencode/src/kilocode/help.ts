@@ -227,11 +227,6 @@ export async function generateCommandTable(options?: { commands?: Cmd[] }) {
     })
   }
 
-  rows.push({
-    display: "kilo completion",
-    description: "generate shell completion script",
-  })
-
   const lines = ["| Command | Description |", "| --- | --- |"]
 
   for (const row of rows) {
