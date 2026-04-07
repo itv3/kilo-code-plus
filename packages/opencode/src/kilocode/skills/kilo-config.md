@@ -4,7 +4,7 @@ All config lives in `kilo.json` (or `kilo.jsonc`). Precedence low-to-high: remot
 
 ## Commands (`.kilo/command/*.md`)
 
-Markdown files with YAML frontmatter. The filename (minus `.md`) becomes the command name invoked via `/name`.
+Markdown files with YAML frontmatter. The filename (minus `.md`) becomes the command name invoked via `/name`. Also loaded from `.kilocode/` and `.opencode/` directories (legacy), and plural `commands/` variants. See Config File Locations for the full search order.
 
 ```yaml
 ---
@@ -21,6 +21,8 @@ Reference files with @file and shell output with !`cmd`.
 Template variables: `$1`-`$N` (positional args), `$ARGUMENTS` (full string), `@file` (file contents), `` !`cmd` `` (shell output).
 
 ## Agents (`.kilo/agent/*.md`)
+
+Also loaded from `.kilocode/` and `.opencode/` directories (legacy), and plural `agents/` variants.
 
 ```yaml
 ---
@@ -127,7 +129,7 @@ Additional skill directories and remote URLs:
 }
 ```
 
-Skills are markdown files at `skills/<name>/SKILL.md` with `name` and `description` in frontmatter.
+Skills are markdown files at `skills/<name>/SKILL.md` (or `skill/<name>/SKILL.md`) with `name` and `description` in frontmatter. Discovered inside `.kilo/`, `.kilocode/`, and `.opencode/` directories.
 
 ## Other Top-Level Fields
 
@@ -200,12 +202,49 @@ Toggle notifications, Toggle animations, Toggle diff wrapping, Toggle sidebar (`
 
 ## Config File Locations
 
-| Scope        | Path                                                                                                                                                       |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project      | `./kilo.json`, `./.kilo/kilo.json`                                                                                                                         |
-| Global       | `~/.config/kilo/kilo.json`                                                                                                                                 |
-| Managed      | Linux: `/etc/kilo/kilo.json`, macOS: `/Library/Application Support/kilo/kilo.json`, Windows: `%ProgramData%\kilo\kilo.json` (enterprise, highest priority) |
-| Commands     | `.kilo/command/*.md` (project), `~/.config/kilo/command/*.md` (global)                                                                                     |
-| Agents       | `.kilo/agent/*.md` (project), `~/.config/kilo/agent/*.md` (global)                                                                                         |
-| Skills       | `.kilo/skill/*/SKILL.md`, `.kilo/skills/*/SKILL.md`                                                                                                        |
-| Instructions | `AGENTS.md`, `.kilo/instructions.md`, glob patterns from `instructions`                                                                                    |
+### Config files (kilo.json)
+
+| Scope   | Path                                                                                                                                                       |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project | `./kilo.json`, `./kilo.jsonc`, `./opencode.json` (legacy), `./opencode.jsonc` (legacy)                                                                     |
+| Global  | `~/.config/kilo/kilo.json`, `~/.config/kilo/kilo.jsonc`, `~/.config/kilo/opencode.json` (legacy), `~/.config/kilo/config.json` (legacy)                    |
+| Managed | Linux: `/etc/kilo/kilo.json`, macOS: `/Library/Application Support/kilo/kilo.json`, Windows: `%ProgramData%\kilo\kilo.json` (enterprise, highest priority) |
+
+Each config directory (`.kilo/`, `.kilocode/`, `.opencode/`) can also contain `kilo.json`, `kilo.jsonc`, `opencode.json`, or `opencode.jsonc`.
+
+### Config directories
+
+Three directory names are scanned: `.kilo` (modern), `.kilocode` (legacy), `.opencode` (legacy). All three are checked at each level:
+
+- **Project**: walks up from CWD to the git worktree root, checking for all three at each directory level
+- **Home**: `~/.kilo/`, `~/.kilocode/`, `~/.opencode/`
+- **XDG global**: `~/.config/kilo/` (always loaded, lowest file-based precedence)
+
+### Commands, agents, modes, plugins
+
+Glob patterns run inside every discovered config directory (including legacy):
+
+| Type    | Pattern                      |
+| ------- | ---------------------------- |
+| Command | `{command,commands}/**/*.md` |
+| Agent   | `{agent,agents}/**/*.md`     |
+| Mode    | `{mode,modes}/*.md`          |
+| Plugin  | `{plugin,plugins}/*.{ts,js}` |
+
+Example: `~/.config/kilo/command/*.md` (modern global), `~/.kilocode/command/*.md` (legacy global), `.opencode/commands/*.md` (legacy project) all load commands.
+
+### Skills and instructions
+
+| Scope        | Path                                                                    |
+| ------------ | ----------------------------------------------------------------------- |
+| Skills       | `{skill,skills}/<name>/SKILL.md` inside any config directory            |
+| Instructions | `AGENTS.md`, `.kilo/instructions.md`, glob patterns from `instructions` |
+
+### Environment variable overrides
+
+| Variable                      | Description                                                      |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `KILO_CONFIG`                 | Path to an additional config file (loaded after global)          |
+| `KILO_CONFIG_DIR`             | Path to an additional config directory (appended to search list) |
+| `KILO_CONFIG_CONTENT`         | Inline JSON config string (high precedence, after project dirs)  |
+| `KILO_DISABLE_PROJECT_CONFIG` | Skip project-level `.kilo`/`.kilocode`/`.opencode` directories   |
