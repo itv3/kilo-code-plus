@@ -388,6 +388,11 @@ export namespace ProviderTransform {
 
     if (!model.capabilities.reasoning) return {}
 
+    // For custom models with user-defined variants, return them directly when reasoning is enabled
+    if (model.api.npm === "@ai-sdk/openai-compatible" && model.variants && Object.keys(model.variants).length > 0) {
+      return model.variants
+    }
+
     const id = model.id.toLowerCase()
     const isAnthropicAdaptive = ["opus-4-6", "opus-4.6", "sonnet-4-6", "sonnet-4.6"].some((v) =>
       model.api.id.includes(v),
