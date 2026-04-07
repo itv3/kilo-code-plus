@@ -30,6 +30,7 @@ import { Installation } from "@/installation"
 import { ConfigMarkdown } from "./markdown"
 import { constants, existsSync } from "fs"
 import { Bus } from "@/bus"
+import { BusEvent } from "@/bus/bus-event" // kilocode_change
 import { GlobalBus } from "@/bus/global"
 import { Event } from "../server/event"
 import { Glob } from "../util/glob"
@@ -282,10 +283,16 @@ export namespace Config {
         }),
       )
 
-      result.command = mergeDeep(result.command ?? {}, await loadCommand(dir))
-      result.agent = mergeDeep(result.agent, await loadAgent(dir))
-      result.agent = mergeDeep(result.agent, await loadMode(dir))
-      result.plugin.push(...(await loadPlugin(dir)))
+      // kilocode_change start
+      try {
+        result.command = mergeDeep(result.command ?? {}, await loadCommand(dir))
+        result.agent = mergeDeep(result.agent, await loadAgent(dir))
+        result.agent = mergeDeep(result.agent, await loadMode(dir))
+        result.plugin.push(...(await loadPlugin(dir)))
+      } catch (err: unknown) {
+        log.error("failed to load config directory", { dir, err })
+      }
+      // kilocode_change end
     }
 
     // Inline config content overrides all non-managed config sources.
@@ -463,6 +470,34 @@ export namespace Config {
     return ext.length ? file.slice(0, -ext.length) : file
   }
 
+  // kilocode_change start
+  // Local event definition that matches Session.Event.Error's type string.
+  // Avoids importing @/session during config init (which causes a circular dependency).
+  const SessionError = BusEvent.define("session.error", z.object({ error: z.any() }))
+
+  function detail(issues: z.core.$ZodIssue[]) {
+    return issues
+      .map((issue) => {
+        const loc = issue.path.map(String).join(".")
+        if (!loc) return issue.message
+        return `${loc}: ${issue.message}`
+      })
+      .join("\n")
+  }
+
+  async function invalid(kind: "agent" | "command", item: string, issues: z.core.$ZodIssue[], cause: Error) {
+    const text = detail(issues)
+    const message = text ? `Config file at ${item} is invalid: ${text}` : `Config file at ${item} is invalid`
+    Bus.publish(SessionError, { error: new NamedError.Unknown({ message }).toObject() })
+    const err = new InvalidError({ path: item, issues }, { cause })
+    if (kind === "command") {
+      log.error("failed to load command", { command: item, err })
+      return
+    }
+    log.error("failed to load agent", { agent: item, err })
+  }
+  // kilocode_change end
+
   async function loadCommand(dir: string) {
     const result: Record<string, Command> = {}
     for (const item of await Glob.scan("{command,commands}/**/*.md", {
@@ -505,7 +540,9 @@ export namespace Config {
         result[config.name] = parsed.data
         continue
       }
-      throw new InvalidError({ path: item, issues: parsed.error.issues }, { cause: parsed.error })
+      // kilocode_change start
+      await invalid("command", item, parsed.error.issues, parsed.error)
+      // kilocode_change end
     }
     return result
   }
@@ -555,7 +592,9 @@ export namespace Config {
         result[config.name] = parsed.data
         continue
       }
-      throw new InvalidError({ path: item, issues: parsed.error.issues }, { cause: parsed.error })
+      // kilocode_change start
+      await invalid("agent", item, parsed.error.issues, parsed.error)
+      // kilocode_change end
     }
     return result
   }
