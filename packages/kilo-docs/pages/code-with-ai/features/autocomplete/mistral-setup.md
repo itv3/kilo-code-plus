@@ -10,19 +10,29 @@ This guide walks you through setting up Mistral's Codestral model for free autoc
 - A [Kilo Code account](https://app.kilo.ai) (free to create)
 - A Mistral AI account with a Codestral API key
 
-## Step 1: Get a Codestral API Key from Mistral
+## Step 1: Navigate to Codestral in Mistral AI Studio
 
-1. Go to the [Mistral AI console](https://console.mistral.ai/).
-2. Sign up or sign in to your account.
-3. Navigate to **Codestral** under the Code section in the sidebar, or go directly to [console.mistral.ai/codestral](https://console.mistral.ai/codestral).
-4. Click **Generate API Key** (or copy an existing one).
-5. Copy the API key to your clipboard.
+Go to the [Mistral AI console](https://console.mistral.ai/) and sign up or sign in to your account. In the sidebar, click **Codestral** under the Code section.
+
+![Select Codestral](/docs/img/mistral-setup/06-navigate-to-codestral.png)
+
+## Step 2: Generate API Key
+
+Click the **Generate API Key** button to create your new Codestral API key.
+
+![Confirm Generate](/docs/img/mistral-setup/07-confirm-key-generation.png)
+
+## Step 3: Copy Your API Key
+
+Once generated, click the **copy** button next to your API key to copy it to your clipboard.
+
+![Copy API Key](/docs/img/mistral-setup/08-copy-api-key.png)
 
 {% callout type="note" %}
 The Codestral API key is separate from the standard Mistral La Plateforme API key. Make sure you generate a key specifically from the **Codestral** section of the Mistral console.
 {% /callout %}
 
-## Step 2: Add Your Key via BYOK in Kilo
+## Step 4: Add Your Key via BYOK in Kilo
 
 1. Log into the [Kilo platform](https://app.kilo.ai).
 2. Navigate to the [Bring Your Own Key (BYOK) page](https://app.kilo.ai/byok), available in the sidebar under **Account**.
@@ -35,7 +45,7 @@ The Codestral API key is separate from the standard Mistral La Plateforme API ke
 For more details on BYOK, see the [Bring Your Own Key documentation](/docs/getting-started/byok).
 {% /callout %}
 
-## Step 3: Verify Autocomplete is Working
+## Step 5: Verify Autocomplete is Working
 
 Once your BYOK key is saved, Kilo Code's autocomplete will automatically use your Codestral key through the Kilo Gateway. No additional configuration is needed in the extension.
 
