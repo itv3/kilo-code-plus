@@ -383,7 +383,7 @@ export namespace PermissionNext {
 
       if (input.requestID) {
         const existing = s.pending[input.requestID]
-        if (existing) {
+        if (existing && (!input.sessionID || existing.info.sessionID === input.sessionID)) {
           delete s.pending[input.requestID]
           Bus.publish(Event.Replied, {
             sessionID: existing.info.sessionID,
