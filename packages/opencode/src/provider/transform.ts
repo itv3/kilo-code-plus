@@ -383,6 +383,11 @@ export namespace ProviderTransform {
     if (model.api.npm === "@kilocode/kilo-gateway" && model.variants && Object.keys(model.variants).length > 0) {
       return model.variants
     }
+
+    // For custom models with pre-loaded user-defined variants, return them directly
+    if (model.api.npm === "@ai-sdk/openai-compatible" && model.variants && Object.keys(model.variants).length > 0) {
+      return model.variants
+    }
     // kilocode_change end
 
     if (!model.capabilities.reasoning) return {}

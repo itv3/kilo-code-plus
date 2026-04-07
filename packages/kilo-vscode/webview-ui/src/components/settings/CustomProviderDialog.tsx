@@ -4,6 +4,7 @@ import { useDialog } from "@kilocode/kilo-ui/context/dialog"
 import { Dialog } from "@kilocode/kilo-ui/dialog"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { ProviderIcon } from "@kilocode/kilo-ui/provider-icon"
+import { Select } from "@kilocode/kilo-ui/select"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { TextField } from "@kilocode/kilo-ui/text-field"
 import { showToast } from "@kilocode/kilo-ui/toast"
@@ -35,10 +36,23 @@ function fuzzy(query: string, target: string) {
 
 type Translator = ReturnType<typeof useLanguage>["t"]
 
+// undefined = not set, null = explicit false, true/false for enable_thinking
+type EnableThinkingValue = undefined | boolean
+type ThinkingTypeValue = undefined | "enabled" | "disabled"
+type ReasoningEffortValue = undefined | "none" | "minimal" | "low" | "medium" | "high"
+
+type VariantRow = {
+  name: string
+  enableThinking: EnableThinkingValue
+  thinking: ThinkingTypeValue
+  reasoningEffort: ReasoningEffortValue
+}
+
 type ModelRow = {
   id: string
   name: string
   reasoning: boolean
+  variants: VariantRow[]
 }
 
 type HeaderRow = {
@@ -60,11 +74,34 @@ type FormErrors = {
   providerID: string | undefined
   name: string | undefined
   baseURL: string | undefined
-  models: Array<{ id?: string; name?: string }>
+  models: Array<{ id?: string; name?: string; variants?: Array<{ name?: string }> }>
   headers: Array<{ key?: string; value?: string }>
 }
 
 type FetchedModel = { id: string; name: string }
+
+type SelectOption<T> = { value: T; labelKey: string }
+
+const ENABLE_THINKING_OPTIONS: SelectOption<EnableThinkingValue>[] = [
+  { value: undefined, labelKey: "provider.custom.models.variants.option.unset" },
+  { value: true, labelKey: "provider.custom.models.variants.enableThinking.true" },
+  { value: false, labelKey: "provider.custom.models.variants.enableThinking.false" },
+]
+
+const THINKING_OPTIONS: SelectOption<ThinkingTypeValue>[] = [
+  { value: undefined, labelKey: "provider.custom.models.variants.option.unset" },
+  { value: "enabled", labelKey: "provider.custom.models.variants.thinking.enabled" },
+  { value: "disabled", labelKey: "provider.custom.models.variants.thinking.disabled" },
+]
+
+const REASONING_EFFORT_OPTIONS: SelectOption<ReasoningEffortValue>[] = [
+  { value: undefined, labelKey: "provider.custom.models.variants.option.unset" },
+  { value: "none", labelKey: "provider.custom.models.variants.reasoningEffort.none" },
+  { value: "minimal", labelKey: "provider.custom.models.variants.reasoningEffort.minimal" },
+  { value: "low", labelKey: "provider.custom.models.variants.reasoningEffort.low" },
+  { value: "medium", labelKey: "provider.custom.models.variants.reasoningEffort.medium" },
+  { value: "high", labelKey: "provider.custom.models.variants.reasoningEffort.high" },
+]
 
 type ValidateArgs = {
   form: FormState
@@ -113,7 +150,7 @@ function validateCustomProvider(input: ValidateArgs) {
   const modelErrors = input.form.models.map((m) => {
     const id = m.id.trim()
     const modelIdError = !id
-      ? input.t("provider.custom.error.required")
+      ? input.t("provider.custom.error.providerID.required")
       : seenModels.has(id)
         ? input.t("provider.custom.error.duplicate")
         : (() => {
@@ -121,11 +158,38 @@ function validateCustomProvider(input: ValidateArgs) {
             return undefined
           })()
     const modelNameError = !m.name.trim() ? input.t("provider.custom.error.required") : undefined
-    return { id: modelIdError, name: modelNameError }
+    const seenVariants = new Set<string>()
+    const variantErrors = m.variants.map((v) => {
+      const n = v.name.trim()
+      const nameError = !n
+        ? input.t("provider.custom.error.required")
+        : seenVariants.has(n)
+          ? input.t("provider.custom.error.duplicate")
+          : (() => {
+              seenVariants.add(n)
+              return undefined
+            })()
+      return { name: nameError }
+    })
+    return { id: modelIdError, name: modelNameError, variants: variantErrors }
   })
-  const modelsValid = modelErrors.every((m) => !m.id && !m.name)
+  const modelsValid = modelErrors.every((m) => !m.id && !m.name && m.variants.every((v) => !v.name))
   const models = Object.fromEntries(
-    input.form.models.map((m) => [m.id.trim(), { name: m.name.trim(), ...(m.reasoning ? { reasoning: true } : {}) }]),
+    input.form.models.map((m) => {
+      const variantEntries = m.variants
+        .filter((v) => v.name.trim())
+        .map((v) => {
+          const cfg: Record<string, unknown> = {}
+          if (v.enableThinking !== undefined) cfg.enable_thinking = v.enableThinking
+          if (v.thinking !== undefined) cfg.thinking = { type: v.thinking }
+          if (v.reasoningEffort !== undefined) cfg.reasoningEffort = v.reasoningEffort
+          return [v.name.trim(), cfg]
+        })
+      const entry: Record<string, unknown> = { name: m.name.trim() }
+      if (m.reasoning) entry.reasoning = true
+      if (variantEntries.length > 0) entry.variants = Object.fromEntries(variantEntries)
+      return [m.id.trim(), entry]
+    }),
   )
 
   const seenHeaders = new Set<string>()
@@ -209,14 +273,28 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
 
   function initModels(): ModelRow[] {
     const cfg = props.existing?.config
-    if (!cfg?.models || typeof cfg.models !== "object") return [{ id: "", name: "", reasoning: false }]
+    if (!cfg?.models || typeof cfg.models !== "object") return [{ id: "", name: "", reasoning: false, variants: [] }]
     const entries = Object.entries(cfg.models)
-    if (entries.length === 0) return [{ id: "", name: "", reasoning: false }]
-    return entries.map(([id, m]) => ({
-      id,
-      name: (m as { name?: string })?.name ?? id,
-      reasoning: (m as { reasoning?: boolean })?.reasoning ?? false,
-    }))
+    if (entries.length === 0) return [{ id: "", name: "", reasoning: false, variants: [] }]
+    return entries.map(([id, m]) => {
+      const raw = m as { name?: string; reasoning?: boolean; variants?: Record<string, Record<string, unknown>> }
+      const variants: VariantRow[] = Object.entries(raw?.variants ?? {}).map(([vname, vcfg]) => ({
+        name: vname,
+        enableThinking: typeof vcfg.enable_thinking === "boolean" ? (vcfg.enable_thinking as boolean) : undefined,
+        thinking:
+          typeof vcfg.thinking === "object" && vcfg.thinking !== null
+            ? ((vcfg.thinking as { type?: string }).type as ThinkingTypeValue)
+            : undefined,
+        reasoningEffort:
+          typeof vcfg.reasoningEffort === "string" ? (vcfg.reasoningEffort as ReasoningEffortValue) : undefined,
+      }))
+      return {
+        id,
+        name: raw?.name ?? id,
+        reasoning: raw?.reasoning ?? false,
+        variants,
+      }
+    })
   }
 
   function initHeaders(): HeaderRow[] {
@@ -248,7 +326,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     providerID: undefined,
     name: undefined,
     baseURL: undefined,
-    models: form.models.map(() => ({})),
+    models: form.models.map((m) => ({ variants: m.variants.map(() => ({})) })),
     headers: form.headers.map(() => ({})),
   })
   const [apiTouched, setApiTouched] = createSignal(false)
@@ -418,14 +496,13 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     // Replace the single empty row or append
     const row = form.models[0]
     const empty = form.models.length === 1 && !!row && !row.id.trim() && !row.name.trim()
-    const merged = empty
-      ? picked.map((m) => ({ ...m, reasoning: false }))
-      : [...form.models, ...picked.map((m) => ({ ...m, reasoning: false }))]
+    const withDefaults = (m: FetchedModel): ModelRow => ({ ...m, reasoning: false, variants: [] })
+    const merged = empty ? picked.map(withDefaults) : [...form.models, ...picked.map(withDefaults)]
 
     setForm("models", merged)
     setErrors(
       "models",
-      merged.map(() => ({})),
+      merged.map((m) => ({ variants: m.variants.map(() => ({})) })),
     )
     setFetchStatus(language.t("provider.custom.models.fetch.added", { count: String(picked.length) }))
     setFetchedModels(undefined)
@@ -448,8 +525,8 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
   }
 
   function addModel() {
-    setForm("models", (v) => [...v, { id: "", name: "", reasoning: false }])
-    setErrors("models", (v) => [...v, {}])
+    setForm("models", (v) => [...v, { id: "", name: "", reasoning: false, variants: [] }])
+    setErrors("models", (v) => [...v, { variants: [] }])
   }
 
   function removeModel(index: number) {
@@ -467,6 +544,17 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     if (form.headers.length <= 1) return
     setForm("headers", (v) => v.filter((_, i) => i !== index))
     setErrors("headers", (v) => v.filter((_, i) => i !== index))
+  }
+
+  function addVariant(modelIndex: number) {
+    const blank: VariantRow = { name: "", enableThinking: undefined, thinking: undefined, reasoningEffort: undefined }
+    setForm("models", modelIndex, "variants", (v) => [...v, blank])
+    setErrors("models", modelIndex, "variants", (v) => [...(v ?? []), {}])
+  }
+
+  function removeVariant(modelIndex: number, variantIndex: number) {
+    setForm("models", modelIndex, "variants", (v) => v.filter((_, i) => i !== variantIndex))
+    setErrors("models", modelIndex, "variants", (v) => (v ?? []).filter((_, i) => i !== variantIndex))
   }
 
   function validate() {
@@ -629,43 +717,131 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
             </div>
             <For each={form.models}>
               {(m, i) => (
-                <div style={{ display: "flex", gap: "8px", "align-items": "start" }}>
-                  <div style={{ flex: 1 }}>
-                    <TextField
-                      label={language.t("provider.custom.models.id.label")}
-                      hideLabel
-                      placeholder={language.t("provider.custom.models.id.placeholder")}
-                      value={m.id}
-                      onChange={(v) => setForm("models", i(), "id", v)}
-                      validationState={errors.models[i()]?.id ? "invalid" : undefined}
-                      error={errors.models[i()]?.id}
+                <div
+                  style={{
+                    display: "flex",
+                    "flex-direction": "column",
+                    gap: "8px",
+                    padding: "8px",
+                    border: "1px solid var(--border-weak-base, var(--vscode-panel-border))",
+                    "border-radius": "6px",
+                  }}
+                >
+                  {/* Model id + name + remove */}
+                  <div style={{ display: "flex", gap: "8px", "align-items": "start" }}>
+                    <div style={{ flex: 1 }}>
+                      <TextField
+                        label={language.t("provider.custom.models.id.label")}
+                        hideLabel
+                        placeholder={language.t("provider.custom.models.id.placeholder")}
+                        value={m.id}
+                        onChange={(v) => setForm("models", i(), "id", v)}
+                        validationState={errors.models[i()]?.id ? "invalid" : undefined}
+                        error={errors.models[i()]?.id}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <TextField
+                        label={language.t("provider.custom.models.name.label")}
+                        hideLabel
+                        placeholder={language.t("provider.custom.models.name.placeholder")}
+                        value={m.name}
+                        onChange={(v) => setForm("models", i(), "name", v)}
+                        validationState={errors.models[i()]?.name ? "invalid" : undefined}
+                        error={errors.models[i()]?.name}
+                      />
+                    </div>
+                    <div style={{ display: "flex", "align-items": "center", "margin-top": "6px" }}>
+                      <Checkbox checked={m.reasoning} onChange={(v) => setForm("models", i(), "reasoning", v)}>
+                        {language.t("provider.custom.models.reasoning.label")}
+                      </Checkbox>
+                    </div>
+                    <IconButton
+                      type="button"
+                      icon="trash"
+                      variant="ghost"
+                      onClick={() => removeModel(i())}
+                      disabled={form.models.length <= 1}
+                      aria-label={language.t("provider.custom.models.remove")}
+                      style={{ "margin-top": "6px" }}
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <TextField
-                      label={language.t("provider.custom.models.name.label")}
-                      hideLabel
-                      placeholder={language.t("provider.custom.models.name.placeholder")}
-                      value={m.name}
-                      onChange={(v) => setForm("models", i(), "name", v)}
-                      validationState={errors.models[i()]?.name ? "invalid" : undefined}
-                      error={errors.models[i()]?.name}
-                    />
-                  </div>
-                  <div style={{ display: "flex", "align-items": "center", "margin-top": "6px" }}>
-                    <Checkbox checked={m.reasoning} onChange={(v) => setForm("models", i(), "reasoning", v)}>
-                      {language.t("provider.custom.models.reasoning.label")}
-                    </Checkbox>
-                  </div>
-                  <IconButton
-                    type="button"
-                    icon="trash"
-                    variant="ghost"
-                    onClick={() => removeModel(i())}
-                    disabled={form.models.length <= 1}
-                    aria-label={language.t("provider.custom.models.remove")}
-                    style={{ "margin-top": "6px" }}
-                  />
+
+                  {/* Variants */}
+                  <Show when={m.variants.length > 0}>
+                    <div style={{ display: "flex", "flex-direction": "column", gap: "6px" }}>
+                      <label style={{ "font-size": "11px", "font-weight": "500", color: "var(--text-weak-base)" }}>
+                        {language.t("provider.custom.models.variants.label")}
+                      </label>
+                      <For each={m.variants}>
+                        {(v, vi) => (
+                          <div style={{ display: "flex", gap: "6px", "align-items": "start", "flex-wrap": "wrap" }}>
+                            <div style={{ "min-width": "100px", flex: "1 1 80px" }}>
+                              <TextField
+                                label={language.t("provider.custom.models.variants.name.label")}
+                                hideLabel
+                                placeholder={language.t("provider.custom.models.variants.name.placeholder")}
+                                value={v.name}
+                                onChange={(val) => setForm("models", i(), "variants", vi(), "name", val)}
+                                validationState={errors.models[i()]?.variants?.[vi()]?.name ? "invalid" : undefined}
+                                error={errors.models[i()]?.variants?.[vi()]?.name}
+                              />
+                            </div>
+                            <div style={{ flex: "0 0 auto" }}>
+                              <Select
+                                options={ENABLE_THINKING_OPTIONS}
+                                current={ENABLE_THINKING_OPTIONS.find((o) => o.value === v.enableThinking)}
+                                value={(o) => String(o.value)}
+                                label={(o) => language.t(o.labelKey)}
+                                onSelect={(o) => setForm("models", i(), "variants", vi(), "enableThinking", o?.value)}
+                                placeholder={language.t("provider.custom.models.variants.enableThinking.placeholder")}
+                                variant="secondary"
+                                size="small"
+                                triggerVariant="settings"
+                              />
+                            </div>
+                            <div style={{ flex: "0 0 auto" }}>
+                              <Select
+                                options={THINKING_OPTIONS}
+                                current={THINKING_OPTIONS.find((o) => o.value === v.thinking)}
+                                value={(o) => String(o.value)}
+                                label={(o) => language.t(o.labelKey)}
+                                onSelect={(o) => setForm("models", i(), "variants", vi(), "thinking", o?.value)}
+                                placeholder={language.t("provider.custom.models.variants.thinking.placeholder")}
+                                variant="secondary"
+                                size="small"
+                                triggerVariant="settings"
+                              />
+                            </div>
+                            <div style={{ flex: "0 0 auto" }}>
+                              <Select
+                                options={REASONING_EFFORT_OPTIONS}
+                                current={REASONING_EFFORT_OPTIONS.find((o) => o.value === v.reasoningEffort)}
+                                value={(o) => String(o.value)}
+                                label={(o) => language.t(o.labelKey)}
+                                onSelect={(o) => setForm("models", i(), "variants", vi(), "reasoningEffort", o?.value)}
+                                placeholder={language.t("provider.custom.models.variants.reasoningEffort.placeholder")}
+                                variant="secondary"
+                                size="small"
+                                triggerVariant="settings"
+                              />
+                            </div>
+                            <IconButton
+                              type="button"
+                              icon="trash"
+                              variant="ghost"
+                              onClick={() => removeVariant(i(), vi())}
+                              aria-label={language.t("provider.custom.models.variants.remove")}
+                              style={{ "margin-top": "2px" }}
+                            />
+                          </div>
+                        )}
+                      </For>
+                    </div>
+                  </Show>
+                  <Button type="button" size="small" variant="ghost" icon="plus-small" onClick={() => addVariant(i())}>
+                    {language.t("provider.custom.models.variants.add")}
+                  </Button>
                 </div>
               )}
             </For>
