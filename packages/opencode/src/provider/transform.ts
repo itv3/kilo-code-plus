@@ -384,13 +384,14 @@ export namespace ProviderTransform {
       return model.variants
     }
 
-    // For custom models with pre-loaded user-defined variants, return them directly
-    if (model.api.npm === "@ai-sdk/openai-compatible" && model.variants && Object.keys(model.variants).length > 0) {
-      return model.variants
-    }
     // kilocode_change end
 
     if (!model.capabilities.reasoning) return {}
+
+    // For custom models with user-defined variants, return them directly when reasoning is enabled
+    if (model.api.npm === "@ai-sdk/openai-compatible" && model.variants && Object.keys(model.variants).length > 0) {
+      return model.variants
+    }
 
     const id = model.id.toLowerCase()
     const isAnthropicAdaptive = ["opus-4-6", "opus-4.6", "sonnet-4-6", "sonnet-4.6"].some((v) =>
