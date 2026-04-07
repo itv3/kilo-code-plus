@@ -30,6 +30,7 @@ const targets = [
   { target: "darwin-x64", cliDir: "@kilocode/cli-darwin-x64", binary: "kilo" },
   { target: "darwin-arm64", cliDir: "@kilocode/cli-darwin-arm64", binary: "kilo" },
   { target: "win32-x64", cliDir: "@kilocode/cli-windows-x64", binary: "kilo.exe" },
+  { target: "win32-arm64", cliDir: "@kilocode/cli-windows-arm64", binary: "kilo.exe" },
 ]
 
 const binDir = join(import.meta.dir, "..", "bin")
@@ -46,6 +47,9 @@ for (const dir of [binDir, distDir, outDir]) {
 
 mkdirSync(outDir, { recursive: true })
 mkdirSync(distDir, { recursive: true })
+
+console.log("\n🔄 Rebuilding SDK types (ensures dist/ is in sync with server API)...")
+await $`bun run --cwd ${join(import.meta.dir, "..", "..", "sdk", "js")} build`
 
 console.log("\n📦 Compiling extension...")
 await $`bun run check-types`
@@ -78,7 +82,7 @@ for (const config of targets) {
 
   console.log(`  📦 Packaging .vsix for ${config.target}...`)
   const vsixPath = join(outDir, `kilo-vscode-${config.target}.vsix`)
-  await $`vsce package --pre-release --no-dependencies --skip-license --target ${config.target} -o ${vsixPath}`.env({
+  await $`vsce package --no-dependencies --skip-license --target ${config.target} -o ${vsixPath}`.env({
     ...process.env,
     npm_config_ignore_scripts: "true",
   })

@@ -68,6 +68,13 @@ export type EventGlobalDisposed = {
   }
 }
 
+export type EventGlobalConfigUpdated = {
+  type: "global.config.updated"
+  properties: {
+    [key: string]: unknown
+  }
+}
+
 export type EventLspClientDiagnostics = {
   type: "lsp.client.diagnostics"
   properties: {
@@ -143,7 +150,6 @@ export type UserMessage = {
     openTabs?: Array<string>
     activeFile?: string
     shell?: string
-    timezone?: string
   }
 }
 
@@ -512,6 +518,7 @@ export type CompactionPart = {
   messageID: string
   type: "compaction"
   auto: boolean
+  overflow?: boolean
 }
 
 export type Part =
@@ -819,13 +826,19 @@ export type Session = {
   id: string
   slug: string
   projectID: string
+  workspaceID?: string
   directory: string
   parentID?: string
   summary?: {
     additions: number
     deletions: number
     files: number
-    diffs?: Array<FileDiff>
+    diffs?: Array<{
+      file: string
+      additions: number
+      deletions: number
+      status?: "added" | "deleted" | "modified"
+    }>
   }
   share?: {
     url: string
@@ -913,6 +926,20 @@ export type EventVcsBranchUpdated = {
   }
 }
 
+export type EventWorkspaceReady = {
+  type: "workspace.ready"
+  properties: {
+    name: string
+  }
+}
+
+export type EventWorkspaceFailed = {
+  type: "workspace.failed"
+  properties: {
+    message: string
+  }
+}
+
 export type Pty = {
   id: string
   title: string
@@ -974,6 +1001,7 @@ export type Event =
   | EventServerInstanceDisposed
   | EventServerConnected
   | EventGlobalDisposed
+  | EventGlobalConfigUpdated
   | EventLspClientDiagnostics
   | EventLspUpdated
   | EventFileEdited
@@ -1007,6 +1035,8 @@ export type Event =
   | EventSessionTurnOpen
   | EventSessionTurnClose
   | EventVcsBranchUpdated
+  | EventWorkspaceReady
+  | EventWorkspaceFailed
   | EventPtyCreated
   | EventPtyUpdated
   | EventPtyExited
@@ -1020,398 +1050,12 @@ export type GlobalEvent = {
 }
 
 /**
- * Custom keybind configurations
- */
-export type KeybindsConfig = {
-  /**
-   * Leader key for keybind combinations
-   */
-  leader?: string
-  /**
-   * Exit the application
-   */
-  app_exit?: string
-  /**
-   * Open external editor
-   */
-  editor_open?: string
-  /**
-   * List available themes
-   */
-  theme_list?: string
-  /**
-   * Toggle sidebar
-   */
-  sidebar_toggle?: string
-  /**
-   * Toggle session scrollbar
-   */
-  scrollbar_toggle?: string
-  /**
-   * Toggle username visibility
-   */
-  username_toggle?: string
-  /**
-   * View status
-   */
-  status_view?: string
-  /**
-   * Export session to editor
-   */
-  session_export?: string
-  /**
-   * Create a new session
-   */
-  session_new?: string
-  /**
-   * List all sessions
-   */
-  session_list?: string
-  /**
-   * Show session timeline
-   */
-  session_timeline?: string
-  /**
-   * Fork session from message
-   */
-  session_fork?: string
-  /**
-   * Rename session
-   */
-  session_rename?: string
-  /**
-   * Delete session
-   */
-  session_delete?: string
-  /**
-   * Delete stash entry
-   */
-  stash_delete?: string
-  /**
-   * Open provider list from model dialog
-   */
-  model_provider_list?: string
-  /**
-   * Toggle model favorite status
-   */
-  model_favorite_toggle?: string
-  /**
-   * Share current session
-   */
-  session_share?: string
-  /**
-   * Unshare current session
-   */
-  session_unshare?: string
-  /**
-   * Interrupt current session
-   */
-  session_interrupt?: string
-  /**
-   * Compact the session
-   */
-  session_compact?: string
-  /**
-   * Scroll messages up by one page
-   */
-  messages_page_up?: string
-  /**
-   * Scroll messages down by one page
-   */
-  messages_page_down?: string
-  /**
-   * Scroll messages up by one line
-   */
-  messages_line_up?: string
-  /**
-   * Scroll messages down by one line
-   */
-  messages_line_down?: string
-  /**
-   * Scroll messages up by half page
-   */
-  messages_half_page_up?: string
-  /**
-   * Scroll messages down by half page
-   */
-  messages_half_page_down?: string
-  /**
-   * Navigate to first message
-   */
-  messages_first?: string
-  /**
-   * Navigate to last message
-   */
-  messages_last?: string
-  /**
-   * Navigate to next message
-   */
-  messages_next?: string
-  /**
-   * Navigate to previous message
-   */
-  messages_previous?: string
-  /**
-   * Navigate to last user message
-   */
-  messages_last_user?: string
-  /**
-   * Copy message
-   */
-  messages_copy?: string
-  /**
-   * Undo message
-   */
-  messages_undo?: string
-  /**
-   * Redo message
-   */
-  messages_redo?: string
-  /**
-   * Toggle code block concealment in messages
-   */
-  messages_toggle_conceal?: string
-  /**
-   * Toggle tool details visibility
-   */
-  tool_details?: string
-  /**
-   * List available models
-   */
-  model_list?: string
-  /**
-   * Next recently used model
-   */
-  model_cycle_recent?: string
-  /**
-   * Previous recently used model
-   */
-  model_cycle_recent_reverse?: string
-  /**
-   * Next favorite model
-   */
-  model_cycle_favorite?: string
-  /**
-   * Previous favorite model
-   */
-  model_cycle_favorite_reverse?: string
-  /**
-   * List available commands
-   */
-  command_list?: string
-  /**
-   * List agents
-   */
-  agent_list?: string
-  /**
-   * Next agent
-   */
-  agent_cycle?: string
-  /**
-   * Previous agent
-   */
-  agent_cycle_reverse?: string
-  /**
-   * Cycle model variants
-   */
-  variant_cycle?: string
-  /**
-   * Clear input field
-   */
-  input_clear?: string
-  /**
-   * Paste from clipboard
-   */
-  input_paste?: string
-  /**
-   * Submit input
-   */
-  input_submit?: string
-  /**
-   * Insert newline in input
-   */
-  input_newline?: string
-  /**
-   * Move cursor left in input
-   */
-  input_move_left?: string
-  /**
-   * Move cursor right in input
-   */
-  input_move_right?: string
-  /**
-   * Move cursor up in input
-   */
-  input_move_up?: string
-  /**
-   * Move cursor down in input
-   */
-  input_move_down?: string
-  /**
-   * Select left in input
-   */
-  input_select_left?: string
-  /**
-   * Select right in input
-   */
-  input_select_right?: string
-  /**
-   * Select up in input
-   */
-  input_select_up?: string
-  /**
-   * Select down in input
-   */
-  input_select_down?: string
-  /**
-   * Move to start of line in input
-   */
-  input_line_home?: string
-  /**
-   * Move to end of line in input
-   */
-  input_line_end?: string
-  /**
-   * Select to start of line in input
-   */
-  input_select_line_home?: string
-  /**
-   * Select to end of line in input
-   */
-  input_select_line_end?: string
-  /**
-   * Move to start of visual line in input
-   */
-  input_visual_line_home?: string
-  /**
-   * Move to end of visual line in input
-   */
-  input_visual_line_end?: string
-  /**
-   * Select to start of visual line in input
-   */
-  input_select_visual_line_home?: string
-  /**
-   * Select to end of visual line in input
-   */
-  input_select_visual_line_end?: string
-  /**
-   * Move to start of buffer in input
-   */
-  input_buffer_home?: string
-  /**
-   * Move to end of buffer in input
-   */
-  input_buffer_end?: string
-  /**
-   * Select to start of buffer in input
-   */
-  input_select_buffer_home?: string
-  /**
-   * Select to end of buffer in input
-   */
-  input_select_buffer_end?: string
-  /**
-   * Delete line in input
-   */
-  input_delete_line?: string
-  /**
-   * Delete to end of line in input
-   */
-  input_delete_to_line_end?: string
-  /**
-   * Delete to start of line in input
-   */
-  input_delete_to_line_start?: string
-  /**
-   * Backspace in input
-   */
-  input_backspace?: string
-  /**
-   * Delete character in input
-   */
-  input_delete?: string
-  /**
-   * Undo in input
-   */
-  input_undo?: string
-  /**
-   * Redo in input
-   */
-  input_redo?: string
-  /**
-   * Move word forward in input
-   */
-  input_word_forward?: string
-  /**
-   * Move word backward in input
-   */
-  input_word_backward?: string
-  /**
-   * Select word forward in input
-   */
-  input_select_word_forward?: string
-  /**
-   * Select word backward in input
-   */
-  input_select_word_backward?: string
-  /**
-   * Delete word forward in input
-   */
-  input_delete_word_forward?: string
-  /**
-   * Delete word backward in input
-   */
-  input_delete_word_backward?: string
-  /**
-   * Previous history item
-   */
-  history_previous?: string
-  /**
-   * Next history item
-   */
-  history_next?: string
-  /**
-   * Next child session
-   */
-  session_child_cycle?: string
-  /**
-   * Previous child session
-   */
-  session_child_cycle_reverse?: string
-  /**
-   * Go to parent session
-   */
-  session_parent?: string
-  /**
-   * Suspend terminal
-   */
-  terminal_suspend?: string
-  /**
-   * Toggle terminal title
-   */
-  terminal_title_toggle?: string
-  /**
-   * Toggle tips on home screen
-   */
-  tips_toggle?: string
-  /**
-   * Toggle news on home screen
-   */
-  news_toggle?: string
-  /**
-   * Toggle thinking blocks visibility
-   */
-  display_thinking?: string
-}
-
-/**
  * Log level
  */
 export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR"
 
 /**
- * Server configuration for opencode serve and web commands
+ * Server configuration for kilo serve and web commands
  */
 export type ServerConfig = {
   /**
@@ -1427,7 +1071,7 @@ export type ServerConfig = {
    */
   mdns?: boolean
   /**
-   * Custom domain name for mDNS service (default: opencode.local)
+   * Custom domain name for mDNS service (default: kilo.local)
    */
   mdnsDomain?: string
   /**
@@ -1436,7 +1080,7 @@ export type ServerConfig = {
   cors?: Array<string>
 }
 
-export type PermissionActionConfig = "ask" | "allow" | "deny"
+export type PermissionActionConfig = "ask" | "allow" | "deny" | null
 
 export type PermissionObjectConfig = {
   [key: string]: PermissionActionConfig
@@ -1469,7 +1113,7 @@ export type PermissionConfig =
   | PermissionActionConfig
 
 export type AgentConfig = {
-  model?: string
+  model?: string | null
   /**
    * Default model variant for this agent (applies only when using the agent's configured model).
    */
@@ -1511,6 +1155,8 @@ export type AgentConfig = {
   permission?: PermissionConfig
   [key: string]:
     | unknown
+    | string
+    | null
     | string
     | number
     | {
@@ -1580,6 +1226,8 @@ export type ProviderConfig = {
       }
       recommendedIndex?: number
       prompt?: "codex" | "gemini" | "beast" | "anthropic" | "trinity" | "anthropic_without_todo"
+      isFree?: boolean
+      ai_sdk_provider?: "anthropic" | "openai" | "openai-compatible" | "openrouter"
       experimental?: boolean
       status?: "alpha" | "beta" | "deprecated"
       options?: {
@@ -1706,37 +1354,10 @@ export type Config = {
    * JSON schema reference for configuration validation
    */
   $schema?: string
-  /**
-   * Theme name to use for the interface
-   */
-  theme?: string
-  keybinds?: KeybindsConfig
   logLevel?: LogLevel
-  /**
-   * TUI specific settings
-   */
-  tui?: {
-    /**
-     * TUI scroll speed
-     */
-    scroll_speed?: number
-    /**
-     * Scroll acceleration settings
-     */
-    scroll_acceleration?: {
-      /**
-       * Enable scroll acceleration
-       */
-      enabled: boolean
-    }
-    /**
-     * Control diff rendering style: 'auto' adapts to terminal width, 'stacked' always shows single column
-     */
-    diff_style?: "auto" | "stacked"
-  }
   server?: ServerConfig
   /**
-   * Command configuration, see https://opencode.ai/docs/commands
+   * Command configuration, see https://kilo.ai/docs/commands
    */
   command?: {
     [key: string]: {
@@ -1774,6 +1395,10 @@ export type Config = {
    */
   autoshare?: boolean
   /**
+   * Enable remote control of sessions via Kilo Cloud. Equivalent to running /remote on startup.
+   */
+  remote_control?: boolean
+  /**
    * Automatically update to the latest version. Set to true to auto-update, false to disable, or 'notify' to show update notifications
    */
   autoupdate?: boolean | "notify"
@@ -1788,11 +1413,11 @@ export type Config = {
   /**
    * Model to use in the format of provider/model, eg anthropic/claude-2
    */
-  model?: string
+  model?: string | null
   /**
    * Small model to use for tasks like title generation in the format of provider/model
    */
-  small_model?: string
+  small_model?: string | null
   /**
    * Default agent to use when none is specified. Must be a primary agent. Falls back to 'code' if not set or if the specified agent is invalid.
    */
@@ -1810,7 +1435,7 @@ export type Config = {
     [key: string]: AgentConfig | undefined
   }
   /**
-   * Agent configuration, see https://opencode.ai/docs/agents
+   * Agent configuration, see https://kilo.ai/docs/agents
    */
   agent?: {
     plan?: AgentConfig
@@ -1908,6 +1533,10 @@ export type Config = {
      * Enable the batch tool
      */
     batch_tool?: boolean
+    /**
+     * Enable AI-powered codebase search
+     */
+    codebase_search?: boolean
     /**
      * Enable telemetry. Set to false to opt-out.
      */
@@ -2035,6 +1664,8 @@ export type Model = {
   }
   recommendedIndex?: number
   prompt?: "codex" | "gemini" | "beast" | "anthropic" | "trinity" | "anthropic_without_todo"
+  isFree?: boolean
+  ai_sdk_provider?: "anthropic" | "openai" | "openai-compatible" | "openrouter"
 }
 
 export type Provider = {
@@ -2061,6 +1692,16 @@ export type ToolListItem = {
 
 export type ToolList = Array<ToolListItem>
 
+export type Workspace = {
+  id: string
+  type: string
+  branch: string | null
+  name: string | null
+  directory: string | null
+  extra: unknown | null
+  projectID: string
+}
+
 export type Worktree = {
   name: string
   branch: string
@@ -2083,6 +1724,19 @@ export type WorktreeResetInput = {
   directory: string
 }
 
+export type WorktreeDiffItem = {
+  file: string
+  before: string
+  after: string
+  additions: number
+  deletions: number
+  status?: "added" | "deleted" | "modified"
+  tracked: boolean
+  generatedLike: boolean
+  summarized: boolean
+  stamp: string
+}
+
 export type ProjectSummary = {
   id: string
   name?: string
@@ -2093,13 +1747,19 @@ export type GlobalSession = {
   id: string
   slug: string
   projectID: string
+  workspaceID?: string
   directory: string
   parentID?: string
   summary?: {
     additions: number
     deletions: number
     files: number
-    diffs?: Array<FileDiff>
+    diffs?: Array<{
+      file: string
+      additions: number
+      deletions: number
+      status?: "added" | "deleted" | "modified"
+    }>
   }
   share?: {
     url: string
@@ -2289,10 +1949,12 @@ export type Command = {
 
 export type Agent = {
   name: string
+  displayName?: string
   description?: string
   mode: "subagent" | "primary" | "all"
   native?: boolean
   hidden?: boolean
+  deprecated?: boolean
   topP?: number
   temperature?: number
   color?: string
@@ -2473,6 +2135,7 @@ export type ProjectListData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/project"
 }
@@ -2491,6 +2154,7 @@ export type ProjectCurrentData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/project/current"
 }
@@ -2503,6 +2167,25 @@ export type ProjectCurrentResponses = {
 }
 
 export type ProjectCurrentResponse = ProjectCurrentResponses[keyof ProjectCurrentResponses]
+
+export type ProjectInitGitData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/project/git/init"
+}
+
+export type ProjectInitGitResponses = {
+  /**
+   * Project information after git initialization
+   */
+  200: Project
+}
+
+export type ProjectInitGitResponse = ProjectInitGitResponses[keyof ProjectInitGitResponses]
 
 export type ProjectUpdateData = {
   body?: {
@@ -2524,6 +2207,7 @@ export type ProjectUpdateData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/project/{projectID}"
 }
@@ -2555,6 +2239,7 @@ export type PtyListData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/pty"
 }
@@ -2581,6 +2266,7 @@ export type PtyCreateData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/pty"
 }
@@ -2610,6 +2296,7 @@ export type PtyRemoveData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/pty/{ptyID}"
 }
@@ -2639,6 +2326,7 @@ export type PtyGetData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/pty/{ptyID}"
 }
@@ -2674,6 +2362,7 @@ export type PtyUpdateData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/pty/{ptyID}"
 }
@@ -2703,6 +2392,7 @@ export type PtyConnectData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/pty/{ptyID}/connect"
 }
@@ -2730,6 +2420,7 @@ export type ConfigGetData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/config"
 }
@@ -2748,6 +2439,7 @@ export type ConfigUpdateData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/config"
 }
@@ -2775,6 +2467,7 @@ export type ConfigProvidersData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/config/providers"
 }
@@ -2798,6 +2491,7 @@ export type ToolIdsData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/experimental/tool/ids"
 }
@@ -2825,6 +2519,7 @@ export type ToolListData = {
   path?: never
   query: {
     directory?: string
+    workspace?: string
     provider: string
     model: string
   }
@@ -2849,11 +2544,99 @@ export type ToolListResponses = {
 
 export type ToolListResponse = ToolListResponses[keyof ToolListResponses]
 
+export type ExperimentalWorkspaceListData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/experimental/workspace"
+}
+
+export type ExperimentalWorkspaceListResponses = {
+  /**
+   * Workspaces
+   */
+  200: Array<Workspace>
+}
+
+export type ExperimentalWorkspaceListResponse =
+  ExperimentalWorkspaceListResponses[keyof ExperimentalWorkspaceListResponses]
+
+export type ExperimentalWorkspaceCreateData = {
+  body?: {
+    id?: string
+    type: string
+    branch: string | null
+    extra: unknown | null
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/experimental/workspace"
+}
+
+export type ExperimentalWorkspaceCreateErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type ExperimentalWorkspaceCreateError =
+  ExperimentalWorkspaceCreateErrors[keyof ExperimentalWorkspaceCreateErrors]
+
+export type ExperimentalWorkspaceCreateResponses = {
+  /**
+   * Workspace created
+   */
+  200: Workspace
+}
+
+export type ExperimentalWorkspaceCreateResponse =
+  ExperimentalWorkspaceCreateResponses[keyof ExperimentalWorkspaceCreateResponses]
+
+export type ExperimentalWorkspaceRemoveData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/experimental/workspace/{id}"
+}
+
+export type ExperimentalWorkspaceRemoveErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type ExperimentalWorkspaceRemoveError =
+  ExperimentalWorkspaceRemoveErrors[keyof ExperimentalWorkspaceRemoveErrors]
+
+export type ExperimentalWorkspaceRemoveResponses = {
+  /**
+   * Workspace removed
+   */
+  200: Workspace
+}
+
+export type ExperimentalWorkspaceRemoveResponse =
+  ExperimentalWorkspaceRemoveResponses[keyof ExperimentalWorkspaceRemoveResponses]
+
 export type WorktreeRemoveData = {
   body?: WorktreeRemoveInput
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/experimental/worktree"
 }
@@ -2881,6 +2664,7 @@ export type WorktreeListData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/experimental/worktree"
 }
@@ -2899,6 +2683,7 @@ export type WorktreeCreateData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/experimental/worktree"
 }
@@ -2926,6 +2711,7 @@ export type WorktreeResetData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/experimental/worktree/reset"
 }
@@ -2953,6 +2739,11 @@ export type WorktreeDiffData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
+    /**
+     * Base branch or ref to diff against
+     */
+    base?: string
   }
   url: "/experimental/worktree/diff"
 }
@@ -2975,6 +2766,74 @@ export type WorktreeDiffResponses = {
 
 export type WorktreeDiffResponse = WorktreeDiffResponses[keyof WorktreeDiffResponses]
 
+export type WorktreeDiffSummaryData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+    /**
+     * Base branch or ref to diff against
+     */
+    base?: string
+  }
+  url: "/experimental/worktree/diff/summary"
+}
+
+export type WorktreeDiffSummaryErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type WorktreeDiffSummaryError = WorktreeDiffSummaryErrors[keyof WorktreeDiffSummaryErrors]
+
+export type WorktreeDiffSummaryResponses = {
+  /**
+   * Diff summary items
+   */
+  200: Array<WorktreeDiffItem>
+}
+
+export type WorktreeDiffSummaryResponse = WorktreeDiffSummaryResponses[keyof WorktreeDiffSummaryResponses]
+
+export type WorktreeDiffFileData = {
+  body?: never
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    /**
+     * Base branch or ref to diff against
+     */
+    base?: string
+    /**
+     * Relative file path to load diff contents for
+     */
+    file: string
+  }
+  url: "/experimental/worktree/diff/file"
+}
+
+export type WorktreeDiffFileErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type WorktreeDiffFileError = WorktreeDiffFileErrors[keyof WorktreeDiffFileErrors]
+
+export type WorktreeDiffFileResponses = {
+  /**
+   * Diff detail item
+   */
+  200: WorktreeDiffItem | null
+}
+
+export type WorktreeDiffFileResponse = WorktreeDiffFileResponses[keyof WorktreeDiffFileResponses]
+
 export type ExperimentalSessionListData = {
   body?: never
   path?: never
@@ -2983,6 +2842,7 @@ export type ExperimentalSessionListData = {
      * Filter sessions by project directory
      */
     directory?: string
+    workspace?: string
     /**
      * Only return root sessions (no parentID)
      */
@@ -3025,6 +2885,7 @@ export type ExperimentalResourceListData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/experimental/resource"
 }
@@ -3049,6 +2910,7 @@ export type SessionListData = {
      * Filter sessions by project directory
      */
     directory?: string
+    workspace?: string
     /**
      * Only return root sessions (no parentID)
      */
@@ -3088,6 +2950,7 @@ export type SessionCreateData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session"
 }
@@ -3115,6 +2978,7 @@ export type SessionStatusData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/status"
 }
@@ -3146,6 +3010,7 @@ export type SessionDeleteData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}"
 }
@@ -3179,6 +3044,7 @@ export type SessionGetData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}"
 }
@@ -3217,6 +3083,7 @@ export type SessionUpdateData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}"
 }
@@ -3250,6 +3117,7 @@ export type SessionChildrenData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/children"
 }
@@ -3286,6 +3154,7 @@ export type SessionTodoData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/todo"
 }
@@ -3326,6 +3195,7 @@ export type SessionInitData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/init"
 }
@@ -3361,6 +3231,7 @@ export type SessionForkData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/fork"
 }
@@ -3381,6 +3252,7 @@ export type SessionAbortData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/abort"
 }
@@ -3414,6 +3286,7 @@ export type SessionUnshareData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/share"
 }
@@ -3447,6 +3320,7 @@ export type SessionShareData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/share"
 }
@@ -3480,6 +3354,7 @@ export type SessionDiffData = {
   }
   query?: {
     directory?: string
+    workspace?: string
     messageID?: string
   }
   url: "/session/{sessionID}/diff"
@@ -3508,6 +3383,7 @@ export type SessionSummarizeData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/summarize"
 }
@@ -3544,6 +3420,7 @@ export type SessionMessagesData = {
   }
   query?: {
     directory?: string
+    workspace?: string
     limit?: number
   }
   url: "/session/{sessionID}/message"
@@ -3597,7 +3474,6 @@ export type SessionPromptData = {
       openTabs?: Array<string>
       activeFile?: string
       shell?: string
-      timezone?: string
     }
     parts: Array<TextPartInput | FilePartInput | AgentPartInput | SubtaskPartInput>
   }
@@ -3609,6 +3485,7 @@ export type SessionPromptData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/message"
 }
@@ -3652,6 +3529,7 @@ export type SessionDeleteMessageData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/message/{messageID}"
 }
@@ -3692,6 +3570,7 @@ export type SessionMessageData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/message/{messageID}"
 }
@@ -3739,6 +3618,7 @@ export type PartDeleteData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/message/{messageID}/part/{partID}"
 }
@@ -3783,6 +3663,7 @@ export type PartUpdateData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/message/{messageID}/part/{partID}"
 }
@@ -3832,7 +3713,6 @@ export type SessionPromptAsyncData = {
       openTabs?: Array<string>
       activeFile?: string
       shell?: string
-      timezone?: string
     }
     parts: Array<TextPartInput | FilePartInput | AgentPartInput | SubtaskPartInput>
   }
@@ -3844,6 +3724,7 @@ export type SessionPromptAsyncData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/prompt_async"
 }
@@ -3895,6 +3776,7 @@ export type SessionCommandData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/command"
 }
@@ -3941,6 +3823,7 @@ export type SessionShellData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/shell"
 }
@@ -3977,6 +3860,7 @@ export type SessionRevertData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/revert"
 }
@@ -4010,6 +3894,7 @@ export type SessionUnrevertData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/unrevert"
 }
@@ -4046,6 +3931,7 @@ export type PermissionRespondData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/session/{sessionID}/permissions/{permissionID}"
 }
@@ -4072,6 +3958,27 @@ export type PermissionRespondResponses = {
 
 export type PermissionRespondResponse = PermissionRespondResponses[keyof PermissionRespondResponses]
 
+export type SessionViewedData = {
+  body?: {
+    sessionID?: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/viewed"
+}
+
+export type SessionViewedResponses = {
+  /**
+   * Viewed session updated
+   */
+  200: boolean
+}
+
+export type SessionViewedResponse = SessionViewedResponses[keyof SessionViewedResponses]
+
 export type PermissionReplyData = {
   body?: {
     reply: "once" | "always" | "reject"
@@ -4082,6 +3989,7 @@ export type PermissionReplyData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/permission/{requestID}/reply"
 }
@@ -4108,11 +4016,50 @@ export type PermissionReplyResponses = {
 
 export type PermissionReplyResponse = PermissionReplyResponses[keyof PermissionReplyResponses]
 
+export type PermissionSaveAlwaysRulesData = {
+  body?: {
+    approvedAlways?: Array<string>
+    deniedAlways?: Array<string>
+  }
+  path: {
+    requestID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/permission/{requestID}/always-rules"
+}
+
+export type PermissionSaveAlwaysRulesErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type PermissionSaveAlwaysRulesError = PermissionSaveAlwaysRulesErrors[keyof PermissionSaveAlwaysRulesErrors]
+
+export type PermissionSaveAlwaysRulesResponses = {
+  /**
+   * Always rules saved successfully
+   */
+  200: boolean
+}
+
+export type PermissionSaveAlwaysRulesResponse =
+  PermissionSaveAlwaysRulesResponses[keyof PermissionSaveAlwaysRulesResponses]
+
 export type PermissionListData = {
   body?: never
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/permission"
 }
@@ -4131,6 +4078,7 @@ export type QuestionListData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/question"
 }
@@ -4156,6 +4104,7 @@ export type QuestionReplyData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/question/{requestID}/reply"
 }
@@ -4189,6 +4138,7 @@ export type QuestionRejectData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/question/{requestID}/reject"
 }
@@ -4220,6 +4170,7 @@ export type ProviderListData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/provider"
 }
@@ -4273,6 +4224,8 @@ export type ProviderListResponses = {
           }
           recommendedIndex?: number
           prompt?: "codex" | "gemini" | "beast" | "anthropic" | "trinity" | "anthropic_without_todo"
+          isFree?: boolean
+          ai_sdk_provider?: "anthropic" | "openai" | "openai-compatible" | "openrouter"
           experimental?: boolean
           status?: "alpha" | "beta" | "deprecated"
           options: {
@@ -4307,6 +4260,7 @@ export type ProviderAuthData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/provider/auth"
 }
@@ -4337,6 +4291,7 @@ export type ProviderOauthAuthorizeData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/provider/{providerID}/oauth/authorize"
 }
@@ -4378,6 +4333,7 @@ export type ProviderOauthCallbackData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/provider/{providerID}/oauth/callback"
 }
@@ -4416,6 +4372,7 @@ export type TelemetryCaptureData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/telemetry/capture"
 }
@@ -4438,6 +4395,72 @@ export type TelemetryCaptureResponses = {
 
 export type TelemetryCaptureResponse = TelemetryCaptureResponses[keyof TelemetryCaptureResponses]
 
+export type RemoteEnableData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/remote/enable"
+}
+
+export type RemoteEnableResponses = {
+  /**
+   * Remote connection enabled
+   */
+  200: {
+    enabled: boolean
+    connected: boolean
+  }
+}
+
+export type RemoteEnableResponse = RemoteEnableResponses[keyof RemoteEnableResponses]
+
+export type RemoteDisableData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/remote/disable"
+}
+
+export type RemoteDisableResponses = {
+  /**
+   * Remote connection disabled
+   */
+  200: {
+    enabled: boolean
+    connected: boolean
+  }
+}
+
+export type RemoteDisableResponse = RemoteDisableResponses[keyof RemoteDisableResponses]
+
+export type RemoteStatusData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/remote/status"
+}
+
+export type RemoteStatusResponses = {
+  /**
+   * Remote connection status
+   */
+  200: {
+    enabled: boolean
+    connected: boolean
+  }
+}
+
+export type RemoteStatusResponse = RemoteStatusResponses[keyof RemoteStatusResponses]
+
 export type CommitMessageGenerateData = {
   body?: {
     /**
@@ -4456,6 +4479,7 @@ export type CommitMessageGenerateData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/commit-message"
 }
@@ -4480,11 +4504,427 @@ export type CommitMessageGenerateResponses = {
 
 export type CommitMessageGenerateResponse = CommitMessageGenerateResponses[keyof CommitMessageGenerateResponses]
 
+export type EnhancePromptEnhanceData = {
+  body?: {
+    /**
+     * The user's draft prompt to enhance
+     */
+    text: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/enhance-prompt"
+}
+
+export type EnhancePromptEnhanceErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type EnhancePromptEnhanceError = EnhancePromptEnhanceErrors[keyof EnhancePromptEnhanceErrors]
+
+export type EnhancePromptEnhanceResponses = {
+  /**
+   * Enhanced prompt text
+   */
+  200: {
+    text: string
+  }
+}
+
+export type EnhancePromptEnhanceResponse = EnhancePromptEnhanceResponses[keyof EnhancePromptEnhanceResponses]
+
+export type KilocodeSessionImportProjectData = {
+  body?: {
+    id: string
+    worktree: string
+    vcs?: string
+    name?: string
+    iconUrl?: string
+    iconColor?: string
+    timeCreated: number
+    timeUpdated: number
+    timeInitialized?: number
+    sandboxes: Array<string>
+    commands?: {
+      start?: string
+    }
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilocode/session-import/project"
+}
+
+export type KilocodeSessionImportProjectErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type KilocodeSessionImportProjectError =
+  KilocodeSessionImportProjectErrors[keyof KilocodeSessionImportProjectErrors]
+
+export type KilocodeSessionImportProjectResponses = {
+  /**
+   * Project import result
+   */
+  200: {
+    ok: boolean
+    id: string
+    skipped?: boolean
+  }
+}
+
+export type KilocodeSessionImportProjectResponse =
+  KilocodeSessionImportProjectResponses[keyof KilocodeSessionImportProjectResponses]
+
+export type KilocodeSessionImportSessionData = {
+  body?: {
+    id: string
+    projectID: string
+    force?: boolean
+    workspaceID?: string
+    parentID?: string
+    slug: string
+    directory: string
+    title: string
+    version: string
+    shareURL?: string
+    summary?: {
+      additions: number
+      deletions: number
+      files: number
+      diffs?: Array<{
+        [key: string]: unknown
+      }>
+    }
+    revert?: {
+      messageID: string
+      partID?: string
+      snapshot?: string
+      diff?: string
+    }
+    permission?: {
+      [key: string]: unknown
+    }
+    timeCreated: number
+    timeUpdated: number
+    timeCompacting?: number
+    timeArchived?: number
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilocode/session-import/session"
+}
+
+export type KilocodeSessionImportSessionErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type KilocodeSessionImportSessionError =
+  KilocodeSessionImportSessionErrors[keyof KilocodeSessionImportSessionErrors]
+
+export type KilocodeSessionImportSessionResponses = {
+  /**
+   * Session import result
+   */
+  200: {
+    ok: boolean
+    id: string
+    skipped?: boolean
+  }
+}
+
+export type KilocodeSessionImportSessionResponse =
+  KilocodeSessionImportSessionResponses[keyof KilocodeSessionImportSessionResponses]
+
+export type KilocodeSessionImportMessageData = {
+  body?: {
+    id: string
+    sessionID: string
+    timeCreated: number
+    data:
+      | {
+          role: "user"
+          time: {
+            created: number
+          }
+          agent: string
+          model: {
+            providerID: string
+            modelID: string
+          }
+          tools?: {
+            [key: string]: boolean
+          }
+        }
+      | {
+          role: "assistant"
+          time: {
+            created: number
+            completed?: number
+          }
+          parentID: string
+          modelID: string
+          providerID: string
+          mode: string
+          agent: string
+          path: {
+            cwd: string
+            root: string
+          }
+          summary?: boolean
+          cost: number
+          tokens: {
+            total?: number
+            input: number
+            output: number
+            reasoning: number
+            cache: {
+              read: number
+              write: number
+            }
+          }
+          structured?: unknown
+          variant?: string
+          finish?: string
+        }
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilocode/session-import/message"
+}
+
+export type KilocodeSessionImportMessageErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type KilocodeSessionImportMessageError =
+  KilocodeSessionImportMessageErrors[keyof KilocodeSessionImportMessageErrors]
+
+export type KilocodeSessionImportMessageResponses = {
+  /**
+   * Message import result
+   */
+  200: {
+    ok: boolean
+    id: string
+    skipped?: boolean
+  }
+}
+
+export type KilocodeSessionImportMessageResponse =
+  KilocodeSessionImportMessageResponses[keyof KilocodeSessionImportMessageResponses]
+
+export type KilocodeSessionImportPartData = {
+  body?: {
+    id: string
+    messageID: string
+    sessionID: string
+    timeCreated?: number
+    data:
+      | {
+          type: "text"
+          text: string
+          synthetic?: boolean
+          ignored?: boolean
+          time?: {
+            start: number
+            end?: number
+          }
+          metadata?: {
+            [key: string]: unknown
+          }
+        }
+      | {
+          type: "reasoning"
+          text: string
+          metadata?: {
+            [key: string]: unknown
+          }
+          time: {
+            start: number
+            end?: number
+          }
+        }
+      | {
+          type: "tool"
+          callID: string
+          tool: string
+          state:
+            | {
+                status: "pending"
+                input: {
+                  [key: string]: unknown
+                }
+                raw: string
+              }
+            | {
+                status: "running"
+                input: {
+                  [key: string]: unknown
+                }
+                title?: string
+                metadata?: {
+                  [key: string]: unknown
+                }
+                time: {
+                  start: number
+                }
+              }
+            | {
+                status: "completed"
+                input: {
+                  [key: string]: unknown
+                }
+                output: string
+                title: string
+                metadata: {
+                  [key: string]: unknown
+                }
+                time: {
+                  start: number
+                  end: number
+                  compacted?: number
+                }
+              }
+            | {
+                status: "error"
+                input: {
+                  [key: string]: unknown
+                }
+                error: string
+                metadata?: {
+                  [key: string]: unknown
+                }
+                time: {
+                  start: number
+                  end: number
+                }
+              }
+          metadata?: {
+            [key: string]: unknown
+          }
+        }
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilocode/session-import/part"
+}
+
+export type KilocodeSessionImportPartErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type KilocodeSessionImportPartError = KilocodeSessionImportPartErrors[keyof KilocodeSessionImportPartErrors]
+
+export type KilocodeSessionImportPartResponses = {
+  /**
+   * Part import result
+   */
+  200: {
+    ok: boolean
+    id: string
+    skipped?: boolean
+  }
+}
+
+export type KilocodeSessionImportPartResponse =
+  KilocodeSessionImportPartResponses[keyof KilocodeSessionImportPartResponses]
+
+export type KilocodeRemoveSkillData = {
+  body?: {
+    location: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilocode/skill/remove"
+}
+
+export type KilocodeRemoveSkillErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type KilocodeRemoveSkillError = KilocodeRemoveSkillErrors[keyof KilocodeRemoveSkillErrors]
+
+export type KilocodeRemoveSkillResponses = {
+  /**
+   * Skill removed
+   */
+  200: boolean
+}
+
+export type KilocodeRemoveSkillResponse = KilocodeRemoveSkillResponses[keyof KilocodeRemoveSkillResponses]
+
+export type KilocodeRemoveAgentData = {
+  body?: {
+    name: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilocode/agent/remove"
+}
+
+export type KilocodeRemoveAgentErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type KilocodeRemoveAgentError = KilocodeRemoveAgentErrors[keyof KilocodeRemoveAgentErrors]
+
+export type KilocodeRemoveAgentResponses = {
+  /**
+   * Agent removed
+   */
+  200: boolean
+}
+
+export type KilocodeRemoveAgentResponse = KilocodeRemoveAgentResponses[keyof KilocodeRemoveAgentResponses]
+
 export type KiloProfileData = {
   body?: never
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/kilo/profile"
 }
@@ -4528,6 +4968,7 @@ export type KiloOrganizationSetData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/kilo/organization"
 }
@@ -4550,6 +4991,51 @@ export type KiloOrganizationSetResponses = {
 
 export type KiloOrganizationSetResponse = KiloOrganizationSetResponses[keyof KiloOrganizationSetResponses]
 
+export type KiloModesData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/modes"
+}
+
+export type KiloModesResponses = {
+  /**
+   * Organization modes list
+   */
+  200: {
+    modes: Array<{
+      id: string
+      organization_id: string
+      name: string
+      slug: string
+      created_by: string
+      created_at: string
+      updated_at: string
+      config: {
+        roleDefinition?: string
+        whenToUse?: string
+        description?: string
+        customInstructions?: string
+        groups?: Array<
+          | string
+          | [
+              string,
+              {
+                fileRegex?: string
+                description?: string
+              },
+            ]
+        >
+      }
+    }>
+  }
+}
+
+export type KiloModesResponse = KiloModesResponses[keyof KiloModesResponses]
+
 export type KiloFimData = {
   body?: {
     prefix: string
@@ -4561,6 +5047,7 @@ export type KiloFimData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/kilo/fim"
 }
@@ -4578,14 +5065,28 @@ export type KiloFimResponses = {
   /**
    * Streaming FIM completion response
    */
-  200: unknown
+  200: {
+    choices?: Array<{
+      delta?: {
+        content?: string
+      }
+    }>
+    usage?: {
+      prompt_tokens?: number
+      completion_tokens?: number
+    }
+    cost?: number
+  }
 }
+
+export type KiloFimResponse = KiloFimResponses[keyof KiloFimResponses]
 
 export type KiloNotificationsData = {
   body?: never
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/kilo/notifications"
 }
@@ -4612,6 +5113,7 @@ export type KiloNotificationsResponses = {
       actionURL: string
     }
     showIn?: Array<string>
+    suggestModelId?: string
   }>
 }
 
@@ -4624,6 +5126,7 @@ export type KiloCloudSessionGetData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/kilo/cloud/session/{id}"
 }
@@ -4651,6 +5154,7 @@ export type KiloCloudSessionImportData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/kilo/cloud/session/import"
 }
@@ -4675,11 +5179,69 @@ export type KiloCloudSessionImportResponses = {
   200: unknown
 }
 
+export type KiloClawStatusData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/claw/status"
+}
+
+export type KiloClawStatusResponses = {
+  /**
+   * Instance status
+   */
+  200: {
+    status: "provisioned" | "starting" | "restarting" | "running" | "stopped" | "destroying" | null
+    sandboxId?: string
+    flyRegion?: string
+    machineSize?: {
+      cpus: number
+      memory_mb: number
+    }
+    openclawVersion?: string | null
+    lastStartedAt?: string | null
+    lastStoppedAt?: string | null
+    channelCount?: number
+    secretCount?: number
+    userId?: string
+  }
+}
+
+export type KiloClawStatusResponse = KiloClawStatusResponses[keyof KiloClawStatusResponses]
+
+export type KiloClawChatCredentialsData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/claw/chat-credentials"
+}
+
+export type KiloClawChatCredentialsResponses = {
+  /**
+   * Stream Chat credentials or null
+   */
+  200: {
+    apiKey: string
+    userId: string
+    userToken: string
+    channelId: string
+  } | null
+}
+
+export type KiloClawChatCredentialsResponse = KiloClawChatCredentialsResponses[keyof KiloClawChatCredentialsResponses]
+
 export type KiloCloudSessionsData = {
   body?: never
   path?: never
   query?: {
     directory?: string
+    workspace?: string
     cursor?: string
     limit?: number
     gitUrl?: string
@@ -4719,6 +5281,7 @@ export type FindTextData = {
   path?: never
   query: {
     directory?: string
+    workspace?: string
     pattern: string
   }
   url: "/find"
@@ -4754,6 +5317,7 @@ export type FindFilesData = {
   path?: never
   query: {
     directory?: string
+    workspace?: string
     query: string
     dirs?: "true" | "false"
     type?: "file" | "directory"
@@ -4776,6 +5340,7 @@ export type FindSymbolsData = {
   path?: never
   query: {
     directory?: string
+    workspace?: string
     query: string
   }
   url: "/find/symbol"
@@ -4795,6 +5360,7 @@ export type FileListData = {
   path?: never
   query: {
     directory?: string
+    workspace?: string
     path: string
   }
   url: "/file"
@@ -4814,6 +5380,7 @@ export type FileReadData = {
   path?: never
   query: {
     directory?: string
+    workspace?: string
     path: string
   }
   url: "/file/content"
@@ -4833,6 +5400,7 @@ export type FileStatusData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/file/status"
 }
@@ -4851,6 +5419,7 @@ export type McpStatusData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp"
 }
@@ -4874,6 +5443,7 @@ export type McpAddData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp"
 }
@@ -4905,6 +5475,7 @@ export type McpAuthRemoveData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp/{name}/auth"
 }
@@ -4936,6 +5507,7 @@ export type McpAuthStartData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp/{name}/auth"
 }
@@ -4979,6 +5551,7 @@ export type McpAuthCallbackData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp/{name}/auth/callback"
 }
@@ -5012,6 +5585,7 @@ export type McpAuthAuthenticateData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp/{name}/auth/authenticate"
 }
@@ -5045,6 +5619,7 @@ export type McpConnectData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp/{name}/connect"
 }
@@ -5065,6 +5640,7 @@ export type McpDisconnectData = {
   }
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/mcp/{name}/disconnect"
 }
@@ -5085,6 +5661,7 @@ export type TuiAppendPromptData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/append-prompt"
 }
@@ -5112,6 +5689,7 @@ export type TuiOpenHelpData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/open-help"
 }
@@ -5130,6 +5708,7 @@ export type TuiOpenSessionsData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/open-sessions"
 }
@@ -5148,6 +5727,7 @@ export type TuiOpenThemesData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/open-themes"
 }
@@ -5166,6 +5746,7 @@ export type TuiOpenModelsData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/open-models"
 }
@@ -5184,6 +5765,7 @@ export type TuiSubmitPromptData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/submit-prompt"
 }
@@ -5202,6 +5784,7 @@ export type TuiClearPromptData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/clear-prompt"
 }
@@ -5222,6 +5805,7 @@ export type TuiExecuteCommandData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/execute-command"
 }
@@ -5257,6 +5841,7 @@ export type TuiShowToastData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/show-toast"
 }
@@ -5275,6 +5860,7 @@ export type TuiPublishData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/publish"
 }
@@ -5307,6 +5893,7 @@ export type TuiSelectSessionData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/select-session"
 }
@@ -5338,6 +5925,7 @@ export type TuiControlNextData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/control/next"
 }
@@ -5359,6 +5947,7 @@ export type TuiControlResponseData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/tui/control/response"
 }
@@ -5377,6 +5966,7 @@ export type InstanceDisposeData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/instance/dispose"
 }
@@ -5395,6 +5985,7 @@ export type PathGetData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/path"
 }
@@ -5413,6 +6004,7 @@ export type VcsGetData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/vcs"
 }
@@ -5431,6 +6023,7 @@ export type CommandListData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/command"
 }
@@ -5468,6 +6061,7 @@ export type AppLogData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/log"
 }
@@ -5495,6 +6089,7 @@ export type AppAgentsData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/agent"
 }
@@ -5513,6 +6108,7 @@ export type AppSkillsData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/skill"
 }
@@ -5536,6 +6132,7 @@ export type LspStatusData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/lsp"
 }
@@ -5554,6 +6151,7 @@ export type FormatterStatusData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/formatter"
 }
@@ -5572,6 +6170,7 @@ export type EventSubscribeData = {
   path?: never
   query?: {
     directory?: string
+    workspace?: string
   }
   url: "/event"
 }

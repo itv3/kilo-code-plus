@@ -1,11 +1,11 @@
 /**
  * WorktreeStateManager - Centralized persistent state for agent manager worktrees and sessions.
  *
- * Persists to `.kilocode/agent-manager.json`. Decouples worktrees from sessions
+ * Persists to `.kilo/agent-manager.json`. Decouples worktrees from sessions
  * (many sessions per worktree) and provides CRUD operations for both.
  *
  * Data model:
- * - Worktree: a git worktree with branch, path, parentBranch
+ * - Worktree: a git worktree with branch, path, parentBranch (bare), remote
  * - ManagedSession: a server session ID associated with a worktree (or null for local)
  */
 
@@ -17,12 +17,24 @@ export interface Worktree {
   id: string
   branch: string
   path: string
+  /** Bare branch name (e.g. "main"), without remote prefix. */
   parentBranch: string
+  /** Remote name (e.g. "origin"). When set, diffs compare against `${remote}/${parentBranch}`. */
+  remote?: string
   createdAt: string
   /** Shared identifier for worktrees created together via multi-version mode. */
   groupId?: string
   /** User-provided display name for the worktree. */
   label?: string
+}
+
+/**
+ * Construct the remote-prefixed ref for diff comparisons.
+ * Returns `${remote}/${branch}` when a remote is known, otherwise the bare branch.
+ * This mirrors Superset's pattern of always diffing against the remote tracking ref.
+ */
+export function remoteRef(wt: Pick<Worktree, "parentBranch" | "remote">): string {
+  return wt.remote ? `${wt.remote}/${wt.parentBranch}` : wt.parentBranch
 }
 
 export interface ManagedSession {
@@ -35,12 +47,15 @@ interface StateFile {
   worktrees: Record<string, Omit<Worktree, "id">>
   sessions: Record<string, Omit<ManagedSession, "id">>
   tabOrder?: Record<string, string[]>
+  worktreeOrder?: string[]
   sessionsCollapsed?: boolean
   reviewDiffStyle?: "unified" | "split"
+  defaultBaseBranch?: string
 }
 
+import { KILO_DIR, migrateAgentManagerData, type MigrationResult } from "./constants"
+
 const STATE_FILE = "agent-manager.json"
-const KILOCODE_DIR = ".kilocode"
 
 let counter = 0
 
@@ -53,14 +68,20 @@ export class WorktreeStateManager {
   private worktrees = new Map<string, Worktree>()
   private sessions = new Map<string, ManagedSession>()
   private tabOrder: Record<string, string[]> = {}
+  private worktreeOrder: string[] = []
   private collapsed = false
   private reviewDiffStyle: "unified" | "split" = "unified"
+  private defaultBase: string | undefined
   private readonly log: (msg: string) => void
   private saving: Promise<void> | undefined
   private pendingSave = false
 
+  private readonly root: string
+  private migrated = false
+
   constructor(root: string, log: (msg: string) => void) {
-    this.file = path.join(root, KILOCODE_DIR, STATE_FILE)
+    this.root = root
+    this.file = path.join(root, KILO_DIR, STATE_FILE)
     this.log = log
   }
 
@@ -119,6 +140,7 @@ export class WorktreeStateManager {
     branch: string
     path: string
     parentBranch: string
+    remote?: string
     groupId?: string
     label?: string
   }): Worktree {
@@ -130,6 +152,7 @@ export class WorktreeStateManager {
       parentBranch: params.parentBranch,
       createdAt: new Date().toISOString(),
     }
+    if (params.remote) wt.remote = params.remote
     if (params.groupId) wt.groupId = params.groupId
     if (params.label) wt.label = params.label
     this.worktrees.set(id, wt)
@@ -163,6 +186,10 @@ export class WorktreeStateManager {
 
     // Clean up tab order for this worktree
     delete this.tabOrder[id]
+
+    // Remove from worktree order
+    const idx = this.worktreeOrder.indexOf(id)
+    if (idx !== -1) this.worktreeOrder.splice(idx, 1)
 
     this.log(`Removed worktree ${id}, orphaned ${orphaned.length} sessions`)
     void this.save()
@@ -220,6 +247,19 @@ export class WorktreeStateManager {
   }
 
   // ---------------------------------------------------------------------------
+  // Worktree order
+  // ---------------------------------------------------------------------------
+
+  getWorktreeOrder(): string[] {
+    return this.worktreeOrder
+  }
+
+  setWorktreeOrder(order: string[]): void {
+    this.worktreeOrder = order
+    void this.save()
+  }
+
+  // ---------------------------------------------------------------------------
   // Sessions collapsed
   // ---------------------------------------------------------------------------
 
@@ -246,20 +286,45 @@ export class WorktreeStateManager {
   }
 
   // ---------------------------------------------------------------------------
+  // Default base branch
+  // ---------------------------------------------------------------------------
+
+  getDefaultBaseBranch(): string | undefined {
+    return this.defaultBase
+  }
+
+  setDefaultBaseBranch(value: string | undefined): void {
+    this.defaultBase = value
+    void this.save()
+  }
+
+  // ---------------------------------------------------------------------------
   // Persistence
   // ---------------------------------------------------------------------------
 
-  async load(): Promise<void> {
+  async load(): Promise<MigrationResult> {
+    // Migrate Agent Manager data from .kilocode → .kilo before first read
+    let migration: MigrationResult = { refsFixed: 0 }
+    if (!this.migrated) {
+      this.migrated = true
+      migration = await migrateAgentManagerData(this.root, this.log)
+    }
     try {
       const content = await fs.promises.readFile(this.file, "utf-8")
       const data = JSON.parse(content) as StateFile
       this.worktrees.clear()
       this.sessions.clear()
       this.tabOrder = {}
+      this.worktreeOrder = []
       this.reviewDiffStyle = "unified"
 
       for (const [id, wt] of Object.entries(data.worktrees ?? {})) {
-        this.worktrees.set(id, { id, ...wt })
+        // Rewrite stale .kilocode paths while preserving the separator style already stored.
+        const fixed =
+          wt.path?.replace(/([/\\])\.kilocode([/\\])/g, (_match, leadingSep, trailingSep) => {
+            return `${leadingSep}.kilo${trailingSep}`
+          }) ?? wt.path
+        this.worktrees.set(id, { id, ...wt, path: fixed })
       }
       for (const [id, s] of Object.entries(data.sessions ?? {})) {
         this.sessions.set(id, { id, ...s })
@@ -267,10 +332,14 @@ export class WorktreeStateManager {
       if (data.tabOrder) {
         this.tabOrder = data.tabOrder
       }
+      if (data.worktreeOrder) {
+        this.worktreeOrder = data.worktreeOrder
+      }
       this.collapsed = data.sessionsCollapsed ?? false
       if (data.reviewDiffStyle === "split") {
         this.reviewDiffStyle = "split"
       }
+      this.defaultBase = data.defaultBaseBranch
       this.log(`Loaded state: ${this.worktrees.size} worktrees, ${this.sessions.size} sessions`)
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code
@@ -278,6 +347,7 @@ export class WorktreeStateManager {
         this.log(`Failed to load state: ${error}`)
       }
     }
+    return migration
   }
 
   /** Remove worktrees whose directories no longer exist on disk. */
@@ -337,11 +407,17 @@ export class WorktreeStateManager {
     if (Object.keys(this.tabOrder).length > 0) {
       data.tabOrder = this.tabOrder
     }
+    if (this.worktreeOrder.length > 0) {
+      data.worktreeOrder = this.worktreeOrder
+    }
     if (this.collapsed) {
       data.sessionsCollapsed = true
     }
     if (this.reviewDiffStyle === "split") {
       data.reviewDiffStyle = "split"
+    }
+    if (this.defaultBase) {
+      data.defaultBaseBranch = this.defaultBase
     }
 
     try {

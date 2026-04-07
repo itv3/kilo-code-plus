@@ -10,10 +10,11 @@ import { WorkspaceServeCommand } from "./cli/cmd/workspace-serve"
 import { Filesystem } from "./util/filesystem"
 // import { GithubCommand } from "./cli/cmd/github" // kilocode_change
 import { EOL } from "os"
+
 // kilocode_change start - Import telemetry, instance disposal, and legacy migration
 import { Telemetry } from "@kilocode/kilo-telemetry"
 import { Instance } from "./project/instance" // kilocode_change
-import { migrateLegacyKiloAuth, ENV_FEATURE } from "@kilocode/kilo-gateway"
+import { migrateLegacyKiloAuth, ENV_FEATURE, ENV_VERSION } from "@kilocode/kilo-gateway"
 
 // kilocode_change - set feature for tracking. 'serve' is spawned by other services
 // (extension, cloud) which set their own KILOCODE_FEATURE env var. Direct CLI use
@@ -24,6 +25,11 @@ if (!process.env[ENV_FEATURE]) {
   process.env[ENV_FEATURE] = isServe ? "unknown" : "cli"
 }
 import { Global } from "./global"
+
+// kilocode_change - set version so kilo-gateway can include it in the editor name header
+if (!process.env[ENV_VERSION]) {
+  process.env[ENV_VERSION] = Installation.VERSION
+}
 import { Config } from "./config/config"
 import { Auth } from "./auth"
 // kilocode_change end
@@ -42,6 +48,11 @@ process.on("uncaughtException", (e) => {
     e: e instanceof Error ? e.message : e,
   })
 })
+
+// Ensure the process exits on terminal hangup (eg. closing the terminal tab).
+// Without this, long-running commands like `serve` block on a never-resolving
+// promise and survive as orphaned processes.
+process.on("SIGHUP", () => process.exit())
 
 let cli = yargs(hideBin(process.argv))
   .parserConfiguration({ "populate--": true })
@@ -72,7 +83,8 @@ let cli = yargs(hideBin(process.argv))
     })
 
     process.env.AGENT = "1"
-    process.env.OPENCODE = "1"
+    process.env.KILO = "1"
+    process.env.KILO_PID = String(process.pid)
 
     Log.Default.info("opencode", {
       version: Installation.VERSION,

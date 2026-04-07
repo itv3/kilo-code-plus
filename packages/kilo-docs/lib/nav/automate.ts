@@ -16,24 +16,6 @@ export const AutomateNav: NavSection[] = [
         ],
       },
       { href: "/automate/agent-manager", children: "Agent Manager" },
-      {
-        href: "/automate/kiloclaw/overview",
-        children: "KiloClaw",
-        subLinks: [
-          { href: "/automate/kiloclaw/overview", children: "Overview" },
-          { href: "/automate/kiloclaw/dashboard", children: "Dashboard" },
-          { href: "/automate/kiloclaw/control-ui", children: "Control UI" },
-          {
-            href: "/automate/kiloclaw/chat-platforms",
-            children: "Chat Platforms",
-          },
-          {
-            href: "/automate/kiloclaw/troubleshooting",
-            children: "Troubleshooting",
-          },
-          { href: "/automate/kiloclaw/pricing", children: "Pricing" },
-        ],
-      },
     ],
   },
   {
@@ -47,6 +29,7 @@ export const AutomateNav: NavSection[] = [
       {
         href: "/automate/extending/auto-launch",
         children: "Auto-launch Configuration",
+        platform: "legacy",
       },
       {
         href: "/automate/mcp/overview",
@@ -71,8 +54,8 @@ export const AutomateNav: NavSection[] = [
   {
     title: "Tools",
     links: [
-      { href: "/automate/how-tools-work", children: "How Tools Work" },
-      { href: "/automate/tools", children: "Tools Details" },
+      { href: "/automate/how-tools-work", children: "How Tools Work", platform: "legacy" },
+      { href: "/automate/tools", children: "Tools Details", platform: "legacy" },
     ],
   },
 ]
