@@ -1,4 +1,8 @@
 // kilocode_change - new file
+// Command barrel: exports the list of CommandModules with no side effects.
+// Keeping this separate from index.ts allows help.ts and generate-cli-docs.ts
+// to import commands for introspection without triggering the CLI startup code
+// (middleware, telemetry, migrations, etc.) that lives in index.ts.
 import { AcpCommand } from "./cmd/acp"
 import { McpCommand } from "./cmd/mcp"
 import { TuiThreadCommand } from "./cmd/tui/thread"
