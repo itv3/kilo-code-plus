@@ -1,7 +1,6 @@
 // All CommandModules in one place so help.ts and generate-cli-docs.ts can
 // introspect them without importing index.ts (which has startup side effects).
 // When upstream adds a new command to index.ts, add it here too.
-import type { CommandModule } from "yargs"
 import { AcpCommand } from "../cli/cmd/acp"
 import { McpCommand } from "../cli/cmd/mcp"
 import { TuiThreadCommand } from "../cli/cmd/tui/thread"
@@ -26,13 +25,13 @@ import { HelpCommand } from "./help-command"
 
 // Synthetic entry for the yargs built-in .completion() command so that
 // generateHelp --all and cli-reference.md include it automatically.
-const CompletionCommand: CommandModule<any, any> = {
+const CompletionCommand = {
   command: "completion",
   describe: "generate shell completion script",
   handler: () => {},
 }
 
-export const commands: CommandModule<any, any>[] = [
+export const commands = [
   AcpCommand,
   McpCommand,
   TuiThreadCommand,
