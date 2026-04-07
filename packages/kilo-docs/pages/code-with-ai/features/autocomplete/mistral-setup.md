@@ -60,13 +60,12 @@ The autocomplete status bar in VS Code shows the current provider ("Kilo Gateway
 When you add a Codestral BYOK key, the request flow is:
 
 ```
-Your Editor → Kilo Gateway → Vercel AI Gateway (with your key) → Mistral
+Your Editor → Kilo Gateway (with your key) → Mistral
 ```
 
 - The Kilo Gateway detects your BYOK key and routes autocomplete requests using it.
 - You are billed directly by Mistral — Kilo does not add any markup.
 - If your BYOK key is invalid, the request will fail (it does not fall back to Kilo's keys).
-- All Kilo platform features (usage tracking, Code Reviews, Cloud Agents) continue to work normally.
 
 ## Troubleshooting
 
