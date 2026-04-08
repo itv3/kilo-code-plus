@@ -272,9 +272,8 @@ async function isBinaryFile(filepath: string, fileSize: number): Promise<boolean
     const result = await fh.read(bytes, 0, sampleSize, 0)
     if (result.bytesRead === 0) return false
 
-    const sample = bytes.subarray(0, result.bytesRead)
-
     // kilocode_change start - encoding-aware binary detection
+    const sample = bytes.subarray(0, result.bytesRead)
     // If encoding detection recognizes a known text encoding, it's not binary.
     // This prevents UTF-16 (with null bytes) and CJK encodings from being
     // falsely flagged as binary.
@@ -283,7 +282,6 @@ async function isBinaryFile(filepath: string, fileSize: number): Promise<boolean
       // jschardet confidently identified a non-default encoding → text file
       return false
     }
-    // kilocode_change end
 
     let nonPrintableCount = 0
     for (let i = 0; i < result.bytesRead; i++) {
@@ -294,6 +292,7 @@ async function isBinaryFile(filepath: string, fileSize: number): Promise<boolean
     }
     // If >30% non-printable characters, consider it binary
     return nonPrintableCount / result.bytesRead > 0.3
+    // kilocode_change end
   } finally {
     await fh.close()
   }
