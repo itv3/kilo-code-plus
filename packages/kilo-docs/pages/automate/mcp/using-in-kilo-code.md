@@ -422,25 +422,41 @@ To set the maximum time to wait for a response after a tool call to the MCP serv
 {% /tab %}
 {% /tabs %}
 
-### Auto Approve Tools
+### Tool Permissions
 
 {% tabs %}
 {% tab label="VSCode" %}
 
 MCP tool calls use the same permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `my_server_do_something`).
 
-**At runtime:** When an MCP tool is called, the Permission Dock shows an approval prompt. Click **Approve Always** to save an allow rule to your config so future calls to that tool are auto-approved.
+There are three permission levels:
+
+| Permission | Behavior                                                                                                          |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| `"allow"`  | Tool calls are auto-approved without prompting.                                                                   |
+| `"ask"`    | A prompt appears each time the tool is called, requiring manual approval. This is the default if no rule matches. |
+| `"deny"`   | Tool calls are blocked entirely.                                                                                  |
+
+**At runtime:** When an MCP tool is called and no permission rule matches, the Permission Dock shows an approval prompt (equivalent to `"ask"`). Click **Approve Always** to save an `"allow"` rule to your config so future calls to that tool are auto-approved.
 
 **In your config file:** Add the tool name (or a wildcard pattern) to the `permission` key in `kilo.jsonc`:
 
-```json
+```jsonc
 {
   "permission": {
-    "my_server_do_something": "allow",
-    "my_server_*": "allow"
-  }
+    // Auto-approve a specific tool
+    "my_server_safe_read": "allow",
+
+    // Require approval for all other tools on this server
+    "my_server_*": "ask",
+
+    // Block a dangerous tool entirely
+    "my_server_delete_all": "deny",
+  },
 }
 ```
+
+Glob patterns are evaluated top-to-bottom and the first match wins, so you can allow specific safe tools while requiring approval for everything else on a server.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
