@@ -149,6 +149,7 @@ export namespace ModelsDev {
 
     if (kiloAllowed && !providers["kilo"]) {
       const kiloOptions = config.provider?.kilo?.options
+      // resolve org ID from auth (OAuth accountId) not just config
       const kiloAuth = await Auth.get("kilo")
       const kiloOrgId =
         kiloOptions?.kilocodeOrganizationId ?? (kiloAuth?.type === "oauth" ? kiloAuth.accountId : undefined)
