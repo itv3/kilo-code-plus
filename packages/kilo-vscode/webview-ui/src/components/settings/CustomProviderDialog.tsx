@@ -802,7 +802,20 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
                                   error={errors.models[i()]?.variants?.[vi()]?.name}
                                 />
                               </div>
-                              <div style={{ flex: "0 0 auto", "padding-bottom": "6px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  "flex-direction": "column",
+                                  gap: "4px",
+                                  "padding-bottom": "6px",
+                                  flex: "0 0 auto",
+                                }}
+                              >
+                                <label
+                                  style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}
+                                >
+                                  {language.t("provider.custom.models.variants.enableThinking.label")}
+                                </label>
                                 <Select
                                   options={ENABLE_THINKING_OPTIONS}
                                   current={ENABLE_THINKING_OPTIONS.find((o) => o.value === v.enableThinking)}
@@ -815,7 +828,20 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
                                   triggerVariant="settings"
                                 />
                               </div>
-                              <div style={{ flex: "0 0 auto", "padding-bottom": "6px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  "flex-direction": "column",
+                                  gap: "4px",
+                                  "padding-bottom": "6px",
+                                  flex: "0 0 auto",
+                                }}
+                              >
+                                <label
+                                  style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}
+                                >
+                                  {language.t("provider.custom.models.variants.thinking.label")}
+                                </label>
                                 <Select
                                   options={THINKING_OPTIONS}
                                   current={THINKING_OPTIONS.find((o) => o.value === v.thinking)}
@@ -828,7 +854,20 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
                                   triggerVariant="settings"
                                 />
                               </div>
-                              <div style={{ flex: "0 0 auto", "padding-bottom": "6px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  "flex-direction": "column",
+                                  gap: "4px",
+                                  "padding-bottom": "6px",
+                                  flex: "0 0 auto",
+                                }}
+                              >
+                                <label
+                                  style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}
+                                >
+                                  {language.t("provider.custom.models.variants.reasoningEffort.label")}
+                                </label>
                                 <Select
                                   options={REASONING_EFFORT_OPTIONS}
                                   current={REASONING_EFFORT_OPTIONS.find((o) => o.value === v.reasoningEffort)}
