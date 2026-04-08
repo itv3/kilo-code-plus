@@ -60,6 +60,7 @@ function init() {
       const { duration, ...currentToast } = parsedOptions
       setStore("currentToast", currentToast)
       if (timeoutHandle) clearTimeout(timeoutHandle)
+      // kilocode_change start
       timeoutHandle = null
       if (duration && duration > 0) {
         timeoutHandle = setTimeout(() => {
@@ -73,6 +74,7 @@ function init() {
       timeoutHandle = null
       setStore("currentToast", null)
     },
+    // kilocode_change end
     error: (err: any) => {
       if (err instanceof Error)
         return toast.show({
