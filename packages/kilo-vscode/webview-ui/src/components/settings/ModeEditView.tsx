@@ -232,8 +232,8 @@ const ModeEditView: Component<Props> = (props) => {
       </Card>
 
       {/* Calculated permissions (read-only, collapsible) */}
-      <Show when={agent()?.permission}>
-        <PermissionRuleset rules={agent()!.permission!} expanded={expanded()} onToggle={() => setExpanded((v) => !v)} />
+      <Show when={agent()?.permission} keyed>
+        {(rules) => <PermissionRuleset rules={rules} expanded={expanded()} onToggle={() => setExpanded((v) => !v)} />}
       </Show>
 
       <div style={{ display: "flex", "justify-content": "flex-end" }}>
@@ -253,6 +253,7 @@ const ACTION_COLORS: Record<string, { bg: string; fg: string }> = {
   allow: { bg: "var(--vscode-terminal-ansiGreen, #3fb950)", fg: "var(--vscode-editor-background, #1e1e1e)" },
   ask: { bg: "var(--vscode-editorWarning-foreground, #cca700)", fg: "var(--vscode-editor-background, #1e1e1e)" },
   deny: { bg: "var(--vscode-errorForeground, #f85149)", fg: "var(--vscode-editor-background, #fff)" },
+  unknown: { bg: "var(--vscode-descriptionForeground, #8b949e)", fg: "var(--vscode-editor-background, #1e1e1e)" },
 }
 
 interface RulesetProps {
@@ -265,6 +266,8 @@ const PermissionRuleset: Component<RulesetProps> = (props) => {
   const language = useLanguage()
 
   // Compute effective action per unique tool by finding the last rule with pattern "*"
+  // NOTE: This assumes the CLI uses "*" as the wildcard pattern for catch-all rules.
+  // If the CLI convention changes (e.g. to "**" or another pattern), this will need updating.
   const summary = createMemo(() => {
     const tools = new Map<string, PermissionRuleItem["action"]>()
     for (const rule of props.rules) {
@@ -320,7 +323,7 @@ const PermissionRuleset: Component<RulesetProps> = (props) => {
             <div style={{ display: "flex", "flex-wrap": "wrap", gap: "4px" }}>
               <For each={summary()}>
                 {([tool, action]) => {
-                  const colors = ACTION_COLORS[action] ?? ACTION_COLORS.ask
+                  const colors = ACTION_COLORS[action] ?? ACTION_COLORS.unknown
                   return (
                     <span
                       style={{
@@ -376,7 +379,7 @@ const PermissionRuleset: Component<RulesetProps> = (props) => {
             <tbody>
               <For each={props.rules}>
                 {(rule, idx) => {
-                  const colors = ACTION_COLORS[rule.action] ?? ACTION_COLORS.ask
+                  const colors = ACTION_COLORS[rule.action] ?? ACTION_COLORS.unknown
                   return (
                     <tr
                       style={{
