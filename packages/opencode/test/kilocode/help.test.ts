@@ -1,4 +1,5 @@
 import { describe, test, expect } from "bun:test"
+import path from "path"
 import { generateHelp, generateCommandTable } from "../../src/kilocode/help"
 import { AcpCommand } from "../../src/cli/cmd/acp"
 import { McpCommand } from "../../src/cli/cmd/mcp"
@@ -153,5 +154,19 @@ describe("generateCommandTable", () => {
   test("contains kilo help row", async () => {
     const output = await generateCommandTable({ commands })
     expect(output).toContain("`kilo help")
+  })
+})
+
+describe("commands.ts stays in sync with index.ts", () => {
+  test("every .command() in index.ts has an entry in commands.ts", async () => {
+    const index = await Bun.file(path.resolve(import.meta.dir, "../../src/index.ts")).text()
+    const barrel = await Bun.file(path.resolve(import.meta.dir, "../../src/kilocode/commands.ts")).text()
+
+    // Match uncommented .command(XxxCommand) calls in index.ts
+    const registered = [...index.matchAll(/^\s*\.command\((\w+)\)/gm)].map((m) => m[1]!)
+    expect(registered.length).toBeGreaterThan(0)
+
+    const missing = registered.filter((name) => !barrel.includes(name))
+    expect(missing).toEqual([])
   })
 })
