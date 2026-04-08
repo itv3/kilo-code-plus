@@ -63,6 +63,10 @@ System prompt for this agent.
 
 `mode` values: `primary` = selectable as main agent, `subagent` = only via Task tool, `all` = both.
 
+## Workflows (legacy)
+
+Markdown files in `.kilo/workflows/` or `.kilocode/workflows/` (project-level) and `~/.kilo/workflows/` or `~/.kilocode/workflows/` (global). These are automatically converted to commands at startup. The filename (minus `.md`) becomes the command name. Project workflows override global ones with the same name.
+
 ## Permissions
 
 Scalar form applies to all patterns. Object form maps glob patterns to actions. Evaluated top-to-bottom; first match wins.
