@@ -1384,6 +1384,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Інструмент",
   "settings.agentBehaviour.permissions.col.pattern": "Шаблон",
   "settings.agentBehaviour.permissions.col.action": "Дія",
+  "settings.agentBehaviour.permissions.copy": "Копіювати дозволи як JSON",
   "settings.agentBehaviour.permissions.hint":
     "Правила оцінюються по порядку — останнє відповідне правило має пріоритет. Це розрахований набір правил з CLI бекенду.",
   "settings.agentBehaviour.editMode.save": "Готово",

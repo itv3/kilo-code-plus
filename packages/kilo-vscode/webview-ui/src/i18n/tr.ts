@@ -1382,6 +1382,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Araç",
   "settings.agentBehaviour.permissions.col.pattern": "Desen",
   "settings.agentBehaviour.permissions.col.action": "Eylem",
+  "settings.agentBehaviour.permissions.copy": "İzinleri JSON olarak kopyala",
   "settings.agentBehaviour.permissions.hint":
     "Kurallar sırayla değerlendirilir — son eşleşen kural kazanır. Bu, CLI arka ucundan çözümlenen kural kümesidir.",
   "settings.agentBehaviour.editMode.save": "Tamam",

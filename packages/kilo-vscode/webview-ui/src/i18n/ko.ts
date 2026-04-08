@@ -1130,6 +1130,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "도구",
   "settings.agentBehaviour.permissions.col.pattern": "패턴",
   "settings.agentBehaviour.permissions.col.action": "작업",
+  "settings.agentBehaviour.permissions.copy": "권한을 JSON으로 복사",
   "settings.agentBehaviour.permissions.hint":
     "규칙은 순서대로 평가되며, 마지막에 일치하는 규칙이 적용됩니다. 이것은 CLI 백엔드에서 확인된 규칙 세트입니다.",
   "settings.agentBehaviour.removeMode.title": "모드 제거",

@@ -1143,6 +1143,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Инструмент",
   "settings.agentBehaviour.permissions.col.pattern": "Шаблон",
   "settings.agentBehaviour.permissions.col.action": "Действие",
+  "settings.agentBehaviour.permissions.copy": "Скопировать разрешения как JSON",
   "settings.agentBehaviour.permissions.hint":
     "Правила оцениваются по порядку — побеждает последнее совпавшее правило. Это разрешенный набор правил из бэкенда CLI.",
   "settings.agentBehaviour.removeMode.title": "Удалить режим",

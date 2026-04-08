@@ -1141,6 +1141,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Alat",
   "settings.agentBehaviour.permissions.col.pattern": "Uzorak",
   "settings.agentBehaviour.permissions.col.action": "Akcija",
+  "settings.agentBehaviour.permissions.copy": "Kopiraj dozvole kao JSON",
   "settings.agentBehaviour.permissions.hint":
     "Pravila se evaluiraju po redoslijedu — zadnje pravilo koje se podudara pobjeđuje. Ovo je riješeni skup pravila iz CLI backenda.",
   "settings.agentBehaviour.removeMode.title": "Ukloni mod",

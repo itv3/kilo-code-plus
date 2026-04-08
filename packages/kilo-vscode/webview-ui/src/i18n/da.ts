@@ -1134,6 +1134,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Værktøj",
   "settings.agentBehaviour.permissions.col.pattern": "Mønster",
   "settings.agentBehaviour.permissions.col.action": "Handling",
+  "settings.agentBehaviour.permissions.copy": "Kopiér tilladelser som JSON",
   "settings.agentBehaviour.permissions.hint":
     "Reglerne evalueres i rækkefølge — den sidst matchende regel vinder. Dette er det endelige regelsæt fra CLI-backenden.",
   "settings.agentBehaviour.removeMode.title": "Fjern tilstand",

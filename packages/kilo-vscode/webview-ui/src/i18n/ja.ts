@@ -1136,6 +1136,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "ツール",
   "settings.agentBehaviour.permissions.col.pattern": "パターン",
   "settings.agentBehaviour.permissions.col.action": "アクション",
+  "settings.agentBehaviour.permissions.copy": "権限をJSONとしてコピー",
   "settings.agentBehaviour.permissions.hint":
     "ルールは順番に評価され、最後に一致したルールが適用されます。これはCLIバックエンドから解決されたルールセットです。",
   "settings.agentBehaviour.removeMode.title": "モードを削除",

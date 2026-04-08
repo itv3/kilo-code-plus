@@ -1115,6 +1115,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "工具",
   "settings.agentBehaviour.permissions.col.pattern": "模式",
   "settings.agentBehaviour.permissions.col.action": "動作",
+  "settings.agentBehaviour.permissions.copy": "複製權限為 JSON",
   "settings.agentBehaviour.permissions.hint":
     "規則會按順序評估 — 最後符合的規則為準。這是來自 CLI 後端的已解析規則集。",
   "settings.agentBehaviour.removeMode.title": "移除模式",

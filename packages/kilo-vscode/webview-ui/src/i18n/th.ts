@@ -1125,6 +1125,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "เครื่องมือ",
   "settings.agentBehaviour.permissions.col.pattern": "รูปแบบ",
   "settings.agentBehaviour.permissions.col.action": "การดำเนินการ",
+  "settings.agentBehaviour.permissions.copy": "คัดลอกสิทธิ์เป็น JSON",
   "settings.agentBehaviour.permissions.hint":
     "กฎจะถูกประเมินตามลำดับ — กฎที่ตรงกันล่าสุดจะมีผล นี่คือชุดกฎที่ประมวลผลแล้วจากแบ็กเอนด์ CLI",
   "settings.agentBehaviour.removeMode.title": "ลบโหมด",

@@ -233,7 +233,14 @@ const ModeEditView: Component<Props> = (props) => {
 
       {/* Calculated permissions (read-only, collapsible) */}
       <Show when={agent()?.permission} keyed>
-        {(rules) => <PermissionRuleset rules={rules} expanded={expanded()} onToggle={() => setExpanded((v) => !v)} />}
+        {(rules) => (
+          <PermissionRuleset
+            agent={props.name}
+            rules={rules}
+            expanded={expanded()}
+            onToggle={() => setExpanded((v) => !v)}
+          />
+        )}
       </Show>
 
       <div style={{ display: "flex", "justify-content": "flex-end" }}>
@@ -257,6 +264,7 @@ const ACTION_COLORS: Record<string, { bg: string; fg: string }> = {
 }
 
 interface RulesetProps {
+  agent: string
   rules: PermissionRuleItem[]
   expanded: boolean
   onToggle: () => void
@@ -264,6 +272,7 @@ interface RulesetProps {
 
 const PermissionRuleset: Component<RulesetProps> = (props) => {
   const language = useLanguage()
+  const [copied, setCopied] = createSignal(false)
 
   // Compute effective action per unique tool by finding the last rule with pattern "*"
   // NOTE: This assumes the CLI uses "*" as the wildcard pattern for catch-all rules.
@@ -277,6 +286,14 @@ const PermissionRuleset: Component<RulesetProps> = (props) => {
     }
     return [...tools.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   })
+
+  const copy = (e: MouseEvent) => {
+    e.stopPropagation()
+    const data = { agent: props.agent, rules: props.rules }
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <Card style={{ "margin-bottom": "12px" }}>
@@ -305,6 +322,15 @@ const PermissionRuleset: Component<RulesetProps> = (props) => {
         >
           {language.t("settings.agentBehaviour.permissions.count", { count: String(props.rules.length) })}
         </span>
+        <div style={{ "margin-left": "auto" }}>
+          <IconButton
+            size="small"
+            variant="ghost"
+            icon={copied() ? "check" : "copy"}
+            title={language.t("settings.agentBehaviour.permissions.copy")}
+            onClick={copy}
+          />
+        </div>
       </div>
 
       <Show when={props.expanded}>

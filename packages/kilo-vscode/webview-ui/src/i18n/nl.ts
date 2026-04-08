@@ -1389,6 +1389,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Tool",
   "settings.agentBehaviour.permissions.col.pattern": "Patroon",
   "settings.agentBehaviour.permissions.col.action": "Actie",
+  "settings.agentBehaviour.permissions.copy": "Machtigingen kopiëren als JSON",
   "settings.agentBehaviour.permissions.hint":
     "Regels worden op volgorde geëvalueerd — de laatst overeenkomende regel wint. Dit is de opgeloste regelset van de CLI backend.",
   "settings.agentBehaviour.editMode.save": "Klaar",

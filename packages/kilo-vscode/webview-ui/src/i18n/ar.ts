@@ -1124,6 +1124,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "الأداة",
   "settings.agentBehaviour.permissions.col.pattern": "النمط",
   "settings.agentBehaviour.permissions.col.action": "الإجراء",
+  "settings.agentBehaviour.permissions.copy": "نسخ الأذونات كـ JSON",
   "settings.agentBehaviour.permissions.hint":
     "يتم تقييم القواعد بالترتيب — القاعدة المطابقة الأخيرة هي التي تُطبق. هذه هي مجموعة القواعد المحلولة من خلفية CLI.",
   "settings.agentBehaviour.removeMode.title": "إزالة الوضع",

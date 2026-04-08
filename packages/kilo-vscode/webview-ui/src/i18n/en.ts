@@ -1185,6 +1185,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Tool",
   "settings.agentBehaviour.permissions.col.pattern": "Pattern",
   "settings.agentBehaviour.permissions.col.action": "Action",
+  "settings.agentBehaviour.permissions.copy": "Copy permissions as JSON",
   "settings.agentBehaviour.permissions.hint":
     "Rules are evaluated in order — last matching rule wins. This is the resolved ruleset from the CLI backend.",
 

@@ -1140,6 +1140,7 @@ export const dict = {
   "settings.agentBehaviour.permissions.col.tool": "Narzędzie",
   "settings.agentBehaviour.permissions.col.pattern": "Wzorzec",
   "settings.agentBehaviour.permissions.col.action": "Akcja",
+  "settings.agentBehaviour.permissions.copy": "Kopiuj uprawnienia jako JSON",
   "settings.agentBehaviour.permissions.hint":
     "Reguły są sprawdzane po kolei — ostatnia pasująca reguła wygrywa. To jest wynikowy zestaw reguł z backendu CLI.",
   "settings.agentBehaviour.removeMode.title": "Usuń tryb",
