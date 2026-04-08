@@ -34,6 +34,16 @@ import { ModelPreview } from "./ModelPreview"
 // Row / group key helpers — single source of truth for key formatting
 // ---------------------------------------------------------------------------
 
+function fuzzyMatch(query: string, target: string): boolean {
+  const q = query.toLowerCase().replace(/\s+/g, "")
+  const t = target.toLowerCase().replace(/\s+/g, "")
+  let qi = 0
+  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+    if (t[ti] === q[qi]) qi++
+  }
+  return qi === q.length
+}
+
 const CLEAR_KEY = "clear"
 const FAVORITES_KEY = "favorites"
 const RECOMMENDED_KEY = "recommended"
@@ -167,11 +177,11 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
 
   // Flat filtered list for keyboard navigation
   const filtered = createMemo(() => {
-    const q = debouncedSearch().toLowerCase()
+    const q = debouncedSearch()
     if (!q) {
       return visibleModels()
     }
-    return visibleModels().filter((m) => m.name.toLowerCase().includes(q))
+    return visibleModels().filter((m) => fuzzyMatch(q, m.name) || fuzzyMatch(q, m.id) || fuzzyMatch(q, m.providerName))
   })
 
   // Live set of favorited keys — drives star icon visual state (filled vs outline).
