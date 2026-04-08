@@ -89,6 +89,8 @@
   <!-- packages/kilo-vscode/webview-ui/src/components/settings/CustomProviderDialog.tsx -->
 - <https://kilo.ai/gateway>
   <!-- packages/opencode/src/cli/cmd/tui/component/dialog-provider.tsx -->
+- <https://kilo.ai/install>
+  <!-- packages/opencode/src/installation/index.ts -->
 - <https://kilo.ai/kiloclaw>
   <!-- packages/opencode/src/kilocode/components/dialog-claw-setup.tsx -->
 - <https://kilo.ai/support>
@@ -112,8 +114,6 @@
   <!-- packages/opencode/src/config/config.ts -->
 - <https://opencode.ai/docs/providers/#cloudflare-ai-gateway>
   <!-- packages/opencode/src/cli/cmd/providers.ts -->
-- <https://opencode.ai/install>
-  <!-- packages/opencode/src/installation/index.ts -->
 - <https://opencode.ai/tui.json>
   <!-- packages/opencode/src/config/migrate-tui-config.ts -->
 - <https://opencode.ai/zen>
