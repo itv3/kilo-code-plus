@@ -5818,6 +5818,9 @@
                   "projectID": {
                     "type": "string"
                   },
+                  "force": {
+                    "type": "boolean"
+                  },
                   "workspaceID": {
                     "type": "string"
                   },
@@ -14210,6 +14213,9 @@
                 "type": "null"
               }
             ]
+          },
+          "worktreeName": {
+            "type": "string"
           }
         },
         "required": ["id", "slug", "projectID", "directory", "title", "version", "time", "project"]

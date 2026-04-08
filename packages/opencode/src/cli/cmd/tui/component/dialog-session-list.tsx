@@ -71,7 +71,7 @@ export function DialogSessionList() {
         const isWorking = status?.type === "busy"
         return {
           title: isDeleting ? `Press ${keybind.print("session_delete")} again to confirm` : x.title,
-          description: all ? `(${path.basename(x.directory)})` : undefined, // kilocode_change - worktree label
+          description: all && x.worktreeName ? `(${x.worktreeName})` : undefined, // kilocode_change - worktree label
           bg: isDeleting ? theme.error : undefined,
           value: x.id,
           category,

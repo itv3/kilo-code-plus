@@ -1780,6 +1780,7 @@ export type GlobalSession = {
     diff?: string
   }
   project: ProjectSummary | null
+  worktreeName?: string
 }
 
 export type McpResource = {

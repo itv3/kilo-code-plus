@@ -204,6 +204,7 @@ export namespace Session {
 
   export const GlobalInfo = Info.extend({
     project: ProjectInfo.nullable(),
+    worktreeName: z.string().optional(), // kilocode_change - basename of the specific worktree directory
   }).meta({
     ref: "GlobalSession",
   })
