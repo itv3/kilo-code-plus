@@ -11,12 +11,11 @@
 
 import { Component, createMemo, For, Show, createSignal, createEffect, on } from "solid-js"
 import { Dynamic } from "solid-js/web"
-import { Message, UserMessageDisplay } from "@kilocode/kilo-ui/message-part"
+import { UserMessageDisplay } from "@kilocode/kilo-ui/message-part"
 import { Collapsible } from "@kilocode/kilo-ui/collapsible"
 import { Accordion } from "@kilocode/kilo-ui/accordion"
 import { DiffChanges } from "@kilocode/kilo-ui/diff-changes"
 import { Icon } from "@kilocode/kilo-ui/icon"
-import { Card } from "@kilocode/kilo-ui/card"
 import { StickyAccordionHeader } from "@kilocode/kilo-ui/sticky-accordion-header"
 import { useData } from "@kilocode/kilo-ui/context/data"
 import { useDiffComponent } from "@kilocode/kilo-ui/context/diff"
@@ -28,6 +27,11 @@ import type {
   Part as SDKPart,
   FileDiff,
 } from "@kilocode/sdk/v2"
+import { ErrorDisplay } from "./ErrorDisplay"
+import { useServer } from "../../context/server"
+import { useSession } from "../../context/session"
+import { useLanguage } from "../../context/language"
+
 function getDirectory(path: string): string {
   const sep = path.includes("/") ? "/" : "\\"
   const idx = path.lastIndexOf(sep)
@@ -40,58 +44,19 @@ function getFilename(path: string): string {
   return idx === -1 ? path : path.slice(idx + 1)
 }
 
-function unwrapError(message: string): string {
-  const text = message.replace(/^Error:\s*/, "").trim()
-  const tryParse = (v: string) => {
-    try {
-      return JSON.parse(v) as unknown
-    } catch {
-      return undefined
-    }
-  }
-  const read = (v: string) => {
-    const first = tryParse(v)
-    if (typeof first !== "string") return first
-    return tryParse(first.trim())
-  }
-  let json = read(text)
-  if (json === undefined) {
-    const start = text.indexOf("{")
-    const end = text.lastIndexOf("}")
-    if (start !== -1 && end > start) json = read(text.slice(start, end + 1))
-  }
-  if (!json || typeof json !== "object" || Array.isArray(json)) return message
-  const rec = json as Record<string, unknown>
-  const err =
-    rec.error && typeof rec.error === "object" && !Array.isArray(rec.error)
-      ? (rec.error as Record<string, unknown>)
-      : undefined
-  if (err) {
-    const type = typeof err.type === "string" ? err.type : undefined
-    const msg = typeof err.message === "string" ? err.message : undefined
-    if (type && msg) return `${type}: ${msg}`
-    if (msg) return msg
-    if (type) return type
-    const code = typeof err.code === "string" ? err.code : undefined
-    if (code) return code
-  }
-  const msg = typeof rec.message === "string" ? rec.message : undefined
-  if (msg) return msg
-  const reason = typeof rec.error === "string" ? rec.error : undefined
-  if (reason) return reason
-  return message
-}
-
 interface VscodeSessionTurnProps {
   sessionID: string
   messageID: string
-  lastUserMessageID?: string
+  queued?: boolean
 }
 
 export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
   const data = useData()
   const i18n = useI18n()
   const diffComponent = useDiffComponent()
+  const server = useServer()
+  const session = useSession()
+  const language = useLanguage()
 
   const emptyMessages: SDKMessage[] = []
   const emptyParts: SDKPart[] = []
@@ -139,13 +104,6 @@ export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
     () => assistantMessages().find((m) => m.error && m.error.name !== "MessageAbortedError")?.error,
   )
 
-  const errorText = createMemo(() => {
-    const msg = error()?.data?.message
-    if (typeof msg === "string") return unwrapError(msg)
-    if (msg === undefined || msg === null) return ""
-    return unwrapError(String(msg))
-  })
-
   // Diffs from message summary
   const diffs = createMemo(() => {
     const rawDiffs = (message() as unknown as { summary?: { diffs?: unknown[] } } | undefined)?.summary?.diffs
@@ -174,19 +132,6 @@ export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
     ),
   )
 
-  // Last turn duration (for text part meta)
-  const turnDurationMs = createMemo(() => {
-    const start = (message() as unknown as { time?: { created?: number } } | undefined)?.time?.created
-    if (typeof start !== "number") return undefined
-    const end = assistantMessages().reduce<number | undefined>((max, item) => {
-      const completed = item.time?.completed
-      if (typeof completed !== "number") return max
-      return max === undefined ? completed : Math.max(max, completed)
-    }, undefined)
-    if (typeof end !== "number" || end < start) return undefined
-    return end - start
-  })
-
   // Copy part ID — the last text part from the last assistant message
   const showAssistantCopyPartID = createMemo(() => {
     const msgs = assistantMessages()
@@ -208,11 +153,30 @@ export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
       {(msg) => (
         <div class="vscode-session-turn" data-message={msg().id}>
           {/* User message */}
-          <div class="vscode-session-turn-user">
+          <div
+            class="vscode-session-turn-user"
+            data-revert-disabled={
+              assistantMessages().length > 0 && !session.revert() && session.status() !== "idle" ? "" : undefined
+            }
+            title={
+              assistantMessages().length > 0 && !session.revert() && session.status() !== "idle"
+                ? language.t("revert.disabled.agentBusy")
+                : undefined
+            }
+          >
             <UserMessageDisplay
               message={msg() as unknown as Parameters<typeof UserMessageDisplay>[0]["message"]}
               parts={parts() as unknown as Parameters<typeof UserMessageDisplay>[0]["parts"]}
               interrupted={interrupted()}
+              queued={props.queued}
+              onRevert={
+                assistantMessages().length > 0 && !session.revert()
+                  ? () => {
+                      if (session.status() !== "idle") return
+                      session.revertSession(props.messageID)
+                    }
+                  : undefined
+              }
             />
           </div>
 
@@ -220,13 +184,7 @@ export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
           <Show when={assistantMessages().length > 0}>
             <div class="vscode-session-turn-assistant">
               <For each={assistantMessages()}>
-                {(msg) => (
-                  <AssistantMessage
-                    message={msg}
-                    showAssistantCopyPartID={showAssistantCopyPartID()}
-                    turnDurationMs={turnDurationMs()}
-                  />
-                )}
+                {(msg) => <AssistantMessage message={msg} showAssistantCopyPartID={showAssistantCopyPartID()} />}
               </For>
             </div>
           </Show>
@@ -326,11 +284,9 @@ export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
             </div>
           </Show>
 
-          {/* Error card */}
+          {/* Error handling */}
           <Show when={error()}>
-            <Card variant="error" class="error-card">
-              {errorText()}
-            </Card>
+            <ErrorDisplay error={error()!} onLogin={server.startLogin} />
           </Show>
         </div>
       )}
