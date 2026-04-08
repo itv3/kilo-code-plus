@@ -46,6 +46,8 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "Tilføj kreditter",
 
   "ui.sessionTurn.status.delegating": "Delegerer arbejde",
+  "ui.sessionTurn.status.delegatingWaitingPermission": "Subagent waiting for permission",
+  "ui.sessionTurn.status.delegatingWaitingQuestion": "Subagent waiting for response",
   "ui.sessionTurn.status.planning": "Planlægger næste trin",
   "ui.sessionTurn.status.gatheringContext": "Udforsker",
   "ui.sessionTurn.status.gatheredContext": "Udforsket",
@@ -93,12 +95,15 @@ export const dict = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.webfetch": "Webhentning",
+  "ui.tool.websearch": "Websøgning",
+  "ui.tool.codesearch": "Kodesøgning",
   "ui.tool.shell": "Shell",
   "ui.tool.patch": "Patch",
   "ui.tool.todos": "Opgaver",
   "ui.tool.todos.read": "Læs opgaver",
   "ui.tool.questions": "Spørgsmål",
   "ui.tool.agent": "{{type}} Agent",
+  "ui.tool.agent.default": "Agent",
 
   "ui.common.file.one": "fil",
   "ui.common.file.other": "filer",
@@ -117,8 +122,6 @@ export const dict = {
   "ui.permission.deny": "Afvis",
   "ui.permission.allowAlways": "Tillad altid",
   "ui.permission.allowOnce": "Tillad én gang",
-  "ui.permission.sessionHint":
-    '"Tillad altid" gælder kun for denne session. Brug indstillinger til globale tilladelser.',
 
   "ui.message.expand": "Udvid besked",
   "ui.message.collapse": "Skjul besked",
@@ -126,6 +129,7 @@ export const dict = {
   "ui.message.copyMessage": "Kopier besked",
   "ui.message.copyResponse": "Kopier svar",
   "ui.message.copied": "Kopieret!",
+  "ui.message.revert": "Revert to here",
   "ui.message.interrupted": "Afbrudt",
   "ui.message.queued": "I kø",
   "ui.message.attachment.alt": "vedhæftning",

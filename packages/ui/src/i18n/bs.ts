@@ -51,6 +51,8 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "Dodaj kredite",
 
   "ui.sessionTurn.status.delegating": "Delegiranje posla",
+  "ui.sessionTurn.status.delegatingWaitingPermission": "Subagent waiting for permission",
+  "ui.sessionTurn.status.delegatingWaitingQuestion": "Subagent waiting for response",
   "ui.sessionTurn.status.planning": "Planiranje sljedećih koraka",
   "ui.sessionTurn.status.gatheringContext": "Istraživanje",
   "ui.sessionTurn.status.gatheredContext": "Istraženo",
@@ -98,12 +100,15 @@ export const dict = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.webfetch": "Web preuzimanje",
+  "ui.tool.websearch": "Pretraga weba",
+  "ui.tool.codesearch": "Pretraga koda",
   "ui.tool.shell": "Shell",
   "ui.tool.patch": "Patch",
   "ui.tool.todos": "Lista zadataka",
   "ui.tool.todos.read": "Čitanje liste zadataka",
   "ui.tool.questions": "Pitanja",
   "ui.tool.agent": "{{type}} agent",
+  "ui.tool.agent.default": "agent",
 
   "ui.common.file.one": "datoteka",
   "ui.common.file.other": "datoteke",
@@ -122,8 +127,6 @@ export const dict = {
   "ui.permission.deny": "Zabrani",
   "ui.permission.allowAlways": "Uvijek dozvoli",
   "ui.permission.allowOnce": "Dozvoli jednom",
-  "ui.permission.sessionHint":
-    '"Uvijek dozvoli" primjenjuje se samo na ovu sesiju. Koristite postavke za globalne dozvole.',
 
   "ui.message.expand": "Proširi poruku",
   "ui.message.collapse": "Sažmi poruku",
@@ -131,6 +134,7 @@ export const dict = {
   "ui.message.copyMessage": "Kopiraj poruku",
   "ui.message.copyResponse": "Kopiraj odgovor",
   "ui.message.copied": "Kopirano!",
+  "ui.message.revert": "Revert to here",
   "ui.message.interrupted": "Prekinuto",
   "ui.message.queued": "U redu",
   "ui.message.attachment.alt": "prilog",

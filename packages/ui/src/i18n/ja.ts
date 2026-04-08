@@ -46,6 +46,8 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "クレジットを追加",
 
   "ui.sessionTurn.status.delegating": "作業を委任中",
+  "ui.sessionTurn.status.delegatingWaitingPermission": "Subagent waiting for permission",
+  "ui.sessionTurn.status.delegatingWaitingQuestion": "Subagent waiting for response",
   "ui.sessionTurn.status.planning": "次のステップを計画中",
   "ui.sessionTurn.status.gatheringContext": "探索中",
   "ui.sessionTurn.status.gatheredContext": "探索済み",
@@ -93,12 +95,15 @@ export const dict = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.webfetch": "Webfetch",
+  "ui.tool.websearch": "Web検索",
+  "ui.tool.codesearch": "コード検索",
   "ui.tool.shell": "Shell",
   "ui.tool.patch": "Patch",
   "ui.tool.todos": "Todo",
   "ui.tool.todos.read": "Todo読み込み",
   "ui.tool.questions": "質問",
   "ui.tool.agent": "{{type}}エージェント",
+  "ui.tool.agent.default": "エージェント",
 
   "ui.common.file.one": "ファイル",
   "ui.common.file.other": "ファイル",
@@ -117,8 +122,6 @@ export const dict = {
   "ui.permission.deny": "拒否",
   "ui.permission.allowAlways": "常に許可",
   "ui.permission.allowOnce": "今回のみ許可",
-  "ui.permission.sessionHint":
-    "「常に許可」はこのセッションにのみ適用されます。グローバルな権限は設定で変更してください。",
 
   "ui.message.expand": "メッセージを展開",
   "ui.message.collapse": "メッセージを折りたたむ",
@@ -126,6 +129,7 @@ export const dict = {
   "ui.message.copyMessage": "メッセージをコピー",
   "ui.message.copyResponse": "応答をコピー",
   "ui.message.copied": "コピーしました！",
+  "ui.message.revert": "Revert to here",
   "ui.message.interrupted": "中断",
   "ui.message.queued": "待機中",
   "ui.message.attachment.alt": "添付ファイル",

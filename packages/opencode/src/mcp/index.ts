@@ -3,6 +3,15 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+// kilocode_change start
+// The MCP SDK only sets windowsHide:true in Electron (checks `'type' in process`).
+// When running inside the VS Code extension on Windows, set process.type so the SDK
+// hides cmd.exe windows when spawning MCP servers. The extension passes KILO_PLATFORM=vscode
+// so we use that to scope this shim to the vscode context only.
+if (process.platform === "win32" && process.env.KILO_PLATFORM === "vscode" && !("type" in process)) {
+  ;(process as NodeJS.Process & { type: string }).type = "browser"
+}
+// kilocode_change end
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js"
 import {
   CallToolResultSchema,
@@ -112,6 +121,7 @@ export namespace MCP {
   function registerNotificationHandlers(client: MCPClient, serverName: string) {
     client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
       log.info("tools list changed notification received", { server: serverName })
+      ;(await state()).toolsCache.delete(serverName) // kilocode_change
       Bus.publish(ToolsChanged, { server: serverName })
     })
   }
@@ -158,6 +168,14 @@ export namespace MCP {
   type McpEntry = NonNullable<Config.Info["mcp"]>[string]
   function isMcpConfigured(entry: McpEntry): entry is Config.Mcp {
     return typeof entry === "object" && entry !== null && "type" in entry
+  }
+
+  // kilocode_change — exported for testing
+  export function ensureDockerRm(cmd: string, args: string[]): string[] {
+    if (cmd !== "docker" || args[0] !== "run") return args
+    // Always inject --rm right after "run". Docker treats duplicate --rm as
+    // a no-op, so this is safe even when the user already specified it.
+    return ["run", "--rm", ...args.slice(1)]
   }
 
   async function descendants(pid: number): Promise<number[]> {
@@ -215,6 +233,7 @@ export namespace MCP {
       return {
         status,
         clients,
+        toolsCache: new Map<string, MCPToolDef[]>(), // kilocode_change — per-server listTools cache
       }
     },
     async (state) => {
@@ -293,6 +312,7 @@ export namespace MCP {
 
   export async function add(name: string, mcp: Config.Mcp) {
     const s = await state()
+    s.toolsCache.delete(name) // kilocode_change
     const result = await create(name, mcp)
     if (!result) {
       const status = {
@@ -384,7 +404,7 @@ export namespace MCP {
       for (const { name, transport } of transports) {
         try {
           const client = new Client({
-            name: "opencode",
+            name: "kilo", // kilocode_change
             version: Installation.VERSION,
           })
           await withTimeout(client.connect(transport), connectTimeout)
@@ -420,7 +440,7 @@ export namespace MCP {
               // Show toast for needs_auth
               Bus.publish(TuiEvent.ToastShow, {
                 title: "MCP Authentication Required",
-                message: `Server "${key}" requires authentication. Run: opencode mcp auth ${key}`,
+                message: `Server "${key}" requires authentication. Run: kilo mcp auth ${key}`, // kilocode_change
                 variant: "warning",
                 duration: 8000,
               }).catch((e) => log.debug("failed to show toast", { error: e }))
@@ -444,11 +464,14 @@ export namespace MCP {
 
     if (mcp.type === "local") {
       const [cmd, ...args] = mcp.command
+      // kilocode_change — inject --rm for Docker containers to prevent stopped
+      // containers from accumulating when MCP servers are toggled on/off.
+      const finalArgs = ensureDockerRm(cmd, args)
       const cwd = Instance.directory
       const transport = new StdioClientTransport({
         stderr: "pipe",
         command: cmd,
-        args,
+        args: finalArgs,
         cwd,
         env: {
           ...process.env,
@@ -463,7 +486,7 @@ export namespace MCP {
       const connectTimeout = mcp.timeout ?? DEFAULT_TIMEOUT
       try {
         const client = new Client({
-          name: "opencode",
+          name: "kilo", // kilocode_change
           version: Installation.VERSION,
         })
         await withTimeout(client.connect(transport), connectTimeout)
@@ -550,6 +573,7 @@ export namespace MCP {
   }
 
   export async function connect(name: string) {
+    ;(await state()).toolsCache.delete(name) // kilocode_change
     const cfg = await Config.get()
     const config = cfg.mcp ?? {}
     const mcp = config[name]
@@ -577,7 +601,6 @@ export namespace MCP {
     const s = await state()
     s.status[name] = result.status
     if (result.mcpClient) {
-      // Close existing client if present to prevent memory leaks
       const existingClient = s.clients[name]
       if (existingClient) {
         await existingClient.close().catch((error) => {
@@ -590,6 +613,7 @@ export namespace MCP {
 
   export async function disconnect(name: string) {
     const s = await state()
+    s.toolsCache.delete(name) // kilocode_change
     const client = s.clients[name]
     if (client) {
       await client.close().catch((error) => {
@@ -614,6 +638,12 @@ export namespace MCP {
 
     const toolsResults = await Promise.all(
       connectedClients.map(async ([clientName, client]) => {
+        // kilocode_change start — use cached listTools when available
+        const cached = s.toolsCache.get(clientName)
+        if (cached) {
+          return { clientName, client, toolsResult: { tools: cached } }
+        }
+        // kilocode_change end
         const toolsResult = await client.listTools().catch((e) => {
           log.error("failed to get tools", { clientName, error: e.message })
           const failedStatus = {
@@ -624,6 +654,7 @@ export namespace MCP {
           delete s.clients[clientName]
           return undefined
         })
+        if (toolsResult) s.toolsCache.set(clientName, toolsResult.tools) // kilocode_change
         return { clientName, client, toolsResult }
       }),
     )
@@ -800,7 +831,7 @@ export namespace MCP {
     // Try to connect - this will trigger the OAuth flow
     try {
       const client = new Client({
-        name: "opencode",
+        name: "kilo", // kilocode_change
         version: Installation.VERSION,
       })
       await client.connect(transport)

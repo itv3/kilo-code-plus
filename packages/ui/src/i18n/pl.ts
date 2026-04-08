@@ -46,6 +46,8 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "Dodaj kredyty",
 
   "ui.sessionTurn.status.delegating": "Delegowanie pracy",
+  "ui.sessionTurn.status.delegatingWaitingPermission": "Subagent waiting for permission",
+  "ui.sessionTurn.status.delegatingWaitingQuestion": "Subagent waiting for response",
   "ui.sessionTurn.status.planning": "Planowanie kolejnych kroków",
   "ui.sessionTurn.status.gatheringContext": "Eksplorowanie",
   "ui.sessionTurn.status.gatheredContext": "Wyeksplorowano",
@@ -93,12 +95,15 @@ export const dict = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.webfetch": "Pobieranie sieciowe",
+  "ui.tool.websearch": "Wyszukiwanie w sieci",
+  "ui.tool.codesearch": "Wyszukiwanie kodu",
   "ui.tool.shell": "Terminal",
   "ui.tool.patch": "Patch",
   "ui.tool.todos": "Zadania",
   "ui.tool.todos.read": "Czytaj zadania",
   "ui.tool.questions": "Pytania",
   "ui.tool.agent": "Agent {{type}}",
+  "ui.tool.agent.default": "Agent",
 
   "ui.common.file.one": "plik",
   "ui.common.file.other": "pliki",
@@ -117,8 +122,6 @@ export const dict = {
   "ui.permission.deny": "Odmów",
   "ui.permission.allowAlways": "Zezwalaj zawsze",
   "ui.permission.allowOnce": "Zezwól raz",
-  "ui.permission.sessionHint":
-    '"Zezwalaj zawsze" dotyczy tylko tej sesji. Użyj ustawień, aby zmienić globalne uprawnienia.',
 
   "ui.message.expand": "Rozwiń wiadomość",
   "ui.message.collapse": "Zwiń wiadomość",
@@ -126,6 +129,7 @@ export const dict = {
   "ui.message.copyMessage": "Kopiuj wiadomość",
   "ui.message.copyResponse": "Kopiuj odpowiedź",
   "ui.message.copied": "Skopiowano!",
+  "ui.message.revert": "Revert to here",
   "ui.message.interrupted": "Przerwano",
   "ui.message.queued": "W kolejce",
   "ui.message.attachment.alt": "załącznik",

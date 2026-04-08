@@ -47,6 +47,8 @@ export const dict = {
   "ui.sessionTurn.error.addCredits": "Ajouter des crédits",
 
   "ui.sessionTurn.status.delegating": "Délégation du travail",
+  "ui.sessionTurn.status.delegatingWaitingPermission": "Subagent waiting for permission",
+  "ui.sessionTurn.status.delegatingWaitingQuestion": "Subagent waiting for response",
   "ui.sessionTurn.status.planning": "Planification des prochaines étapes",
   "ui.sessionTurn.status.gatheringContext": "Exploration",
   "ui.sessionTurn.status.gatheredContext": "Exploré",
@@ -94,12 +96,15 @@ export const dict = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.webfetch": "Webfetch",
+  "ui.tool.websearch": "Recherche Web",
+  "ui.tool.codesearch": "Recherche de code",
   "ui.tool.shell": "Shell",
   "ui.tool.patch": "Patch",
   "ui.tool.todos": "Tâches",
   "ui.tool.todos.read": "Lire les tâches",
   "ui.tool.questions": "Questions",
   "ui.tool.agent": "Agent {{type}}",
+  "ui.tool.agent.default": "Agent",
 
   "ui.common.file.one": "fichier",
   "ui.common.file.other": "fichiers",
@@ -118,8 +123,6 @@ export const dict = {
   "ui.permission.deny": "Refuser",
   "ui.permission.allowAlways": "Toujours autoriser",
   "ui.permission.allowOnce": "Autoriser une fois",
-  "ui.permission.sessionHint":
-    '"Toujours autoriser" s\'applique uniquement à cette session. Utilisez les paramètres pour les autorisations globales.',
 
   "ui.message.expand": "Développer le message",
   "ui.message.collapse": "Réduire le message",
@@ -127,6 +130,7 @@ export const dict = {
   "ui.message.copyMessage": "Copier le message",
   "ui.message.copyResponse": "Copier la réponse",
   "ui.message.copied": "Copié !",
+  "ui.message.revert": "Revert to here",
   "ui.message.interrupted": "Interrompu",
   "ui.message.queued": "En file",
   "ui.message.attachment.alt": "pièce jointe",

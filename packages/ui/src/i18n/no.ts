@@ -50,6 +50,8 @@ export const dict: Record<Keys, string> = {
   "ui.sessionTurn.error.addCredits": "Legg til kreditt",
 
   "ui.sessionTurn.status.delegating": "Delegerer arbeid",
+  "ui.sessionTurn.status.delegatingWaitingPermission": "Subagent waiting for permission",
+  "ui.sessionTurn.status.delegatingWaitingQuestion": "Subagent waiting for response",
   "ui.sessionTurn.status.planning": "Planlegger neste trinn",
   "ui.sessionTurn.status.gatheringContext": "Utforsker",
   "ui.sessionTurn.status.gatheredContext": "Utforsket",
@@ -97,12 +99,15 @@ export const dict: Record<Keys, string> = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.webfetch": "Webhenting",
+  "ui.tool.websearch": "Nettsøk",
+  "ui.tool.codesearch": "Kodesøk",
   "ui.tool.shell": "Shell",
   "ui.tool.patch": "Patch",
   "ui.tool.todos": "Gjøremål",
   "ui.tool.todos.read": "Les gjøremål",
   "ui.tool.questions": "Spørsmål",
   "ui.tool.agent": "{{type}}-agent",
+  "ui.tool.agent.default": "agent",
 
   "ui.common.file.one": "fil",
   "ui.common.file.other": "filer",
@@ -121,8 +126,6 @@ export const dict: Record<Keys, string> = {
   "ui.permission.deny": "Avslå",
   "ui.permission.allowAlways": "Tillat alltid",
   "ui.permission.allowOnce": "Tillat én gang",
-  "ui.permission.sessionHint":
-    '"Tillat alltid" gjelder bare for denne økten. Bruk innstillinger for globale tillatelser.',
 
   "ui.message.expand": "Utvid melding",
   "ui.message.collapse": "Skjul melding",
@@ -130,6 +133,7 @@ export const dict: Record<Keys, string> = {
   "ui.message.copyMessage": "Kopier melding",
   "ui.message.copyResponse": "Kopier svar",
   "ui.message.copied": "Kopiert!",
+  "ui.message.revert": "Revert to here",
   "ui.message.interrupted": "Avbrutt",
   "ui.message.queued": "I kø",
   "ui.message.attachment.alt": "vedlegg",
