@@ -27,7 +27,7 @@ const env = {
 const CHANNEL = await (async () => {
   if (env.KILO_CHANNEL) return env.KILO_CHANNEL // kilocode_change
   // kilocode_change start - publish to "rc" channel for pre-releases
-  if (env.KILO_BUMP && env.KILO_PRE_RELEASE === "true") return "rc"
+  if (env.KILO_PRE_RELEASE === "true") return "rc"
   // kilocode_change end
   if (env.KILO_BUMP) return "latest" // kilocode_change
   if (env.KILO_VERSION && !env.KILO_VERSION.startsWith("0.0.0-")) return "latest" // kilocode_change
