@@ -4086,6 +4086,25 @@ export type PermissionSaveAlwaysRulesResponses = {
 export type PermissionSaveAlwaysRulesResponse =
   PermissionSaveAlwaysRulesResponses[keyof PermissionSaveAlwaysRulesResponses]
 
+export type PermissionListData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/permission"
+}
+
+export type PermissionListResponses = {
+  /**
+   * List of pending permissions
+   */
+  200: Array<PermissionRequest>
+}
+
+export type PermissionListResponse = PermissionListResponses[keyof PermissionListResponses]
+
 export type PermissionAllowEverythingData = {
   body?: {
     enable: boolean
@@ -4122,25 +4141,6 @@ export type PermissionAllowEverythingResponses = {
 
 export type PermissionAllowEverythingResponse =
   PermissionAllowEverythingResponses[keyof PermissionAllowEverythingResponses]
-
-export type PermissionListData = {
-  body?: never
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/permission"
-}
-
-export type PermissionListResponses = {
-  /**
-   * List of pending permissions
-   */
-  200: Array<PermissionRequest>
-}
-
-export type PermissionListResponse = PermissionListResponses[keyof PermissionListResponses]
 
 export type QuestionListData = {
   body?: never

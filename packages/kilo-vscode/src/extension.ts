@@ -133,6 +133,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Create diff virtual provider (lightweight single-file diff for permission approval)
   const diffVirtualProvider = new DiffVirtualProvider(context.extensionUri)
   provider.setDiffVirtualProvider(diffVirtualProvider)
+  agentManagerHost.setDiffVirtualProvider(diffVirtualProvider)
   context.subscriptions.push(diffVirtualProvider)
 
   // Create settings/profile editor provider (opens in editor area, not sidebar)
