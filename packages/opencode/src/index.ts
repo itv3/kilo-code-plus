@@ -54,7 +54,7 @@ import { Auth } from "./auth"
 import { DbCommand } from "./cli/cmd/db"
 import path from "path"
 import { Global } from "./global"
-import { HelpCommand } from "./kilocode/help-command" // kilocode_change
+import { createHelpCommand } from "./kilocode/help-command" // kilocode_change
 import { JsonMigration } from "./storage/json-migration"
 import { Database } from "./storage/db"
 
@@ -197,8 +197,11 @@ let cli = yargs(hideBin(process.argv))
   .command(SessionCommand)
   .command(RemoteCommand) // kilocode_change
   .command(DbCommand)
-  .command(HelpCommand) // kilocode_change
   .command(ConfigCLICommand) // kilocode_change
+
+// kilocode_change start - registered after initial chain to avoid self-referential type error
+cli = cli.command(createHelpCommand(() => cli))
+// kilocode_change end
 
 if (Installation.isLocal()) {
   cli = cli.command(WorkspaceServeCommand)
