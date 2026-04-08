@@ -944,6 +944,10 @@ export const dict = {
   "session.status.retrying": "Yeniden deneniyor (deneme {{ attempt }})… {{ message }}",
   "session.status.working": "Çalışıyor...",
 
+  "ui.sessionTurn.cancel": "İptal",
+  "ui.sessionTurn.status.thinking": "Düşünüyor...",
+  "ui.sessionTurn.status.consideringNextSteps": "Sonraki adımları değerlendiriyor...",
+
   "dialog.model.noProviders": "Sağlayıcı yok",
 
   "prompt.placeholder.connecting": "Sunucuya bağlanılıyor...",
@@ -1259,6 +1263,7 @@ export const dict = {
   "migration.whatsNew.features.foundation.detail":
     "Her Kilo ürününde küçük ve verimli bir çekirdek. Nasıl çalışmayı tercih ederseniz edin, tanıdık bir deneyim.",
   "migration.whatsNew.blogLink": "Tam duyuruyu oku",
+  "migration.whatsNew.docsLink": "Yenilikler ve sık sorulan sorular",
   "migration.whatsNew.continue": "Devam",
 
   // Screen 2 — Migrate Settings
@@ -1342,6 +1347,7 @@ export const dict = {
   "notifications.action.next": "Sonraki",
   "notifications.action.close": "Kapat",
   "notifications.action.tryModel": "Dene {{model}}",
+  "notifications.action.tryModelGeneric": "Modeli Dene",
   // Missing translations - English fallbacks until translated
   "profile.switchingAccount": "Hesap değiştiriliyor…",
   "settings.agentBehaviour.createMode": "Yeni Mod Oluştur",
@@ -1365,8 +1371,19 @@ export const dict = {
   "settings.agentBehaviour.editMode": "Modu Düzenle",
   "settings.agentBehaviour.editMode.back": "Listeye dön",
   "settings.agentBehaviour.editMode.description": "Açıklama",
-  "settings.agentBehaviour.editMode.native": "Yerleşik mod (salt okunur tanım)",
+  "settings.agentBehaviour.editMode.native":
+    "Bu yerleşik bir moddur. Temel tanımı değiştirilemez, ancak aşağıdan geçersiz kılmaları yapılandırabilirsiniz.",
   "settings.agentBehaviour.editMode.prompt": "Sistem İstemi",
   "settings.agentBehaviour.editMode.promptOverride": "Bu yerleşik mod için özel sistem istemi geçersiz kılma",
+  "settings.agentBehaviour.badge.subagent": "alt ajan",
+  "settings.agentBehaviour.permissions.title": "Hesaplanan İzinler",
+  "settings.agentBehaviour.permissions.count": "{{count}} kural",
+  "settings.agentBehaviour.permissions.effective": "Geçerli (joker karakter):",
+  "settings.agentBehaviour.permissions.col.tool": "Araç",
+  "settings.agentBehaviour.permissions.col.pattern": "Desen",
+  "settings.agentBehaviour.permissions.col.action": "Eylem",
+  "settings.agentBehaviour.permissions.copy": "İzinleri JSON olarak kopyala",
+  "settings.agentBehaviour.permissions.hint":
+    "Kurallar sırayla değerlendirilir — son eşleşen kural kazanır. Bu, CLI arka ucundan çözümlenen kural kümesidir.",
   "settings.agentBehaviour.editMode.save": "Tamam",
 }
