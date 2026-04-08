@@ -10,6 +10,7 @@ import { useSDK } from "../context/sdk"
 import { DialogSessionRename } from "./dialog-session-rename"
 import { createDebouncedSignal } from "../util/signal"
 import { Spinner } from "./spinner"
+import path from "path" // kilocode_change
 
 export function DialogSessionList() {
   const dialog = useDialog()
@@ -21,26 +22,21 @@ export function DialogSessionList() {
 
   const [toDelete, setToDelete] = createSignal<string>()
   const [search, setSearch] = createDebouncedSignal("", 150)
-  const [global, setGlobal] = createSignal(false) // kilocode_change
+  const [global, setGlobal] = createSignal(true) // kilocode_change - show all worktrees by default
 
-  // kilocode_change start
+  // kilocode_change start - always fetch from experimental endpoint (returns GlobalSession with worktree info)
   const [searchResults, searchActions] = createResource(
-    () => ({ query: search(), global: global() }),
-    async ({ query, global: all }) => {
-      if (!query && !all) return undefined
-      if (all) {
-        const result = await sdk.client.experimental.session.list(
-          {
-            search: query || undefined,
-            roots: true,
-            worktrees: true,
-            limit: 30,
-          },
-          { throwOnError: true },
-        )
-        return result.data ?? []
-      }
-      const result = await sdk.client.session.list({ search: query || undefined, limit: 30 }, { throwOnError: true })
+    () => search(),
+    async (query) => {
+      const result = await sdk.client.experimental.session.list(
+        {
+          search: query || undefined,
+          roots: true,
+          worktrees: true,
+          limit: 30,
+        },
+        { throwOnError: true },
+      )
       return result.data ?? []
     },
   )
@@ -48,10 +44,15 @@ export function DialogSessionList() {
 
   const currentSessionID = createMemo(() => (route.data.type === "session" ? route.data.sessionID : undefined))
 
+  // kilocode_change start - client-side worktree filtering when global is off
   const sessions = createMemo(() => {
-    if (global() || search()) return searchResults() ?? [] // kilocode_change
-    return searchResults() ?? sync.data.session
+    const all = searchResults() ?? []
+    if (global()) return all
+    const root = sync.data.path.worktree
+    if (!root || root === "/") return all
+    return all.filter((s) => s.directory === root || s.directory.startsWith(root + path.sep))
   })
+  // kilocode_change end
 
   const options = createMemo(() => {
     const today = new Date().toDateString()
@@ -70,6 +71,7 @@ export function DialogSessionList() {
         const isWorking = status?.type === "busy"
         return {
           title: isDeleting ? `Press ${keybind.print("session_delete")} again to confirm` : x.title,
+          description: all ? `(${path.basename(x.directory)})` : undefined, // kilocode_change - worktree label
           bg: isDeleting ? theme.error : undefined,
           value: x.id,
           category,
@@ -85,7 +87,7 @@ export function DialogSessionList() {
 
   return (
     <DialogSelect
-      title={global() ? "Sessions (all worktrees)" : "Sessions"} // kilocode_change
+      title={global() ? "Sessions (all worktrees)" : "Sessions (current worktree)"} // kilocode_change
       options={options()}
       skipFilter={true}
       current={currentSessionID()}
@@ -110,7 +112,7 @@ export function DialogSessionList() {
                 sessionID: option.value,
               })
               setToDelete(undefined)
-              if (global() || search()) void searchActions.refetch() // kilocode_change
+              void searchActions.refetch() // kilocode_change
               return
             }
             setToDelete(option.value)
@@ -126,7 +128,7 @@ export function DialogSessionList() {
                 session={option.value}
                 title={item?.title}
                 onConfirm={() => {
-                  if (global() || search()) void searchActions.refetch() // kilocode_change
+                  void searchActions.refetch() // kilocode_change
                 }}
               />
             ))
@@ -135,7 +137,7 @@ export function DialogSessionList() {
         // kilocode_change start
         {
           keybind: { name: "a", ctrl: true, meta: false, shift: false, leader: false },
-          title: global() ? "recent" : "all",
+          title: global() ? "current" : "all",
           onTrigger: async () => {
             setToDelete(undefined)
             setGlobal((v) => !v)
