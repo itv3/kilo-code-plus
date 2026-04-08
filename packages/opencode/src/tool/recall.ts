@@ -100,16 +100,19 @@ async function read(params: { sessionID?: string }, ctx: Tool.Context) {
   }
   // kilocode_change end
 
-  await ctx.ask({
-    permission: "recall",
-    patterns: [session.directory],
-    always: [session.directory],
-    metadata: {
-      sessionID: session.id,
-      title: session.title,
-      directory: session.directory,
-    },
-  })
+  const cross = session.projectID !== Instance.project.id
+  if (cross) {
+    await ctx.ask({
+      permission: "recall",
+      patterns: [session.directory],
+      always: [session.directory],
+      metadata: {
+        sessionID: session.id,
+        title: session.title,
+        directory: session.directory,
+      },
+    })
+  }
 
   const msgs = await Session.messages({ sessionID: session.id })
   const lines: string[] = [
