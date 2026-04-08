@@ -54,7 +54,7 @@ export function registerCommitMessageService(
 
       const path = repository.rootUri.fsPath
 
-      let client: KiloClient
+      let client
       try {
         client = await connectionService.getClientAsync()
       } catch (err) {
