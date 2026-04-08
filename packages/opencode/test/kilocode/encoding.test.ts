@@ -61,6 +61,14 @@ describe("Encoding", () => {
       expect(info.encoding).toBe("utf-8")
       expect(info.bom).toBe(false)
     })
+
+    test("does not misdetect UTF-32 LE BOM as UTF-16 LE", () => {
+      // UTF-32 LE BOM is FF FE 00 00
+      const bytes = Buffer.from([0xff, 0xfe, 0x00, 0x00, 0x41, 0x00, 0x00, 0x00])
+      const info = Encoding.detect(bytes)
+      // Should NOT be detected as utf-16le since it's actually UTF-32 LE
+      expect(info.encoding).not.toBe("utf-16le")
+    })
   })
 
   describe("decode", () => {

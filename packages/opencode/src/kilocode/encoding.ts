@@ -26,13 +26,19 @@ export namespace Encoding {
     if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
       return { encoding: "utf-8", bom: true }
     }
-    // Check UTF-16 BE before LE because FF FE could also be the start of UTF-32 LE,
-    // but FE FF is unambiguously UTF-16 BE.
     if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) {
       return { encoding: "utf-16be", bom: true }
     }
+    // Disambiguate UTF-32 LE (FF FE 00 00) from UTF-16 LE (FF FE).
+    // UTF-32 is extremely rare in practice — treat it as UTF-16 LE only
+    // when the next two bytes are NOT both zero.
     if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
-      return { encoding: "utf-16le", bom: true }
+      if (bytes.length >= 4 && bytes[2] === 0x00 && bytes[3] === 0x00) {
+        // Looks like a UTF-32 LE BOM — unsupported, fall through to
+        // heuristic detection which will treat it as binary/latin1.
+      } else {
+        return { encoding: "utf-16le", bom: true }
+      }
     }
 
     // Heuristic: detect BOM-less UTF-16 by looking for null-byte patterns
