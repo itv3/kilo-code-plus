@@ -179,7 +179,7 @@ export namespace PermissionNext {
     return {
       pending,
       approved: stored,
-      session: {} as Record<string, Ruleset>,
+      session: {} as Record<string, Ruleset>, // kilocode_change
     }
   })
 
@@ -190,12 +190,12 @@ export namespace PermissionNext {
     async (input) => {
       const s = await state()
       const { ruleset, ...request } = input
-      const local = s.session[request.sessionID] ?? []
+      const local = s.session[request.sessionID] ?? [] // kilocode_change
       // kilocode_change start — force "ask" for config file edits
       const protected_ = ConfigProtection.isRequest(request)
       // kilocode_change end
       for (const pattern of request.patterns ?? []) {
-        const rule = evaluate(request.permission, pattern, ruleset, s.approved, local)
+        const rule = evaluate(request.permission, pattern, ruleset, s.approved, local) // kilocode_change
         log.info("evaluated", { permission: request.permission, pattern, action: rule })
         if (rule.action === "deny")
           throw new DeniedError(ruleset.filter((r) => Wildcard.match(request.permission, r.permission)))

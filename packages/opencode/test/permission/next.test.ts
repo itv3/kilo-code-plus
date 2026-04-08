@@ -606,6 +606,7 @@ test("reply - always persists approval and resolves", async () => {
   })
 })
 
+// kilocode_change start
 test("allowEverything - session-scoped enable stays within one session", async () => {
   await using tmp = await tmpdir({ git: true })
   await Instance.provide({
@@ -658,6 +659,7 @@ test("allowEverything - session-scoped enable stays within one session", async (
     },
   })
 })
+// kilocode_change end
 
 test("reply - reject cancels all pending for same session", async () => {
   await using tmp = await tmpdir({ git: true })

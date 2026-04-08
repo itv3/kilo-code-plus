@@ -1,3 +1,4 @@
+// kilocode_change - new file
 import { describe, expect, test } from "bun:test"
 import { PermissionNext } from "../../src/permission/next"
 import { Instance } from "../../src/project/instance"
