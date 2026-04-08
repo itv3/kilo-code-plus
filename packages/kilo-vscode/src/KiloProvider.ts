@@ -1629,6 +1629,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         description: a.description,
         mode: a.mode,
         native: a.native,
+        hidden: a.hidden,
         color: a.color,
         deprecated: a.deprecated,
         permission: a.permission,

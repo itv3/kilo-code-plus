@@ -82,7 +82,12 @@ const AgentBehaviourTab: Component = () => {
   })
 
   const agentNames = createMemo(() => {
-    const names = session.allAgents().map((a) => a.name)
+    // Exclude server-side hidden internal modes (compaction, title, summary)
+    // from the list. Config-only agents are still added below.
+    const names = session
+      .allAgents()
+      .filter((a) => !a.hidden)
+      .map((a) => a.name)
     // Also include any agents from config that might not be in the agent list
     const agents = Object.keys(config().agent ?? {})
     for (const name of agents) {
