@@ -108,10 +108,12 @@ const allTargets: {
     arch: "x64",
     avx2: false,
   },
+  // kilocode_change start - Windows ARM64 target
   {
     os: "win32",
     arch: "arm64",
   },
+  // kilocode_change end
   {
     os: "win32",
     arch: "x64",
