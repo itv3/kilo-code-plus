@@ -26,7 +26,7 @@ export namespace Installation {
   }
 
   async function upgradeCurl(target: string) {
-    const body = await fetch("https://opencode.ai/install").then((res) => {
+    const body = await fetch("https://kilo.ai/install").then((res) => { // kilocode_change
       if (!res.ok) throw new Error(res.statusText)
       return res.text()
     })
@@ -120,15 +120,7 @@ export namespace Installation {
       },
       {
         name: "brew" as const,
-        command: () => text(["brew", "list", "--formula", "opencode"]),
-      },
-      {
-        name: "scoop" as const,
-        command: () => text(["scoop", "list", "opencode"]),
-      },
-      {
-        name: "choco" as const,
-        command: () => text(["choco", "list", "--limit-output", "opencode"]),
+        command: () => text(["brew", "list", "--formula", "kilo"]), // kilocode_change
       },
     ]
     // kilocode_change end
@@ -145,7 +137,7 @@ export namespace Installation {
       const output = await check.command()
       // kilocode_change start - check for @kilocode/cli instead of opencode-ai for JS package managers
       const installedName =
-        check.name === "brew" || check.name === "choco" || check.name === "scoop" ? "opencode" : "@kilocode/cli"
+        check.name === "brew" ? "opencode" : "@kilocode/cli" // kilocode_change - removed choco/scoop
       // kilocode_change end
       if (output.includes(installedName)) {
         return check.name
@@ -163,11 +155,13 @@ export namespace Installation {
   )
 
   async function getBrewFormula() {
-    const tapFormula = await text(["brew", "list", "--formula", "anomalyco/tap/opencode"])
-    if (tapFormula.includes("opencode")) return "anomalyco/tap/opencode"
-    const coreFormula = await text(["brew", "list", "--formula", "opencode"])
-    if (coreFormula.includes("opencode")) return "opencode"
-    return "opencode"
+    // kilocode_change start
+    const tapFormula = await text(["brew", "list", "--formula", "Kilo-Org/tap/kilo"])
+    if (tapFormula.includes("kilo")) return "Kilo-Org/tap/kilo"
+    const coreFormula = await text(["brew", "list", "--formula", "kilo"])
+    if (coreFormula.includes("kilo")) return "kilo"
+    return "kilo"
+    // kilocode_change end
   }
 
   export async function upgrade(method: Method, target: string) {
@@ -192,12 +186,12 @@ export namespace Installation {
           ...process.env,
         }
         if (formula.includes("/")) {
-          const tap = await Process.run(["brew", "tap", "anomalyco/tap"], { env, nothrow: true })
+          const tap = await Process.run(["brew", "tap", "Kilo-Org/tap/kilo"], { env, nothrow: true }) // kilocode_change
           if (tap.code !== 0) {
             result = tap
             break
           }
-          const repo = await Process.text(["brew", "--repo", "anomalyco/tap"], { env, nothrow: true })
+          const repo = await Process.text(["brew", "--repo", "Kilo-Org/tap/kilo"], { env, nothrow: true }) // kilocode_change
           if (repo.code !== 0) {
             result = repo
             break
@@ -215,18 +209,12 @@ export namespace Installation {
         break
       }
 
-      case "choco":
-        result = await Process.run(["choco", "upgrade", "opencode", `--version=${target}`, "-y"], { nothrow: true })
-        break
-      case "scoop":
-        result = await Process.run(["scoop", "install", `opencode@${target}`], { nothrow: true })
-        break
+      // kilocode_change - removed choco/scoop (not supported by Kilo)
       default:
         throw new Error(`Unknown method: ${method}`)
     }
     if (!result || result.code !== 0) {
-      const stderr =
-        method === "choco" ? "not running from an elevated command shell" : result?.stderr.toString("utf8") || ""
+      const stderr = result?.stderr.toString("utf8") || ""
       throw new UpgradeFailedError({
         stderr: stderr,
       })
@@ -281,29 +269,7 @@ export namespace Installation {
     }
     // kilocode_change end
 
-    if (detectedMethod === "choco") {
-      return fetch(
-        "https://community.chocolatey.org/api/v2/Packages?$filter=Id%20eq%20%27opencode%27%20and%20IsLatestVersion&$select=Version",
-        { headers: { Accept: "application/json;odata=verbose" } },
-      )
-        .then((res) => {
-          if (!res.ok) throw new Error(res.statusText)
-          return res.json()
-        })
-        .then((data: any) => data.d.results[0].Version)
-    }
-
-    if (detectedMethod === "scoop") {
-      return fetch("https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/opencode.json", {
-        headers: { Accept: "application/json" },
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error(res.statusText)
-          return res.json()
-        })
-        .then((data: any) => data.version)
-    }
-
+    // kilocode_change - removed choco/scoop version checks (not supported by Kilo)
     return fetch("https://api.github.com/repos/Kilo-Org/kilocode/releases/latest")
       .then((res) => {
         if (!res.ok) throw new Error(res.statusText)
