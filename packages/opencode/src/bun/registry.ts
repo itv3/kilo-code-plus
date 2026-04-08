@@ -36,6 +36,17 @@ export namespace PackageRegistry {
       return false
     }
 
+    // kilocode_change start — guard against invalid semver (npm semver is stricter than Bun's built-in)
+    if (!cachedVersion || (!semver.valid(cachedVersion) && !semver.validRange(cachedVersion))) {
+      log.warn("cannot compare versions, skipping outdated check", { cachedVersion, latestVersion })
+      return false
+    }
+    if (!latestVersion || !semver.valid(latestVersion)) {
+      log.warn("cannot compare versions, skipping outdated check", { cachedVersion, latestVersion })
+      return false
+    }
+    // kilocode_change end
+
     const isRange = /[\s^~*xX<>|=]/.test(cachedVersion)
     if (isRange) return !semver.satisfies(latestVersion, cachedVersion)
 
