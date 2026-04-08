@@ -177,7 +177,7 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
 
   // Flat filtered list for keyboard navigation
   const filtered = createMemo(() => {
-    const q = debouncedSearch()
+    const q = debouncedSearch().trim()
     if (!q) {
       return visibleModels()
     }
