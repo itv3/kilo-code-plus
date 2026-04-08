@@ -44,7 +44,7 @@
     bottom: var(--card-line-pad);
     width: 2px;
     border-radius: 2px;
-    background-color: var(--card-accent);
+    background-color: transparent; /* kilocode_change — upstream uses var(--card-accent) but clashes with Kilo light theme */
   }
 
   :where([data-card="title"], [data-slot="card-title"]) {
