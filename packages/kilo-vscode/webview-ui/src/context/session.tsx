@@ -1045,6 +1045,7 @@ export const SessionProvider: ParentComponent = (props) => {
         if (!parts) continue
         for (const p of parts) {
           if (p.type !== "tool") continue
+          // Webview ToolState omits runtime metadata; task parts still carry it from the backend.
           const child = childID(
             p as {
               type: string
