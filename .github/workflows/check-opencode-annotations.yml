@@ -11,12 +11,7 @@ on:
 jobs:
   check-annotations:
     name: Check kilocode_change annotations
-    if: >-
-      github.repository == 'Kilo-Org/kilocode' &&
-      (
-        github.event_name != 'pull_request' ||
-        !contains(github.event.pull_request.head.ref, 'kilo-opencode-')
-      )
+    if: github.repository == 'Kilo-Org/kilocode'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

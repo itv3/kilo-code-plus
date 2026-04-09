@@ -50,28 +50,12 @@ function changedFiles() {
   return out ? out.split("\n").filter(Boolean) : []
 }
 
-function branch() {
-  return process.env.GITHUB_HEAD_REF || process.env.HEAD_REF || run("git", ["branch", "--show-current"])
-}
-
-function commits() {
+function isUpstreamMerge() {
   const out = run("git", ["log", "--format=%P%x09%s", `${base}..HEAD`])
-  return out ? out.split("\n").filter(Boolean) : []
-}
-
-function skip() {
-  const name = branch()
-  if (name.includes("kilo-opencode-")) {
-    return `upstream merge branch '${name}'`
-  }
-
-  const hit = commits().find((line) => {
+  return out.split("\n").some((line) => {
     const [parents = "", subject = ""] = line.split("\t")
     return parents.includes(" ") && subject.startsWith("merge: upstream ")
   })
-
-  if (hit) return "upstream merge commit"
-  return ""
 }
 
 function isExempt(file: string) {
@@ -144,9 +128,8 @@ function coveredLines(text: string): { lines: string[]; covered: Set<number> } {
 
 // --- main ---
 
-const why = skip()
-if (why) {
-  console.log(`Skipping opencode annotation check for ${why}.`)
+if (isUpstreamMerge()) {
+  console.log("Skipping opencode annotation check — upstream opencode merge detected.")
   process.exit(0)
 }
 
