@@ -54,7 +54,8 @@ function isUpstreamMerge() {
   const out = run("git", ["log", "--format=%P%x09%s", `${base}..HEAD`])
   return out.split("\n").some((line) => {
     const [parents = "", subject = ""] = line.split("\t")
-    return parents.includes(" ") && subject.startsWith("merge: upstream ")
+    if (!parents.includes(" ")) return false
+    return subject.startsWith("merge: upstream ") || subject.startsWith("Resolve merge conflict")
   })
 }
 
