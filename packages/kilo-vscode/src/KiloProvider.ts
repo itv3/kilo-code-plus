@@ -42,6 +42,7 @@ import { getBusySessionCount, seedSessionStatuses } from "./session-status"
 import { retry } from "./services/cli-backend/retry"
 import { slimPart, slimParts } from "./kilo-provider/slim-metadata"
 import { matchFollowup, recordFollowup, type Followup } from "./kilo-provider/followup-session"
+import { childID } from "./kilo-provider/task-session"
 import { retryable, backoff, MAX_RETRIES } from "./util/retry"
 // legacy-migration start
 import {
@@ -2960,9 +2961,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         type?: string
         tool?: string
         metadata?: { sessionId?: string }
+        state?: { metadata?: { sessionId?: string } }
         sessionID?: string
       }
-      const childId = part.type === "tool" && part.tool === "task" ? part.metadata?.sessionId : undefined
+      const childId = childID(part)
       if (childId && !this.trackedSessionIds.has(childId)) {
         console.log("[Kilo New] KiloProvider: 🔗 Auto-adopting child session from task tool", { childId })
         void this.handleSyncSession(childId, part.sessionID ?? sessionID)
