@@ -6,8 +6,10 @@ import {
   buildSettingPath,
   mapSSEEventToWebviewMessage,
   isEventFromForeignProject,
+  mapCloudSessionMessageToWebviewMessage,
   type ProviderInfo,
 } from "../../src/kilo-provider-utils"
+import type { CloudSessionMessage } from "../../src/services/cli-backend/types"
 import type {
   Session,
   Agent,
@@ -17,6 +19,7 @@ import type {
   EventMessageUpdated,
   EventSessionStatus,
   EventPermissionAsked,
+  EventPermissionReplied,
   EventTodoUpdated,
   EventQuestionAsked,
   EventQuestionReplied,
@@ -281,6 +284,7 @@ describe("mapSSEEventToWebviewMessage", () => {
       expect(msg.permission.args).toEqual({ path: "/foo" })
       expect(msg.permission.message).toBe("Permission required: read_file")
       expect(msg.permission.patterns).toEqual(["**/*.ts"])
+      expect(msg.permission.always).toEqual([])
     }
   })
 
@@ -299,6 +303,42 @@ describe("mapSSEEventToWebviewMessage", () => {
     const msg = mapSSEEventToWebviewMessage(event, "s1")
     if (msg?.type === "permissionRequest") {
       expect(msg.permission.patterns).toEqual([])
+    }
+  })
+
+  it("maps permission.replied to permissionResolved", () => {
+    const event: EventPermissionReplied = {
+      type: "permission.replied",
+      properties: { sessionID: "sess-1", requestID: "perm-1", reply: "once" },
+    }
+    const msg = mapSSEEventToWebviewMessage(event, "sess-1")
+    expect(msg?.type).toBe("permissionResolved")
+    if (msg?.type === "permissionResolved") {
+      expect(msg.permissionID).toBe("perm-1")
+    }
+  })
+
+  it("maps permission.replied (always) to permissionResolved", () => {
+    const event: EventPermissionReplied = {
+      type: "permission.replied",
+      properties: { sessionID: "sess-1", requestID: "perm-2", reply: "always" },
+    }
+    const msg = mapSSEEventToWebviewMessage(event, "sess-1")
+    expect(msg?.type).toBe("permissionResolved")
+    if (msg?.type === "permissionResolved") {
+      expect(msg.permissionID).toBe("perm-2")
+    }
+  })
+
+  it("maps permission.replied (reject) to permissionResolved", () => {
+    const event: EventPermissionReplied = {
+      type: "permission.replied",
+      properties: { sessionID: "sess-1", requestID: "perm-3", reply: "reject" },
+    }
+    const msg = mapSSEEventToWebviewMessage(event, "sess-1")
+    expect(msg?.type).toBe("permissionResolved")
+    if (msg?.type === "permissionResolved") {
+      expect(msg.permissionID).toBe("perm-3")
     }
   })
 
@@ -323,11 +363,21 @@ describe("mapSSEEventToWebviewMessage", () => {
       properties: {
         id: "q1",
         sessionID: "sess-1",
-        questions: [],
+        questions: [
+          {
+            question: "Ready to implement?",
+            header: "Implement",
+            options: [{ label: "Implement", description: "Switch to code", mode: "code" }],
+          },
+        ],
       },
     }
     const msg = mapSSEEventToWebviewMessage(event, "sess-1")
     expect(msg?.type).toBe("questionRequest")
+    if (msg?.type === "questionRequest") {
+      const questions = msg.question.questions as Array<{ options?: Array<{ mode?: string }> }>
+      expect(questions[0]?.options?.[0]?.mode).toBe("code")
+    }
   })
 
   it("maps question.replied to questionResolved", () => {
@@ -419,5 +469,57 @@ describe("isEventFromForeignProject", () => {
   it("keeps non-session events regardless of project", () => {
     const event = { type: "server.heartbeat", properties: {} } as unknown as Event
     expect(isEventFromForeignProject(event, "project-A")).toBe(false)
+  })
+})
+
+describe("mapCloudSessionMessage", () => {
+  function makeCloudMessage(overrides: Partial<CloudSessionMessage["info"]> = {}): CloudSessionMessage {
+    return {
+      info: {
+        id: "msg-1",
+        sessionID: "sess-1",
+        role: "assistant",
+        time: { created: 1700000000000, completed: 1700000005000 },
+        cost: { input: 10, output: 20 },
+        tokens: { input: 100, output: 200 },
+        ...overrides,
+      },
+      parts: [{ id: "p1", sessionID: "sess-1", messageID: "msg-1", type: "text", text: "hello" }],
+    }
+  }
+
+  it("maps fields to webview message format", () => {
+    const msg = mapCloudSessionMessageToWebviewMessage(makeCloudMessage())
+    expect(msg.id).toBe("msg-1")
+    expect(msg.sessionID).toBe("sess-1")
+    expect(msg.role).toBe("assistant")
+    expect(msg.createdAt).toBe(new Date(1700000000000).toISOString())
+    expect(msg.cost).toEqual({ input: 10, output: 20 })
+    expect(msg.tokens).toEqual({ input: 100, output: 200 })
+    expect(msg.parts).toHaveLength(1)
+  })
+
+  it("includes the time field with created and completed", () => {
+    const msg = mapCloudSessionMessageToWebviewMessage(makeCloudMessage())
+    expect(msg.time).toEqual({ created: 1700000000000, completed: 1700000005000 })
+  })
+
+  it("includes time when only created is present", () => {
+    const msg = mapCloudSessionMessageToWebviewMessage(makeCloudMessage({ time: { created: 1700000000000 } }))
+    expect(msg.time).toEqual({ created: 1700000000000 })
+  })
+
+  it("falls back to current date when time.created is missing", () => {
+    const before = Date.now()
+    const msg = mapCloudSessionMessageToWebviewMessage(makeCloudMessage({ time: undefined as never }))
+    const after = Date.now()
+    const createdAt = new Date(msg.createdAt).getTime()
+    expect(createdAt).toBeGreaterThanOrEqual(before)
+    expect(createdAt).toBeLessThanOrEqual(after)
+  })
+
+  it("maps user role correctly", () => {
+    const msg = mapCloudSessionMessageToWebviewMessage(makeCloudMessage({ role: "user" }))
+    expect(msg.role).toBe("user")
   })
 })

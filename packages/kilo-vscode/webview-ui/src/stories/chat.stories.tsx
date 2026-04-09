@@ -1,7 +1,7 @@
 /** @jsxImportSource solid-js */
 /**
  * Stories for high-priority chat components:
- * ChatView, MessageList, QuestionDock
+ * ChatView, MessageList, QuestionDock, TaskHeader
  *
  * These render with mocked session/server/provider contexts — the components
  * will show their "idle / empty" states since no real extension host is connected.
@@ -10,9 +10,11 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite"
 import { StoryProviders, mockSessionValue } from "./StoryProviders"
 import { ChatView } from "../components/chat/ChatView"
+import { TaskHeader } from "../components/chat/TaskHeader"
 import { QuestionDock } from "../components/chat/QuestionDock"
 import { SessionContext } from "../context/session"
-import type { QuestionRequest } from "../types/messages"
+import { ServerContext } from "../context/server"
+import type { QuestionRequest, TodoItem } from "../types/messages"
 
 const SESSION_ID = "story-session-chat-001"
 
@@ -97,7 +99,7 @@ export const ChatViewWithMessages: Story = {
     const session = {
       ...mockSessionValue({ id: SESSION_ID, status: "idle" }),
       messages: () => [{ id: "msg-001" }] as any[],
-      totalCost: () => 0.0012,
+      costBreakdown: () => [{ label: "Parent session", cost: 0.0012 }],
       contextUsage: () => ({ tokens: 512, percentage: 6 }),
     }
     return (
@@ -134,6 +136,153 @@ export const QuestionDockMulti: Story = {
       <div style={{ width: "100%" }}>
         <QuestionDock request={multiQuestion} />
       </div>
+    </StoryProviders>
+  ),
+}
+
+/** Many options to verify the max-height scroll constraint */
+const manyOptionsQuestion: QuestionRequest = {
+  id: "q-many-001",
+  sessionID: SESSION_ID,
+  questions: [
+    {
+      question: "What would you like to work on today?",
+      header: "Quick check-in",
+      options: [
+        { label: "Fix a bug", description: "Debug and resolve an issue in the codebase" },
+        { label: "Add a feature", description: "Implement new functionality" },
+        { label: "Refactor code", description: "Improve existing code structure or quality" },
+        { label: "Write tests", description: "Add or improve test coverage" },
+        { label: "Review code", description: "Provide feedback on code changes" },
+        { label: "Update docs", description: "Improve documentation" },
+        { label: "Performance", description: "Optimize for speed or memory" },
+      ],
+    },
+  ],
+}
+
+export const QuestionDockManyOptions: Story = {
+  name: "QuestionDock — many options (scrollable)",
+  render: () => (
+    <StoryProviders sessionID={SESSION_ID} questions={[manyOptionsQuestion]}>
+      <div style={{ width: "100%" }}>
+        <QuestionDock request={manyOptionsQuestion} />
+      </div>
+    </StoryProviders>
+  ),
+}
+
+// ---------------------------------------------------------------------------
+// TaskHeader with todos
+// ---------------------------------------------------------------------------
+
+const mockTodosInProgress: TodoItem[] = [
+  { id: "1", content: "Create a haiku about Jan", status: "completed" },
+  { id: "2", content: "Create a poem about Henk", status: "in_progress" },
+  { id: "3", content: "Write a limerick about the team", status: "pending" },
+]
+
+const mockTodosAllDone: TodoItem[] = [
+  { id: "1", content: "Create a haiku about Jan", status: "completed" },
+  { id: "2", content: "Create a poem about Henk", status: "completed" },
+]
+
+export const TaskHeaderWithTodos: Story = {
+  name: "TaskHeader — with todos (in progress)",
+  render: () => {
+    const session = {
+      ...mockSessionValue({ id: SESSION_ID, status: "busy" }),
+      messages: () => [{ id: "msg-001" }] as any[],
+      currentSession: () => ({
+        id: SESSION_ID,
+        title: "Writing poems about the team",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+      todos: () => mockTodosInProgress,
+    }
+    return (
+      <StoryProviders sessionID={SESSION_ID} status="busy" noPadding>
+        <SessionContext.Provider value={session as any}>
+          <div style={{ width: "380px" }}>
+            <TaskHeader />
+          </div>
+        </SessionContext.Provider>
+      </StoryProviders>
+    )
+  },
+}
+
+export const TaskHeaderWithTodosAllDone: Story = {
+  name: "TaskHeader — with todos (all done)",
+  render: () => {
+    const session = {
+      ...mockSessionValue({ id: SESSION_ID, status: "idle" }),
+      messages: () => [{ id: "msg-001" }] as any[],
+      currentSession: () => ({
+        id: SESSION_ID,
+        title: "Writing poems about the team",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+      todos: () => mockTodosAllDone,
+    }
+    return (
+      <StoryProviders sessionID={SESSION_ID} status="idle" noPadding>
+        <SessionContext.Provider value={session as any}>
+          <div style={{ width: "380px" }}>
+            <TaskHeader />
+          </div>
+        </SessionContext.Provider>
+      </StoryProviders>
+    )
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Welcome screen with AccountSwitcher + KiloNotifications
+// ---------------------------------------------------------------------------
+
+const MOCK_NOTIFICATION = {
+  id: "notif-1",
+  title: "Try BYOK for Kilo Gateway",
+  message: "Bring your own API key for even more flexibility with Kilo Gateway models.",
+  action: { actionText: "Learn more", actionURL: "https://kilo.ai/docs" },
+}
+
+/** Mock server context with profile data so AccountSwitcher is visible */
+const mockServer = {
+  connectionState: () => "connected" as const,
+  serverInfo: () => undefined,
+  extensionVersion: () => "1.0.0",
+  errorMessage: () => undefined,
+  errorDetails: () => undefined,
+  isConnected: () => true,
+  profileData: () => ({
+    profile: {
+      email: "dev@kilo.dev",
+      name: "Dev User",
+      organizations: [{ id: "org-1", name: "Kilo Org", role: "member" }],
+    },
+    balance: { balance: 5.0 },
+    currentOrgId: "org-1",
+  }),
+  deviceAuth: () => ({ status: "idle" as const }),
+  startLogin: () => {},
+  vscodeLanguage: () => "en",
+  languageOverride: () => undefined,
+  workspaceDirectory: () => "/project",
+}
+
+export const WelcomeWithSwitcherAndNotification: Story = {
+  name: "Welcome — account switcher + notification",
+  render: () => (
+    <StoryProviders sessionID={SESSION_ID} status="idle" noPadding notifications={[MOCK_NOTIFICATION]}>
+      <ServerContext.Provider value={mockServer as any}>
+        <div style={{ width: "100%", height: "600px", display: "flex", "flex-direction": "column" }}>
+          <ChatView />
+        </div>
+      </ServerContext.Provider>
     </StoryProviders>
   ),
 }

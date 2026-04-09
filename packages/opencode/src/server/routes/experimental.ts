@@ -10,11 +10,14 @@ import { Session } from "../../session"
 import { zodToJsonSchema } from "zod-to-json-schema"
 import { errors } from "../error"
 import { lazy } from "../../util/lazy"
-import { $ } from "bun" // kilocode_change
-import path from "path" // kilocode_change
 import { Snapshot } from "../../snapshot" // kilocode_change
 import { Review } from "../../kilocode/review/review" // kilocode_change
+import { WorktreeDiff } from "../../kilocode/review/worktree-diff" // kilocode_change
+import { WorktreeFamily } from "../../kilocode/worktree-family" // kilocode_change
 import { Log } from "../../util/log" // kilocode_change
+import { WorkspaceRoutes } from "./workspace"
+import { Filesystem } from "../../util/filesystem" // kilocode_change
+import path from "path" // kilocode_change
 
 export const ExperimentalRoutes = lazy(() =>
   new Hono()
@@ -92,6 +95,7 @@ export const ExperimentalRoutes = lazy(() =>
         )
       },
     )
+    .route("/workspace", WorkspaceRoutes())
     .post(
       "/worktree",
       describeRoute({
@@ -223,118 +227,84 @@ export const ExperimentalRoutes = lazy(() =>
         // kilocode_change end
         const dir = Instance.directory
         log.info("computing diff", { dir, base })
-
-        const mergeBaseResult = await $`git merge-base HEAD ${base}`.cwd(dir).quiet().nothrow()
-        if (mergeBaseResult.exitCode !== 0) {
-          log.warn("git merge-base failed", {
-            exitCode: mergeBaseResult.exitCode,
-            stderr: mergeBaseResult.stderr.toString().trim(),
-            dir,
-            base,
-          })
-          return c.json([])
-        }
-        const ancestor = mergeBaseResult.stdout.toString().trim()
-        log.info("merge-base resolved", { ancestor: ancestor.slice(0, 12) })
-
-        const nameStatus = await $`git -c core.quotepath=false diff --name-status --no-renames ${ancestor}`
-          .cwd(dir)
-          .quiet()
-          .nothrow()
-        if (nameStatus.exitCode !== 0) return c.json([])
-
-        const numstat = await $`git -c core.quotepath=false diff --numstat --no-renames ${ancestor}`
-          .cwd(dir)
-          .quiet()
-          .nothrow()
-        const stats = new Map<string, { additions: number; deletions: number }>()
-        if (numstat.exitCode === 0) {
-          for (const line of numstat.stdout.toString().trim().split("\n")) {
-            if (!line) continue
-            const parts = line.split("\t")
-            const add = parts[0]
-            const del = parts[1]
-            const file = parts.slice(2).join("\t")
-            if (file)
-              stats.set(file, {
-                additions: add === "-" ? 0 : parseInt(add!, 10),
-                deletions: del === "-" ? 0 : parseInt(del!, 10),
-              })
-          }
-        }
-
-        const diffs: Snapshot.FileDiff[] = []
-        const seen = new Set<string>()
-        for (const line of nameStatus.stdout.toString().trim().split("\n")) {
-          if (!line) continue
-          const parts = line.split("\t")
-          const statusChar = parts[0]
-          const file = parts.slice(1).join("\t")
-          if (!file || !statusChar) continue
-
-          seen.add(file)
-          const status =
-            statusChar === "A" ? ("added" as const) : statusChar === "D" ? ("deleted" as const) : ("modified" as const)
-
-          const before =
-            status === "added"
-              ? ""
-              : await (async () => {
-                  const result = await $`git show ${ancestor}:${file}`.cwd(dir).quiet().nothrow()
-                  return result.exitCode === 0 ? result.stdout.toString() : ""
-                })()
-
-          const after =
-            status === "deleted"
-              ? ""
-              : await (async () => {
-                  const f = Bun.file(path.join(dir, file))
-                  return (await f.exists()) ? await f.text() : ""
-                })()
-
-          const stat = stats.get(file) ?? { additions: 0, deletions: 0 }
-          diffs.push({
-            file,
-            before,
-            after,
-            additions: stat.additions,
-            deletions: stat.deletions,
-            status,
-          })
-        }
-
-        // Include untracked files (new files never staged) so the diff
-        // viewer shows all working-tree changes, not just tracked ones.
-        const untrackedResult = await $`git ls-files --others --exclude-standard`.cwd(dir).quiet().nothrow()
-        if (untrackedResult.exitCode === 0) {
-          const untrackedFiles = untrackedResult.stdout.toString().trim()
-          if (untrackedFiles) {
-            log.info("untracked files found", { count: untrackedFiles.split("\n").length })
-          }
-          for (const file of untrackedFiles.split("\n")) {
-            if (!file || seen.has(file)) continue
-            const f = Bun.file(path.join(dir, file))
-            if (!(await f.exists())) continue
-            const content = await f.text()
-            const lines = content.endsWith("\n") ? content.split("\n").length - 1 : content.split("\n").length
-            diffs.push({
-              file,
-              before: "",
-              after: content,
-              additions: lines,
-              deletions: 0,
-              status: "added",
-            })
-          }
-        } else {
-          log.warn("git ls-files failed", {
-            exitCode: untrackedResult.exitCode,
-            stderr: untrackedResult.stderr.toString().trim(),
-          })
-        }
-
-        log.info("diff complete", { totalFiles: diffs.length })
-        return c.json(diffs)
+        const diffs = await WorktreeDiff.full({ dir, base, log })
+        return c.json(
+          diffs.map((diff) => ({
+            file: diff.file,
+            before: diff.before,
+            after: diff.after,
+            additions: diff.additions,
+            deletions: diff.deletions,
+            status: diff.status,
+          })),
+        )
+      },
+    )
+    .get(
+      "/worktree/diff/summary",
+      describeRoute({
+        summary: "Get worktree diff summary",
+        description: "Get lightweight file diff metadata for a worktree compared to its base branch.",
+        operationId: "worktree.diffSummary",
+        responses: {
+          200: {
+            description: "Diff summary items",
+            content: {
+              "application/json": {
+                schema: resolver(z.array(WorktreeDiff.Item)),
+              },
+            },
+          },
+          ...errors(400),
+        },
+      }),
+      validator(
+        "query",
+        z.object({
+          base: z.string().optional().meta({ description: "Base branch or ref to diff against" }),
+        }),
+      ),
+      async (c) => {
+        const log = Log.create({ service: "worktree-diff" })
+        const query = c.req.valid("query")
+        const base = query.base || (await Review.getBaseBranch())
+        const dir = Instance.directory
+        log.info("computing diff summary", { dir, base })
+        return c.json(await WorktreeDiff.summary({ dir, base, log }))
+      },
+    )
+    .get(
+      "/worktree/diff/file",
+      describeRoute({
+        summary: "Get worktree diff detail",
+        description: "Get full diff contents for one worktree file compared to its base branch.",
+        operationId: "worktree.diffFile",
+        responses: {
+          200: {
+            description: "Diff detail item",
+            content: {
+              "application/json": {
+                schema: resolver(WorktreeDiff.Item.nullable()),
+              },
+            },
+          },
+          ...errors(400),
+        },
+      }),
+      validator(
+        "query",
+        z.object({
+          base: z.string().optional().meta({ description: "Base branch or ref to diff against" }),
+          file: z.string().meta({ description: "Relative file path to load diff contents for" }),
+        }),
+      ),
+      async (c) => {
+        const log = Log.create({ service: "worktree-diff" })
+        const query = c.req.valid("query")
+        const base = query.base || (await Review.getBaseBranch())
+        const dir = Instance.directory
+        log.info("computing diff detail", { dir, base, file: query.file })
+        return c.json((await WorktreeDiff.detail({ dir, base, file: query.file, log })) ?? null)
       },
     )
     // kilocode_change end
@@ -359,7 +329,14 @@ export const ExperimentalRoutes = lazy(() =>
       validator(
         "query",
         z.object({
+          // kilocode_change start
+          projectID: z.string().optional().meta({ description: "Filter sessions by project ID" }),
           directory: z.string().optional().meta({ description: "Filter sessions by project directory" }),
+          worktrees: z.coerce
+            .boolean()
+            .optional()
+            .meta({ description: "Restrict sessions to the current repo worktree family or current directory" }),
+          // kilocode_change end
           roots: z.coerce.boolean().optional().meta({ description: "Only return root sessions (no parentID)" }),
           start: z.coerce
             .number()
@@ -376,10 +353,19 @@ export const ExperimentalRoutes = lazy(() =>
       ),
       async (c) => {
         const query = c.req.valid("query")
-        const limit = query.limit ?? 100
+        const limit = query.limit ?? 100 // kilocode_change
+        // kilocode_change start
+        const projectID = query.worktrees && !query.projectID ? Instance.project.id : query.projectID
+        // kilocode_change end
+        const directories = query.worktrees ? await WorktreeFamily.list() : undefined // kilocode_change
+        // kilocode_change start - sort longest-first so most specific worktree matches first
+        const sorted = directories ? [...directories].sort((a, b) => b.length - a.length) : undefined
+        // kilocode_change end
         const sessions: Session.GlobalInfo[] = []
         for await (const session of Session.listGlobal({
+          projectID, // kilocode_change
           directory: query.directory,
+          directories, // kilocode_change
           roots: query.roots,
           start: query.start,
           cursor: query.cursor,
@@ -387,6 +373,13 @@ export const ExperimentalRoutes = lazy(() =>
           limit: limit + 1,
           archived: query.archived,
         })) {
+          // kilocode_change start - resolve worktree folder name for each session
+          if (sorted) {
+            const root = sorted.find((d) => Filesystem.contains(d, session.directory))
+            sessions.push({ ...session, worktreeName: path.basename(root ?? session.directory) })
+            continue
+          }
+          // kilocode_change end
           sessions.push(session)
         }
         const hasMore = sessions.length > limit
