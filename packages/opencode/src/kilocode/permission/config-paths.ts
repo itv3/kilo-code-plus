@@ -80,22 +80,13 @@ export namespace ConfigProtection {
 
   /**
    * Determine if a permission request targets config files.
-   * Checks `edit` and `external_directory` permissions — read access is not restricted.
+   * Only gates `edit` permissions — read access is not restricted.
    */
   export function isRequest(request: {
     permission: string
     patterns: string[]
     metadata?: Record<string, any>
   }): boolean {
-    // external_directory patterns are absolute globs like "/Users/alex/.config/kilo/*"
-    if (request.permission === "external_directory") {
-      for (const pattern of request.patterns) {
-        const dir = pattern.replace(/\/\*$/, "")
-        if (isAbsolute(dir)) return true
-      }
-      return false
-    }
-
     if (request.permission !== "edit") return false
 
     // Check patterns — handle both relative and absolute
