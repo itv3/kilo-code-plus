@@ -927,9 +927,9 @@ export class AgentManagerProvider implements Disposable {
         continue
       }
 
-      await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch)
+      await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
 
-      const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch)
+      const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
       if (!session) {
         const state = this.getStateManager()
         const manager = this.getWorktreeManager()
@@ -942,7 +942,7 @@ export class AgentManagerProvider implements Disposable {
       const state = this.getStateManager()!
       state.addSession(session.id, wt.worktree.id)
       this.registerWorktreeSession(session.id, wt.result.path)
-      this.notifyWorktreeReady(session.id, wt.result)
+      this.notifyWorktreeReady(session.id, wt.result, wt.worktree.id)
 
       // Set the per-version model immediately so the UI selector reflects
       // the correct model as soon as the worktree appears, before Phase 2.
@@ -1420,6 +1420,7 @@ export class AgentManagerProvider implements Disposable {
         status: "error",
         message: `Setup script failed: ${msg}`,
         branch,
+        worktreeId,
       })
     }
   }
