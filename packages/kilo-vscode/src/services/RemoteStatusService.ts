@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import type { KiloClient } from "@kilocode/sdk/v2/client"
+import { t } from "./cli-backend/i18n"
 
 export type RemoteState = { enabled: boolean; connected: boolean }
 
@@ -116,11 +117,11 @@ export class RemoteStatusService implements vscode.Disposable {
     }
     if (this.state.connected) {
       this.bar.text = "$(radio-tower) Kilo Remote"
-      this.bar.tooltip = "Kilo Remote: Connected"
+      this.bar.tooltip = t("remote.connected")
       this.bar.color = new vscode.ThemeColor("testing.iconPassed")
     } else {
       this.bar.text = "$(radio-tower) Kilo Remote \u2026"
-      this.bar.tooltip = "Kilo Remote: Connecting\u2026"
+      this.bar.tooltip = t("remote.connecting")
       this.bar.color = new vscode.ThemeColor("editorWarning.foreground")
     }
     this.bar.show()
