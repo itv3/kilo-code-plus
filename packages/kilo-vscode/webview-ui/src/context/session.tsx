@@ -857,11 +857,12 @@ export const SessionProvider: ParentComponent = (props) => {
       return [...msgs, message]
     })
 
-    if (message.role === "user") {
-      const agent = message.agent?.trim()
-      if (agent && agentNames().has(agent)) {
-        setStore("agentSelections", message.sessionID, agent)
-      }
+    // Sync mode picker from any message role (user or assistant).
+    // agentNames() already excludes subagent/hidden agents, so subtask
+    // assistant messages (e.g. "task" agent) are silently ignored.
+    const agent = message.agent?.trim()
+    if (agent && agentNames().has(agent)) {
+      setStore("agentSelections", message.sessionID, agent)
     }
 
     if (message.parts && message.parts.length > 0) {
