@@ -106,6 +106,7 @@ import {
 import { sectionAwareDetector } from "./section-dnd"
 import { ConstrainDragXAxis } from "./constrain-drag-x"
 import { mergeWorktreeDiffs } from "./diff-state"
+import { trackOpenSessions } from "./open-sessions"
 import "./agent-manager.css"
 import "./agent-manager-review.css"
 
@@ -676,6 +677,7 @@ const AgentManagerContent: Component = () => {
       setLocalSessionIDs(valid)
     }
   })
+  trackOpenSessions(localSessionIDs, isPending, managedSessions, vscode.postMessage)
 
   // Drop in-memory review state for worktrees that no longer exist.
   createEffect(() => {

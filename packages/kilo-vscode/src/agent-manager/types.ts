@@ -465,6 +465,11 @@ interface OpenPRIn {
   worktreeId: string
 }
 
+interface OpenSessionsIn {
+  type: "agentManager.openSessions"
+  sessionIDs: string[]
+}
+
 interface OpenFileIn {
   type: "agentManager.openFile"
   sessionId: string
@@ -619,6 +624,7 @@ export type AgentManagerInMessage =
   | RevertWorktreeFileIn
   | RefreshPRIn
   | OpenPRIn
+  | OpenSessionsIn
   | OpenFileIn
   | GenericOpenFileIn
   | PreviewImageIn

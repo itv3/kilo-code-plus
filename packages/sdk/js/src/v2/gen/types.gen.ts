@@ -994,6 +994,14 @@ export type EventWorktreeFailed = {
   }
 }
 
+export type EventKiloSessionsRemoteStatusChanged = {
+  type: "kilo-sessions.remote-status-changed"
+  properties: {
+    enabled: boolean
+    connected: boolean
+  }
+}
+
 export type Event =
   | EventInstallationUpdated
   | EventInstallationUpdateAvailable
@@ -1043,6 +1051,7 @@ export type Event =
   | EventPtyDeleted
   | EventWorktreeReady
   | EventWorktreeFailed
+  | EventKiloSessionsRemoteStatusChanged
 
 export type GlobalEvent = {
   directory: string
@@ -3992,7 +4001,8 @@ export type PermissionRespondResponse = PermissionRespondResponses[keyof Permiss
 
 export type SessionViewedData = {
   body?: {
-    sessionID?: string
+    focused?: Array<string>
+    open?: Array<string>
   }
   path?: never
   query?: {
@@ -4004,7 +4014,7 @@ export type SessionViewedData = {
 
 export type SessionViewedResponses = {
   /**
-   * Viewed session updated
+   * Viewed sessions updated
    */
   200: boolean
 }

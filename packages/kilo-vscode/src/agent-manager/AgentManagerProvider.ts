@@ -400,6 +400,10 @@ export class AgentManagerProvider implements Disposable {
       this.startDiffPolling(m.sessionId)
       return null
     }
+    if (m.type === "agentManager.openSessions") {
+      this.connectionService.registerOpen("agent-manager", m.sessionIDs)
+      return null
+    }
     if (m.type === "agentManager.stopDiffWatch") {
       this.stopDiffPolling()
       return null
@@ -427,6 +431,7 @@ export class AgentManagerProvider implements Disposable {
     // uses the correct session even before the session provider's async session.get completes.
     if (m.type === "loadMessages") {
       this.activeSessionId = m.sessionID
+      this.connectionService.registerFocused("agent-manager", m.sessionID)
       this.terminalManager.syncOnSessionSwitch(m.sessionID)
       this.prBridge.poller.setActiveWorktreeId(this.state?.getSession(m.sessionID)?.worktreeId ?? undefined)
     }
@@ -434,6 +439,7 @@ export class AgentManagerProvider implements Disposable {
     // After clearSession, clear active tracking and re-register worktree sessions
     if (m.type === "clearSession") {
       this.activeSessionId = undefined
+      this.connectionService.unregisterFocused("agent-manager")
       void Promise.resolve().then(() => {
         if (!this.panel || !this.state) return
         for (const id of this.state.worktreeSessionIds()) {
@@ -1987,6 +1993,8 @@ export class AgentManagerProvider implements Disposable {
   }
 
   public dispose(): void {
+    this.connectionService.unregisterFocused("agent-manager")
+    this.connectionService.registerOpen("agent-manager", [])
     this.stopDiffPolling()
     this.statsPoller.stop()
     this.gitOps.dispose()

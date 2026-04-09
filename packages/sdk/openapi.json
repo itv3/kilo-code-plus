@@ -4358,11 +4358,11 @@
             }
           }
         ],
-        "summary": "Set viewed session",
-        "description": "Notify the server which session the user is currently viewing, or clear it.",
+        "summary": "Set viewed sessions",
+        "description": "Notify the server which sessions the user is currently viewing, or clear all.",
         "responses": {
           "200": {
-            "description": "Viewed session updated",
+            "description": "Viewed sessions updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -4378,8 +4378,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "sessionID": {
-                    "type": "string"
+                  "focused": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "open": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -12373,6 +12382,34 @@
         },
         "required": ["type", "properties"]
       },
+      "Event.kilo-sessions.remote-status-changed": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "kilo-sessions.remote-status-changed"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "connected": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "enabled",
+              "connected"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "properties"
+        ]
+      },
       "Event": {
         "anyOf": [
           {
@@ -12518,6 +12555,9 @@
           },
           {
             "$ref": "#/components/schemas/Event.worktree.failed"
+          },
+          {
+            "$ref": "#/components/schemas/Event.kilo-sessions.remote-status-changed"
           }
         ]
       },
