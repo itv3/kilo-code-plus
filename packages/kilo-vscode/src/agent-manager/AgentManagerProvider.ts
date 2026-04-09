@@ -6,8 +6,10 @@ import { getErrorMessage } from "../kilo-provider-utils"
 import { isAbsolutePath } from "../path-utils"
 import { WorktreeManager, type CreateWorktreeResult } from "./WorktreeManager"
 import { WorktreeStateManager, remoteRef } from "./WorktreeStateManager"
+import { handleSection } from "./section-handler"
 import { chooseBaseBranch, normalizeBaseBranch } from "./base-branch"
 import { GitStatsPoller, type WorktreePresenceResult } from "./GitStatsPoller"
+import { PRStatusBridge } from "./pr-status-bridge"
 import { GitOps, type ApplyConflict } from "./GitOps"
 import { versionedName } from "./branch-name"
 import { normalizePath, classifyWorktreeError } from "./git-import"
@@ -23,6 +25,7 @@ import { continueInWorktree } from "./continue-in-worktree"
 import { shouldStopDiffPolling } from "./delete-worktree"
 import { buildKeybindingMap } from "./format-keybinding"
 import { resolveVersionModels, buildInitialMessages, type CreatedVersion } from "./multi-version"
+import { Semaphore } from "./semaphore"
 import { PLATFORM } from "./constants"
 import type { AgentManagerOutMessage, AgentManagerInMessage } from "./types"
 import { hashFileDiffs, resolveLocalDiffTarget } from "../review-utils"
@@ -53,6 +56,7 @@ export class AgentManagerProvider implements Disposable {
   private diffSessionId: string | undefined
   private lastDiffHash: string | undefined
   private statsPoller: GitStatsPoller
+  private prBridge!: PRStatusBridge
   private gitOps: GitOps
   private cachedDiffTarget: { sessionId: string; directory: string; baseBranch: string } | undefined
   private staleWorktreeIds = new Set<string>()
@@ -73,11 +77,13 @@ export class AgentManagerProvider implements Disposable {
       (msg) => this.outputChannel.appendLine(`[SessionTerminal] ${msg}`),
       createTerminalHost(),
     )
-    this.gitOps = new GitOps({ log: (...args) => this.log(...args) })
+    const semaphore = new Semaphore(3)
+    this.gitOps = new GitOps({ log: (...args) => this.log(...args), semaphore })
     this.statsPoller = new GitStatsPoller({
       getWorktrees: () => this.state?.getWorktrees() ?? [],
       getWorkspaceRoot: () => this.getRoot(),
       getClient: () => this.connectionService.getClient(),
+      semaphore,
       onStats: (stats) => {
         const msg = { type: "agentManager.worktreeStats" as const, stats }
         this.cachedWorktreeStats = msg
@@ -93,6 +99,16 @@ export class AgentManagerProvider implements Disposable {
       },
       log: (...args) => this.log(...args),
       git: this.gitOps,
+    })
+    this.prBridge = PRStatusBridge.create({
+      getWorktrees: () => this.state?.getWorktrees() ?? [],
+      getWorkspaceRoot: () => this.getRoot(),
+      postToWebview: (m) => this.postToWebview(m),
+      updateWorktreePR: (id, n, u, s) => this.state?.updateWorktreePR(id, n, u, s),
+      hasPersistedPR: (id: string) => !!this.state?.getWorktree(id)?.prNumber,
+      openExternal: (u) => this.host.openExternal(u),
+      log: (...a) => this.log(...a),
+      semaphore,
     })
   }
 
@@ -147,13 +163,14 @@ export class AgentManagerProvider implements Disposable {
     this.stateReady = this.initializeState()
     void this.sendRepoInfo()
     this.sendKeybindings()
-
+    this.prBridge.attachPanel(ctx)
     ctx.onDidDispose(() => {
       // Only clear if this is still the active panel — a newer panel may
       // have already replaced us via attachPanel.
       if (this.panel === ctx) {
         this.log("Panel disposed")
         this.statsPoller.stop()
+        this.prBridge.poller.stop()
         this.stopDiffPolling()
         this.panel = undefined
       }
@@ -184,24 +201,25 @@ export class AgentManagerProvider implements Disposable {
       this.host.refreshGit()
     }
 
-    // Do not auto-remove stale worktrees on load.
-    // Presence checks run in the shared poller and require explicit user cleanup.
-
-    // Register all worktree sessions with the session provider
-    for (const worktree of state.getWorktrees()) {
-      for (const session of state.getSessions(worktree.id)) {
-        this.panel?.sessions.setSessionDirectory(session.id, worktree.path)
-        this.panel?.sessions.trackSession(session.id)
+    for (const wt of state.getWorktrees()) {
+      for (const s of state.getSessions(wt.id)) {
+        this.panel?.sessions.setSessionDirectory(s.id, wt.path)
+        this.panel?.sessions.trackSession(s.id)
       }
     }
-
-    // Push full state to webview
+    for (const s of state.getSessions()) if (!s.worktreeId) this.panel?.sessions.trackSession(s.id)
     this.pushState()
 
     // Refresh sessions so worktree sessions appear in the list
     if (state.getSessions().length > 0) {
       this.panel?.sessions.refreshSessions()
     }
+
+    // Recover any pending permission/question prompts that were missed during
+    // panel recreation or SSE reconnection. Must run after all worktree sessions
+    // are registered with their directory overrides so the recovery queries the
+    // correct CLI backend Instances.
+    this.panel?.sessions.recoverPendingPrompts()
   }
 
   // ---------------------------------------------------------------------------
@@ -209,6 +227,7 @@ export class AgentManagerProvider implements Disposable {
   // ---------------------------------------------------------------------------
 
   private async onMessage(msg: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+    if (this.prBridge.handleMessage(msg)) return null
     const m = msg as unknown as AgentManagerInMessage
 
     if (m.type === "agentManager.createWorktree") {
@@ -218,8 +237,12 @@ export class AgentManagerProvider implements Disposable {
     if (m.type === "agentManager.removeStaleWorktree") return this.onRemoveStaleWorktree(m.worktreeId)
     if (m.type === "agentManager.promoteSession") return this.onPromoteSession(m.sessionId)
     if (m.type === "agentManager.openLocally") {
-      if (!this.panel) return null
-      this.panel.sessions.clearSessionDirectory(m.sessionId)
+      this.panel?.sessions.clearSessionDirectory(m.sessionId)
+      const st = this.getStateManager()
+      if (st?.getSession(m.sessionId)) {
+        st.moveSession(m.sessionId, null)
+        this.pushState()
+      }
       return null
     }
     if (m.type === "continueInWorktree") {
@@ -231,6 +254,15 @@ export class AgentManagerProvider implements Disposable {
     if (m.type === "agentManager.addSessionToWorktree") return this.onAddSessionToWorktree(m.worktreeId)
     if (m.type === "agentManager.forkSession") return this.onForkSession(m.sessionId, m.worktreeId)
     if (m.type === "agentManager.closeSession") return this.onCloseSession(m.sessionId)
+    if (m.type === "agentManager.persistSession" || m.type === "agentManager.forgetSession") {
+      const persist = m.type === "agentManager.persistSession"
+      void this.stateReady?.then(() => {
+        const st = this.getStateManager()
+        if (st)
+          persist ? !st.getSession(m.sessionId) && st.addSession(m.sessionId, null) : st.removeSession(m.sessionId)
+      })
+      return null
+    }
     if ((m.type === "sendMessage" || m.type === "sendCommand") && m.draftID && !m.sessionID) {
       this.activeSessionId = m.draftID
     }
@@ -292,6 +324,7 @@ export class AgentManagerProvider implements Disposable {
           // already emitted before the webview was ready to receive messages.
           if (this.cachedWorktreeStats) this.postToWebview(this.cachedWorktreeStats)
           if (this.cachedLocalStats) this.postToWebview(this.cachedLocalStats)
+          this.prBridge.replay()
           // Refresh sessions after pushState so the webview's sessionsLoaded
           // handler is guaranteed to be registered (requestState fires from
           // onMount). Without this, the initial refreshSessions() in
@@ -327,6 +360,7 @@ export class AgentManagerProvider implements Disposable {
       this.state?.setSessionsCollapsed(m.collapsed)
       return null
     }
+    if (this.handleSection(m)) return null
     if (m.type === "agentManager.setReviewDiffStyle") {
       this.state?.setReviewDiffStyle(m.style)
       return null
@@ -376,8 +410,16 @@ export class AgentManagerProvider implements Disposable {
       void this.onApplyWorktreeDiff(m.worktreeId, selectedFiles)
       return null
     }
+    if (m.type === "agentManager.revertWorktreeFile") {
+      void this.onRevertWorktreeFile(m.sessionId, m.file)
+      return null
+    }
     if (m.type === "agentManager.startDiffWatch") {
       this.startDiffPolling(m.sessionId)
+      return null
+    }
+    if (m.type === "agentManager.openSessions") {
+      this.connectionService.registerOpen("agent-manager", m.sessionIDs)
       return null
     }
     if (m.type === "agentManager.stopDiffWatch") {
@@ -407,12 +449,15 @@ export class AgentManagerProvider implements Disposable {
     // uses the correct session even before the session provider's async session.get completes.
     if (m.type === "loadMessages") {
       this.activeSessionId = m.sessionID
+      this.connectionService.registerFocused("agent-manager", m.sessionID)
       this.terminalManager.syncOnSessionSwitch(m.sessionID)
+      this.prBridge.poller.setActiveWorktreeId(this.state?.getSession(m.sessionID)?.worktreeId ?? undefined)
     }
 
     // After clearSession, clear active tracking and re-register worktree sessions
     if (m.type === "clearSession") {
       this.activeSessionId = undefined
+      this.connectionService.unregisterFocused("agent-manager")
       void Promise.resolve().then(() => {
         if (!this.panel || !this.state) return
         for (const id of this.state.worktreeSessionIds()) {
@@ -671,6 +716,7 @@ export class AgentManagerProvider implements Disposable {
     }
     // Remove from state BEFORE disk removal so pollers immediately stop targeting this worktree.
     this.statsPoller.skipWorktree(worktreeId)
+    this.prBridge.remove(worktreeId)
     const orphaned = state.removeWorktree(worktreeId)
     if (shouldStopDiffPolling(worktree.path, orphaned, this.cachedDiffTarget, this.diffSessionId)) {
       this.stopDiffPolling()
@@ -679,11 +725,11 @@ export class AgentManagerProvider implements Disposable {
     this.pushState()
     // Disk removal after state is clean — pollers no longer reference this worktree.
     try {
-      await manager.removeWorktree(worktree.path, worktree.branch)
+      await manager.removeWorktree(worktree.path, worktree.originalBranch ?? worktree.branch)
     } catch (error) {
       this.log(`Failed to remove worktree from disk: ${error}`)
     }
-    this.log(`Deleted worktree ${worktreeId} (${worktree.branch})`)
+    this.log(`Deleted worktree ${worktreeId} (${worktree.originalBranch ?? worktree.branch})`)
     return null
   }
 
@@ -889,9 +935,9 @@ export class AgentManagerProvider implements Disposable {
         continue
       }
 
-      await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch)
+      await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
 
-      const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch)
+      const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
       if (!session) {
         const state = this.getStateManager()
         const manager = this.getWorktreeManager()
@@ -904,7 +950,7 @@ export class AgentManagerProvider implements Disposable {
       const state = this.getStateManager()!
       state.addSession(session.id, wt.worktree.id)
       this.registerWorktreeSession(session.id, wt.result.path)
-      this.notifyWorktreeReady(session.id, wt.result)
+      this.notifyWorktreeReady(session.id, wt.result, wt.worktree.id)
 
       // Set the per-version model immediately so the UI selector reflects
       // the correct model as soon as the worktree appears, before Phase 2.
@@ -1382,6 +1428,7 @@ export class AgentManagerProvider implements Disposable {
         status: "error",
         message: `Setup script failed: ${msg}`,
         branch,
+        worktreeId,
       })
     }
   }
@@ -1410,6 +1457,10 @@ export class AgentManagerProvider implements Disposable {
     if (!this.panel) return
     this.panel.sessions.setSessionDirectory(sessionId, directory)
     this.panel.sessions.trackSession(sessionId)
+    // Recover any permission/question prompts that arrived before the session
+    // was tracked. The CLI backend may have emitted permission.asked between
+    // session.create() returning and this registration completing.
+    this.panel.sessions.recoverPendingPrompts()
   }
 
   private onWorktreePresence(result: WorktreePresenceResult): void {
@@ -1428,12 +1479,20 @@ export class AgentManagerProvider implements Disposable {
     const entries = result.worktrees.filter((item) => ids.has(item.worktreeId))
     if (entries.length === 0) return
 
+    // Sync branches from git worktree list (no extra git calls)
+    let branchChanged = false
+    for (const entry of entries) {
+      if (entry.branch && state.updateWorktreeBranch(entry.worktreeId, entry.branch)) {
+        branchChanged = true
+      }
+    }
+
     const next = new Set(entries.filter((entry) => entry.missing).map((entry) => entry.worktreeId))
-    const changed =
+    const staleChanged =
       next.size !== this.staleWorktreeIds.size || [...next].some((worktreeId) => !this.staleWorktreeIds.has(worktreeId))
     this.staleWorktreeIds = next
 
-    if (changed) {
+    if (staleChanged || branchChanged) {
       this.pushState()
     }
   }
@@ -1464,6 +1523,7 @@ export class AgentManagerProvider implements Disposable {
       type: "agentManager.state",
       worktrees,
       sessions: state.getSessions(),
+      sections: state.getSections(),
       staleWorktreeIds,
       tabOrder: state.getTabOrder(),
       worktreeOrder: state.getWorktreeOrder(),
@@ -1474,6 +1534,7 @@ export class AgentManagerProvider implements Disposable {
     })
 
     this.statsPoller.setEnabled(worktrees.length > 0 || this.panel !== undefined)
+    this.prBridge.poller.setEnabled(worktrees.length > 0)
   }
 
   /** Push empty state when the folder is not a git repo or has no folder open. */
@@ -1610,6 +1671,66 @@ export class AgentManagerProvider implements Disposable {
       this.postApplyResult(worktreeId, "error", message)
     } finally {
       this.applyingWorktreeId = undefined
+    }
+  }
+
+  /** Revert a single file in a worktree back to the merge-base state. */
+  private async onRevertWorktreeFile(sessionId: string, file: string): Promise<void> {
+    if (!file) return
+    if (this.stateReady) {
+      await this.stateReady.catch((err) => this.log("stateReady rejected, continuing revert resolve:", err))
+    }
+
+    const target =
+      this.cachedDiffTarget?.sessionId === sessionId ? this.cachedDiffTarget : await this.resolveDiffTarget(sessionId)
+    if (!target) {
+      this.postToWebview({
+        type: "agentManager.revertWorktreeFileResult",
+        sessionId,
+        file,
+        status: "error",
+        message: "Could not resolve diff target",
+      })
+      return
+    }
+
+    // Look up the file status from the cached diffs so we know if it's added/modified/deleted
+    let status: "added" | "deleted" | "modified" | undefined
+    try {
+      const client = this.connectionService.getClient()
+      const { data } = await client.worktree.diffFile(
+        { directory: target.directory, base: target.baseBranch, file },
+        { throwOnError: true },
+      )
+      status = data?.status
+    } catch (err) {
+      this.log("Failed to look up file status for revert:", err)
+    }
+
+    try {
+      const result = await this.gitOps.revertFile(target.directory, target.baseBranch, file, status)
+      this.postToWebview({
+        type: "agentManager.revertWorktreeFileResult",
+        sessionId,
+        file,
+        status: result.ok ? "success" : "error",
+        message: result.message,
+      })
+
+      // After successful revert, trigger a diff refresh so the UI updates
+      if (result.ok) {
+        void this.onRequestWorktreeDiff(sessionId)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      this.log("Failed to revert worktree file:", message)
+      this.postToWebview({
+        type: "agentManager.revertWorktreeFileResult",
+        sessionId,
+        file,
+        status: "error",
+        message,
+      })
     }
   }
 
@@ -1886,13 +2007,21 @@ export class AgentManagerProvider implements Disposable {
     )
   }
 
+  private handleSection(m: AgentManagerInMessage): boolean {
+    return handleSection(this.state, m, () => this.pushState())
+  }
+
   public postMessage(message: unknown): void {
     this.panel?.postMessage(message)
   }
 
   public dispose(): void {
+    this.connectionService.unregisterFocused("agent-manager")
+    this.connectionService.registerOpen("agent-manager", [])
     this.stopDiffPolling()
     this.statsPoller.stop()
+    this.gitOps.dispose()
+    this.prBridge.poller.stop()
     this.terminalManager.dispose()
     this.panel?.dispose()
     this.outputChannel.dispose()
