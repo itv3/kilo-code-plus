@@ -705,7 +705,10 @@ export const SessionProvider: ParentComponent = (props) => {
         case "clearPendingPrompts":
           setPermissions([])
           setQuestions([])
+          setSuggestions([])
           setRespondingPermissions(new Set<string>())
+          setSuggestionErrors(new Set<string>())
+          setRespondingSuggestions(new Set<string>())
           break
 
         case "sessionsLoaded":

@@ -329,6 +329,14 @@ export class KiloConnectionService {
           if (error) throw new Error(`Failed to reject question ${q.id}: ${String(error)}`)
         }
       }
+      const { data: suggestions, error: sugErr } = await this.client.suggestion.list({ directory: dir })
+      if (sugErr) throw new Error(`Failed to list suggestions for ${dir}: ${String(sugErr)}`)
+      if (suggestions) {
+        for (const s of suggestions) {
+          const { error } = await this.client.suggestion.dismiss({ requestID: s.id, directory: dir })
+          if (error) throw new Error(`Failed to dismiss suggestion ${s.id}: ${String(error)}`)
+        }
+      }
     }
     for (const listener of this.clearPendingPromptsListeners) {
       listener()

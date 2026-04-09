@@ -1380,11 +1380,12 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         messages,
       })
 
-      // Recover any missed permission/question prompts emitted by the child before
-      // we started tracking it.  Both run fire-and-forget after messagesLoaded so
+      // Recover any missed permission/question/suggestion prompts emitted by the child
+      // before we started tracking it.  All run fire-and-forget after messagesLoaded so
       // the webview isn't blocked.
       void fetchAndSendPendingPermissions(this.permissionCtx)
       void fetchAndSendPendingQuestions(this.questionCtx)
+      void fetchAndSendPendingSuggestions(this.suggestionCtx)
     } catch (err) {
       this.syncedChildSessions.delete(sessionID)
       console.error("[Kilo New] KiloProvider: Failed to sync child session:", err)
