@@ -1283,6 +1283,7 @@ export namespace Config {
           baseURL: z.string().optional(),
           enterpriseUrl: z.string().optional().describe("GitHub Enterprise URL for copilot authentication"),
           setCacheKey: z.boolean().optional().describe("Enable promptCacheKey for this provider (default false)"),
+          // kilocode_change start
           timeout: z
             .union([
               z
@@ -1290,13 +1291,14 @@ export namespace Config {
                 .int()
                 .positive()
                 .describe(
-                  "Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.",
+                  "Timeout in milliseconds for requests to this provider. Default is 120000 (2 minutes). Set to false to disable timeout.",
                 ),
               z.literal(false).describe("Disable timeout for this provider entirely."),
+              // kilocode_change end
             ])
             .optional()
             .describe(
-              "Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.",
+              "Timeout in milliseconds for requests to this provider. Default is 120000 (2 minutes). Set to false to disable timeout.", // kilocode_change
             ),
           chunkTimeout: z
             .number()
@@ -1645,7 +1647,10 @@ export namespace Config {
         for (let i = 0; i < data.plugin.length; i++) {
           const plugin = data.plugin[i]
           try {
-            data.plugin[i] = import.meta.resolve!(plugin, options.path)
+            // kilocode_change start: on Windows, import.meta.resolve may return a bare path without file:// prefix
+            const resolved = import.meta.resolve!(plugin, options.path)
+            data.plugin[i] = resolved.startsWith("file://") ? resolved : pathToFileURL(resolved).href
+            // kilocode_change end
           } catch (e) {
             try {
               // import.meta.resolve sometimes fails with newly created node_modules

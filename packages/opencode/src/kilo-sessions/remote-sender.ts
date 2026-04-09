@@ -1,6 +1,6 @@
 import { RemoteProtocol } from "@/kilo-sessions/remote-protocol"
 import type { RemoteWS } from "@/kilo-sessions/remote-ws"
-import { Bus } from "@/bus"
+import { GlobalBus } from "@/bus/global"
 import { Instance } from "@/project/instance"
 import { Session } from "@/session"
 import { SessionPrompt } from "@/session/prompt"
@@ -58,7 +58,7 @@ export namespace RemoteSender {
       error: (...args: any[]) => void
       warn: (...args: any[]) => void
     }
-    subscribe?: typeof Bus.subscribeAll
+    subscribe?: (callback: (event: any) => void) => () => void
     provide?: typeof Instance.provide
   }
 
@@ -72,7 +72,20 @@ export namespace RemoteSender {
     const children = new Map<string, string>() // childId → parentId
     let unsub: (() => void) | undefined
 
-    const sub = options.subscribe ?? Bus.subscribeAll
+    const sub =
+      options.subscribe ??
+      ((callback: (event: any) => void) => {
+        const handler = (event: { directory?: string; payload: any }) => callback(event.payload)
+        GlobalBus.on("event", handler)
+        return () => {
+          GlobalBus.off("event", handler)
+        }
+      })
+
+    async function directoryFor(sid: string): Promise<string> {
+      const info = await Session.get(sid).catch(() => undefined)
+      return info?.directory ?? options.directory
+    }
 
     function subscribed(sid: string) {
       if (sessions.has(sid)) return true
@@ -89,8 +102,9 @@ export namespace RemoteSender {
     async function backfillChildren(parentId: string) {
       const provide = options.provide ?? Instance.provide
       try {
+        const dir = await directoryFor(parentId)
         await provide({
-          directory: options.directory,
+          directory: dir,
           fn: async () => {
             await discoverChildren(parentId)
           },
@@ -128,8 +142,9 @@ export namespace RemoteSender {
     async function backfillPendingState(sessionId: string) {
       const provide = options.provide ?? Instance.provide
       try {
+        const dir = await directoryFor(sessionId)
         await provide({
-          directory: options.directory,
+          directory: dir,
           fn: () => replay(sessionId),
         })
       } catch (e) {
@@ -189,12 +204,12 @@ export namespace RemoteSender {
       })
     }
 
-    function dispatchLongRunning(msg: RemoteProtocol.Command, work: () => Promise<void>) {
+    function dispatchLongRunning(msg: RemoteProtocol.Command, dir: Promise<string>, work: () => Promise<void>) {
       const provide = options.provide ?? Instance.provide
       options.conn.send({ type: "response", id: msg.id, result: {} })
       void (async () => {
         try {
-          await provide({ directory: options.directory, fn: work })
+          await provide({ directory: await dir, fn: work })
         } catch (e) {
           options.log.error("long-running command failed after ACK", {
             id: msg.id,
@@ -205,11 +220,11 @@ export namespace RemoteSender {
       })()
     }
 
-    function dispatchQuick(msg: RemoteProtocol.Command, work: () => Promise<void>) {
+    function dispatchQuick(msg: RemoteProtocol.Command, dir: Promise<string>, work: () => Promise<void>) {
       const provide = options.provide ?? Instance.provide
       void (async () => {
         try {
-          await provide({ directory: options.directory, fn: work })
+          await provide({ directory: await dir, fn: work })
           options.conn.send({ type: "response", id: msg.id, result: {} })
         } catch (e) {
           options.conn.send({ type: "response", id: msg.id, error: String(e) })
@@ -228,7 +243,9 @@ export namespace RemoteSender {
           })
           return
         }
-        const input = SessionPrompt.PromptInput.safeParse(normalizePrompt(parsed.data as SessionPrompt.PromptInput & { model?: string }))
+        const input = SessionPrompt.PromptInput.safeParse(
+          normalizePrompt(parsed.data as SessionPrompt.PromptInput & { model?: string }),
+        )
         if (!input.success) {
           options.conn.send({
             type: "response",
@@ -237,7 +254,7 @@ export namespace RemoteSender {
           })
           return
         }
-        dispatchLongRunning(msg, async () => {
+        dispatchLongRunning(msg, directoryFor(input.data.sessionID), async () => {
           await SessionPrompt.prompt(input.data)
         })
         return
@@ -252,7 +269,10 @@ export namespace RemoteSender {
           })
           return
         }
-        dispatchQuick(msg, () => Question.reply({ ...parsed.data, requestID: QuestionID.make(parsed.data.requestID) }))
+        const dir = msg.sessionId ? directoryFor(msg.sessionId) : Promise.resolve(options.directory)
+        dispatchQuick(msg, dir, () =>
+          Question.reply({ ...parsed.data, requestID: QuestionID.make(parsed.data.requestID) }),
+        )
         return
       }
       if (msg.command === "question_reject") {
@@ -265,7 +285,8 @@ export namespace RemoteSender {
           })
           return
         }
-        dispatchQuick(msg, () => Question.reject(QuestionID.make(parsed.data.requestID)))
+        const dir = msg.sessionId ? directoryFor(msg.sessionId) : Promise.resolve(options.directory)
+        dispatchQuick(msg, dir, () => Question.reject(QuestionID.make(parsed.data.requestID)))
         return
       }
       if (msg.command === "permission_respond") {
@@ -278,7 +299,10 @@ export namespace RemoteSender {
           })
           return
         }
-        dispatchQuick(msg, () => PermissionNext.reply({ ...parsed.data, requestID: PermissionID.make(parsed.data.requestID) }))
+        const dir = msg.sessionId ? directoryFor(msg.sessionId) : Promise.resolve(options.directory)
+        dispatchQuick(msg, dir, () =>
+          PermissionNext.reply({ ...parsed.data, requestID: PermissionID.make(parsed.data.requestID) }),
+        )
         return
       }
       options.conn.send({
