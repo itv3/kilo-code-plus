@@ -9,31 +9,60 @@ describe("ConfigProtection.isRequest", () => {
   const config = path.resolve(Global.Path.config)
   const legacy = KilocodePaths.globalDirs().map((d) => path.resolve(d))
 
-  test("returns false for external_directory targeting global config", () => {
+  // --- external_directory: bash-originated (empty metadata) ---
+
+  test("returns true for bash external_directory targeting global config", () => {
     const result = ConfigProtection.isRequest({
       permission: "external_directory",
       patterns: [config + "/*"],
+      metadata: {},
     })
-    expect(result).toBe(false)
+    expect(result).toBe(true)
   })
 
-  test("returns false for external_directory targeting skill dir", () => {
+  test("returns true for bash external_directory targeting skill dir", () => {
     const result = ConfigProtection.isRequest({
       permission: "external_directory",
       patterns: [path.join(config, "skills", "my-skill") + "/*"],
+      metadata: {},
     })
-    expect(result).toBe(false)
+    expect(result).toBe(true)
   })
 
-  test("returns false for external_directory targeting legacy global dir", () => {
+  test("returns true for bash external_directory targeting legacy global dir", () => {
     for (const dir of legacy) {
       const result = ConfigProtection.isRequest({
         permission: "external_directory",
         patterns: [dir + "/*"],
+        metadata: {},
       })
-      expect(result).toBe(false)
+      expect(result).toBe(true)
     }
   })
+
+  // --- external_directory: file-tool-originated (has metadata.filepath) ---
+
+  test("returns false for file-tool external_directory targeting global config", () => {
+    const result = ConfigProtection.isRequest({
+      permission: "external_directory",
+      patterns: [config + "/*"],
+      metadata: { filepath: path.join(config, "kilo.json"), parentDir: config },
+    })
+    expect(result).toBe(false)
+  })
+
+  // --- external_directory: non-config dirs ---
+
+  test("returns false for bash external_directory targeting non-config dir", () => {
+    const result = ConfigProtection.isRequest({
+      permission: "external_directory",
+      patterns: ["/tmp/some-project/*"],
+      metadata: {},
+    })
+    expect(result).toBe(false)
+  })
+
+  // --- edit permission ---
 
   test("returns true for edit targeting global config file via metadata.filepath", () => {
     const result = ConfigProtection.isRequest({
