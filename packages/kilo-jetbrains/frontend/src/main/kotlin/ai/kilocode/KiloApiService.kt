@@ -2,12 +2,14 @@
 
 package ai.kilocode
 
-import ai.kilocode.rpc.KiloRpcApi
+import ai.kilocode.rpc.KiloProjectRpcApi
 import ai.kilocode.rpc.dto.ConnectionStateDto
 import ai.kilocode.rpc.dto.ConnectionStatusDto
+import ai.kilocode.rpc.dto.HealthDto
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.project.projectId
 import fleet.rpc.client.durable
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +20,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * Frontend project-level service for Kilo CLI interaction.
+ *
+ * Communicates with the backend via [KiloProjectRpcApi], passing
+ * [project.projectId] on every call so the backend can resolve the
+ * correct project-level service without scanning ProjectManager.
+ */
 @Service(Service.Level.PROJECT)
 class KiloApiService(
     private val project: Project,
@@ -31,7 +40,9 @@ class KiloApiService(
 
     val state: StateFlow<ConnectionStateDto> = flow {
         durable {
-            KiloRpcApi.getInstance().state().collect { emit(it) }
+            KiloProjectRpcApi.getInstance()
+                .state(project.projectId())
+                .collect { emit(it) }
         }
     }.stateIn(cs, SharingStarted.Eagerly, init)
 
@@ -39,9 +50,16 @@ class KiloApiService(
         if (!started.compareAndSet(false, true)) return
         cs.launch {
             durable {
-                KiloRpcApi.getInstance().connect()
+                KiloProjectRpcApi.getInstance().connect(project.projectId())
             }
         }
+    }
+
+    /** One-shot health check. Returns null on failure. */
+    suspend fun health(): HealthDto? = try {
+        durable { KiloProjectRpcApi.getInstance().health(project.projectId()) }
+    } catch (_: Exception) {
+        null
     }
 
     fun watch(fn: (String) -> Unit): Job {
@@ -55,8 +73,8 @@ class KiloApiService(
         }
     }
 
-    private fun text(state: ConnectionStateDto): String {
-        return when (state.status) {
+    private fun text(state: ConnectionStateDto): String =
+        when (state.status) {
             ConnectionStatusDto.DISCONNECTED -> KiloBundle.message("toolwindow.status.disconnected")
             ConnectionStatusDto.CONNECTING -> KiloBundle.message("toolwindow.status.connecting")
             ConnectionStatusDto.CONNECTED -> KiloBundle.message("toolwindow.status.connected")
@@ -65,5 +83,4 @@ class KiloApiService(
                 state.error ?: KiloBundle.message("toolwindow.error.unknown"),
             )
         }
-    }
 }

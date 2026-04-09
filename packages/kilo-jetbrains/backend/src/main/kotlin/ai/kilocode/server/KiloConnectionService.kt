@@ -1,5 +1,6 @@
 package ai.kilocode.server
 
+import ai.kilocode.jetbrains.api.client.DefaultApi
 import ai.kilocode.rpc.dto.ConnectionStateDto
 import ai.kilocode.rpc.dto.ConnectionStatusDto
 import com.intellij.openapi.Disposable
@@ -17,16 +18,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.map
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -40,6 +40,16 @@ sealed class ConnectionState {
 
 data class SseEvent(val type: String, val data: String)
 
+/**
+ * App-level service managing the CLI server connection.
+ *
+ * Uses two separate OkHttp clients mirroring the VS Code architecture:
+ * - [apiClient]: no call/read timeout — used for the generated API client and SSE
+ * - [healthClient]: 3 s timeout — used only for `/global/health` polling
+ *
+ * The generated [DefaultApi] is configured with [apiClient] and exposed via [api]
+ * for typed access to all CLI server endpoints.
+ */
 @Service(Service.Level.APP)
 class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
 
@@ -47,7 +57,6 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
         private val LOG = Logger.getInstance(KiloConnectionService::class.java)
         private const val HEARTBEAT_TIMEOUT_MS = 15_000L
         private const val HEALTH_POLL_INTERVAL_MS = 10_000L
-        private const val HEALTH_TIMEOUT_MS = 3_000L
         private const val RECONNECT_DELAY_MS = 250L
         private val TYPE_REGEX = Regex(""""type"\s*:\s*"([^"]+)"""")
     }
@@ -58,7 +67,12 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
     private val _events = MutableSharedFlow<SseEvent>(extraBufferCapacity = 64)
     val events: SharedFlow<SseEvent> = _events.asSharedFlow()
 
-    private var client: OkHttpClient? = null
+    /** Generated API client — null when disconnected. */
+    var api: DefaultApi? = null
+        private set
+
+    private var apiClient: OkHttpClient? = null
+    private var healthClient: OkHttpClient? = null
     private var port = 0
     private var password = ""
 
@@ -73,7 +87,6 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
 
     suspend fun connect() {
         if (_state.value is ConnectionState.Connected || _state.value is ConnectionState.Connecting) return
-
         open()
     }
 
@@ -82,32 +95,29 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
         close()
         processJob?.cancel()
         healthJob?.cancel()
-        
+
         setState(ConnectionState.Connecting)
 
         val cli = service<ServerManager>()
-        val processState = cli.init()
+        val result = cli.init()
 
-        if (processState is ServerManager.ServerState.Error) {
-            setState(ConnectionState.Error(processState.message))
+        if (result is ServerManager.ServerState.Error) {
+            setState(ConnectionState.Error(result.message))
             return
         }
 
-        val ready = processState as ServerManager.ServerState.Ready
+        val ready = result as ServerManager.ServerState.Ready
         port = ready.port
         password = ready.password
 
-        client = OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val auth = Base64.getEncoder().encodeToString("kilo:$password".toByteArray())
-                chain.proceed(
-                    chain.request().newBuilder()
-                        .header("Authorization", "Basic $auth")
-                        .build()
-                )
-            }
-            .callTimeout(HEALTH_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-            .build()
+        // Create dual OkHttp clients (bundled — no IntelliJ platform deps)
+        val ac = KiloHttpClients.api(password)
+        val hc = KiloHttpClients.health(password)
+        apiClient = ac
+        healthClient = hc
+
+        // Configure generated API client with the no-timeout api client
+        api = DefaultApi(basePath = "http://127.0.0.1:$port", client = ac)
 
         startSse()
         startHeartbeatWatcher()
@@ -118,7 +128,7 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
     }
 
     private fun startSse() {
-        val http = client ?: return
+        val http = apiClient ?: return
         val request = Request.Builder()
             .url("http://127.0.0.1:$port/global/event")
             .header("Accept", "text/event-stream")
@@ -143,8 +153,8 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
 
         override fun onEvent(src: EventSource, id: String?, type: String?, data: String) {
             lastEvent.set(System.currentTimeMillis())
-            val eventType = type ?: extractType(data)
-            cs.launch { _events.emit(SseEvent(type = eventType, data = data)) }
+            val kind = type ?: extractType(data)
+            cs.launch { _events.emit(SseEvent(type = kind, data = data)) }
         }
 
         override fun onClosed(src: EventSource) {
@@ -215,7 +225,7 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
     }
 
     private fun checkHealth(): Boolean {
-        val http = client ?: return false
+        val http = healthClient ?: return false
         return try {
             val req = Request.Builder()
                 .url("http://127.0.0.1:$port/global/health")
@@ -238,25 +248,24 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
     }
 
     private fun close() {
-        client?.let { http ->
-            http.dispatcher.executorService.shutdown()
-            http.connectionPool.evictAll()
-        }
-        client = null
+        api = null
+        apiClient?.let { KiloHttpClients.shutdown(it) }
+        apiClient = null
+        healthClient?.let { KiloHttpClients.shutdown(it) }
+        healthClient = null
     }
 
     private fun setState(next: ConnectionState) {
         _state.value = next
     }
 
-    private fun dto(state: ConnectionState): ConnectionStateDto {
-        return when (state) {
+    private fun dto(state: ConnectionState): ConnectionStateDto =
+        when (state) {
             ConnectionState.Disconnected -> ConnectionStateDto(ConnectionStatusDto.DISCONNECTED)
             ConnectionState.Connecting -> ConnectionStateDto(ConnectionStatusDto.CONNECTING)
             is ConnectionState.Connected -> ConnectionStateDto(ConnectionStatusDto.CONNECTED)
             is ConnectionState.Error -> ConnectionStateDto(ConnectionStatusDto.ERROR, state.message)
         }
-    }
 
     private fun extractType(data: String): String =
         TYPE_REGEX.find(data)?.groupValues?.get(1) ?: "unknown"

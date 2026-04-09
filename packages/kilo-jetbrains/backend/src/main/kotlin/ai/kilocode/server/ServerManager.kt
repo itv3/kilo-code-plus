@@ -78,6 +78,7 @@ class ServerManager(private val cs: CoroutineScope) : Disposable {
   private suspend fun start(): ServerState {
     return try {
       val path = extractCli()
+      LOG.info("CLI binary path: ${path.absolutePath} (size=${path.length()} bytes)")
       withTimeout(STARTUP_TIMEOUT_MS) {
         spawn(path)
       }
@@ -136,13 +137,16 @@ class ServerManager(private val cs: CoroutineScope) : Disposable {
         put("KILO_APP_NAME", "kilo-code")
       }
 
-      val builder = ProcessBuilder(cli.absolutePath, "serve", "--port", "0")
+      val cmd = listOf(cli.absolutePath, "serve", "--port", "0")
+      val builder = ProcessBuilder(cmd)
       builder.environment().clear()
       builder.environment().putAll(env)
       builder.redirectErrorStream(false)
 
-      LOG.info("Spawning: ${cli.absolutePath} serve --port 0")
+      LOG.info("Starting CLI: ${cmd.joinToString(" ")}")
+      LOG.info("CLI env: KILO_CLIENT=jetbrains KILO_PLATFORM=jetbrains KILO_APP_NAME=kilo-code")
       val proc = builder.start()
+      LOG.info("CLI process started (pid=${proc.pid()})")
       process = proc
       install(proc)
 
