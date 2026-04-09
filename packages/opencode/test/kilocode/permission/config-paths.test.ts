@@ -51,6 +51,36 @@ describe("ConfigProtection.isRequest", () => {
     expect(result).toBe(false)
   })
 
+  test("returns false for file-tool external_directory targeting global config root dir", () => {
+    const result = ConfigProtection.isRequest({
+      permission: "external_directory",
+      patterns: [config + "/*"],
+      metadata: { filepath: config, parentDir: config },
+    })
+    expect(result).toBe(false)
+  })
+
+  test("returns false for file-tool external_directory targeting readable global command dir", () => {
+    const result = ConfigProtection.isRequest({
+      permission: "external_directory",
+      patterns: [path.join(config, "command") + "/*"],
+      metadata: { filepath: path.join(config, "command", "foo.md"), parentDir: path.join(config, "command") },
+    })
+    expect(result).toBe(false)
+  })
+
+  test("returns false for file-tool external_directory targeting readable global skill dir", () => {
+    const result = ConfigProtection.isRequest({
+      permission: "external_directory",
+      patterns: [path.join(config, "skills") + "/*"],
+      metadata: {
+        filepath: path.join(config, "skills", "my-skill", "SKILL.md"),
+        parentDir: path.join(config, "skills"),
+      },
+    })
+    expect(result).toBe(false)
+  })
+
   // --- external_directory: non-config dirs ---
 
   test("returns false for bash external_directory targeting non-config dir", () => {

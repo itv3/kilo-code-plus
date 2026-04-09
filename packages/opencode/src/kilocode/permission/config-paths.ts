@@ -81,7 +81,7 @@ export namespace ConfigProtection {
   /**
    * Determine if a permission request targets config files.
    * Gates `edit` permissions and bash-originated `external_directory` requests.
-   * Read access is not restricted.
+   * File-tool reads are not restricted.
    */
   export function isRequest(request: {
     permission: string
@@ -89,9 +89,8 @@ export namespace ConfigProtection {
     metadata?: Record<string, any>
   }): boolean {
     if (request.permission === "external_directory") {
-      // Only gate bash-originated requests (no filepath metadata).
-      // File tools use assertExternalDirectory() which includes metadata.filepath —
-      // those are independently protected via the edit permission path.
+      // File tools include metadata.filepath. They may read global config
+      // without prompting, but edits are still protected separately via `edit`.
       if (request.metadata?.filepath) return false
       for (const pattern of request.patterns) {
         const dir = pattern.replace(/\/\*$/, "")

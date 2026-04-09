@@ -4,6 +4,7 @@ import { tmpdir } from "../fixture/fixture"
 import { Instance } from "../../src/project/instance"
 import { Agent } from "../../src/agent/agent"
 import { PermissionNext } from "../../src/permission/next"
+import { Global } from "../../src/global"
 
 // Helper to evaluate permission for a tool with wildcard pattern
 function evalPerm(agent: Agent.Info | undefined, permission: string): PermissionNext.Action | undefined {
@@ -154,6 +155,20 @@ test("explore agent asks for external directories and allows Truncate.GLOB", asy
       expect(explore).toBeDefined()
       expect(PermissionNext.evaluate("external_directory", "/some/other/path", explore!.permission).action).toBe("ask")
       expect(PermissionNext.evaluate("external_directory", Truncate.GLOB, explore!.permission).action).toBe("allow")
+    },
+  })
+})
+
+test("code agent allows global config directory reads by default", async () => {
+  await using tmp = await tmpdir()
+  await Instance.provide({
+    directory: tmp.path,
+    fn: async () => {
+      const code = await Agent.get("code")
+      expect(code).toBeDefined()
+      expect(PermissionNext.evaluate("external_directory", `${Global.Path.config}/*`, code!.permission).action).toBe(
+        "allow",
+      )
     },
   })
 })
