@@ -155,13 +155,26 @@ export interface CloudSessionInfo {
 }
 
 // Permission request
+export interface PermissionFileDiff {
+  file: string
+  before?: string
+  after?: string
+  additions: number
+  deletions: number
+}
+
 export interface PermissionRequest {
   id: string
   sessionID: string
   toolName: string
   patterns: string[]
   always: string[]
-  args: Record<string, unknown> & { rules?: string[] }
+  args: Record<string, unknown> & {
+    rules?: string[]
+    diff?: string
+    filepath?: string
+    filediff?: PermissionFileDiff
+  }
   message?: string
   tool?: { messageID: string; callID: string }
 }
@@ -1030,6 +1043,15 @@ export interface AgentManagerApplyWorktreeDiffResultMessage {
   conflicts?: AgentManagerApplyWorktreeDiffConflict[]
 }
 
+// Agent Manager: Revert single file result (extension → webview)
+export interface AgentManagerRevertWorktreeFileResultMessage {
+  type: "agentManager.revertWorktreeFileResult"
+  sessionId: string
+  file: string
+  status: "success" | "error"
+  message: string
+}
+
 // Per-worktree git stats: diff additions/deletions and ahead/behind counts
 export interface WorktreeGitStats {
   worktreeId: string
@@ -1449,6 +1471,7 @@ export type ExtensionMessage =
   | AgentManagerWorktreeDiffFileMessage
   | AgentManagerWorktreeDiffLoadingMessage
   | AgentManagerApplyWorktreeDiffResultMessage
+  | AgentManagerRevertWorktreeFileResultMessage
   | AgentManagerWorktreeStatsMessage
   | AgentManagerLocalStatsMessage
   | AgentManagerPRStatusMessage
@@ -2069,6 +2092,13 @@ export interface ApplyWorktreeDiffMessage {
   selectedFiles?: string[]
 }
 
+// Agent Manager: Revert a single file in a worktree (webview → extension)
+export interface RevertWorktreeFileMessage {
+  type: "agentManager.revertWorktreeFile"
+  sessionId: string
+  file: string
+}
+
 // Variant persistence (webview → extension)
 export interface PersistVariantRequest {
   type: "persistVariant"
@@ -2091,6 +2121,12 @@ export interface EnhancePromptRequest {
 // Open the standalone changes viewer tab from the sidebar
 export interface OpenChangesRequest {
   type: "openChanges"
+}
+
+// Open diff virtual (permission diff) in the lightweight diff virtual panel
+export interface OpenDiffVirtualRequest {
+  type: "openDiffVirtual"
+  diff: PermissionFileDiff
 }
 
 export interface RetryConnectionRequest {
@@ -2354,8 +2390,10 @@ export type WebviewMessage =
   | FinalizeLegacyMigrationMessage
   // legacy-migration end
   | ApplyWorktreeDiffMessage
+  | RevertWorktreeFileMessage
   | EnhancePromptRequest
   | OpenChangesRequest
+  | OpenDiffVirtualRequest
   | RetryConnectionRequest
   | OpenSubAgentViewerRequest
   | PreviewImageRequest
