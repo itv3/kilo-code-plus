@@ -1614,8 +1614,8 @@ export namespace Config {
         for (let i = 0; i < data.plugin.length; i++) {
           const plugin = data.plugin[i]
           try {
-            const resolved = import.meta.resolve!(plugin, options.path)
             // kilocode_change start: on Windows, import.meta.resolve may return a bare path without file:// prefix
+            const resolved = import.meta.resolve!(plugin, options.path)
             data.plugin[i] = resolved.startsWith("file://") ? resolved : pathToFileURL(resolved).href
             // kilocode_change end
           } catch (e) {
