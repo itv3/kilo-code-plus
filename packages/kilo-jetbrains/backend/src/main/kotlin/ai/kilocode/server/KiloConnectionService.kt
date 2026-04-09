@@ -90,6 +90,38 @@ class KiloConnectionService(private val cs: CoroutineScope) : Disposable {
         open()
     }
 
+    /** Kill the CLI process and restart it. Tears down all connections first. */
+    suspend fun restart() {
+        LOG.info("Restarting CLI")
+        teardown()
+        open()
+    }
+
+    /** Kill the CLI process, re-extract the binary from JAR, and restart. */
+    suspend fun reinstall() {
+        LOG.info("Reinstalling CLI")
+        teardown()
+        service<ServerManager>().forceExtract = true
+        open()
+    }
+
+    /**
+     * Full teardown: cancel all jobs, close SSE, shutdown HTTP clients, kill process.
+     *
+     * Order matters — reconnect/health/heartbeat jobs are cancelled first so they
+     * cannot race with the SSE close or process kill.
+     */
+    private suspend fun teardown() {
+        reconnectJob?.cancel()
+        heartbeatJob?.cancel()
+        healthJob?.cancel()
+        processJob?.cancel()
+        source.getAndSet(null)?.cancel()
+        close()
+        setState(ConnectionState.Disconnected)
+        service<ServerManager>().stop()
+    }
+
     private suspend fun open() {
         source.getAndSet(null)?.cancel()
         close()

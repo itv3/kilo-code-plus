@@ -33,4 +33,10 @@ interface KiloProjectRpcApi : RemoteApi<Unit> {
 
     /** One-shot health check against /global/health. */
     suspend fun health(projectId: ProjectId): HealthDto
+
+    /** Kill the CLI process and restart it. */
+    suspend fun restart(projectId: ProjectId)
+
+    /** Kill the CLI process, re-extract the binary, and restart. */
+    suspend fun reinstall(projectId: ProjectId)
 }

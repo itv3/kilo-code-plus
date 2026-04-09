@@ -50,6 +50,13 @@ class ServerManager(private val cs: CoroutineScope) : Disposable {
   private var process: Process? = null
   private var hook: Thread? = null
 
+  /**
+   * When true, the next [extractCli] call deletes and re-extracts the binary
+   * regardless of the size check. Reset to false after extraction.
+   */
+  @Volatile
+  var forceExtract = false
+
   fun process(): Process? = process
 
   suspend fun init(): ServerState {
@@ -72,6 +79,17 @@ class ServerManager(private val cs: CoroutineScope) : Disposable {
       process = null
       pending = null
       uninstall()
+    }
+  }
+
+  /** Kill the running CLI process and reset state so the next [init] spawns fresh. */
+  suspend fun stop() {
+    mutex.withLock {
+      val proc = process ?: return@withLock
+      process = null
+      pending = null
+      uninstall()
+      kill(proc, "stop()")
     }
   }
 
@@ -98,6 +116,12 @@ class ServerManager(private val cs: CoroutineScope) : Disposable {
     val loader = javaClass.classLoader
 
     val target = File(PathManager.getSystemPath(), "kilo/bin/$exe")
+
+    if (forceExtract && target.exists()) {
+      LOG.info("Force re-extracting CLI binary — deleting ${target.absolutePath}")
+      target.delete()
+      forceExtract = false
+    }
 
     val url = loader.getResource(resource)
       ?: throw IllegalStateException("CLI binary not found in JAR resources at $resource")

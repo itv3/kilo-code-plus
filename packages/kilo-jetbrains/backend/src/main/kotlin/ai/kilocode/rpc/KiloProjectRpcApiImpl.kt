@@ -33,4 +33,10 @@ class KiloProjectRpcApiImpl : KiloProjectRpcApi {
 
     override suspend fun health(projectId: ProjectId): HealthDto =
         resolve(projectId).health()
+
+    override suspend fun restart(projectId: ProjectId) =
+        resolve(projectId).restart()
+
+    override suspend fun reinstall(projectId: ProjectId) =
+        resolve(projectId).reinstall()
 }

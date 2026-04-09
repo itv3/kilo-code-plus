@@ -42,6 +42,12 @@ class KiloProjectService(
     /** Ensure the CLI backend is running and connected. */
     suspend fun connect() = connection.connect()
 
+    /** Kill the CLI process and restart it. */
+    suspend fun restart() = connection.restart()
+
+    /** Kill the CLI process, re-extract the binary, and restart. */
+    suspend fun reinstall() = connection.reinstall()
+
     /**
      * The generated API client, or null when disconnected.
      *

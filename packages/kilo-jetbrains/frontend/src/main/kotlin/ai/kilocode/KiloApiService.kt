@@ -62,6 +62,18 @@ class KiloApiService(
         null
     }
 
+    /** Kill the CLI process and restart it. */
+    suspend fun restart() {
+        started.set(false)
+        durable { KiloProjectRpcApi.getInstance().restart(project.projectId()) }
+    }
+
+    /** Kill the CLI process, re-extract the binary, and restart. */
+    suspend fun reinstall() {
+        started.set(false)
+        durable { KiloProjectRpcApi.getInstance().reinstall(project.projectId()) }
+    }
+
     fun watch(fn: (String) -> Unit): Job {
         val mgr = ToolWindowManager.getInstance(project)
         return cs.launch {
