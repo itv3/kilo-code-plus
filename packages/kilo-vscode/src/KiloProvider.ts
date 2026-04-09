@@ -36,6 +36,7 @@ import { GitOps } from "./agent-manager/GitOps"
 import { GitStatsPoller, type LocalStats } from "./agent-manager/GitStatsPoller"
 import { getWorkspaceRoot } from "./review-utils"
 import { MarketplaceService, type MarketplaceItem, type RemoveResult } from "./services/marketplace"
+import type { RemoteStatusService } from "./services/RemoteStatusService"
 import { resolveProjectDirectory } from "./project-directory"
 import { getBusySessionCount, seedSessionStatuses } from "./session-status"
 import { retry } from "./services/cli-backend/retry"
@@ -112,6 +113,7 @@ const mapAgent = (a: Agent) => ({
 
 export class KiloProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "kilo-code.SidebarProvider"
+  private readonly instanceId = crypto.randomUUID()
 
   private webview: vscode.Webview | null = null
   private currentSession: Session | null = null
@@ -198,6 +200,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     | null = null
 
   private diffVirtualProvider: import("./DiffVirtualProvider").DiffVirtualProvider | undefined
+  private remoteService: RemoteStatusService | null = null
+  private unsubscribeRemote: (() => void) | null = null
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -209,6 +213,13 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.slimEditMetadata = options?.slimEditMetadata ?? true
 
     TelemetryProxy.getInstance().setProvider(this)
+  }
+
+  setRemoteService(service: RemoteStatusService): void {
+    this.remoteService = service
+    this.unsubscribeRemote = service.onChange((state) => {
+      this.postMessage({ type: "remoteStatus", enabled: state.enabled, connected: state.connected })
+    })
   }
 
   public setProjectDirectory(directory: string | null): void {
@@ -324,6 +335,12 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       // authoritative and reconciliation risks race-resetting busy sessions.
       const reconcile = this.sessionStatusMap.size === 0
       void this.seedSessionStatusMap(reconcile)
+
+      // Send current remote status so settings panel shows correct state
+      if (this.remoteService) {
+        const state = this.remoteService.getState()
+        this.postMessage({ type: "remoteStatus", enabled: state.enabled, connected: state.connected })
+      }
     }
 
     // legacy-migration start
@@ -365,6 +382,11 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     webviewView.onDidChangeVisibility(() => {
       vscode.commands.executeCommand("setContext", "kilo-code.new.sidebarVisible", webviewView.visible)
       this.statsPoller?.setEnabled(webviewView.visible)
+      if (webviewView.visible) {
+        if (this.currentSession) this.connectionService.registerFocused(this.instanceId, this.currentSession.id)
+      } else {
+        this.connectionService.unregisterFocused(this.instanceId)
+      }
     })
 
     // Initialize connection to CLI backend
@@ -388,6 +410,15 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
     // Handle messages from webview (shared handler)
     this.setupWebviewMessageHandler(panel.webview)
+
+    // Unregister focus when the editor tab becomes inactive, re-register when active
+    panel.onDidChangeViewState(() => {
+      if (panel.active) {
+        if (this.currentSession) this.connectionService.registerFocused(this.instanceId, this.currentSession.id)
+      } else {
+        this.connectionService.unregisterFocused(this.instanceId)
+      }
+    })
 
     this.initializeConnection()
   }
@@ -582,6 +613,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "clearSession":
           this.contextSessionID = this.currentSession?.id ?? this.contextSessionID
           this.currentSession = null
+          this.connectionService.unregisterFocused(this.instanceId)
           break
         case "loadMessages":
           // Don't await: allow parallel loads so rapid session switching
@@ -817,6 +849,30 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "renameSession":
           await this.handleRenameSession(message.sessionID, message.title)
           break
+        case "toggleRemote":
+          this.remoteService?.toggle().catch((err) => {
+            console.error("[Kilo New] toggleRemote failed:", err)
+            this.postMessage({ type: "error", message: "Failed to toggle remote control" })
+          })
+          break
+        case "setRemoteEnabled":
+          this.remoteService?.setEnabled(message.enabled).catch((err) => {
+            console.error("[Kilo New] setRemoteEnabled failed:", err)
+            this.postMessage({
+              type: "error",
+              message: `Failed to ${message.enabled ? "enable" : "disable"} remote control`,
+            })
+          })
+          break
+        case "requestRemoteStatus": {
+          // Send cached state immediately, then refresh
+          if (this.remoteService) {
+            const state = this.remoteService.getState()
+            this.postMessage({ type: "remoteStatus", enabled: state.enabled, connected: state.connected })
+          }
+          this.remoteService?.refresh().catch((err) => console.error("[Kilo New] remoteStatus refresh failed:", err))
+          break
+        }
         case "updateSetting":
           await this.handleUpdateSetting(message.key, message.value)
           break
@@ -1048,6 +1104,11 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       // Subscribe to SSE events for this webview (filtered by tracked sessions)
       this.unsubscribeEvent = this.connectionService.onEventFiltered(
         (event) => {
+          // Remote status events are global and should always pass through
+          if (event.type === "kilo-sessions.remote-status-changed") {
+            return true
+          }
+
           const sessionId = this.connectionService.resolveEventSessionId(event)
 
           // message.part.updated and message.part.delta are always session-scoped; drop if session unknown.
@@ -1244,6 +1305,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private async handleLoadMessages(sessionID: string): Promise<void> {
     // Track the session so we receive its SSE events
     this.trackedSessionIds.add(sessionID)
+    this.connectionService.registerFocused(this.instanceId, sessionID)
     this.contextSessionID = sessionID
 
     if (!this.client) {
@@ -2822,6 +2884,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    * Filters events by project ID and tracked session IDs so each webview only sees its own sessions.
    */
   private handleEvent(event: Event): void {
+    if (event.type === "kilo-sessions.remote-status-changed") {
+      this.remoteService?.updateFromEvent({
+        enabled: event.properties.enabled,
+        connected: event.properties.connected,
+      })
+      return
+    }
+
     // Drop session events from other projects before any tracking logic.
     // This must come first: the trackedSessionIds guard below would otherwise
     // let a foreign session through if it was accidentally tracked.
@@ -3233,6 +3303,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    * Does NOT kill the server — that's the connection service's job.
    */
   dispose(): void {
+    this.unsubscribeRemote?.()
+    this.connectionService.unregisterFocused(this.instanceId)
     this.statsPoller?.stop()
     this.statsGitOps?.dispose()
     this.unsubscribeEvent?.()
