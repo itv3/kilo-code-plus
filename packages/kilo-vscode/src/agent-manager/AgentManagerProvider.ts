@@ -201,18 +201,13 @@ export class AgentManagerProvider implements Disposable {
       this.host.refreshGit()
     }
 
-    // Do not auto-remove stale worktrees on load.
-    // Presence checks run in the shared poller and require explicit user cleanup.
-
-    // Register all worktree sessions with the session provider
-    for (const worktree of state.getWorktrees()) {
-      for (const session of state.getSessions(worktree.id)) {
-        this.panel?.sessions.setSessionDirectory(session.id, worktree.path)
-        this.panel?.sessions.trackSession(session.id)
+    for (const wt of state.getWorktrees()) {
+      for (const s of state.getSessions(wt.id)) {
+        this.panel?.sessions.setSessionDirectory(s.id, wt.path)
+        this.panel?.sessions.trackSession(s.id)
       }
     }
-
-    // Push full state to webview
+    for (const s of state.getSessions()) if (!s.worktreeId) this.panel?.sessions.trackSession(s.id)
     this.pushState()
 
     // Refresh sessions so worktree sessions appear in the list
@@ -242,8 +237,12 @@ export class AgentManagerProvider implements Disposable {
     if (m.type === "agentManager.removeStaleWorktree") return this.onRemoveStaleWorktree(m.worktreeId)
     if (m.type === "agentManager.promoteSession") return this.onPromoteSession(m.sessionId)
     if (m.type === "agentManager.openLocally") {
-      if (!this.panel) return null
-      this.panel.sessions.clearSessionDirectory(m.sessionId)
+      this.panel?.sessions.clearSessionDirectory(m.sessionId)
+      const st = this.getStateManager()
+      if (st?.getSession(m.sessionId)) {
+        st.moveSession(m.sessionId, null)
+        this.pushState()
+      }
       return null
     }
     if (m.type === "continueInWorktree") {
@@ -255,6 +254,15 @@ export class AgentManagerProvider implements Disposable {
     if (m.type === "agentManager.addSessionToWorktree") return this.onAddSessionToWorktree(m.worktreeId)
     if (m.type === "agentManager.forkSession") return this.onForkSession(m.sessionId, m.worktreeId)
     if (m.type === "agentManager.closeSession") return this.onCloseSession(m.sessionId)
+    if (m.type === "agentManager.persistSession" || m.type === "agentManager.forgetSession") {
+      const persist = m.type === "agentManager.persistSession"
+      void this.stateReady?.then(() => {
+        const st = this.getStateManager()
+        if (st)
+          persist ? !st.getSession(m.sessionId) && st.addSession(m.sessionId, null) : st.removeSession(m.sessionId)
+      })
+      return null
+    }
     if ((m.type === "sendMessage" || m.type === "sendCommand") && m.draftID && !m.sessionID) {
       this.activeSessionId = m.draftID
     }
@@ -927,9 +935,9 @@ export class AgentManagerProvider implements Disposable {
         continue
       }
 
-      await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch)
+      await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
 
-      const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch)
+      const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
       if (!session) {
         const state = this.getStateManager()
         const manager = this.getWorktreeManager()
@@ -942,7 +950,7 @@ export class AgentManagerProvider implements Disposable {
       const state = this.getStateManager()!
       state.addSession(session.id, wt.worktree.id)
       this.registerWorktreeSession(session.id, wt.result.path)
-      this.notifyWorktreeReady(session.id, wt.result)
+      this.notifyWorktreeReady(session.id, wt.result, wt.worktree.id)
 
       // Set the per-version model immediately so the UI selector reflects
       // the correct model as soon as the worktree appears, before Phase 2.
@@ -1420,6 +1428,7 @@ export class AgentManagerProvider implements Disposable {
         status: "error",
         message: `Setup script failed: ${msg}`,
         branch,
+        worktreeId,
       })
     }
   }
