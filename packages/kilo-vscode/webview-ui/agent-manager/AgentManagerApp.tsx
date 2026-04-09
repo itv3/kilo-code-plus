@@ -97,6 +97,7 @@ import { buildTopLevelItems, isGrouped, isGroupStart, isGroupEnd, type TopLevelI
 import { sectionAwareDetector } from "./section-dnd"
 import { ConstrainDragXAxis } from "./constrain-drag-x"
 import { mergeWorktreeDiffs } from "./diff-state"
+import { trackOpenSessions } from "./open-sessions"
 import "./agent-manager.css"
 import "./agent-manager-review.css"
 
@@ -667,14 +668,7 @@ const AgentManagerContent: Component = () => {
       setLocalSessionIDs(valid)
     }
   })
-
-  // Report all open (non-pending) session IDs to extension for heartbeat
-  createEffect(() => {
-    const local = localSessionIDs().filter((id) => !isPending(id))
-    const managed = managedSessions().map((ms) => ms.id)
-    const all = [...new Set([...local, ...managed])]
-    vscode.postMessage({ type: "agentManager.openSessions", sessionIDs: all })
-  })
+  trackOpenSessions(localSessionIDs, isPending, managedSessions, vscode.postMessage)
 
   // Drop in-memory review state for worktrees that no longer exist.
   createEffect(() => {

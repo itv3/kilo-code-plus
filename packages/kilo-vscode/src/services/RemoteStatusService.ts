@@ -74,6 +74,26 @@ export class RemoteStatusService implements vscode.Disposable {
     this.update({ enabled, connected: false })
   }
 
+  /**
+   * Handle a remote-related webview message.
+   * Returns a response message to post back to the webview, or null.
+   */
+  async handleMessage(type: string, enabled?: boolean): Promise<RemoteState | null> {
+    switch (type) {
+      case "toggleRemote":
+        await this.toggle()
+        return null
+      case "setRemoteEnabled":
+        if (enabled === undefined) return null
+        await this.setEnabled(enabled)
+        return null
+      case "requestRemoteStatus":
+        void this.refresh()
+        return this.state
+    }
+    return null
+  }
+
   dispose(): void {
     this.listeners.clear()
     this.bar.dispose()
