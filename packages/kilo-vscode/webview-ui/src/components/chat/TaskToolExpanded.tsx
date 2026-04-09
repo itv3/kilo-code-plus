@@ -46,7 +46,7 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
     childID({
       type: "tool",
       tool: props.tool,
-      metadata: props.metadata as { sessionId?: string },
+      metadata: props.partMetadata as { sessionId?: string } | undefined,
       state: { metadata: props.metadata as { sessionId?: string } },
     })
 
