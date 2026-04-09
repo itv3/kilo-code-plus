@@ -11,10 +11,12 @@ import { Component, createEffect, createMemo, For, Show } from "solid-js"
 import { ToolRegistry, ToolProps, getToolInfo } from "@kilocode/kilo-ui/message-part"
 import { BasicTool } from "@kilocode/kilo-ui/basic-tool"
 import { Icon } from "@kilocode/kilo-ui/icon"
+import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { useData } from "@kilocode/kilo-ui/context/data"
 import { useI18n } from "@kilocode/kilo-ui/context/i18n"
 import { createAutoScroll } from "@kilocode/kilo-ui/hooks"
 import { useSession } from "../../context/session"
+import { useVSCode } from "../../context/vscode"
 import type { ToolPart, Message as SDKMessage } from "@kilocode/sdk/v2"
 
 /** Collect all tool parts from all assistant messages in a given session. */
@@ -37,12 +39,14 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
   const data = useData()
   const i18n = useI18n()
   const session = useSession()
+  const vscode = useVSCode()
 
   const childSessionId = () => props.metadata.sessionId as string | undefined
 
   const running = createMemo(() => props.status === "pending" || props.status === "running")
 
-  // Sync child session into store whenever we have a sessionId
+  // Warm child session data immediately so completed task tools already have
+  // their compact child tool list available when the user expands them.
   createEffect(() => {
     const id = childSessionId()
     if (!id) return
@@ -65,8 +69,14 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
 
   const autoScroll = createAutoScroll({
     working: running,
-    overflowAnchor: "auto",
   })
+
+  const openInTab = (e: MouseEvent) => {
+    e.stopPropagation()
+    const id = childSessionId()
+    if (!id) return
+    vscode.postMessage({ type: "openSubAgentViewer", sessionID: id, title: description() })
+  }
 
   const trigger = () => (
     <div data-slot="basic-tool-tool-info-structured">
@@ -74,10 +84,24 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
         <span data-slot="basic-tool-tool-title" class="capitalize">
           {title()}
         </span>
-        <Show when={description()}>
-          <span data-slot="basic-tool-tool-subtitle">{description()}</span>
+        <Show when={description() || childToolParts().length > 0}>
+          <span data-slot="basic-tool-tool-subtitle">
+            {description()}
+            <Show when={childToolParts().length > 0}>
+              {description() ? " " : ""}({childToolParts().length})
+            </Show>
+          </span>
         </Show>
       </div>
+      <Show when={childSessionId()}>
+        <IconButton
+          icon="square-arrow-top-right"
+          size="small"
+          variant="ghost"
+          aria-label="Open sub-agent in tab"
+          onClick={openInTab}
+        />
+      </Show>
     </div>
   )
 
