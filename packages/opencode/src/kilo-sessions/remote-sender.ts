@@ -83,7 +83,7 @@ export namespace RemoteSender {
       })
 
     async function directoryFor(sid: string): Promise<string> {
-      const info = await Session.get(sid).catch(() => undefined)
+      const info = await Session.get(SessionID.make(sid)).catch(() => undefined)
       return info?.directory ?? options.directory
     }
 

@@ -2814,6 +2814,102 @@ export class Question extends HeyApiClient {
   }
 }
 
+export class Network extends HeyApiClient {
+  /**
+   * List pending network waits
+   *
+   * Get all pending network reconnect requests across all sessions.
+   */
+  public list<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<NetworkListResponses, unknown, ThrowOnError>({
+      url: "/network",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Resume after network wait
+   *
+   * Resume a pending session after reconnecting network-dependent services.
+   */
+  public reply<ThrowOnError extends boolean = false>(
+    parameters: {
+      requestID: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "requestID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<NetworkReplyResponses, NetworkReplyErrors, ThrowOnError>({
+      url: "/network/{requestID}/reply",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Reject network resume request
+   *
+   * Stop a pending session instead of resuming after network reconnect.
+   */
+  public reject<ThrowOnError extends boolean = false>(
+    parameters: {
+      requestID: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "requestID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<NetworkRejectResponses, NetworkRejectErrors, ThrowOnError>({
+      url: "/network/{requestID}/reject",
+      ...options,
+      ...params,
+    })
+  }
+}
+
 export class Oauth extends HeyApiClient {
   /**
    * OAuth authorize
@@ -5291,102 +5387,6 @@ export class Event extends HeyApiClient {
   }
 }
 
-export class Network extends HeyApiClient {
-  /**
-   * List pending network waits
-   *
-   * Get all pending network reconnect requests across all sessions.
-   */
-  public list<ThrowOnError extends boolean = false>(
-    parameters?: {
-      directory?: string
-      workspace?: string
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    const params = buildClientParams(
-      [parameters],
-      [
-        {
-          args: [
-            { in: "query", key: "directory" },
-            { in: "query", key: "workspace" },
-          ],
-        },
-      ],
-    )
-    return (options?.client ?? this.client).get<NetworkListResponses, unknown, ThrowOnError>({
-      url: "/network",
-      ...options,
-      ...params,
-    })
-  }
-
-  /**
-   * Resume after network wait
-   *
-   * Resume a pending session after reconnecting network-dependent services.
-   */
-  public reply<ThrowOnError extends boolean = false>(
-    parameters: {
-      requestID: string
-      directory?: string
-      workspace?: string
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    const params = buildClientParams(
-      [parameters],
-      [
-        {
-          args: [
-            { in: "path", key: "requestID" },
-            { in: "query", key: "directory" },
-            { in: "query", key: "workspace" },
-          ],
-        },
-      ],
-    )
-    return (options?.client ?? this.client).post<NetworkReplyResponses, NetworkReplyErrors, ThrowOnError>({
-      url: "/network/{requestID}/reply",
-      ...options,
-      ...params,
-    })
-  }
-
-  /**
-   * Reject network resume request
-   *
-   * Stop a pending session instead of resuming after network reconnect.
-   */
-  public reject<ThrowOnError extends boolean = false>(
-    parameters: {
-      requestID: string
-      directory?: string
-      workspace?: string
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    const params = buildClientParams(
-      [parameters],
-      [
-        {
-          args: [
-            { in: "path", key: "requestID" },
-            { in: "query", key: "directory" },
-            { in: "query", key: "workspace" },
-          ],
-        },
-      ],
-    )
-    return (options?.client ?? this.client).post<NetworkRejectResponses, NetworkRejectErrors, ThrowOnError>({
-      url: "/network/{requestID}/reject",
-      ...options,
-      ...params,
-    })
-  }
-}
-
 export class KiloClient extends HeyApiClient {
   public static readonly __registry = new HeyApiRegistry<KiloClient>()
 
@@ -5453,6 +5453,11 @@ export class KiloClient extends HeyApiClient {
   private _question?: Question
   get question(): Question {
     return (this._question ??= new Question({ client: this.client }))
+  }
+
+  private _network?: Network
+  get network(): Network {
+    return (this._network ??= new Network({ client: this.client }))
   }
 
   private _provider?: Provider
@@ -5548,10 +5553,5 @@ export class KiloClient extends HeyApiClient {
   private _event?: Event
   get event(): Event {
     return (this._event ??= new Event({ client: this.client }))
-  }
-
-  private _network?: Network
-  get network(): Network {
-    return (this._network ??= new Network({ client: this.client }))
   }
 }

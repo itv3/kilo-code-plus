@@ -7,6 +7,7 @@ import { Global } from "@/global"
 import { Identifier } from "@/id/id"
 import { Instance } from "@/project/instance"
 import { Provider } from "@/provider/provider"
+import { ProviderID, ModelID } from "@/provider/schema"
 import { Question } from "@/question"
 import { Session } from "@/session"
 import { SessionID, MessageID, PartID } from "@/session/schema"
@@ -125,7 +126,7 @@ export namespace PlanFollowup {
 
   const ModelState = z
     .object({
-      model: z.record(z.string(), z.object({ providerID: z.string(), modelID: z.string() })).optional(),
+      model: z.record(z.string(), z.object({ providerID: ProviderID.zod, modelID: ModelID.zod })).optional(),
       variant: z.record(z.string(), z.string().optional()).optional(),
     })
     .passthrough()

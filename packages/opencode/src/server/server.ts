@@ -275,6 +275,7 @@ export namespace Server {
         .route("/permission", PermissionRoutes())
         .route("/permission", PermissionKilocodeRoutes()) // kilocode_change
         .route("/question", QuestionRoutes())
+        .route("/network", NetworkRoutes()) // kilocode_change
         .route("/provider", ProviderRoutes())
         .route("/telemetry", TelemetryRoutes()) // kilocode_change
         .route("/remote", RemoteRoutes()) // kilocode_change

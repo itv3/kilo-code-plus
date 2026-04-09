@@ -13,7 +13,7 @@ export const SIDECAR_BINARIES: Array<{ rustTarget: string; ocBinary: string; ass
   },
   {
     rustTarget: "aarch64-pc-windows-msvc",
-    ocBinary: "opencode-windows-arm64",
+    ocBinary: "@kilocode/cli-windows-arm64", // kilocode_change
     assetExt: "zip",
   },
   {

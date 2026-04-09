@@ -26,7 +26,8 @@ export namespace Installation {
   }
 
   async function upgradeCurl(target: string) {
-    const body = await fetch("https://kilo.ai/install").then((res) => { // kilocode_change
+    const body = await fetch("https://kilo.ai/install").then((res) => {
+      // kilocode_change
       if (!res.ok) throw new Error(res.statusText)
       return res.text()
     })
@@ -136,8 +137,7 @@ export namespace Installation {
     for (const check of checks) {
       const output = await check.command()
       // kilocode_change start - check for @kilocode/cli instead of opencode-ai for JS package managers
-      const installedName =
-        check.name === "brew" ? "opencode" : "@kilocode/cli" // kilocode_change - removed choco/scoop
+      const installedName = check.name === "brew" ? "opencode" : "@kilocode/cli" // kilocode_change - removed choco/scoop
       // kilocode_change end
       if (output.includes(installedName)) {
         return check.name
@@ -171,13 +171,13 @@ export namespace Installation {
         result = await upgradeCurl(target)
         break
       case "npm":
-        result = await Process.run(["npm", "install", "-g", `kilocode/cli@${target}`], { nothrow: true }) // kilocode_change
+        result = await Process.run(["npm", "install", "-g", `@kilocode/cli@${target}`], { nothrow: true }) // kilocode_change
         break
       case "pnpm":
-        result = await Process.run(["pnpm", "install", "-g", `kilocode/cli@${target}`], { nothrow: true }) // kilocode_change
+        result = await Process.run(["pnpm", "install", "-g", `@kilocode/cli@${target}`], { nothrow: true }) // kilocode_change
         break
       case "bun":
-        result = await Process.run(["bun", "install", "-g", `kilocode/cli@${target}`], { nothrow: true }) // kilocode_change
+        result = await Process.run(["bun", "install", "-g", `@kilocode/cli@${target}`], { nothrow: true }) // kilocode_change
         break
       case "brew": {
         const formula = await getBrewFormula()

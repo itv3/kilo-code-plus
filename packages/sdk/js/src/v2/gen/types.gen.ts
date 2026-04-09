@@ -97,6 +97,114 @@ export type EventFileEdited = {
   }
 }
 
+export type EventTuiPromptAppend = {
+  type: "tui.prompt.append"
+  properties: {
+    text: string
+  }
+}
+
+export type EventTuiCommandExecute = {
+  type: "tui.command.execute"
+  properties: {
+    command:
+      | "session.list"
+      | "session.new"
+      | "session.share"
+      | "session.interrupt"
+      | "session.compact"
+      | "session.page.up"
+      | "session.page.down"
+      | "session.line.up"
+      | "session.line.down"
+      | "session.half.page.up"
+      | "session.half.page.down"
+      | "session.first"
+      | "session.last"
+      | "prompt.clear"
+      | "prompt.submit"
+      | "agent.cycle"
+      | string
+  }
+}
+
+export type EventTuiToastShow = {
+  type: "tui.toast.show"
+  properties: {
+    title?: string
+    message: string
+    variant: "info" | "success" | "warning" | "error"
+    /**
+     * Duration in milliseconds
+     */
+    duration?: number
+  }
+}
+
+export type EventTuiSessionSelect = {
+  type: "tui.session.select"
+  properties: {
+    /**
+     * Session ID to navigate to
+     */
+    sessionID: string
+  }
+}
+
+export type EventMcpToolsChanged = {
+  type: "mcp.tools.changed"
+  properties: {
+    server: string
+  }
+}
+
+export type EventMcpBrowserOpenFailed = {
+  type: "mcp.browser.open.failed"
+  properties: {
+    mcpName: string
+    url: string
+  }
+}
+
+export type SessionNetworkWait = {
+  id: string
+  sessionID: string
+  message: string
+  restored: boolean
+  time: {
+    created: number
+  }
+}
+
+export type EventSessionNetworkAsked = {
+  type: "session.network.asked"
+  properties: SessionNetworkWait
+}
+
+export type EventSessionNetworkReplied = {
+  type: "session.network.replied"
+  properties: {
+    sessionID: string
+    requestID: string
+  }
+}
+
+export type EventSessionNetworkRejected = {
+  type: "session.network.rejected"
+  properties: {
+    sessionID: string
+    requestID: string
+  }
+}
+
+export type EventSessionNetworkRestored = {
+  type: "session.network.restored"
+  properties: {
+    sessionID: string
+    requestID: string
+  }
+}
+
 export type OutputFormatText = {
   type: "text"
 }
@@ -738,75 +846,6 @@ export type EventTodoUpdated = {
   }
 }
 
-export type EventTuiPromptAppend = {
-  type: "tui.prompt.append"
-  properties: {
-    text: string
-  }
-}
-
-export type EventTuiCommandExecute = {
-  type: "tui.command.execute"
-  properties: {
-    command:
-      | "session.list"
-      | "session.new"
-      | "session.share"
-      | "session.interrupt"
-      | "session.compact"
-      | "session.page.up"
-      | "session.page.down"
-      | "session.line.up"
-      | "session.line.down"
-      | "session.half.page.up"
-      | "session.half.page.down"
-      | "session.first"
-      | "session.last"
-      | "prompt.clear"
-      | "prompt.submit"
-      | "agent.cycle"
-      | string
-  }
-}
-
-export type EventTuiToastShow = {
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    /**
-     * Duration in milliseconds
-     */
-    duration?: number
-  }
-}
-
-export type EventTuiSessionSelect = {
-  type: "tui.session.select"
-  properties: {
-    /**
-     * Session ID to navigate to
-     */
-    sessionID: string
-  }
-}
-
-export type EventMcpToolsChanged = {
-  type: "mcp.tools.changed"
-  properties: {
-    server: string
-  }
-}
-
-export type EventMcpBrowserOpenFailed = {
-  type: "mcp.browser.open.failed"
-  properties: {
-    mcpName: string
-    url: string
-  }
-}
-
 export type EventCommandExecuted = {
   type: "command.executed"
   properties: {
@@ -1018,6 +1057,16 @@ export type Event =
   | EventLspClientDiagnostics
   | EventLspUpdated
   | EventFileEdited
+  | EventTuiPromptAppend
+  | EventTuiCommandExecute
+  | EventTuiToastShow
+  | EventTuiSessionSelect
+  | EventMcpToolsChanged
+  | EventMcpBrowserOpenFailed
+  | EventSessionNetworkAsked
+  | EventSessionNetworkReplied
+  | EventSessionNetworkRejected
+  | EventSessionNetworkRestored
   | EventMessageUpdated
   | EventMessageRemoved
   | EventMessagePartUpdated
@@ -1030,19 +1079,9 @@ export type Event =
   | EventQuestionAsked
   | EventQuestionReplied
   | EventQuestionRejected
-  | EventSessionNetworkAsked
-  | EventSessionNetworkReplied
-  | EventSessionNetworkRejected
-  | EventSessionNetworkRestored
   | EventSessionCompacted
   | EventFileWatcherUpdated
   | EventTodoUpdated
-  | EventTuiPromptAppend
-  | EventTuiCommandExecute
-  | EventTuiToastShow
-  | EventTuiSessionSelect
-  | EventMcpToolsChanged
-  | EventMcpBrowserOpenFailed
   | EventCommandExecuted
   | EventSessionCreated
   | EventSessionUpdated
@@ -1286,7 +1325,7 @@ export type ProviderConfig = {
      */
     setCacheKey?: boolean
     /**
-     * Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.
+     * Timeout in milliseconds for requests to this provider. Default is 120000 (2 minutes). Set to false to disable timeout.
      */
     timeout?: number | false
     /**
@@ -2005,45 +2044,6 @@ export type FormatterStatus = {
   name: string
   extensions: Array<string>
   enabled: boolean
-}
-
-export type SessionNetworkWait = {
-  id: string
-  sessionID: string
-  message: string
-  restored: boolean
-  time: {
-    created: number
-  }
-}
-
-export type EventSessionNetworkAsked = {
-  type: "session.network.asked"
-  properties: SessionNetworkWait
-}
-
-export type EventSessionNetworkReplied = {
-  type: "session.network.replied"
-  properties: {
-    sessionID: string
-    requestID: string
-  }
-}
-
-export type EventSessionNetworkRejected = {
-  type: "session.network.rejected"
-  properties: {
-    sessionID: string
-    requestID: string
-  }
-}
-
-export type EventSessionNetworkRestored = {
-  type: "session.network.restored"
-  properties: {
-    sessionID: string
-    requestID: string
-  }
 }
 
 export type GlobalHealthData = {
@@ -4243,6 +4243,93 @@ export type QuestionRejectResponses = {
 
 export type QuestionRejectResponse = QuestionRejectResponses[keyof QuestionRejectResponses]
 
+export type NetworkListData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/network"
+}
+
+export type NetworkListResponses = {
+  /**
+   * List of pending network reconnect requests
+   */
+  200: Array<SessionNetworkWait>
+}
+
+export type NetworkListResponse = NetworkListResponses[keyof NetworkListResponses]
+
+export type NetworkReplyData = {
+  body?: never
+  path: {
+    requestID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/network/{requestID}/reply"
+}
+
+export type NetworkReplyErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type NetworkReplyError = NetworkReplyErrors[keyof NetworkReplyErrors]
+
+export type NetworkReplyResponses = {
+  /**
+   * Network wait resumed successfully
+   */
+  200: boolean
+}
+
+export type NetworkReplyResponse = NetworkReplyResponses[keyof NetworkReplyResponses]
+
+export type NetworkRejectData = {
+  body?: never
+  path: {
+    requestID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/network/{requestID}/reject"
+}
+
+export type NetworkRejectErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type NetworkRejectError = NetworkRejectErrors[keyof NetworkRejectErrors]
+
+export type NetworkRejectResponses = {
+  /**
+   * Network wait rejected successfully
+   */
+  200: boolean
+}
+
+export type NetworkRejectResponse = NetworkRejectResponses[keyof NetworkRejectResponses]
+
 export type ProviderListData = {
   body?: never
   path?: never
@@ -6261,90 +6348,3 @@ export type EventSubscribeResponses = {
 }
 
 export type EventSubscribeResponse = EventSubscribeResponses[keyof EventSubscribeResponses]
-
-export type NetworkListData = {
-  body?: never
-  path?: never
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/network"
-}
-
-export type NetworkListResponses = {
-  /**
-   * List of pending network reconnect requests
-   */
-  200: Array<SessionNetworkWait>
-}
-
-export type NetworkListResponse = NetworkListResponses[keyof NetworkListResponses]
-
-export type NetworkReplyData = {
-  body?: never
-  path: {
-    requestID: string
-  }
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/network/{requestID}/reply"
-}
-
-export type NetworkReplyErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-  /**
-   * Not found
-   */
-  404: NotFoundError
-}
-
-export type NetworkReplyError = NetworkReplyErrors[keyof NetworkReplyErrors]
-
-export type NetworkReplyResponses = {
-  /**
-   * Network wait resumed successfully
-   */
-  200: boolean
-}
-
-export type NetworkReplyResponse = NetworkReplyResponses[keyof NetworkReplyResponses]
-
-export type NetworkRejectData = {
-  body?: never
-  path: {
-    requestID: string
-  }
-  query?: {
-    directory?: string
-    workspace?: string
-  }
-  url: "/network/{requestID}/reject"
-}
-
-export type NetworkRejectErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-  /**
-   * Not found
-   */
-  404: NotFoundError
-}
-
-export type NetworkRejectError = NetworkRejectErrors[keyof NetworkRejectErrors]
-
-export type NetworkRejectResponses = {
-  /**
-   * Network wait rejected successfully
-   */
-  200: boolean
-}
-
-export type NetworkRejectResponse = NetworkRejectResponses[keyof NetworkRejectResponses]

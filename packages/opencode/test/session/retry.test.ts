@@ -194,7 +194,7 @@ describe("session.message-v2.fromError", () => {
         syscall: "connect",
         message: "connect ECONNREFUSED 127.0.0.1:3000",
       },
-      { providerID: "test" },
+      { providerID: ProviderID.make("test") },
     ) as MessageV2.APIError
 
     expect(result.data.isRetryable).toBe(true)
