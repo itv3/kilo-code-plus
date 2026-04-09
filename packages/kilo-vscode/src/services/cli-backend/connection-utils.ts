@@ -40,6 +40,14 @@ export function resolveEventSessionId(
     case "question.asked":
     case "question.replied":
     case "question.rejected":
+      return event.properties.sessionID
+    default:
+      return resolveSuggestionSessionId(event)
+  }
+}
+
+function resolveSuggestionSessionId(event: Event): string | undefined {
+  switch (event.type) {
     case "suggestion.shown":
     case "suggestion.accepted":
     case "suggestion.dismissed":

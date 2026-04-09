@@ -329,14 +329,7 @@ export class KiloConnectionService {
           if (error) throw new Error(`Failed to reject question ${q.id}: ${String(error)}`)
         }
       }
-      const { data: suggestions, error: sugErr } = await this.client.suggestion.list({ directory: dir })
-      if (sugErr) throw new Error(`Failed to list suggestions for ${dir}: ${String(sugErr)}`)
-      if (suggestions) {
-        for (const s of suggestions) {
-          const { error } = await this.client.suggestion.dismiss({ requestID: s.id, directory: dir })
-          if (error) throw new Error(`Failed to dismiss suggestion ${s.id}: ${String(error)}`)
-        }
-      }
+      await drainSuggestions(this.client, dir)
     }
     for (const listener of this.clearPendingPromptsListeners) {
       listener()
@@ -505,5 +498,16 @@ export class KiloConnectionService {
 
     // Start the independent health poll once we are confirmed connected.
     this.startHealthPoll(config.baseUrl, config.password)
+  }
+}
+
+async function drainSuggestions(client: KiloClient, directory: string): Promise<void> {
+  const { data, error: err } = await client.suggestion.list({ directory })
+  if (err) throw new Error(`Failed to list suggestions for ${directory}: ${String(err)}`)
+  if (data) {
+    for (const s of data) {
+      const { error } = await client.suggestion.dismiss({ requestID: s.id, directory })
+      if (error) throw new Error(`Failed to dismiss suggestion ${s.id}: ${String(error)}`)
+    }
   }
 }

@@ -78,8 +78,7 @@ import {
 } from "./kilo-provider/handlers/question"
 import {
   fetchAndSendPendingSuggestions,
-  handleSuggestionAccept,
-  handleSuggestionDismiss,
+  routeSuggestionWebviewMessage,
   type SuggestionContext,
 } from "./kilo-provider/handlers/suggestion"
 
@@ -499,6 +498,9 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         }
       }
 
+      // Route suggestion messages (extracted to stay within complexity limit)
+      await routeSuggestionWebviewMessage(this.suggestionCtx, message)
+
       switch (message.type) {
         case "webviewReady":
           console.log("[Kilo New] KiloProvider: ✅ webviewReady received")
@@ -741,12 +743,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "questionReject":
           this.pendingFollowup = null
           await handleQuestionReject(this.questionCtx, message.requestID, message.sessionID)
-          break
-        case "suggestionAccept":
-          await handleSuggestionAccept(this.suggestionCtx, message.requestID, message.index)
-          break
-        case "suggestionDismiss":
-          await handleSuggestionDismiss(this.suggestionCtx, message.requestID)
           break
         case "requestConfig":
           this.fetchAndSendConfig().catch((e) => console.error("[Kilo New] fetchAndSendConfig failed:", e))

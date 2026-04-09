@@ -652,6 +652,9 @@ export const SessionProvider: ParentComponent = (props) => {
   // Handle messages from extension
   onMount(() => {
     const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
+      // Route suggestion messages (extracted to stay within complexity limit)
+      routeSuggestionMessage(message)
+
       switch (message.type) {
         case "sessionCreated":
           handleSessionCreated(message.session, message.draftID)
@@ -687,18 +690,6 @@ export const SessionProvider: ParentComponent = (props) => {
 
         case "questionError":
           handleQuestionError(message.requestID)
-          break
-
-        case "suggestionRequest":
-          handleSuggestionRequest(message.suggestion)
-          break
-
-        case "suggestionResolved":
-          handleSuggestionResolved(message.requestID)
-          break
-
-        case "suggestionError":
-          handleSuggestionError(message.requestID)
           break
 
         case "clearPendingPrompts":
@@ -1055,6 +1046,24 @@ export const SessionProvider: ParentComponent = (props) => {
       return next
     })
     setSuggestionErrors((prev) => new Set(prev).add(requestID))
+  }
+
+  /**
+   * Route suggestion-related extension messages.
+   * Extracted from the main message handler to stay within the complexity limit.
+   */
+  function routeSuggestionMessage(message: ExtensionMessage) {
+    switch (message.type) {
+      case "suggestionRequest":
+        handleSuggestionRequest(message.suggestion)
+        break
+      case "suggestionResolved":
+        handleSuggestionResolved(message.requestID)
+        break
+      case "suggestionError":
+        handleSuggestionError(message.requestID)
+        break
+    }
   }
 
   /**

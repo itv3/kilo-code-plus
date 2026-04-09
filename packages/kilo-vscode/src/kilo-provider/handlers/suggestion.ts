@@ -27,6 +27,24 @@ export function recoverableSuggestions(items: RecoverableSuggestion[], tracked: 
   })
 }
 
+/**
+ * Route suggestion-related webview messages.
+ * Extracted from the main message handler to stay within the complexity limit.
+ */
+export async function routeSuggestionWebviewMessage(
+  ctx: SuggestionContext,
+  message: { type: string; requestID?: string; index?: number },
+): Promise<void> {
+  switch (message.type) {
+    case "suggestionAccept":
+      await handleSuggestionAccept(ctx, message.requestID!, message.index!)
+      break
+    case "suggestionDismiss":
+      await handleSuggestionDismiss(ctx, message.requestID!)
+      break
+  }
+}
+
 export async function handleSuggestionAccept(ctx: SuggestionContext, requestID: string, index: number): Promise<void> {
   if (!ctx.client) {
     ctx.postMessage({ type: "suggestionError", requestID })
