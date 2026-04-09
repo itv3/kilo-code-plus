@@ -61,7 +61,7 @@ That's it. No configuration needed.
 | `build`        | GPT 5.3 Codex | Implementation tasks         |
 | `explore`      | GPT 5.3 Codex | Codebase exploration         |
 
-**All tasks** use GPT 5.3 Codex, providing strong coding and reasoning performance across all modes at a lower cost than frontier routing.
+**All tasks** use GPT 5.3 Codex (Low), providing strong coding and reasoning performance across all modes at a lower cost than frontier routing.
 
 ## Benefits
 
