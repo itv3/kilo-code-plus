@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- TODO: refactor to reduce file size and remove this disable */
 import * as path from "path"
 import * as vscode from "vscode"
 import { z } from "zod"
@@ -526,6 +527,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    */
   private setupWebviewMessageHandler(webview: vscode.Webview): void {
     this.webviewMessageDisposable?.dispose()
+    // eslint-disable-next-line complexity -- TODO: refactor to reduce complexity and remove this disable
     this.webviewMessageDisposable = webview.onDidReceiveMessage(async (message) => {
       // Run interceptor if attached (e.g., AgentManagerProvider worktree logic)
       if (this.onBeforeMessage) {
