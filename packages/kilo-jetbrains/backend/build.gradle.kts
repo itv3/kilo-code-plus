@@ -1,8 +1,51 @@
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
+import javax.inject.Inject
+
 plugins {
     alias(libs.plugins.rpc)
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.openapi.generator)
+}
+
+abstract class PrepareLocalCliTask : DefaultTask() {
+    @get:InputFile
+    abstract val script: RegularFileProperty
+
+    @get:Internal
+    abstract val root: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val out: DirectoryProperty
+
+    @get:Input
+    abstract val platform: Property<String>
+
+    @get:Input
+    abstract val exe: Property<String>
+
+    @get:Inject
+    abstract val exec: ExecOperations
+
+    @TaskAction
+    fun run() {
+        val bin = out.file("${platform.get()}/${exe.get()}").get().asFile
+        if (bin.exists()) return
+        exec.exec {
+            workingDir = root.get().asFile
+            commandLine("bun", "script/build.ts", "--prepare-cli")
+        }
+    }
 }
 
 kotlin {
@@ -117,11 +160,36 @@ val requiredPlatforms = listOf(
     "windows-arm64",
 )
 
+val localCli by tasks.registering(PrepareLocalCliTask::class) {
+    description = "Prepare local CLI binary for JetBrains dev"
+    val os = providers.systemProperty("os.name").map {
+        val name = it.lowercase()
+        if (name.contains("mac")) return@map "darwin"
+        if (name.contains("win")) return@map "windows"
+        if (name.contains("linux")) return@map "linux"
+        throw GradleException("Unsupported host OS: $it")
+    }
+    val arch = providers.systemProperty("os.arch").map {
+        val name = it.lowercase()
+        if (name == "aarch64" || name == "arm64") return@map "arm64"
+        if (name == "x86_64" || name == "amd64") return@map "x64"
+        throw GradleException("Unsupported host arch: $it")
+    }
+    script.set(rootProject.layout.projectDirectory.file("script/build.ts"))
+    root.set(rootProject.layout.projectDirectory)
+    out.set(cliDir)
+    platform.set(os.zip(arch) { a, b -> "$a-$b" })
+    exe.set(platform.map { if (it.startsWith("windows")) "kilo.exe" else "kilo" })
+}
+
 val checkCli by tasks.registering {
     description = "Verify CLI binaries exist before building"
     val dir = cliDir.map { it.asFile }
     val prod = production.get()
     val platforms = requiredPlatforms.toList()
+    if (!prod) {
+        dependsOn(localCli)
+    }
     doLast {
         val resolved = dir.get()
         if (!resolved.exists() || resolved.listFiles()?.isEmpty() != false) {
