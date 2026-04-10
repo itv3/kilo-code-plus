@@ -160,12 +160,12 @@ The client-side chain works as follows:
 
 ## Risks
 
-| Risk                                              | User impact                                            | Mitigation                                                                                                                                                  |
-| ------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Free model disappears mid-session                 | User's next message fails                              | Fallback chain: primary → secondary → tertiary free model. Graceful error only if all options exhausted.                                                    |
-| Model quality variance across free/balanced tiers | Inconsistent experience compared to Frontier           | Set clear expectations in UI. Curate model lists, don't just pick the cheapest.                                                                             |
-| Cross-family model switching breaks context       | Thinking blocks from Model A incompatible with Model B | Strip thinking blocks when the underlying model family changes between turns. Frontier stays within one family so this primarily affects Free and Balanced. |
-| Users don't understand the tier differences       | Wrong tier selected, poor experience                   | Clear descriptions in the model picker. Good defaults (Balanced for paid, Free for unpaid) so most users never need to actively choose.                     |
+| Risk                                              | User impact                                            | Mitigation                                                                                                                                                                    |
+| ------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free model disappears mid-session                 | User's next message fails                              | Fallback chain: primary → secondary → tertiary free model. Graceful error only if all options exhausted.                                                                      |
+| Model quality variance across free/balanced tiers | Inconsistent experience compared to Frontier           | Set clear expectations in UI. Curate model lists, don't just pick the cheapest.                                                                                               |
+| Cross-family model switching breaks context       | Thinking blocks from Model A incompatible with Model B | Strip thinking blocks when the underlying model family changes between turns. Frontier stays within one family so this primarily affects Free tier (which may switch models). |
+| Users don't understand the tier differences       | Wrong tier selected, poor experience                   | Clear descriptions in the model picker. Good defaults (Balanced for paid, Free for unpaid) so most users never need to actively choose.                                       |
 
 ## Data and compliance
 

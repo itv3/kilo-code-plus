@@ -71,7 +71,7 @@ No need to manually switch models when changing modes. Auto Model handles the ro
 
 ### Cost Optimization
 
-Uses the more economical models for implementation tasks where speed matters, while reserving stronger reasoning models for planning tasks. You get optimal cost-to-capability ratio without thinking about it.
+Uses cost-effective models matched to the task — Auto Balanced and Auto Free deliver strong capabilities at a fraction of frontier cost. You get optimal cost-to-capability ratio without thinking about it.
 
 ### Best-in-Class Models
 
