@@ -23,33 +23,27 @@ That's it. No configuration needed.
 
 ## Auto Frontier
 
-`kilo-auto/frontier` routes to the latest and most capable paid models available, optimizing for performance, capability, and cost.
-
-For the current mode-to-model mappings, see the [Gateway docs](/docs/gateway/models-and-providers#kilo-autofrontier).
+`kilo-auto/frontier` routes to the latest and most capable paid models available. It uses different models for reasoning-heavy tasks (planning, architecture, debugging) versus implementation tasks (coding, building, exploring) — pairing the right model capability to each type of work.
 
 ## Auto Balanced
 
-`kilo-auto/balanced` follows the same mode-based routing structure as Frontier but uses a more cost-effective model — GPT 5.3 Codex across all modes.
+`kilo-auto/balanced` follows the same mode-based routing structure as Frontier but uses a more cost-effective model across all modes. It's a good default for most developers who want strong AI assistance without paying frontier prices.
 
-For the current mode-to-model mappings, see the [Gateway docs](/docs/gateway/models-and-providers#kilo-autobalanced).
+## Auto Free
+
+`kilo-auto/free` routes to the best available free model on OpenRouter. Because free model availability shifts over time as providers change promotional periods, the mapping is updated server-side — you always get the best free option without having to track what's currently available. Quality will be lower than paid tiers, and the model may change over time.
+
+For the current model mappings for all tiers, see the [Gateway docs](/docs/gateway/models-and-providers#kilo-autofrontier).
 
 ## Benefits
 
-### Simplified Setup
+### No Configuration Required
 
-No need to manually switch models when changing modes. Auto Model handles the routing transparently in the background.
+No need to manually switch models when changing modes. Auto Model handles routing transparently in the background.
 
-### Cost Optimization
+### Flexible Cost Control
 
-Uses cost-effective models matched to the task — Auto Balanced and Auto Free deliver strong capabilities at a fraction of frontier cost. You get optimal cost-to-capability ratio without thinking about it.
-
-### Best-in-Class Models
-
-Auto Model routes to capable models matched to your task:
-
-- **Auto Frontier** uses the latest and most effective models across all modes
-- **Auto Balanced** uses more cost-effective models while still providing strong capabilities
-- **Auto Free** uses the best available free models
+Pick the tier that fits your budget. Frontier gives you the best models for demanding work; Balanced offers capable models at a fraction of the cost; Free costs nothing.
 
 ## Requirements
 
