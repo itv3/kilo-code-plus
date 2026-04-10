@@ -9,8 +9,3 @@
     padding: 12px 14px;
   }
 }
-
-/* Remove card borders in VS Code theme — cards use the page background as visual separation */
-html[data-theme="kilo-vscode"] [data-component="card"] {
-  border: none;
-}
