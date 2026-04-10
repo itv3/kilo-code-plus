@@ -155,13 +155,26 @@ export interface CloudSessionInfo {
 }
 
 // Permission request
+export interface PermissionFileDiff {
+  file: string
+  before?: string
+  after?: string
+  additions: number
+  deletions: number
+}
+
 export interface PermissionRequest {
   id: string
   sessionID: string
   toolName: string
   patterns: string[]
   always: string[]
-  args: Record<string, unknown> & { rules?: string[] }
+  args: Record<string, unknown> & {
+    rules?: string[]
+    diff?: string
+    filepath?: string
+    filediff?: PermissionFileDiff
+  }
   message?: string
   tool?: { messageID: string; callID: string }
 }
@@ -408,6 +421,7 @@ export interface Config {
   instructions?: string[]
   skills?: SkillsConfig
   snapshot?: boolean
+  remote_control?: boolean
   share?: "manual" | "auto" | "disabled"
   username?: string
   watcher?: WatcherConfig
@@ -1030,6 +1044,15 @@ export interface AgentManagerApplyWorktreeDiffResultMessage {
   conflicts?: AgentManagerApplyWorktreeDiffConflict[]
 }
 
+// Agent Manager: Revert single file result (extension → webview)
+export interface AgentManagerRevertWorktreeFileResultMessage {
+  type: "agentManager.revertWorktreeFileResult"
+  sessionId: string
+  file: string
+  status: "success" | "error"
+  message: string
+}
+
 // Per-worktree git stats: diff additions/deletions and ahead/behind counts
 export interface WorktreeGitStats {
   worktreeId: string
@@ -1095,6 +1118,7 @@ export interface AgentManagerSendInitialMessage {
   providerID?: string
   modelID?: string
   agent?: string
+  variant?: string
   files?: Array<{ mime: string; url: string }>
 }
 
@@ -1449,6 +1473,7 @@ export type ExtensionMessage =
   | AgentManagerWorktreeDiffFileMessage
   | AgentManagerWorktreeDiffLoadingMessage
   | AgentManagerApplyWorktreeDiffResultMessage
+  | AgentManagerRevertWorktreeFileResultMessage
   | AgentManagerWorktreeStatsMessage
   | AgentManagerLocalStatsMessage
   | AgentManagerPRStatusMessage
@@ -1480,6 +1505,7 @@ export type ExtensionMessage =
   | McpStatusLoadedMessage
   | ClearPendingPromptsMessage
   | ExtensionDataReadyMessage
+  | RemoteStatusMessage
 
 // ============================================
 // Messages FROM webview TO extension
@@ -1888,6 +1914,18 @@ export interface CloseSessionRequest {
   sessionId: string
 }
 
+/** Persist a non-worktree session to agent-manager.json (worktreeId = null). */
+export interface PersistSessionRequest {
+  type: "agentManager.persistSession"
+  sessionId: string
+}
+
+/** Remove a non-worktree session from agent-manager.json. */
+export interface ForgetSessionRequest {
+  type: "agentManager.forgetSession"
+  sessionId: string
+}
+
 // Rename a worktree's display label
 export interface RenameWorktreeRequest {
   type: "agentManager.renameWorktree"
@@ -1967,6 +2005,7 @@ export interface CreateMultiVersionRequest {
   providerID?: string
   modelID?: string
   agent?: string
+  variant?: string
   files?: FileAttachment[]
   baseBranch?: string
   branchName?: string
@@ -2069,6 +2108,13 @@ export interface ApplyWorktreeDiffMessage {
   selectedFiles?: string[]
 }
 
+// Agent Manager: Revert a single file in a worktree (webview → extension)
+export interface RevertWorktreeFileMessage {
+  type: "agentManager.revertWorktreeFile"
+  sessionId: string
+  file: string
+}
+
 // Variant persistence (webview → extension)
 export interface PersistVariantRequest {
   type: "persistVariant"
@@ -2093,6 +2139,12 @@ export interface OpenChangesRequest {
   type: "openChanges"
 }
 
+// Open diff virtual (permission diff) in the lightweight diff virtual panel
+export interface OpenDiffVirtualRequest {
+  type: "openDiffVirtual"
+  diff: PermissionFileDiff
+}
+
 export interface RetryConnectionRequest {
   type: "retryConnection"
 }
@@ -2115,6 +2167,31 @@ export interface PreviewImageRequest {
 export interface SetDefaultBaseBranchRequest {
   type: "agentManager.setDefaultBaseBranch"
   branch?: string
+}
+
+// Report all open session IDs to extension for heartbeat (webview → extension)
+export interface AgentManagerOpenSessionsMessage {
+  type: "agentManager.openSessions"
+  sessionIDs: string[]
+}
+
+export interface RemoteStatusMessage {
+  type: "remoteStatus"
+  enabled: boolean
+  connected: boolean
+}
+
+export interface ToggleRemoteMessage {
+  type: "toggleRemote"
+}
+
+export interface SetRemoteEnabledMessage {
+  type: "setRemoteEnabled"
+  enabled: boolean
+}
+
+export interface RequestRemoteStatusMessage {
+  type: "requestRemoteStatus"
 }
 
 export interface ConnectProviderMessage {
@@ -2314,6 +2391,8 @@ export type WebviewMessage =
   | AddSessionToWorktreeRequest
   | ForkSessionRequest
   | CloseSessionRequest
+  | PersistSessionRequest
+  | ForgetSessionRequest
   | RenameWorktreeRequest
   | TelemetryRequest
   | RequestRepoInfoMessage
@@ -2354,12 +2433,15 @@ export type WebviewMessage =
   | FinalizeLegacyMigrationMessage
   // legacy-migration end
   | ApplyWorktreeDiffMessage
+  | RevertWorktreeFileMessage
   | EnhancePromptRequest
   | OpenChangesRequest
+  | OpenDiffVirtualRequest
   | RetryConnectionRequest
   | OpenSubAgentViewerRequest
   | PreviewImageRequest
   | SetDefaultBaseBranchRequest
+  | AgentManagerOpenSessionsMessage
   | FetchMarketplaceDataMessage
   | FilterMarketplaceItemsMessage
   | InstallMarketplaceItemMessage
@@ -2374,6 +2456,9 @@ export type WebviewMessage =
   | RequestRecentsMessage
   | ToggleFavoriteRequest
   | RequestFavoritesMessage
+  | ToggleRemoteMessage
+  | SetRemoteEnabledMessage
+  | RequestRemoteStatusMessage
   | ContinueInWorktreeRequest
   | CreateSectionRequest
   | RenameSectionRequest
