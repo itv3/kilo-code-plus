@@ -61,7 +61,7 @@ export function Popover<T extends ValidComponent = "div">(props: PopoverProps<T>
   }
 
   const focus = (node?: ParentNode | null) => {
-    const root = node ?? contentRef()
+    const root = node ?? state.contentRef
     if (!root) return
     const target = root.querySelector<HTMLElement>("[data-autofocus]")
     if (!target) return
@@ -146,7 +146,7 @@ export function Popover<T extends ValidComponent = "div">(props: PopoverProps<T>
 
   createEffect(() => {
     if (!opened()) return
-    const node = contentRef()
+    const node = state.contentRef
     if (!node) return
     const id = requestAnimationFrame(() => focus(node))
     onCleanup(() => cancelAnimationFrame(id))
