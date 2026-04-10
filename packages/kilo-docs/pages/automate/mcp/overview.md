@@ -13,7 +13,7 @@ This documentation is organized into several sections:
 
 - [**Using MCP in Kilo Code**](using-in-kilo-code) - Comprehensive guide to configuring, enabling, and managing MCP servers with Kilo Code. Includes server settings, tool approval, and troubleshooting.
 
-- [**MCP Tool Permissions**](/docs/getting-started/settings/auto-approving-actions#mcp-tool-permissions) - Control which MCP tools auto-approve, prompt, or are blocked entirely using the same `allow` / `ask` / `deny` permission system as built-in tools.
+- [**MCP Tool Permissions**](using-in-kilo-code#tool-permissions) - Control which MCP tools auto-approve, prompt, or are blocked entirely using the same `allow` / `ask` / `deny` permission system as built-in tools.
 
 - [**What is MCP?**](what-is-mcp) - Clear explanation of the Model Context Protocol, its client-server architecture, and how it enables AI systems to interact with external tools.
 

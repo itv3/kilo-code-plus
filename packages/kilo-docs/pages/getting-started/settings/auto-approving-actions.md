@@ -66,28 +66,9 @@ Expand **Manage Auto-Approve Rules** to add commands or patterns to your allowed
 
 ## MCP Tool Permissions
 
-MCP tools use the same permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `my_server_do_something`).
+MCP tools use the same `allow` / `ask` / `deny` permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `github_create_pull_request`). You can use glob patterns like `github_*` for broad rules.
 
-**At runtime:** When an MCP tool is called and no permission rule matches, the Permission Dock shows an approval prompt (equivalent to `"ask"`). Click **Approve Always** to save an `"allow"` rule to your config so future calls to that tool are auto-approved.
-
-**In your config file:** Add the tool name (or a wildcard pattern) to the `permission` key in `kilo.jsonc`:
-
-```jsonc
-{
-  "permission": {
-    // Require approval for all tools on this server by default
-    "github_*": "ask",
-
-    // Auto-approve a specific safe tool
-    "github_get_file_contents": "allow",
-
-    // Block a dangerous tool entirely
-    "github_delete_file": "deny",
-  },
-}
-```
-
-Rules are evaluated top-to-bottom and the **last** matching rule wins. Put broad patterns first, then add specific overrides after them.
+For full details and examples, see [MCP Tool Permissions](/docs/automate/mcp/using-in-kilo-code#tool-permissions).
 
 ## Defaults
 
@@ -235,26 +216,9 @@ Most tools default to `"*": "allow"` for a smooth out-of-the-box experience. Not
 
 ## MCP Tool Permissions
 
-MCP tools use the same permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `my_server_do_something`).
+MCP tools use the same `allow` / `ask` / `deny` permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `github_create_pull_request`). You can use glob patterns like `github_*` for broad rules.
 
-Add the tool name (or a wildcard pattern) to the `permission` key in your `kilo.jsonc`:
-
-```jsonc
-{
-  "permission": {
-    // Require approval for all tools on this server by default
-    "github_*": "ask",
-
-    // Auto-approve a specific safe tool
-    "github_get_file_contents": "allow",
-
-    // Block a dangerous tool entirely
-    "github_delete_file": "deny",
-  },
-}
-```
-
-Rules are evaluated top-to-bottom and the **last** matching rule wins. Put broad patterns first, then add specific overrides after them.
+For full details and examples, see [MCP Tool Permissions](/docs/automate/mcp/using-in-kilo-code#tool-permissions).
 
 ## Full Configuration Example
 

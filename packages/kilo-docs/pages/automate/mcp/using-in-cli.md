@@ -163,7 +163,7 @@ Add the test MCP server for development:
 
 MCP tools use the same permission system as built-in tools (`allow`, `ask`, `deny`). Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `github_create_pull_request`). You can use glob patterns like `github_*` for broad rules.
 
-For full details on configuring auto-approval permissions — see [Auto-Approving Actions](/docs/getting-started/settings/auto-approving-actions).
+For full details and examples, see [MCP Tool Permissions](/docs/automate/mcp/using-in-kilo-code#tool-permissions).
 
 ## Environment Variables
 
