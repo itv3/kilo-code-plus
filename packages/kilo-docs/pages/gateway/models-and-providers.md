@@ -88,9 +88,9 @@ Great balance of price and capability.
 
 | Mode                                                           | Resolved Model         |
 | -------------------------------------------------------------- | ---------------------- |
-| `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `moonshotai/kimi-k2.5` |
-| `build`, `explore`, `code`                                     | `minimax/minimax-m2.7` |
-| Default (no mode specified)                                    | `minimax/minimax-m2.7` |
+| `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `openai/gpt-5.3-codex` |
+| `build`, `explore`, `code`                                     | `openai/gpt-5.3-codex` |
+| Default (no mode specified)                                    | `openai/gpt-5.3-codex` |
 
 ### `kilo-auto/free`
 
