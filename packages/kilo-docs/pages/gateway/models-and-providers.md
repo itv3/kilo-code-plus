@@ -68,6 +68,10 @@ Several models are available at no cost, subject to rate limits:
 
 Free models are available to both authenticated and anonymous users. Anonymous users are rate-limited to 200 requests per hour per IP address.
 
+{% callout type="warning" title="Nemotron 3 Super Free (NVIDIA free endpoints)" %}
+Provided under the [NVIDIA API Trial Terms of Service](https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf). Trial use only — not for production or sensitive data. Prompts and outputs are logged by NVIDIA to improve its models and services. Do not submit personal or confidential data.
+{% /callout %}
+
 ## Auto models
 
 Kilo Auto virtual models automatically select the best underlying model based on the task type. The selection is controlled by the `x-kilocode-mode` request header.
