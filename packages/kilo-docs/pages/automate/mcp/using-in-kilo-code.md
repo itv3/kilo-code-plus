@@ -422,40 +422,30 @@ To set the maximum time to wait for a response after a tool call to the MCP serv
 {% /tab %}
 {% /tabs %}
 
-### Tool Permissions
-
-MCP tools use the same permission system as built-in tools (`allow`, `ask`, `deny`). Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `github_create_pull_request`). You can use glob patterns like `github_*` for broad rules.
-
-For full details on configuring auto-approval permissions — see [Auto-Approving Actions](/docs/getting-started/settings/auto-approving-actions).
+### Auto Approve Tools
 
 {% tabs %}
 {% tab label="VSCode" %}
 
-**At runtime:** When an MCP tool is called and no permission rule matches, the Permission Dock shows an approval prompt (equivalent to `"ask"`). Click **Approve Always** to save an `"allow"` rule to your config so future calls to that tool are auto-approved.
+MCP tool calls use the same permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `my_server_do_something`).
+
+**At runtime:** When an MCP tool is called, the Permission Dock shows an approval prompt. Click **Approve Always** to save an allow rule to your config so future calls to that tool are auto-approved.
 
 **In your config file:** Add the tool name (or a wildcard pattern) to the `permission` key in `kilo.jsonc`:
 
-```jsonc
+```json
 {
   "permission": {
-    // Require approval for all tools on this server by default
-    "github_*": "ask",
-
-    // Auto-approve a specific safe tool
-    "github_get_file_contents": "allow",
-
-    // Block a dangerous tool entirely
-    "github_delete_file": "deny",
-  },
+    "my_server_do_something": "allow",
+    "my_server_*": "allow"
+  }
 }
 ```
-
-Rules are evaluated top-to-bottom and the **last** matching rule wins. Put broad patterns first, then add specific overrides after them.
 
 {% /tab %}
 {% tab label="VSCode (Legacy)" %}
 
-In the legacy extension, MCP tool auto-approval works on a per-tool basis and is disabled by default. To configure auto-approval:
+MCP tool auto-approval works on a per-tool basis and is disabled by default. To configure auto-approval:
 
 1. First enable the global "Use MCP servers" auto-approval option in [auto-approving-actions](/docs/getting-started/settings/auto-approving-actions)
 2. Navigate to Settings > Agent Behaviour > MCP Servers, then locate the specific tool you want to auto-approve

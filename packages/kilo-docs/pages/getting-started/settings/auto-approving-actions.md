@@ -68,7 +68,7 @@ Expand **Manage Auto-Approve Rules** to add commands or patterns to your allowed
 
 MCP tools use the same `allow` / `ask` / `deny` permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `github_create_pull_request`). You can use glob patterns like `github_*` for broad rules.
 
-For full details and examples, see [MCP Tool Permissions](/docs/automate/mcp/using-in-kilo-code#tool-permissions).
+For full details and examples, see [MCP Tool Permissions](/docs/automate/mcp/using-in-kilo-code#auto-approve-tools).
 
 ## Defaults
 
@@ -218,7 +218,7 @@ Most tools default to `"*": "allow"` for a smooth out-of-the-box experience. Not
 
 MCP tools use the same `allow` / `ask` / `deny` permission system as built-in tools. Each MCP tool's permission key is its namespaced name: `{server}_{tool}` (e.g. `github_create_pull_request`). You can use glob patterns like `github_*` for broad rules.
 
-For full details and examples, see [MCP Tool Permissions](/docs/automate/mcp/using-in-kilo-code#tool-permissions).
+For full details and examples, see [MCP Tool Permissions](/docs/automate/mcp/using-in-kilo-code#auto-approve-tools).
 
 ## Full Configuration Example
 
