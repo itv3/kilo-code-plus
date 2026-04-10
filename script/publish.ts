@@ -63,7 +63,7 @@ if (Script.release) {
   await $`git tag v${Script.version}`
   await $`git fetch origin`
   if (!Script.preview) {
-    await $`git cherry-pick HEAD..origin/dev`.nothrow()
+    await $`git cherry-pick HEAD..origin/main`.nothrow()
     await $`git push origin HEAD --tags --no-verify --force-with-lease`
   }
   if (Script.preview) {
