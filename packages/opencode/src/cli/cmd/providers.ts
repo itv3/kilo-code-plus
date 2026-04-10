@@ -193,8 +193,10 @@ export function resolvePluginProviders(input: {
 }
 
 export const ProvidersCommand = cmd({
-  command: "providers",
-  aliases: ["auth"],
+  // kilocode_change start - keep "auth" as primary command name
+  command: "auth",
+  aliases: ["providers"],
+  // kilocode_change end
   describe: "manage AI providers and credentials",
   builder: (yargs) =>
     yargs.command(ProvidersListCommand).command(ProvidersLoginCommand).command(ProvidersLogoutCommand).demandCommand(),
