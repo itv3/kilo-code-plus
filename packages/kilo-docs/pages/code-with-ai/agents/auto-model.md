@@ -31,6 +31,11 @@ You can see which underlying models are used, as well as the cost, in the expand
 
 ## Benefits
 
+
+### Cost Optimization
+
+Automatically uses the best model for a given task, selecting the best balance of cost and capability for a given task. Uses the more economical models for more straight forward tasks, while reserving stronger reasoning models for planning tasks. You get optimal cost-to-capability ratio without thinking about it.
+
 ### No Configuration Required
 
 No need to manually switch models when changing modes. Auto Model handles routing transparently in the background.
