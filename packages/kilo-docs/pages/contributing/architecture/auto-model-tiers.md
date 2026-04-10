@@ -46,7 +46,7 @@ Free models on OpenRouter appear and disappear based on promotional periods. A m
 
 **Pricing**: Paid. Uses credits.
 
-For the current mode-to-model mappings, see the [Auto Model user docs](/docs/code-with-ai/agents/auto-model#auto-frontier).
+For the current mode-to-model mappings, see the [Auto Model user docs](/docs/code-with-ai/agents/auto-model#tiers).
 
 ### Auto: Balanced
 
@@ -56,7 +56,7 @@ For the current mode-to-model mappings, see the [Auto Model user docs](/docs/cod
 
 **Pricing**: Paid, but significantly cheaper than Frontier.
 
-For the current mode-to-model mappings, see the [Auto Model user docs](/docs/code-with-ai/agents/auto-model#auto-balanced).
+For the current mode-to-model mappings, see the [Auto Model user docs](/docs/code-with-ai/agents/auto-model#tiers).
 
 ### Auto: Free
 
