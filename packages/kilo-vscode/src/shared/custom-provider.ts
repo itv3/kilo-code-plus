@@ -125,14 +125,14 @@ export function normalizeCustomProviderConfig(
       ...(headers && Object.keys(headers).length > 0 ? { headers } : {}),
     },
     models: Object.fromEntries(
-      Object.entries(config.models).map(([id, model]) => {
-        const entry: { name: string; reasoning?: true; variants?: Record<string, VariantConfig> } = {
+      Object.entries(config.models).map(([id, model]) => [
+        id.trim(),
+        {
           name: model.name.trim(),
-        }
-        if (model.reasoning) entry.reasoning = true
-        if (model.variants && Object.keys(model.variants).length > 0) entry.variants = model.variants
-        return [id.trim(), entry]
-      }),
+          ...(model.reasoning ? { reasoning: true as const } : {}),
+          ...(model.variants && Object.keys(model.variants).length > 0 ? { variants: model.variants } : {}),
+        },
+      ]),
     ),
   }
 }

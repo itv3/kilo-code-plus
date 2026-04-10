@@ -35,7 +35,7 @@ function fuzzy(query: string, target: string) {
 
 type Translator = ReturnType<typeof useLanguage>["t"]
 
-// undefined = not set, null = explicit false, true/false for enable_thinking
+// undefined = not set; true/false = enable_thinking value
 type EnableThinkingValue = undefined | boolean
 type ThinkingTypeValue = undefined | "enabled" | "disabled"
 type ReasoningEffortValue = undefined | "none" | "minimal" | "low" | "medium" | "high"
@@ -157,27 +157,27 @@ function validateCustomProvider(input: ValidateArgs) {
             return undefined
           })()
     const modelNameError = !m.name.trim() ? input.t("provider.custom.error.required") : undefined
-    const seenVariants = new Set<string>()
-    const variantErrors = m.reasoning
+    const seen = new Set<string>()
+    const verrs = m.reasoning
       ? m.variants.map((v) => {
           const n = v.name.trim()
           const nameError = !n
             ? input.t("provider.custom.error.required")
-            : seenVariants.has(n)
+            : seen.has(n)
               ? input.t("provider.custom.error.duplicate")
               : (() => {
-                  seenVariants.add(n)
+                  seen.add(n)
                   return undefined
                 })()
           return { name: nameError }
         })
       : []
-    return { id: modelIdError, name: modelNameError, variants: variantErrors }
+    return { id: modelIdError, name: modelNameError, variants: verrs }
   })
   const modelsValid = modelErrors.every((m) => !m.id && !m.name && m.variants.every((v) => !v.name))
   const models = Object.fromEntries(
     input.form.models.map((m) => {
-      const variantEntries = m.reasoning
+      const ventries = m.reasoning
         ? m.variants
             .filter((v) => v.name.trim())
             .map((v) => {
@@ -190,7 +190,7 @@ function validateCustomProvider(input: ValidateArgs) {
         : []
       const entry: Record<string, unknown> = { name: m.name.trim() }
       if (m.reasoning) entry.reasoning = true
-      if (variantEntries.length > 0) entry.variants = Object.fromEntries(variantEntries)
+      if (ventries.length > 0) entry.variants = Object.fromEntries(ventries)
       return [m.id.trim(), entry]
     }),
   )
@@ -499,8 +499,8 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     // Replace the single empty row or append
     const row = form.models[0]
     const empty = form.models.length === 1 && !!row && !row.id.trim() && !row.name.trim()
-    const withDefaults = (m: FetchedModel): ModelRow => ({ ...m, reasoning: false, variants: [] })
-    const merged = empty ? picked.map(withDefaults) : [...form.models, ...picked.map(withDefaults)]
+    const defaults = (m: FetchedModel): ModelRow => ({ ...m, reasoning: false, variants: [] })
+    const merged = empty ? picked.map(defaults) : [...form.models, ...picked.map(defaults)]
 
     setForm("models", merged)
     setErrors(
@@ -549,15 +549,15 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     setErrors("headers", (v) => v.filter((_, i) => i !== index))
   }
 
-  function addVariant(modelIndex: number) {
+  function addVariant(mi: number) {
     const blank: VariantRow = { name: "", enableThinking: undefined, thinking: undefined, reasoningEffort: undefined }
-    setForm("models", modelIndex, "variants", (v) => [...v, blank])
-    setErrors("models", modelIndex, "variants", (v) => [...(v ?? []), {}])
+    setForm("models", mi, "variants", (v) => [...v, blank])
+    setErrors("models", mi, "variants", (v) => [...(v ?? []), {}])
   }
 
-  function removeVariant(modelIndex: number, variantIndex: number) {
-    setForm("models", modelIndex, "variants", (v) => v.filter((_, i) => i !== variantIndex))
-    setErrors("models", modelIndex, "variants", (v) => (v ?? []).filter((_, i) => i !== variantIndex))
+  function removeVariant(mi: number, vi: number) {
+    setForm("models", mi, "variants", (v) => v.filter((_, i) => i !== vi))
+    setErrors("models", mi, "variants", (v) => (v ?? []).filter((_, i) => i !== vi))
   }
 
   function validate() {
