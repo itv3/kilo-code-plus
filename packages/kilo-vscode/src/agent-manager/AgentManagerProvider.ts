@@ -226,6 +226,7 @@ export class AgentManagerProvider implements Disposable {
   // Message interceptor
   // ---------------------------------------------------------------------------
 
+  // eslint-disable-next-line complexity -- TODO: refactor to reduce complexity and remove this disable
   private async onMessage(msg: Record<string, unknown>): Promise<Record<string, unknown> | null> {
     if (this.prBridge.handleMessage(msg)) return null
     const m = msg as unknown as AgentManagerInMessage
@@ -354,6 +355,7 @@ export class AgentManagerProvider implements Disposable {
     }
     if (m.type === "agentManager.setWorktreeOrder") {
       this.state?.setWorktreeOrder(m.order)
+      this.pushState()
       return null
     }
     if (m.type === "agentManager.setSessionsCollapsed") {
