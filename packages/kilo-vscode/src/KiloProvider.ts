@@ -25,6 +25,8 @@ import {
   mapSSEEventToWebviewMessage,
   getErrorMessage,
   isEventFromForeignProject,
+  MessageConfirmation,
+  runWithMessageConfirmation,
   loadSessions as loadSessionsUtil,
   flushPendingSessionRefresh as flushPendingSessionRefreshUtil,
   resolveContextDirectory,
@@ -164,6 +166,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   /** Set when refreshSessions() is called before the client is ready.
    *  Cleared and retried once the connection transitions to "connected". */
   private pendingSessionRefresh = false
+  private readonly confirmations = new MessageConfirmation()
   private unsubscribeEvent: (() => void) | null = null
   private unsubscribeState: (() => void) | null = null
   /** Cached legacy migration data so migrate() doesn't re-read from disk/SecretStorage. */ // legacy-migration
@@ -2297,21 +2300,12 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   /** Abort controllers for active retry loops, keyed by session ID */
   private retryAbortControllers = new Map<string, AbortController>()
 
-  /**
-   * Execute an SDK call with exponential backoff on HTTP errors.
-   * Retries on 429, 5xx, and other retryable status codes.
-   * When the response includes `Retry-After` / `Retry-After-MS` headers,
-   * the delay honours that value (capped at 5 min). Otherwise uses the
-   * predefined backoff schedule: 5s -> 10s -> 30s -> 60s -> 300s.
-   *
-   * After MAX_RETRIES (5) attempts, automatically throws the error.
-   * Users can cancel via the cancel button in the UI which sends an abort
-   * message — this interrupts the backoff delay and stops the retry loop.
-   *
-   * The webview receives `sessionStatus` messages with a countdown so the
-   * user can see that a retry is in progress.
-   */
-  private async withRetry(fn: () => Promise<{ error?: unknown; response: Response }>, sid: string): Promise<void> {
+  /** Execute an SDK call with visible exponential backoff for retryable HTTP errors. */
+  private async withRetry(
+    fn: () => Promise<{ error?: unknown; response?: Response }>,
+    sid: string,
+    messageID?: string,
+  ): Promise<void> {
     const abortController = new AbortController()
     this.retryAbortControllers.set(sid, abortController)
 
@@ -2324,6 +2318,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
         const result = await fn()
         if (!result.error) return
+        if (this.confirmations.has(messageID)) return
 
         const status = result.response?.status ?? 0
 
@@ -2352,12 +2347,16 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         })
 
         // Wait for delay or until aborted
-        await new Promise((resolve) => {
-          const timer = setTimeout(resolve, delay)
-          abortController.signal.addEventListener("abort", () => {
+        await new Promise<void>((resolve) => {
+          const done = () => {
             clearTimeout(timer)
-          })
+            abortController.signal.removeEventListener("abort", done)
+            resolve()
+          }
+          const timer = setTimeout(done, delay)
+          abortController.signal.addEventListener("abort", done, { once: true })
         })
+        if (this.confirmations.has(messageID)) return
       }
     } finally {
       this.retryAbortControllers.delete(sid)
@@ -2417,19 +2416,22 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
       const sid = resolved!.sid
       const dir = resolved!.dir
-      await this.withRetry(
-        () =>
-          this.client!.session.promptAsync({
-            sessionID: sid,
-            directory: dir,
-            messageID,
-            parts,
-            model: providerID && modelID ? { providerID, modelID } : undefined,
-            agent,
-            variant,
-            editorContext,
-          }),
-        sid,
+      await runWithMessageConfirmation(this.confirmations, messageID, "KiloProvider: Message request", () =>
+        this.withRetry(
+          () =>
+            this.client!.session.promptAsync({
+              sessionID: sid,
+              directory: dir,
+              messageID,
+              parts,
+              model: providerID && modelID ? { providerID, modelID } : undefined,
+              agent,
+              variant,
+              editorContext,
+            }),
+          sid,
+          messageID,
+        ),
       )
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Failed to send message:", error)
@@ -2482,20 +2484,23 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
       const sid = resolved!.sid
       const dir = resolved!.dir
-      await this.withRetry(
-        () =>
-          this.client!.session.command({
-            sessionID: sid,
-            directory: dir,
-            command,
-            arguments: args,
-            messageID,
-            model: providerID && modelID ? `${providerID}/${modelID}` : undefined,
-            agent,
-            variant,
-            parts,
-          }),
-        sid,
+      await runWithMessageConfirmation(this.confirmations, messageID, "KiloProvider: Command request", () =>
+        this.withRetry(
+          () =>
+            this.client!.session.command({
+              sessionID: sid,
+              directory: dir,
+              command,
+              arguments: args,
+              messageID,
+              model: providerID && modelID ? `${providerID}/${modelID}` : undefined,
+              agent,
+              variant,
+              parts,
+            }),
+          sid,
+          messageID,
+        ),
       )
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Failed to send command:", error)
@@ -2640,6 +2645,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       postMessage: (msg) => this.postMessage(msg),
       getWorkspaceDirectory: (sid) => this.getWorkspaceDirectory(sid),
       gatherEditorContext: () => this.gatherEditorContext(),
+      runWithMessageConfirmation: (id, label, run) => runWithMessageConfirmation(this.confirmations, id, label, run),
     }
   }
 
@@ -2852,6 +2858,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     // This must come first: the trackedSessionIds guard below would otherwise
     // let a foreign session through if it was accidentally tracked.
     if (isEventFromForeignProject(event, this.projectID)) return
+
+    if (event.type === "message.updated") {
+      this.confirmations.confirm(event.properties.info.id)
+    }
 
     // session.status events pass the onEventFiltered pre-filter for all providers (see line 842),
     // so this runs on every KiloProvider instance — including the Settings panel which has no
