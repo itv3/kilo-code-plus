@@ -19,21 +19,13 @@ Auto Model is a smart model routing system that automatically selects the optima
 2. Start working in any mode (Code, Architect, Debug, etc.)
 3. The system automatically routes your requests to the best model for that task
 
-That's it. No configuration needed.
+That's it. No configuration needed. For the exact model mappings for each tier, see the [Gateway docs](/docs/gateway/models-and-providers#kilo-autofrontier).
 
-## Auto Frontier
+## Tiers
 
-`kilo-auto/frontier` routes to the latest and most capable paid models available. It uses different models for reasoning-heavy tasks (planning, architecture, debugging) versus implementation tasks (coding, building, exploring) — pairing the right model capability to each type of work.
-
-## Auto Balanced
-
-`kilo-auto/balanced` follows the same mode-based routing structure as Frontier but uses a more cost-effective model across all modes. It's a good default for most developers who want strong AI assistance without paying frontier prices.
-
-## Auto Free
-
-`kilo-auto/free` routes to the best available free model on OpenRouter. Because free model availability shifts over time as providers change promotional periods, the mapping is updated server-side — you always get the best free option without having to track what's currently available. Quality will be lower than paid tiers, and the model may change over time.
-
-For the current model mappings for all tiers, see the [Gateway docs](/docs/gateway/models-and-providers#kilo-autofrontier).
+- **Frontier** — Routes to the latest and most capable paid models. Uses different models for reasoning-heavy tasks (planning, architecture, debugging) versus implementation tasks (coding, building, exploring), pairing the right capability to each type of work.
+- **Balanced** — Follows the same mode-based routing structure as Frontier but uses a more cost-effective model across all modes. A good default for most developers who want strong AI assistance without paying frontier prices.
+- **Free** — Routes to the best available free model on OpenRouter. Because free model availability shifts over time as providers change promotional periods, the mapping is updated server-side — you always get the best free option without having to track what's currently available. Quality will be lower than paid tiers, and the model may change over time.
 
 ## Benefits
 
