@@ -75,19 +75,19 @@ MCP tools use the same permission system as built-in tools. Each MCP tool's perm
 ```jsonc
 {
   "permission": {
-    // Auto-approve a specific tool
-    "my_server_safe_read": "allow",
+    // Require approval for all tools on this server by default
+    "github_*": "ask",
 
-    // Require approval for all other tools on this server
-    "my_server_*": "ask",
+    // Auto-approve a specific safe tool
+    "github_get_file_contents": "allow",
 
     // Block a dangerous tool entirely
-    "my_server_delete_all": "deny",
+    "github_delete_file": "deny",
   },
 }
 ```
 
-Glob patterns are evaluated top-to-bottom and the first match wins, so you can allow specific safe tools while requiring approval for everything else on a server.
+Rules are evaluated top-to-bottom and the **last** matching rule wins. Put broad patterns first, then add specific overrides after them.
 
 ## Defaults
 
@@ -242,19 +242,19 @@ Add the tool name (or a wildcard pattern) to the `permission` key in your `kilo.
 ```jsonc
 {
   "permission": {
-    // Auto-approve a specific tool
-    "my_server_safe_read": "allow",
+    // Require approval for all tools on this server by default
+    "github_*": "ask",
 
-    // Require approval for all other tools on this server
-    "my_server_*": "ask",
+    // Auto-approve a specific safe tool
+    "github_get_file_contents": "allow",
 
     // Block a dangerous tool entirely
-    "my_server_delete_all": "deny",
+    "github_delete_file": "deny",
   },
 }
 ```
 
-Glob patterns are evaluated top-to-bottom and the first match wins. This lets you allow specific safe tools while requiring approval for everything else on a server.
+Rules are evaluated top-to-bottom and the **last** matching rule wins. Put broad patterns first, then add specific overrides after them.
 
 ## Full Configuration Example
 
