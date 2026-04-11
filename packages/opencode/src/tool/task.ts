@@ -75,7 +75,7 @@ export const TaskTool = Tool.define("task", async (ctx) => {
       // were themselves inherited from a grandparent, so both sources are needed.
       const caller = await Agent.get(ctx.agent)
       const callerSession = await Session.get(ctx.sessionID)
-      const callerRules = PermissionNext.merge(caller?.permission ?? [], callerSession.permission ?? [])
+      const callerRules = Permission.merge(caller?.permission ?? [], callerSession.permission ?? [])
       // Build the set of MCP server prefixes (e.g. "servername_") so we can
       // include both server-wide wildcards ("servername_*") and specific MCP tool
       // permissions ("servername_create_issue") in the inherited ruleset.

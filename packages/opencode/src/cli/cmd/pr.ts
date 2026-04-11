@@ -122,7 +122,6 @@ export const PrCommand = cmd({
           stdout: "inherit",
           stderr: "inherit",
           cwd: process.cwd(),
-          windowsHide: true, // kilocode_change - prevent CMD window flash on Windows
         })
         const code = await opencodeProcess.exited
         if (code !== 0) throw new Error(`${bin} exited with code ${code}`) // kilocode_change

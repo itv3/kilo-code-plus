@@ -1507,7 +1507,7 @@ export namespace Provider {
 
     // kilocode_change start
     // Check if kilo provider is available before using it
-    const kiloProvider = await state().then((state) => state.providers["kilo"])
+    const kiloProvider = await state().then((state) => state.providers[ProviderID.kilo])
     if (kiloProvider && kiloProvider.models["kilo-auto/small"]) {
       return getModel(ProviderID.make("kilo"), ModelID.make("kilo-auto/small"))
     }

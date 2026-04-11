@@ -748,7 +748,7 @@ test("allowEverything - session-scoped enable stays within one session", async (
   await Instance.provide({
     directory: tmp.path,
     fn: async () => {
-      const first = PermissionNext.ask({
+      const first = Permission.ask({
         id: PermissionID.make("permission_session_allow"),
         sessionID: SessionID.make("session_allowed"),
         permission: "bash",
@@ -758,7 +758,7 @@ test("allowEverything - session-scoped enable stays within one session", async (
         ruleset: [],
       })
 
-      await PermissionNext.allowEverything({
+      await Permission.allowEverything({
         enable: true,
         requestID: "permission_session_allow",
         sessionID: "session_allowed",
@@ -766,7 +766,7 @@ test("allowEverything - session-scoped enable stays within one session", async (
 
       await expect(first).resolves.toBeUndefined()
 
-      const allowed = await PermissionNext.ask({
+      const allowed = await Permission.ask({
         sessionID: SessionID.make("session_allowed"),
         permission: "bash",
         patterns: ["ls"],
@@ -776,7 +776,7 @@ test("allowEverything - session-scoped enable stays within one session", async (
       })
       expect(allowed).toBeUndefined()
 
-      const blocked = PermissionNext.ask({
+      const blocked = Permission.ask({
         id: PermissionID.make("permission_session_blocked"),
         sessionID: SessionID.make("session_blocked"),
         permission: "bash",
@@ -786,12 +786,12 @@ test("allowEverything - session-scoped enable stays within one session", async (
         ruleset: [],
       })
 
-      await PermissionNext.reply({
+      await Permission.reply({
         requestID: PermissionID.make("permission_session_blocked"),
         reply: "reject",
       })
 
-      await expect(blocked).rejects.toBeInstanceOf(PermissionNext.RejectedError)
+      await expect(blocked).rejects.toBeInstanceOf(Permission.RejectedError)
     },
   })
 })

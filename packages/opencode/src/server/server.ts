@@ -17,6 +17,8 @@ import { Agent } from "../agent/agent"
 import { Skill } from "../skill"
 import { Auth } from "../auth"
 import { ModelCache } from "../provider/model-cache" // kilocode_change
+import { Bus } from "@/bus" // kilocode_change
+import { BusEvent } from "@/bus/bus-event" // kilocode_change
 import { Flag } from "../flag/flag"
 import { Command } from "../command"
 import { Global } from "../global"

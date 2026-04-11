@@ -231,7 +231,7 @@ export namespace Permission {
         return yield* Effect.ensuring(
           Deferred.await(deferred),
           Effect.sync(() => {
-            pending.delete(id)
+            s.pending.delete(id)
           }),
         )
       })

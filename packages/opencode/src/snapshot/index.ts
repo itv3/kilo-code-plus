@@ -520,9 +520,9 @@ export namespace Snapshot {
   export const defaultLayer = layer.pipe(
     Layer.provide(NodeChildProcessSpawner.layer),
     Layer.provide(AppFileSystem.defaultLayer),
-    Layer.provide(NodeFileSystem.layer), // needed by NodeChildProcessSpawner
+    Layer.provide(NodeFileSystem.layer),
     Layer.provide(NodePath.layer),
-  )
+  ) as Layer.Layer<Service>
 
   const runPromise = makeRunPromise(Service, defaultLayer)
 

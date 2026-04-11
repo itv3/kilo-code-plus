@@ -1,4 +1,3 @@
-import { NodePath } from "@effect/platform-node"
 import { Cause, Duration, Effect, Layer, Schedule, ServiceMap } from "effect"
 import path from "path"
 import type { Agent } from "../agent/agent"
@@ -134,7 +133,9 @@ export namespace Truncate {
     }),
   )
 
-  export const defaultLayer = layer.pipe(Layer.provide(AppFileSystem.defaultLayer), Layer.provide(NodePath.layer))
+  export const defaultLayer = layer.pipe(
+    Layer.provide(AppFileSystem.defaultLayer),
+  ) as Layer.Layer<Service>
 
   const runPromise = makeRunPromise(Service, defaultLayer)
 

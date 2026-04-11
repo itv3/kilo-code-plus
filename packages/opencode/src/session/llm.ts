@@ -78,7 +78,7 @@ export namespace LLM {
     system.push(
       [
         // kilocode_change start - soul defines core identity and personality
-        ...(isCodex ? [] : [SystemPrompt.soul()]),
+        ...(isOpenaiOauth ? [] : [SystemPrompt.soul()]),
         // kilocode_change end
         // use agent prompt otherwise provider prompt
         ...(input.agent.prompt ? [input.agent.prompt] : SystemPrompt.provider(input.model)),

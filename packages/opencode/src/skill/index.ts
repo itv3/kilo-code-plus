@@ -1,3 +1,4 @@
+import { rm } from "fs/promises"
 import os from "os"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -20,6 +21,9 @@ import { Discovery } from "./discovery"
 
 export namespace Skill {
   const log = Log.create({ service: "skill" })
+  // kilocode_change start
+  export const BUILTIN_LOCATION = "builtin"
+  // kilocode_change end
   const EXTERNAL_DIRS = [".claude", ".agents"]
   const EXTERNAL_SKILL_PATTERN = "skills/**/SKILL.md"
   const OPENCODE_SKILL_PATTERN = "{skill,skills}/**/SKILL.md"
@@ -124,7 +128,7 @@ export namespace Skill {
     }
 
     const load = async () => {
-      if (!Flag.OPENCODE_DISABLE_EXTERNAL_SKILLS) {
+      if (!Flag.KILO_DISABLE_EXTERNAL_SKILLS) {
         for (const dir of EXTERNAL_DIRS) {
           const root = path.join(Global.Path.home, dir)
           if (!(await Filesystem.isDir(root))) continue
@@ -259,4 +263,15 @@ export namespace Skill {
   export async function available(agent?: Agent.Info) {
     return runPromise((skill) => skill.available(agent))
   }
+
+  // kilocode_change start
+  export async function remove(location: string) {
+    if (location === BUILTIN_LOCATION) {
+      throw new Error("cannot remove built-in skill")
+    }
+    const resolved = path.resolve(location)
+    const dir = path.dirname(resolved)
+    await rm(dir, { recursive: true, force: true })
+  }
+  // kilocode_change end
 }

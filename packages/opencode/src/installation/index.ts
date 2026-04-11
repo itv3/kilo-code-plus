@@ -344,7 +344,7 @@ export namespace Installation {
     Layer.provide(NodeChildProcessSpawner.layer),
     Layer.provide(NodeFileSystem.layer),
     Layer.provide(NodePath.layer),
-  )
+  ) as Layer.Layer<Service>
 
   const runPromise = makeRunPromise(Service, defaultLayer)
 
