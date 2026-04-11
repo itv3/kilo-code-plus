@@ -914,27 +914,54 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   )
 }
 
+// kilocode_change start — guard against missing renderer context in ErrorBoundary fallback
+function tryUseRenderer() {
+  try {
+    return useRenderer()
+  } catch {
+    return undefined
+  }
+}
+
+function tryUseTerminalDimensions() {
+  try {
+    return useTerminalDimensions()
+  } catch {
+    return undefined
+  }
+}
+// kilocode_change end
+
 function ErrorComponent(props: {
   error: Error
   reset: () => void
   onExit: () => Promise<void>
   mode?: "dark" | "light"
 }) {
-  const term = useTerminalDimensions()
-  const renderer = useRenderer()
+  // kilocode_change start — use safe accessors so ErrorComponent renders even without renderer context
+  const term = tryUseTerminalDimensions()
+  const renderer = tryUseRenderer()
+
+  const height = () => term?.().height ?? process.stdout.rows ?? 24
 
   const handleExit = async () => {
-    renderer.setTerminalTitle("")
-    renderer.destroy()
+    renderer?.setTerminalTitle("")
+    renderer?.destroy()
     win32FlushInputBuffer()
     await props.onExit()
   }
 
-  useKeyboard((evt) => {
-    if (evt.ctrl && evt.name === "c") {
-      handleExit()
-    }
-  })
+  try {
+    useKeyboard((evt) => {
+      if (evt.ctrl && evt.name === "c") {
+        handleExit()
+      }
+    })
+  } catch {
+    // Keyboard handler unavailable — renderer context may be missing.
+    // Ctrl+C will still work via the default signal handler.
+  }
+  // kilocode_change end
   const [copied, setCopied] = createSignal(false)
 
   const issueURL = new URL("https://github.com/Kilo-Org/kilocode/issues/new?template=bug-report.yml")
@@ -989,7 +1016,7 @@ function ErrorComponent(props: {
           <text fg={colors.bg}>Exit</text>
         </box>
       </box>
-      <scrollbox height={Math.floor(term().height * 0.7)}>
+      <scrollbox height={Math.floor(height() * 0.7)}>
         <text fg={colors.muted}>{props.error.stack}</text>
       </scrollbox>
       <text fg={colors.text}>{props.error.message}</text>
