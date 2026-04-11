@@ -1053,21 +1053,6 @@ export type Event =
   | EventLspClientDiagnostics
   | EventLspUpdated
   | EventFileEdited
-  | EventMessageUpdated
-  | EventMessageRemoved
-  | EventMessagePartUpdated
-  | EventMessagePartDelta
-  | EventMessagePartRemoved
-  | EventPermissionAsked
-  | EventPermissionReplied
-  | EventSessionStatus
-  | EventSessionIdle
-  | EventQuestionAsked
-  | EventQuestionReplied
-  | EventQuestionRejected
-  | EventSessionCompacted
-  | EventFileWatcherUpdated
-  | EventTodoUpdated
   | EventTuiPromptAppend
   | EventTuiCommandExecute
   | EventTuiToastShow
@@ -2055,10 +2040,10 @@ export type Agent = {
   name: string
   displayName?: string
   description?: string
+  deprecated?: boolean
   mode: "subagent" | "primary" | "all"
   native?: boolean
   hidden?: boolean
-  deprecated?: boolean
   topP?: number
   temperature?: number
   color?: string

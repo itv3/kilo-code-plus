@@ -51,6 +51,7 @@ import { Truncate } from "@/tool/truncate"
 import { PlanFollowup } from "@/kilocode/plan-followup" // kilocode_change
 import { environmentDetails } from "@/kilocode/editor-context" // kilocode_change
 import { decodeDataUrl } from "@/util/data-url"
+import { Identifier } from "@/id/id" // kilocode_change
 import { Process } from "@/util/process"
 
 // @ts-ignore

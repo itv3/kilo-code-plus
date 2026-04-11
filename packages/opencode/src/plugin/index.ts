@@ -52,7 +52,7 @@ export namespace Plugin {
     CodexAuthPlugin,
     CopilotAuthPlugin,
     GitlabAuthPlugin as unknown as PluginInstance,
-    PoeAuthPlugin,
+    PoeAuthPlugin as unknown as PluginInstance,
   ] // kilocode_change end
 
   // Old npm package names for plugins that are now built-in — skip if users still have them in config
