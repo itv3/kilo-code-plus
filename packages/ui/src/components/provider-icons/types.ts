@@ -19,7 +19,6 @@ export const iconNames = [
   "v0",
   "upstage",
   "togetherai",
-  "the-grid-ai",
   "tencent-coding-plan",
   "synthetic",
   "submodel",
