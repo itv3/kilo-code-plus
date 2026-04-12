@@ -1,4 +1,4 @@
-import type { Project, UserMessage } from "@kilocode/sdk/v2"
+import type { Project, UserMessage } from "@opencode-ai/sdk/v2"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useMutation } from "@tanstack/solid-query"
 import {
@@ -7,7 +7,6 @@ import {
   Show,
   Match,
   Switch,
-  createRoot,
   createMemo,
   createEffect,
   createComputed,
@@ -350,105 +349,6 @@ export default function Page() {
       bottom: true,
     },
   })
-
-  // kilocode_change start - handle mode switch from question options
-  let modeActionAbort: AbortController | undefined
-
-  const waitForIdle = (sessionID: string, signal: AbortSignal) =>
-    new Promise<void>((resolve, reject) => {
-      let settled = false
-      const ref: { dispose?: () => void } = {}
-      const settle = (fn: () => void) => {
-        if (settled) return
-        settled = true
-        clearTimeout(timeout)
-        ref.dispose?.()
-        fn()
-      }
-      const timeout = setTimeout(() => {
-        settle(() => reject(new Error("Timed out waiting for session idle")))
-      }, 30_000)
-
-      createRoot((dispose) => {
-        ref.dispose = dispose
-        signal.addEventListener("abort", () => settle(() => reject(new Error("Cancelled"))), { once: true })
-        createEffect(() => {
-          const status = sync.data.session_status[sessionID]
-          if (!status || status.type !== "idle") return
-          settle(() => resolve())
-        })
-      })
-    })
-
-  onCleanup(() => modeActionAbort?.abort())
-
-  const handleModeAction = async (input: { mode: string; text: string; description?: string }) => {
-    const sessionID = params.id
-    if (!sessionID) return
-
-    modeActionAbort?.abort()
-    const controller = new AbortController()
-    modeActionAbort = controller
-
-    const toastTimer = setTimeout(() => {
-      showToast({
-        title: language.t("session.modeSwitch.switching", { mode: input.mode }),
-        description: language.t("session.modeSwitch.waiting"),
-      })
-    }, 500)
-
-    try {
-      // Allow one microtask for session status to reflect the reply before checking idle
-      await new Promise((r) => setTimeout(r, 0))
-      await waitForIdle(sessionID, controller.signal)
-    } catch (err: unknown) {
-      clearTimeout(toastTimer)
-      if (controller.signal.aborted) return
-      const message = err instanceof Error ? err.message : String(err)
-      showToast({ title: language.t("common.requestFailed"), description: message })
-      return
-    }
-
-    clearTimeout(toastTimer)
-
-    if (controller.signal.aborted) return
-
-    local.agent.set(input.mode)
-
-    const agent = local.agent.current()
-    if (!agent) return
-
-    if (agent.name !== input.mode) {
-      showToast({
-        title: language.t("session.modeSwitch.notAvailable"),
-        description: language.t("session.modeSwitch.fallback", { requested: input.mode, actual: agent.name }),
-      })
-    }
-
-    const model = local.model.current()
-    if (!model) return
-
-    const variant = local.model.variant.current()
-    const messageID = Identifier.ascending("message")
-
-    sdk.client.session
-      .prompt({
-        sessionID,
-        agent: agent.name,
-        model: {
-          modelID: model.id,
-          providerID: model.provider.id,
-        },
-        messageID,
-        parts: [{ type: "text", text: input.description ?? input.text }],
-        variant,
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : String(err)
-        showToast({ title: language.t("common.requestFailed"), description: message })
-      })
-  }
-  // kilocode_change end
 
   const composer = createSessionComposerState()
 
@@ -1941,7 +1841,6 @@ export default function Page() {
             setPromptDockRef={(el) => {
               promptDock = el
             }}
-            onModeAction={handleModeAction} // kilocode_change
           />
 
           <Show when={desktopReviewOpen()}>
