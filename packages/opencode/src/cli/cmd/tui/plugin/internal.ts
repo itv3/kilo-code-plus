@@ -1,7 +1,9 @@
+import HomeFooter from "../feature-plugins/home/footer"
 import HomeTips from "../feature-plugins/home/tips"
 // kilocode_change start
 import HomeNews from "@/kilocode/plugins/home-news"
 import HomeOnboarding from "@/kilocode/plugins/home-onboarding"
+import KiloHomeFooter from "@/kilocode/plugins/home-footer"
 import KiloSidebarFooter from "@/kilocode/plugins/sidebar-footer"
 // kilocode_change end
 import SidebarContext from "../feature-plugins/sidebar/context"
@@ -21,7 +23,9 @@ export type InternalTuiPlugin = TuiPluginModule & {
 export const INTERNAL_TUI_PLUGINS: InternalTuiPlugin[] = [
   HomeNews, // kilocode_change
   HomeOnboarding, // kilocode_change
+  KiloHomeFooter, // kilocode_change
   KiloSidebarFooter, // kilocode_change
+  HomeFooter,
   HomeTips,
   SidebarContext,
   SidebarMcp,

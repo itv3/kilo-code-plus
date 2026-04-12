@@ -47,6 +47,9 @@ export const SessionQuestionDock: Component<{
     return language.t("session.question.progress", { current: n, total: total() })
   })
 
+  const customLabel = () => language.t("ui.messagePart.option.typeOwnAnswer")
+  const customPlaceholder = () => language.t("ui.question.custom.placeholder")
+
   const last = createMemo(() => store.tab >= total() - 1)
 
   const customUpdate = (value: string, selected: boolean = on()) => {
@@ -170,6 +173,13 @@ export const SessionQuestionDock: Component<{
 
   const submit = () => void reply(questions().map((_, i) => store.answers[i] ?? []))
 
+  const answered = (i: number) => {
+    if ((store.answers[i]?.length ?? 0) > 0) return true
+    return store.customOn[i] === true && (store.custom[i] ?? "").trim().length > 0
+  }
+
+  const picked = (answer: string) => store.answers[store.tab]?.includes(answer) ?? false
+
   const pick = (answer: string, custom: boolean = false) => {
     // kilocode_change start - find option to check for mode
     // Custom answers won't match a predefined option, so mode switching is intentionally skipped
@@ -259,6 +269,24 @@ export const SessionQuestionDock: Component<{
     customUpdate(input())
   }
 
+  const resizeInput = (el: HTMLTextAreaElement) => {
+    el.style.height = "0px"
+    el.style.height = `${el.scrollHeight}px`
+  }
+
+  const focusCustom = (el: HTMLTextAreaElement) => {
+    setTimeout(() => {
+      el.focus()
+      resizeInput(el)
+    }, 0)
+  }
+
+  const toggleCustomMark = (event: MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    customToggle()
+  }
+
   const next = () => {
     if (sending()) return
     if (store.editing) commitCustom()
@@ -299,10 +327,7 @@ export const SessionQuestionDock: Component<{
                   type="button"
                   data-slot="question-progress-segment"
                   data-active={i() === store.tab}
-                  data-answered={
-                    (store.answers[i()]?.length ?? 0) > 0 ||
-                    (store.customOn[i()] === true && (store.custom[i()] ?? "").trim().length > 0)
-                  }
+                  data-answered={answered(i())}
                   disabled={sending()}
                   onClick={() => jump(i())}
                   aria-label={`${language.t("ui.tool.questions")} ${i() + 1}`}
@@ -336,43 +361,23 @@ export const SessionQuestionDock: Component<{
       </Show>
       <div data-slot="question-options">
         <For each={options()}>
-          {(opt, i) => {
-            const picked = () => store.answers[store.tab]?.includes(opt.label) ?? false
-            return (
-              <button
-                data-slot="question-option"
-                data-picked={picked()}
-                role={multi() ? "checkbox" : "radio"}
-                aria-checked={picked()}
-                disabled={sending()}
-                onClick={() => selectOption(i())}
-              >
-                <span data-slot="question-option-check" aria-hidden="true">
-                  <span
-                    data-slot="question-option-box"
-                    data-type={multi() ? "checkbox" : "radio"}
-                    data-picked={picked()}
-                  >
-                    <Show when={multi()} fallback={<span data-slot="question-option-radio-dot" />}>
-                      <Icon name="check-small" size="small" />
-                    </Show>
-                  </span>
-                </span>
-                <span data-slot="question-option-main">
-                  <span data-slot="option-label">{opt.label}</span>
-                  <Show when={opt.description}>
-                    <span data-slot="option-description">{opt.description}</span>
-                  </Show>
-                </span>
-              </button>
-            )
-          }}
+          {(opt, i) => (
+            <Option
+              multi={multi()}
+              picked={picked(opt.label)}
+              label={opt.label}
+              description={opt.description}
+              disabled={sending()}
+              onClick={() => selectOption(i())}
+            />
+          )}
         </For>
 
         <Show
           when={store.editing}
           fallback={
             <button
+              type="button"
               data-slot="question-option"
               data-custom="true"
               data-picked={on()}
@@ -381,24 +386,10 @@ export const SessionQuestionDock: Component<{
               disabled={sending()}
               onClick={customOpen}
             >
-              <span
-                data-slot="question-option-check"
-                aria-hidden="true"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  customToggle()
-                }}
-              >
-                <span data-slot="question-option-box" data-type={multi() ? "checkbox" : "radio"} data-picked={on()}>
-                  <Show when={multi()} fallback={<span data-slot="question-option-radio-dot" />}>
-                    <Icon name="check-small" size="small" />
-                  </Show>
-                </span>
-              </span>
+              <Mark multi={multi()} picked={on()} onClick={toggleCustomMark} />
               <span data-slot="question-option-main">
-                <span data-slot="option-label">{language.t("ui.messagePart.option.typeOwnAnswer")}</span>
-                <span data-slot="option-description">{input() || language.t("ui.question.custom.placeholder")}</span>
+                <span data-slot="option-label">{customLabel()}</span>
+                <span data-slot="option-description">{input() || customPlaceholder()}</span>
               </span>
             </button>
           }
@@ -423,33 +414,13 @@ export const SessionQuestionDock: Component<{
               commitCustom()
             }}
           >
-            <span
-              data-slot="question-option-check"
-              aria-hidden="true"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                customToggle()
-              }}
-            >
-              <span data-slot="question-option-box" data-type={multi() ? "checkbox" : "radio"} data-picked={on()}>
-                <Show when={multi()} fallback={<span data-slot="question-option-radio-dot" />}>
-                  <Icon name="check-small" size="small" />
-                </Show>
-              </span>
-            </span>
+            <Mark multi={multi()} picked={on()} onClick={toggleCustomMark} />
             <span data-slot="question-option-main">
-              <span data-slot="option-label">{language.t("ui.messagePart.option.typeOwnAnswer")}</span>
+              <span data-slot="option-label">{customLabel()}</span>
               <textarea
-                ref={(el) =>
-                  setTimeout(() => {
-                    el.focus()
-                    el.style.height = "0px"
-                    el.style.height = `${el.scrollHeight}px`
-                  }, 0)
-                }
+                ref={focusCustom}
                 data-slot="question-custom-input"
-                placeholder={language.t("ui.question.custom.placeholder")}
+                placeholder={customPlaceholder()}
                 value={input()}
                 rows={1}
                 disabled={sending()}
@@ -465,8 +436,7 @@ export const SessionQuestionDock: Component<{
                 }}
                 onInput={(e) => {
                   customUpdate(e.currentTarget.value)
-                  e.currentTarget.style.height = "0px"
-                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
+                  resizeInput(e.currentTarget)
                 }}
               />
             </span>
