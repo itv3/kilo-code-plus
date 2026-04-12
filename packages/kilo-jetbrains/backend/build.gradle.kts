@@ -1,83 +1,8 @@
-import org.gradle.api.DefaultTask
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
-import org.gradle.process.ExecOperations
-import javax.inject.Inject
-
 plugins {
     alias(libs.plugins.rpc)
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.openapi.generator)
-}
-
-abstract class PrepareLocalCliTask : DefaultTask() {
-    @get:InputFile
-    abstract val script: RegularFileProperty
-
-    @get:Internal
-    abstract val root: DirectoryProperty
-
-    @get:OutputDirectory
-    abstract val out: DirectoryProperty
-
-    @get:Input
-    abstract val platform: Property<String>
-
-    @get:Input
-    abstract val exe: Property<String>
-
-    @get:Inject
-    abstract val exec: ExecOperations
-
-    @TaskAction
-    fun run() {
-        val bin = out.file("${platform.get()}/${exe.get()}").get().asFile
-        if (bin.exists()) return
-        exec.exec {
-            workingDir = root.get().asFile
-            commandLine(findBun(), "script/build.ts", "--prepare-cli")
-        }
-    }
-
-    /**
-     * Resolve the absolute path to `bun`. The Gradle daemon's PATH is often
-     * stripped down and doesn't include Homebrew or user-local bin dirs.
-     * Probe common install locations so the build works without manual PATH setup.
-     */
-    private fun findBun(): String {
-        // 1. Already on PATH?
-        val which = runCatching {
-            ProcessBuilder("which", "bun")
-                .redirectErrorStream(true)
-                .start()
-                .inputStream.bufferedReader().readLine()?.trim()
-        }.getOrNull()
-        if (which != null && File(which).isFile) return which
-
-        // 2. Common install locations
-        val home = System.getProperty("user.home")
-        val candidates = listOf(
-            "$home/.bun/bin/bun",
-            "/opt/homebrew/bin/bun",
-            "/usr/local/bin/bun",
-            "$home/.nvm/current/bin/bun",
-        )
-        for (path in candidates) {
-            val f = File(path)
-            if (f.isFile && f.canExecute()) return f.absolutePath
-        }
-
-        // 3. Fall back — let the OS resolve it (will fail with a clear message)
-        return "bun"
-    }
 }
 
 kotlin {
@@ -102,7 +27,7 @@ openApiGenerate {
     apiPackage.set("ai.kilocode.jetbrains.api.client")
     modelPackage.set("ai.kilocode.jetbrains.api.model")
     configOptions.set(mapOf(
-        "serializationLibrary" to "moshi",
+        "serializationLibrary" to "kotlinx_serialization",
         "omitGradleWrapper" to "true",
         "omitGradlePluginVersions" to "true",
         "useCoroutines" to "false",
@@ -113,10 +38,12 @@ openApiGenerate {
     modelNameMappings.set(mapOf(
         "File" to "DiffFileInfo",
     ))
-    // Map empty anyOf references to kotlin.Any
+    // Map empty anyOf references to kotlin.Any; bare numbers to Double
     typeMappings.set(mapOf(
         "AnyOfLessThanGreaterThan" to "kotlin.Any",
         "anyOf<>" to "kotlin.Any",
+        "number" to "kotlin.Double",
+        "decimal" to "kotlin.Double",
     ))
     // Normalise OpenAPI 3.1 → 3.0-compatible patterns
     openapiNormalizer.set(mapOf(
@@ -129,83 +56,194 @@ openApiGenerate {
     generateModelDocumentation.set(false)
 }
 
-// Fix openapi-generator 3.1.1 codegen bugs in generated Kotlin sources.
+// Fix openapi-generator codegen bugs in generated Kotlin sources.
 //
 // 1) Boolean const enum fix:
-//    The OpenAPI spec uses `const: true` on boolean fields (e.g. `healthy`).
-//    openapi-generator turns these into single-value enum classes:
-//      val healthy: GlobalHealth200Response.Healthy
-//      enum class Healthy(val value: kotlin.Boolean) { @Json(name = "true") TRUE("true") }
-//    Moshi's EnumJsonAdapter calls nextString() for the value, but the server sends
-//    a JSON boolean `true`, not a JSON string `"true"`.
-//    Fix: replace the enum field type with kotlin.Boolean, remove the enum class.
+//    `const: true`/`const: false` fields produce broken single-value enums.
+//    Fix: replace with kotlin.Boolean, remove the enum class.
 //
-// 2) anyOf[string, null] fix:
-//    Fields like Config.model defined as `anyOf: [{type: string}, {type: null}]`
-//    get generated as empty wrapper classes (e.g. ConfigModel). Moshi then expects
-//    a JSON object but the server sends a plain string.
-//    Fix: replace the field type with kotlin.String?, delete the empty wrapper class file.
+// 2) Double-parentheses on HashMap-extending data classes:
+//    `data class Foo(...) : HashMap<String, Any>()()` — extra `()`.
+//    Fix: remove the trailing `()`.
+//
+// 7) Empty anyOf wrapper classes:
+//    anyOf unions of heterogeneous types (e.g. string enum | object) generate
+//    empty `class Foo () {}` that can't deserialize primitives.
+//    Fix: replace references with JsonElement, delete the empty class files.
+//
+// 3) Private Double constructor:
+//    `kotlin.Double("5000")` — Double has no public String constructor.
+//    Fix: convert to `5000.0` double literal.
+//
+// 4) Missing @Contextual on bare kotlin.Any fields:
+//    kotlinx.serialization can't serialize `Any` without @Contextual.
+//    Fix: add @Contextual annotation where missing.
+//
+// 5) Nullable body access in ApiClient.kt:
+//    `response.body` is nullable in OkHttp but generated code dereferences
+//    it without safe calls. Fix: replace `body.` with `body?.`.
 val fixGeneratedApi by tasks.registering {
     dependsOn("openApiGenerate")
     val dir = generatedApi
     doLast {
-        // ── Fix 1: boolean const enums ──────────────────────────────
+        // ── Fix 7: empty anyOf wrapper classes → JsonElement ────────
+        // These are anyOf unions (e.g. string enum | object) that the
+        // codegen produces as empty classes. Replace all references with
+        // kotlinx.serialization.json.JsonElement and delete the files.
+        val modelDir = dir.get().file("ai/kilocode/jetbrains/api/model").asFile
+        val emptyWrappers = modelDir.listFiles()
+            ?.filter { it.extension == "kt" }
+            ?.filter { f ->
+                val text = f.readText()
+                // Match: non-data `class Foo ()` with no `val` properties
+                text.contains(Regex("""\nclass \w+ \(\n\n\)""")) && !text.contains("val ")
+            }
+            ?.map { it.nameWithoutExtension }
+            ?: emptyList()
 
-        val enumDecl = Regex(
-            """enum class (\w+)\(val value: kotlin\.Boolean\)"""
-        )
+        if (emptyWrappers.isNotEmpty()) {
+            // Delete the empty wrapper class files
+            for (name in emptyWrappers) {
+                val f = File(modelDir, "$name.kt")
+                if (f.exists()) f.delete()
+            }
+            // Replace references in all generated files
+            dir.get().asFile.walkTopDown().filter { it.extension == "kt" }.forEach { file ->
+                var text = file.readText()
+                var changed = false
+                for (name in emptyWrappers) {
+                    if (!text.contains(name)) continue
+                    // Remove import lines FIRST (before replacing class names)
+                    text = text.replace(Regex("""import [^\n]*\.$name\n"""), "")
+                    // Replace type references in code
+                    text = text.replace(Regex("""\b$name\b"""), "kotlinx.serialization.json.JsonElement")
+                    changed = true
+                }
+                if (changed) file.writeText(text)
+            }
+        }
+
         dir.get().asFile.walkTopDown().filter { it.extension == "kt" }.forEach { file ->
             var text = file.readText()
-            val names = enumDecl.findAll(text).map { it.groupValues[1] }.toList()
-            if (names.isEmpty()) return@forEach
+            var changed = false
 
+            // ── Fix 1: boolean const enums ──────────────────────────
+            val enumDecl = Regex(
+                """enum class (\w+)\(val value: kotlin\.Boolean\)"""
+            )
+            val names = enumDecl.findAll(text).map { it.groupValues[1] }.toList()
             for (name in names) {
-                // Replace field type: `val foo: EnclosingClass.EnumName` → `val foo: kotlin.Boolean`
                 text = text.replace(Regex("""(val \w+:\s*)\w+\.$name""")) { m ->
                     "${m.groupValues[1]}kotlin.Boolean"
                 }
-                // Remove the @JsonClass annotation + enum class block
                 text = text.replace(Regex(
-                    """\n\s*@JsonClass\(generateAdapter = false\)\s*\n\s*enum class $name\(val value: kotlin\.Boolean\)\s*\{[^}]*\}"""
+                    """\n\s*@Serializable\s*\n\s*enum class $name\(val value: kotlin\.Boolean\)\s*\{[^}]*\}"""
                 ), "")
-                // Remove the orphaned KDoc block that preceded the enum (lines of ` *` ending with `*/`)
                 text = text.replace(Regex(
                     """\n\s*/\*\*\s*\n(\s*\*[^\n]*\n)*\s*\*/\s*(?=\n\s*\n)"""
                 ), "")
-            }
-            file.writeText(text)
-        }
-
-        // ── Fix 2: anyOf[string, null] empty wrapper classes ────────
-        //
-        // These are classes generated from `anyOf: [{type: string}, {type: null}]`
-        // that should be kotlin.String? instead. The generated class is an empty
-        // `class FooBar () {}` and fields referencing it need to become String?.
-        val emptyWrappers = listOf("ConfigModel", "ConfigSmallModel")
-        for (wrapper in emptyWrappers) {
-            // Delete the empty wrapper class file
-            val wrapperFile = dir.get().file(
-                "ai/kilocode/jetbrains/api/model/$wrapper.kt"
-            ).asFile
-            if (wrapperFile.exists()) {
-                wrapperFile.delete()
+                changed = true
             }
 
-            // Replace all field references in other files:
-            //   `val model: ConfigModel? = null` → `val model: kotlin.String? = null`
-            dir.get().asFile.walkTopDown().filter { it.extension == "kt" }.forEach { file ->
-                val text = file.readText()
-                if (!text.contains(wrapper)) return@forEach
-                var patched = text
-                // Replace field type references
-                patched = patched.replace(Regex(""":\s*$wrapper\?"""), ": kotlin.String?")
-                patched = patched.replace(Regex(""":\s*$wrapper([^?\w])"""), ": kotlin.String?$1")
-                // Remove the import line
-                patched = patched.replace(Regex("""import [^\n]*\.$wrapper\n"""), "")
-                if (patched != text) {
-                    file.writeText(patched)
+            // ── Fix 2: double-parentheses `HashMap<...>()()` ────────
+            if (text.contains("()()")) {
+                text = text.replace("()()", "()")
+                changed = true
+            }
+
+            // ── Fix 3: `kotlin.Double("...")` → double literal ──────
+            val doubleCtorPattern = Regex("""kotlin\.Double\("(\d+(?:\.\d+)?)"\)""")
+            if (doubleCtorPattern.containsMatchIn(text)) {
+                text = doubleCtorPattern.replace(text) { m ->
+                    val num = m.groupValues[1]
+                    if (num.contains(".")) num else "$num.0"
+                }
+                changed = true
+            }
+
+            // ── Fix 4: add @Contextual to bare `kotlin.Any` usages ──
+            // kotlinx.serialization cannot handle kotlin.Any without @Contextual.
+            // Only patch @Serializable data class files (which import Contextual).
+            // Skip enum files, API client files, and infrastructure.
+            if (text.contains("kotlin.Any") &&
+                text.contains("import kotlinx.serialization.Contextual") &&
+                text.contains("@Serializable") &&
+                text.contains("data class")
+            ) {
+                // Add @Contextual before kotlin.Any in val/field type positions
+                // Covers: `val foo: kotlin.Any`, `Map<String, kotlin.Any>`, etc.
+                text = text.replace(
+                    Regex("""(?<!@Contextual )kotlin\.Any"""),
+                    "@Contextual kotlin.Any"
+                )
+                changed = true
+            }
+
+            // ── Fix 5: nullable body in ApiClient ───────────────────
+            // OkHttp's response.body is nullable but the generated code
+            // dereferences it without null checks in two places:
+            // a) responseBody() — add null guard so body smart-casts
+            // b) request() error branches — `it.body.string()` → `it.body?.string()`
+            if (file.name == "ApiClient.kt") {
+                val guard = "val body = response.body"
+                if (text.contains(guard) && !text.contains("if (body == null) return null")) {
+                    text = text.replace(
+                        guard,
+                        "$guard\n        if (body == null) return null"
+                    )
+                    // After the null guard, remove safe calls that cause
+                    // InputStream? issues (body is smart-cast non-null).
+                    text = text.replace("body?.", "body.")
+                    changed = true
+                }
+                // Fix `it.body.string()` in error branches of request()
+                if (text.contains("it.body.string()")) {
+                    text = text.replace("it.body.string()", "it.body?.string()")
+                    changed = true
                 }
             }
+
+            // ── Fix 6: register AnySerializer in Serializer.kt ──────
+            // kotlinx.serialization needs a contextual serializer for Any
+            // that delegates to JsonElement for dynamic JSON values.
+            if (file.name == "Serializer.kt") {
+                if (!text.contains("AnySerializer")) {
+                    // Add import + serializer object at end of file
+                    text = text.replace(
+                        "import kotlinx.serialization.modules.SerializersModuleBuilder",
+                        "import kotlinx.serialization.modules.SerializersModuleBuilder\n" +
+                        "import kotlinx.serialization.KSerializer\n" +
+                        "import kotlinx.serialization.descriptors.SerialDescriptor\n" +
+                        "import kotlinx.serialization.encoding.Decoder\n" +
+                        "import kotlinx.serialization.encoding.Encoder\n" +
+                        "import kotlinx.serialization.json.JsonDecoder\n" +
+                        "import kotlinx.serialization.json.JsonEncoder\n" +
+                        "import kotlinx.serialization.json.JsonElement"
+                    )
+                    // Register it in the SerializersModule
+                    text = text.replace(
+                        "contextual(StringBuilder::class, StringBuilderAdapter)",
+                        "contextual(StringBuilder::class, StringBuilderAdapter)\n" +
+                        "            contextual(Any::class, AnySerializer)"
+                    )
+                    // Append the serializer object before the closing of Serializer
+                    text = text.trimEnd() + "\n\n" +
+                        "internal object AnySerializer : KSerializer<Any> {\n" +
+                        "    private val delegate = JsonElement.serializer()\n" +
+                        "    override val descriptor: SerialDescriptor = delegate.descriptor\n" +
+                        "    override fun serialize(encoder: Encoder, value: Any) {\n" +
+                        "        val json = (encoder as JsonEncoder).json\n" +
+                        "        encoder.encodeSerializableValue(delegate, json.encodeToJsonElement(delegate, value as? JsonElement ?: return))\n" +
+                        "    }\n" +
+                        "    override fun deserialize(decoder: Decoder): Any {\n" +
+                        "        return (decoder as JsonDecoder).decodeJsonElement()\n" +
+                        "    }\n" +
+                        "}\n"
+                    changed = true
+                }
+            }
+
+            if (changed) file.writeText(text)
         }
     }
 }
@@ -296,6 +334,5 @@ dependencies {
     implementation(project(":shared"))
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
-    implementation(libs.moshi)
-    implementation(libs.moshi.kotlin)
+    implementation(libs.kotlinx.serialization.json)
 }

@@ -58,3 +58,7 @@ tasks.named<JavaExec>("runIde") {
     }
 }
 
+tasks.named<Delete>("clean") {
+    delete(layout.buildDirectory)
+}
+
