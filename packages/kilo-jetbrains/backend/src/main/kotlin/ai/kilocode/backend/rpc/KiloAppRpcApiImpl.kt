@@ -2,12 +2,18 @@
 
 package ai.kilocode.backend.rpc
 
-import ai.kilocode.backend.ConnectionState
+import ai.kilocode.backend.KiloAppState
 import ai.kilocode.backend.KiloBackendAppService
+import ai.kilocode.backend.LoadError
+import ai.kilocode.backend.LoadProgress
+import ai.kilocode.backend.ProfileResult
 import ai.kilocode.rpc.KiloAppRpcApi
-import ai.kilocode.rpc.dto.ConnectionStateDto
-import ai.kilocode.rpc.dto.ConnectionStatusDto
 import ai.kilocode.rpc.dto.HealthDto
+import ai.kilocode.rpc.dto.KiloAppStateDto
+import ai.kilocode.rpc.dto.KiloAppStatusDto
+import ai.kilocode.rpc.dto.LoadErrorDto
+import ai.kilocode.rpc.dto.LoadProgressDto
+import ai.kilocode.rpc.dto.ProfileStatusDto
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -25,8 +31,8 @@ class KiloAppRpcApiImpl : KiloAppRpcApi {
 
     override suspend fun connect() = app.connect()
 
-    override suspend fun state(): Flow<ConnectionStateDto> =
-        app.state.map(::dto).distinctUntilChanged()
+    override suspend fun state(): Flow<KiloAppStateDto> =
+        app.appState.map(::dto).distinctUntilChanged()
 
     override suspend fun health(): HealthDto = app.health()
 
@@ -34,11 +40,35 @@ class KiloAppRpcApiImpl : KiloAppRpcApi {
 
     override suspend fun reinstall() = app.reinstall()
 
-    private fun dto(state: ConnectionState): ConnectionStateDto =
+    private fun dto(state: KiloAppState): KiloAppStateDto =
         when (state) {
-            ConnectionState.Disconnected -> ConnectionStateDto(ConnectionStatusDto.DISCONNECTED)
-            ConnectionState.Connecting -> ConnectionStateDto(ConnectionStatusDto.CONNECTING)
-            is ConnectionState.Connected -> ConnectionStateDto(ConnectionStatusDto.CONNECTED)
-            is ConnectionState.Error -> ConnectionStateDto(ConnectionStatusDto.ERROR, state.message)
+            KiloAppState.Disconnected -> KiloAppStateDto(KiloAppStatusDto.DISCONNECTED)
+            KiloAppState.Connecting -> KiloAppStateDto(KiloAppStatusDto.CONNECTING)
+            is KiloAppState.Loading -> KiloAppStateDto(
+                status = KiloAppStatusDto.LOADING,
+                progress = progress(state.progress),
+            )
+            is KiloAppState.Ready -> KiloAppStateDto(KiloAppStatusDto.READY)
+            is KiloAppState.Error -> KiloAppStateDto(
+                status = KiloAppStatusDto.ERROR,
+                error = state.message,
+                errors = state.errors.map(::error),
+            )
         }
+
+    private fun progress(p: LoadProgress) = LoadProgressDto(
+        config = p.config,
+        notifications = p.notifications,
+        profile = when (p.profile) {
+            ProfileResult.PENDING -> ProfileStatusDto.PENDING
+            ProfileResult.LOADED -> ProfileStatusDto.LOADED
+            ProfileResult.NOT_LOGGED_IN -> ProfileStatusDto.NOT_LOGGED_IN
+        },
+    )
+
+    private fun error(e: LoadError) = LoadErrorDto(
+        resource = e.resource,
+        status = e.status,
+        detail = e.detail,
+    )
 }

@@ -3,9 +3,9 @@
 package ai.kilocode.client
 
 import ai.kilocode.rpc.KiloAppRpcApi
-import ai.kilocode.rpc.dto.ConnectionStateDto
-import ai.kilocode.rpc.dto.ConnectionStatusDto
 import ai.kilocode.rpc.dto.HealthDto
+import ai.kilocode.rpc.dto.KiloAppStateDto
+import ai.kilocode.rpc.dto.KiloAppStatusDto
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import fleet.rpc.client.durable
@@ -25,13 +25,13 @@ import kotlinx.coroutines.launch
  * are app-scoped — no project context is needed.
  *
  * Callers of [watch] are responsible for scheduling UI updates on
- * the EDT and converting [ConnectionStateDto] to display text.
+ * the EDT and converting [KiloAppStateDto] to display text.
  */
 @Service(Service.Level.APP)
 class KiloAppService(private val cs: CoroutineScope) {
     companion object {
         private val LOG = Logger.getInstance(KiloAppService::class.java)
-        private val init = ConnectionStateDto(ConnectionStatusDto.DISCONNECTED)
+        private val init = KiloAppStateDto(KiloAppStatusDto.DISCONNECTED)
     }
 
     private val started = AtomicBoolean(false)
@@ -41,7 +41,7 @@ class KiloAppService(private val cs: CoroutineScope) {
     var version: String? = null
         private set
 
-    val state: StateFlow<ConnectionStateDto> = flow {
+    val state: StateFlow<KiloAppStateDto> = flow {
         durable {
             KiloAppRpcApi.getInstance()
                 .state()
@@ -111,15 +111,15 @@ class KiloAppService(private val cs: CoroutineScope) {
     }
 
     /**
-     * Collect connection state changes and invoke [fn] for each update.
+     * Collect app state changes and invoke [fn] for each update.
      *
-     * The callback receives raw [ConnectionStateDto] — the caller is
+     * The callback receives raw [KiloAppStateDto] — the caller is
      * responsible for converting to display text and scheduling on the EDT.
      */
-    fun watch(fn: (ConnectionStateDto) -> Unit): Job {
+    fun watch(fn: (KiloAppStateDto) -> Unit): Job {
         return cs.launch {
             state.collect { next ->
-                if (next.status == ConnectionStatusDto.CONNECTED) fetchVersionAsync()
+                if (next.status == KiloAppStatusDto.READY) fetchVersionAsync()
                 fn(next)
             }
         }

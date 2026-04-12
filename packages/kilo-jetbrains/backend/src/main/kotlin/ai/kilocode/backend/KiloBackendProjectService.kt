@@ -36,9 +36,9 @@ class KiloBackendProjectService(
     val directory: String
         get() = project.basePath ?: ""
 
-    /** Connection state (delegates to app-level service). */
-    val state: StateFlow<ConnectionState>
-        get() = app.state
+    /** App lifecycle state (delegates to app-level service). */
+    val state: StateFlow<KiloAppState>
+        get() = app.appState
 
     /** Ensure the CLI backend is running and connected. */
     suspend fun connect() = app.connect()

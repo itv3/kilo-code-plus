@@ -1,7 +1,7 @@
 package ai.kilocode.rpc
 
-import ai.kilocode.rpc.dto.ConnectionStateDto
 import ai.kilocode.rpc.dto.HealthDto
+import ai.kilocode.rpc.dto.KiloAppStateDto
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -25,8 +25,8 @@ interface KiloAppRpcApi : RemoteApi<Unit> {
     /** Ensure the CLI backend is running and connected. */
     suspend fun connect()
 
-    /** Observe connection state changes. */
-    suspend fun state(): Flow<ConnectionStateDto>
+    /** Observe app lifecycle state changes. */
+    suspend fun state(): Flow<KiloAppStateDto>
 
     /** One-shot health check against /global/health. */
     suspend fun health(): HealthDto
