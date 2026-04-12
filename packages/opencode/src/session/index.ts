@@ -9,11 +9,9 @@ import { Config } from "../config/config"
 import { Flag } from "../flag/flag"
 import { Installation } from "../installation"
 
-import { Database, NotFoundError, eq, and, gte, isNull, desc, like, inArray, lt } from "../storage/db"
+import { Database, NotFoundError, eq, and, gte, isNull, desc, like } from "../storage/db"
 import { SyncEvent } from "../sync"
-import type { SQL } from "../storage/db"
 import { SessionTable } from "./session.sql"
-import { ProjectTable } from "../project/project.sql"
 import { Storage } from "@/storage/storage"
 import { Log } from "../util/log"
 import { updateSchema } from "../util/update-schema"
@@ -301,34 +299,12 @@ export namespace Session {
     }
 
     // kilocode_change start - Use provider-reported cost when available for OpenRouter/Kilo
-    // The OpenRouter AI SDK provider exposes cost at providerMetadata.openrouter.usage
-    // Reference: https://openrouter.ai/docs/use-cases/usage-accounting
-    // Note: The AI SDK uses camelCase (upstreamInferenceCost), not snake_case
-    const openrouterUsage = input.metadata?.["openrouter"]?.["usage"] as
-      | {
-          cost?: number
-          costDetails?: { upstreamInferenceCost?: number }
-        }
-      | undefined
-
-    if (openrouterUsage) {
-      // For Kilo provider (BYOK), always prefer upstreamInferenceCost when available
-      // The 'cost' field from OpenRouter is just their 5% fee for BYOK requests
-      // For regular OpenRouter, use the cost field
-      const isKiloProvider = (input.provider?.id ?? input.model.providerID) === "kilo"
-      const upstreamCost = openrouterUsage.costDetails?.upstreamInferenceCost
-      const openrouterCost = openrouterUsage.cost
-
-      // Kilo is always BYOK, so prefer upstream cost. For OpenRouter, use regular cost.
-      const providerCost = isKiloProvider && upstreamCost !== undefined ? upstreamCost : openrouterCost
-
-      if (providerCost !== undefined && providerCost !== null && Number.isFinite(providerCost)) {
-        return {
-          cost: safe(providerCost),
-          tokens,
-        }
-      }
-    }
+    const reported = KiloSession.providerCost({
+      metadata: input.metadata,
+      provider: input.provider,
+      providerID: input.model.providerID,
+    })
+    if (reported !== undefined) return { cost: safe(reported), tokens }
     // kilocode_change end
 
     const costInfo =
@@ -384,14 +360,14 @@ export namespace Session {
     readonly messages: (input: { sessionID: SessionID; limit?: number }) => Effect.Effect<MessageV2.WithParts[]>
     readonly children: (parentID: SessionID) => Effect.Effect<Info[]>
     readonly remove: (sessionID: SessionID) => Effect.Effect<void>
-    readonly updateMessage: (msg: MessageV2.Info) => Effect.Effect<MessageV2.Info>
+    readonly updateMessage: <T extends MessageV2.Info>(msg: T) => Effect.Effect<T>
     readonly removeMessage: (input: { sessionID: SessionID; messageID: MessageID }) => Effect.Effect<MessageID>
     readonly removePart: (input: {
       sessionID: SessionID
       messageID: MessageID
       partID: PartID
     }) => Effect.Effect<PartID>
-    readonly updatePart: (part: MessageV2.Part) => Effect.Effect<MessageV2.Part>
+    readonly updatePart: <T extends MessageV2.Part>(part: T) => Effect.Effect<T>
     readonly updatePartDelta: (input: {
       sessionID: SessionID
       messageID: MessageID
@@ -474,23 +450,13 @@ export namespace Session {
       const share = Effect.fn("Session.share")(function* (id: SessionID) {
         const cfg = yield* config.get()
         if (cfg.share === "disabled") throw new Error("Sharing is disabled in configuration")
-        // kilocode_change start
-        const result = yield* Effect.promise(async () => {
-          const { KiloSessions } = await import("@/kilo-sessions/kilo-sessions")
-          return KiloSessions.share(id)
-        })
-        // kilocode_change end
+        const result = yield* Effect.promise(() => KiloSession.shareSession(id)) // kilocode_change
         yield* Effect.sync(() => SyncEvent.run(Event.Updated, { sessionID: id, info: { share: { url: result.url } } }))
         return result
       })
 
       const unshare = Effect.fn("Session.unshare")(function* (id: SessionID) {
-        // kilocode_change start
-        yield* Effect.promise(async () => {
-          const { KiloSessions } = await import("@/kilo-sessions/kilo-sessions")
-          await KiloSessions.unshare(id)
-        })
-        // kilocode_change end
+        yield* Effect.promise(() => KiloSession.unshareSession(id)) // kilocode_change
         yield* Effect.sync(() => SyncEvent.run(Event.Updated, { sessionID: id, info: { share: { url: null } } }))
       })
 
@@ -514,10 +480,7 @@ export namespace Session {
             yield* remove(child.id)
           }
           // kilocode_change start
-          yield* Effect.promise(async () => {
-            const { KiloSessions } = await import("@/kilo-sessions/kilo-sessions")
-            await KiloSessions.remove(sessionID).catch(() => {})
-          })
+          yield* Effect.promise(() => KiloSession.removeSession(sessionID))
           KiloSession.clearPlatformOverride(sessionID)
           SessionPrompt.cancel(sessionID)
           // kilocode_change end
@@ -530,46 +493,36 @@ export namespace Session {
         }
       })
 
-      const updateMessage = Effect.fn("Session.updateMessage")(function* (msg: MessageV2.Info) {
-        // kilocode_change start - ignore FK errors when session was deleted while processor was still running
-        try {
+      const updateMessage = <T extends MessageV2.Info>(msg: T): Effect.Effect<T> =>
+        Effect.gen(function* () {
+          // kilocode_change start - ignore FK errors when session was deleted while processor was still running
           yield* Effect.sync(() =>
-            SyncEvent.run(MessageV2.Event.Updated, {
-              sessionID: msg.sessionID,
-              info: msg,
-            }),
+            KiloSession.runSyncSafe(
+              () => SyncEvent.run(MessageV2.Event.Updated, { sessionID: msg.sessionID, info: msg }),
+              { type: "message update", id: msg.id, sessionID: msg.sessionID },
+            ),
           )
-        } catch (e: any) {
-          if (e?.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
-            log.warn("skipping message update for deleted session", { id: msg.id, sessionID: msg.sessionID })
-          } else {
-            throw e
-          }
-        }
-        // kilocode_change end
-        return msg
-      })
+          // kilocode_change end
+          return msg
+        }).pipe(Effect.withSpan("Session.updateMessage"))
 
-      const updatePart = Effect.fn("Session.updatePart")(function* (part: MessageV2.Part) {
-        // kilocode_change start - ignore FK errors when session was deleted while processor was still running
-        try {
+      const updatePart = <T extends MessageV2.Part>(part: T): Effect.Effect<T> =>
+        Effect.gen(function* () {
+          // kilocode_change start - ignore FK errors when session was deleted while processor was still running
           yield* Effect.sync(() =>
-            SyncEvent.run(MessageV2.Event.PartUpdated, {
-              sessionID: part.sessionID,
-              part: structuredClone(part),
-              time: Date.now(),
-            }),
+            KiloSession.runSyncSafe(
+              () =>
+                SyncEvent.run(MessageV2.Event.PartUpdated, {
+                  sessionID: part.sessionID,
+                  part: structuredClone(part),
+                  time: Date.now(),
+                }),
+              { type: "part update", id: part.id, sessionID: part.sessionID },
+            ),
           )
-        } catch (e: any) {
-          if (e?.code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
-            log.warn("skipping part update for deleted session", { id: part.id, sessionID: part.sessionID })
-          } else {
-            throw e
-          }
-        }
-        // kilocode_change end
-        return part
-      })
+          // kilocode_change end
+          return part
+        }).pipe(Effect.withSpan("Session.updatePart"))
 
       const create = Effect.fn("Session.create")(function* (input?: {
         parentID?: SessionID
@@ -883,94 +836,16 @@ export namespace Session {
     limit?: number
     archived?: boolean
   }) {
-    const conditions: SQL[] = []
-
-    if (input?.projectID) {
-      const ids = KiloSession.family(input.projectID)
-      if (ids.length === 1 && ids[0] === input.projectID) {
-        conditions.push(eq(SessionTable.project_id, ProjectID.make(input.projectID)))
-      } else {
-        conditions.push(
-          inArray(
-            SessionTable.project_id,
-            ids.map((id) => ProjectID.make(id)),
-          ),
-        )
-      }
-    }
-
-    if (input?.directory) {
-      conditions.push(eq(SessionTable.directory, Filesystem.resolve(input.directory)))
-    }
-    if (input?.roots) {
-      conditions.push(isNull(SessionTable.parent_id))
-    }
-    if (input?.start) {
-      conditions.push(gte(SessionTable.time_updated, input.start))
-    }
-    if (input?.cursor) {
-      conditions.push(lt(SessionTable.time_updated, input.cursor))
-    }
-    if (input?.search) {
-      conditions.push(like(SessionTable.title, `%${input.search}%`))
-    }
-    if (!input?.archived) {
-      conditions.push(isNull(SessionTable.time_archived))
-    }
-
-    const limit = input?.limit ?? 100
-    const dirs = [...new Set((input?.directories ?? []).map((dir) => Filesystem.resolve(dir)))]
-
-    const rows = Database.use((db) => {
-      const query =
-        conditions.length > 0
-          ? db
-              .select()
-              .from(SessionTable)
-              .where(and(...conditions))
-          : db.select().from(SessionTable)
-      const sorted = query.orderBy(desc(SessionTable.time_updated), desc(SessionTable.id))
-      return dirs.length ? sorted.all() : sorted.limit(limit).all()
-    })
-
-    const list =
-      dirs.length > 0
-        ? rows.filter((row) => {
-            const dir = Filesystem.resolve(row.directory)
-            return dirs.some((root) => Filesystem.contains(root, dir))
-          })
-        : rows
-
-    const ids = [...new Set(list.slice(0, limit).map((row) => row.project_id))]
-    const projects = new Map<string, ProjectInfo>()
-
-    if (ids.length > 0) {
-      const items = Database.use((db) =>
-        db
-          .select({ id: ProjectTable.id, name: ProjectTable.name, worktree: ProjectTable.worktree })
-          .from(ProjectTable)
-          .where(inArray(ProjectTable.id, ids))
-          .all(),
-      )
-      for (const item of items) {
-        projects.set(item.id, {
-          id: item.id,
-          name: item.name ?? undefined,
-          worktree: item.worktree,
-        })
-      }
-    }
-
-    for (const row of list.slice(0, limit)) {
-      const project = projects.get(row.project_id) ?? null
-      yield { ...fromRow(row), project }
-    }
+    yield* KiloSession.listGlobal<GlobalInfo>({ ...input, fromRow })
   }
   // kilocode_change end
 
   export const children = fn(SessionID.zod, (id) => runPromise((svc) => svc.children(id)))
   export const remove = fn(SessionID.zod, (id) => runPromise((svc) => svc.remove(id)))
-  export const updateMessage = fn(MessageV2.Info, (msg) => runPromise((svc) => svc.updateMessage(msg)))
+  export async function updateMessage<T extends MessageV2.Info>(msg: T): Promise<T> {
+    MessageV2.Info.parse(msg)
+    return runPromise((svc) => svc.updateMessage(msg))
+  }
 
   export const removeMessage = fn(z.object({ sessionID: SessionID.zod, messageID: MessageID.zod }), (input) =>
     runPromise((svc) => svc.removeMessage(input)),
@@ -981,7 +856,10 @@ export namespace Session {
     (input) => runPromise((svc) => svc.removePart(input)),
   )
 
-  export const updatePart = fn(MessageV2.Part, (part) => runPromise((svc) => svc.updatePart(part)))
+  export async function updatePart<T extends MessageV2.Part>(part: T): Promise<T> {
+    MessageV2.Part.parse(part)
+    return runPromise((svc) => svc.updatePart(part))
+  }
 
   export const updatePartDelta = fn(
     z.object({

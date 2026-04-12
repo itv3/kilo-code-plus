@@ -11,6 +11,7 @@ import { environmentDetails, type EditorContext } from "@/kilocode/editor-contex
 import { Identifier } from "@/id/id"
 import { Filesystem } from "@/util/filesystem"
 import PROMPT_PLAN from "@/session/prompt/plan.txt"
+import CODE_SWITCH from "@/session/prompt/code-switch.txt"
 
 export namespace KiloSessionPrompt {
   /**
@@ -135,22 +136,8 @@ export namespace KiloSessionPrompt {
   }
 
   /**
-   * End-of-loop handler: returns the most recent assistant message from the stream,
-   * resolves any queued callbacks, and handles abort.
+   * Returns the CODE_SWITCH prompt text (plan-to-code transition).
+   * Used when switching from plan agent to code agent.
    */
-  export async function resolveFinishedMessages(input: {
-    sessionID: SessionID
-    callbacks: { resolve(input: MessageV2.WithParts): void; reject(reason?: any): void }[]
-    abort: AbortSignal
-  }): Promise<MessageV2.WithParts> {
-    for await (const item of MessageV2.stream(input.sessionID)) {
-      if (item.info.role === "user") continue
-      for (const q of input.callbacks) {
-        q.resolve(item)
-      }
-      return item
-    }
-    if (input.abort.aborted) input.abort.throwIfAborted()
-    throw new Error("Impossible")
-  }
+  export const CODE_SWITCH_TEXT = CODE_SWITCH
 }
