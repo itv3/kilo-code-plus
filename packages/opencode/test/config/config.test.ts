@@ -2030,8 +2030,9 @@ describe("KILO_DISABLE_PROJECT_CONFIG", () => {
     }
   })
 
+  // kilocode_change start
   test("skips project .kilo/ directories when flag is set", async () => {
-    // kilocode_change
+    // kilocode_change end
     const originalEnv = process.env["KILO_DISABLE_PROJECT_CONFIG"]
     process.env["KILO_DISABLE_PROJECT_CONFIG"] = "true"
 
