@@ -269,13 +269,6 @@ export const RunCommand = cmd({
           default: "default",
           describe: "format: default (formatted) or json (raw JSON events)",
         })
-        // kilocode_change start - auto approve all permissions
-        .option("auto", {
-          type: "boolean",
-          describe: "auto-approve all permissions (for autonomous/pipeline usage)",
-          default: false,
-        })
-        // kilocode_change end
         .option("file", {
           alias: ["f"],
           type: "string",
@@ -307,6 +300,13 @@ export const RunCommand = cmd({
           type: "string",
           describe: "model variant (provider-specific reasoning effort, e.g., high, max, minimal)",
         })
+        // kilocode_change start - auto approve all permissions
+        .option("auto", {
+          type: "boolean",
+          describe: "auto-approve all permissions (for autonomous/pipeline usage)",
+          default: false,
+        })
+        // kilocode_change end
         .option("thinking", {
           type: "boolean",
           describe: "show thinking blocks",
