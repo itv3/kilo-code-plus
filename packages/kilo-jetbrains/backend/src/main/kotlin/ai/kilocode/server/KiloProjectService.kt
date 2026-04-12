@@ -2,6 +2,7 @@ package ai.kilocode.server
 
 import ai.kilocode.jetbrains.api.client.DefaultApi
 import ai.kilocode.rpc.dto.ConnectionStateDto
+import ai.kilocode.rpc.dto.ConnectionStatusDto
 import ai.kilocode.rpc.dto.HealthDto
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Project-level backend service that delegates to the app-level
- * [KiloConnectionService] and scopes CLI API calls to this project's
+ * [KiloAppService] and scopes CLI API calls to this project's
  * working directory.
  *
  * The VS Code extension likewise scopes calls via `x-kilo-directory`.
@@ -30,7 +31,7 @@ class KiloProjectService(
         private val LOG = Logger.getInstance(KiloProjectService::class.java)
     }
 
-    private val connection: KiloConnectionService
+    private val app: KiloAppService
         get() = service()
 
     /** Project working directory sent as the `directory` parameter. */
@@ -39,19 +40,19 @@ class KiloProjectService(
 
     /** Connection state (delegates to app-level service). */
     val state: StateFlow<ConnectionState>
-        get() = connection.state
+        get() = app.state
 
     /** Connection state mapped to DTO for RPC transport. */
-    fun stream() = connection.stream()
+    fun stream() = app.state.map(::dto).distinctUntilChanged()
 
     /** Ensure the CLI backend is running and connected. */
-    suspend fun connect() = connection.connect()
+    suspend fun connect() = app.connect()
 
     /** Kill the CLI process and restart it. */
-    suspend fun restart() = connection.restart()
+    suspend fun restart() = app.restart()
 
     /** Kill the CLI process, re-extract the binary, and restart. */
-    suspend fun reinstall() = connection.reinstall()
+    suspend fun reinstall() = app.reinstall()
 
     /**
      * The generated API client, or null when disconnected.
@@ -60,7 +61,7 @@ class KiloProjectService(
      * parameter to scope requests to this project.
      */
     val api: DefaultApi?
-        get() = connection.api
+        get() = app.api
 
     /**
      * One-shot health check via the generated API client.
@@ -77,4 +78,12 @@ class KiloProjectService(
         LOG.info("health: version=${response.version}")
         return HealthDto(healthy = true, version = response.version)
     }
+
+    private fun dto(state: ConnectionState): ConnectionStateDto =
+        when (state) {
+            ConnectionState.Disconnected -> ConnectionStateDto(ConnectionStatusDto.DISCONNECTED)
+            ConnectionState.Connecting -> ConnectionStateDto(ConnectionStatusDto.CONNECTING)
+            is ConnectionState.Connected -> ConnectionStateDto(ConnectionStatusDto.CONNECTED)
+            is ConnectionState.Error -> ConnectionStateDto(ConnectionStatusDto.ERROR, state.message)
+        }
 }

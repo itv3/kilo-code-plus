@@ -1,8 +1,6 @@
 package ai.kilocode.server
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.system.CpuArch
@@ -21,16 +19,17 @@ import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
 
 /**
- * Application-level service that manages the Kilo CLI binary lifecycle.
+ * Manages the Kilo CLI binary lifecycle.
  *
  * Extracts the bundled CLI from JAR resources into IntelliJ's system directory,
  * spawns `kilo serve --port 0`, and exposes the result as [ServerState].
  *
  * All concurrent callers of [init] share the same startup flow — only one
  * CLI process is ever spawned.
+ *
+ * Not a service — owned and instantiated by [KiloAppService].
  */
-@Service(Service.Level.APP)
-class ServerManager(private val cs: CoroutineScope) : Disposable {
+class ServerManager(private val cs: CoroutineScope) {
 
   sealed class ServerState {
     data class Ready(val port: Int, val password: String) : ServerState()
@@ -209,7 +208,7 @@ class ServerManager(private val cs: CoroutineScope) : Disposable {
       )
     }
 
-  override fun dispose() {
+  fun dispose() {
     val proc = process ?: return
     process = null
     pending = null
