@@ -2,6 +2,7 @@ import path from "path"
 import os from "os"
 import fs from "fs/promises"
 import { KiloSessionPrompt } from "@/kilocode/session/prompt" // kilocode_change
+import { KiloSession } from "@/kilocode/session" // kilocode_change
 import z from "zod"
 import { Filesystem } from "../util/filesystem"
 import { SessionID, MessageID, PartID } from "./schema"
@@ -301,7 +302,7 @@ export namespace SessionPrompt {
 
     // kilocode_change start
     void Bus.publish(Session.Event.TurnOpen, { sessionID })
-    let closeReason: Session.CloseReason = "completed"
+    let closeReason: KiloSession.CloseReason = "completed"
     let finished = false
     await using _ = defer(() => cancel(sessionID))
     await using _close = defer(async () => {
@@ -1441,10 +1442,10 @@ export namespace SessionPrompt {
 
     // Original logic when experimental plan mode is disabled
     if (!Flag.KILO_EXPERIMENTAL_PLAN_MODE) {
-      // kilocode_change - inject plan file path so agent writes to .kilo/plans/
+      // kilocode_change start - inject plan file path so agent writes to .kilo/plans/
       await KiloSessionPrompt.insertPlanReminders({ agent: input.agent, session: input.session, userMessage })
       const wasPlan = input.messages.some((msg) => msg.info.role === "assistant" && msg.info.agent === "plan")
-      // kilocode_change start - renamed from "build" to "code"
+      // kilocode_change - renamed from "build" to "code"
       if (wasPlan && input.agent.name === "code") {
         // kilocode_change end
         userMessage.parts.push({
