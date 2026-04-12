@@ -3,7 +3,7 @@
 package ai.kilocode.client
 
 import ai.kilocode.client.plugin.KiloBundle
-import ai.kilocode.rpc.KiloProjectRpcApi
+import ai.kilocode.rpc.KiloAppRpcApi
 import ai.kilocode.rpc.dto.ConnectionStateDto
 import ai.kilocode.rpc.dto.ConnectionStatusDto
 import ai.kilocode.rpc.dto.HealthDto
@@ -11,7 +11,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.project.projectId
 import fleet.rpc.client.durable
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
@@ -25,9 +24,8 @@ import kotlinx.coroutines.launch
 /**
  * Frontend project-level service for Kilo CLI interaction.
  *
- * Communicates with the backend via [KiloProjectRpcApi], passing
- * [project.projectId] on every call so the backend can resolve the
- * correct project-level service without scanning ProjectManager.
+ * Communicates with the backend via [KiloAppRpcApi]. All operations
+ * are app-scoped — no project ID is needed.
  */
 @Service(Service.Level.PROJECT)
 class KiloAppService(
@@ -48,8 +46,8 @@ class KiloAppService(
 
     val state: StateFlow<ConnectionStateDto> = flow {
         durable {
-            KiloProjectRpcApi.getInstance()
-                .state(project.projectId())
+            KiloAppRpcApi.getInstance()
+                .state()
                 .collect { emit(it) }
         }
     }.stateIn(cs, SharingStarted.Eagerly, init)
@@ -58,14 +56,14 @@ class KiloAppService(
         if (!started.compareAndSet(false, true)) return
         cs.launch {
             durable {
-                KiloProjectRpcApi.getInstance().connect(project.projectId())
+                KiloAppRpcApi.getInstance().connect()
             }
         }
     }
 
     /** One-shot health check. Returns null on failure. */
     suspend fun health(): HealthDto? = try {
-        durable { KiloProjectRpcApi.getInstance().health(project.projectId()) }
+        durable { KiloAppRpcApi.getInstance().health() }
     } catch (e: Exception) {
         LOG.warn("health check failed", e)
         null
@@ -76,7 +74,7 @@ class KiloAppService(
         LOG.info("restart: resetting state and sending RPC")
         started.set(false)
         version = null
-        durable { KiloProjectRpcApi.getInstance().restart(project.projectId()) }
+        durable { KiloAppRpcApi.getInstance().restart() }
         LOG.info("restart: RPC returned — backend restart complete")
     }
 
@@ -85,7 +83,7 @@ class KiloAppService(
         LOG.info("reinstall: resetting state and sending RPC")
         started.set(false)
         version = null
-        durable { KiloProjectRpcApi.getInstance().reinstall(project.projectId()) }
+        durable { KiloAppRpcApi.getInstance().reinstall() }
         LOG.info("reinstall: RPC returned — backend reinstall complete")
     }
 

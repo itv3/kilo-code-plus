@@ -1,17 +1,12 @@
 package ai.kilocode.backend
 
 import ai.kilocode.jetbrains.api.client.DefaultApi
-import ai.kilocode.rpc.dto.ConnectionStateDto
-import ai.kilocode.rpc.dto.ConnectionStatusDto
-import ai.kilocode.rpc.dto.HealthDto
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 
 /**
  * Project-level backend service that delegates to the app-level
@@ -21,6 +16,9 @@ import kotlinx.coroutines.flow.map
  * The VS Code extension likewise scopes calls via `x-kilo-directory`.
  * In the JetBrains plugin this is achieved by passing the directory
  * parameter to each generated API method.
+ *
+ * Currently a thin shell — will hold project-scoped data loading
+ * (providers, agents, config, etc.) in the future.
  */
 @Service(Service.Level.PROJECT)
 class KiloBackendProjectService(
@@ -42,9 +40,6 @@ class KiloBackendProjectService(
     val state: StateFlow<ConnectionState>
         get() = app.state
 
-    /** Connection state mapped to DTO for RPC transport. */
-    fun stream() = app.state.map(::dto).distinctUntilChanged()
-
     /** Ensure the CLI backend is running and connected. */
     suspend fun connect() = app.connect()
 
@@ -62,28 +57,4 @@ class KiloBackendProjectService(
      */
     val api: DefaultApi?
         get() = app.api
-
-    /**
-     * One-shot health check via the generated API client.
-     * Returns [HealthDto] or throws if not connected / server unreachable.
-     */
-    suspend fun health(): HealthDto {
-        val client = api
-        if (client == null) {
-            LOG.warn("health: API client is null — not connected")
-            throw IllegalStateException("Not connected")
-        }
-        LOG.info("health: calling /global/health")
-        val response = client.globalHealth()
-        LOG.info("health: version=${response.version}")
-        return HealthDto(healthy = true, version = response.version)
-    }
-
-    private fun dto(state: ConnectionState): ConnectionStateDto =
-        when (state) {
-            ConnectionState.Disconnected -> ConnectionStateDto(ConnectionStatusDto.DISCONNECTED)
-            ConnectionState.Connecting -> ConnectionStateDto(ConnectionStatusDto.CONNECTING)
-            is ConnectionState.Connected -> ConnectionStateDto(ConnectionStatusDto.CONNECTED)
-            is ConnectionState.Error -> ConnectionStateDto(ConnectionStatusDto.ERROR, state.message)
-        }
 }

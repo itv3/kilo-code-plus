@@ -4,6 +4,7 @@ import ai.kilocode.jetbrains.api.client.DefaultApi
 import ai.kilocode.jetbrains.api.model.Config
 import ai.kilocode.jetbrains.api.model.KiloNotifications200ResponseInner
 import ai.kilocode.jetbrains.api.model.KiloProfile200Response
+import ai.kilocode.rpc.dto.HealthDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
@@ -18,9 +19,8 @@ import kotlinx.coroutines.launch
  * App-level orchestrator that owns the CLI server lifecycle and
  * loads project-independent data after the connection is established.
  *
- * This is the single entry point for the CLI backend. Both
- * [KiloBackendProjectService] and [KiloApiService][ai.kilocode.KiloApiService]
- * (frontend) reach the CLI through this service.
+ * This is the single entry point for the CLI backend. The frontend
+ * reaches it via [KiloAppRpcApi][ai.kilocode.rpc.KiloAppRpcApi] RPC.
  *
  * Data flows use the generated OpenAPI model types directly —
  * no intermediate DTOs needed at the backend layer.
@@ -69,6 +69,13 @@ class KiloBackendAppService(private val cs: CoroutineScope) : Disposable {
     suspend fun reinstall() {
         clear()
         connection.reinstall()
+    }
+
+    /** One-shot health check via the generated API client. */
+    suspend fun health(): HealthDto {
+        val client = api ?: throw IllegalStateException("Not connected")
+        val response = client.globalHealth()
+        return HealthDto(healthy = true, version = response.version)
     }
 
     // ── Internals ───────────────────────────────────────────────────
