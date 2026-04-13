@@ -1,5 +1,8 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.app
 
+import ai.kilocode.backend.util.IntellijLog
+import ai.kilocode.backend.KiloBackendHttpClients
+import ai.kilocode.backend.util.KiloLog
 import ai.kilocode.jetbrains.api.client.DefaultApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,10 +53,10 @@ data class SseEvent(val type: String, val data: String)
  * Not a service — owned and instantiated by [KiloBackendAppService].
  */
 class KiloConnectionService(
-    private val cs: CoroutineScope,
-    private val server: CliServer,
-    private val onReconnect: () -> Unit,
-    private val log: KiloLog = IntellijLog(KiloConnectionService::class.java),
+  private val cs: CoroutineScope,
+  private val server: CliServer,
+  private val onReconnect: () -> Unit,
+  private val log: KiloLog = IntellijLog(KiloConnectionService::class.java),
 ) {
 
     companion object {

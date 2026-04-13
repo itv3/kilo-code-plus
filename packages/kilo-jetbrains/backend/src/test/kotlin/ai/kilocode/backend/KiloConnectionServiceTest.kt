@@ -1,5 +1,8 @@
 package ai.kilocode.backend
 
+import ai.kilocode.backend.app.CliServer
+import ai.kilocode.backend.app.ConnectionState
+import ai.kilocode.backend.app.KiloConnectionService
 import ai.kilocode.backend.testing.FakeCliServer
 import ai.kilocode.backend.testing.MockCliServer
 import ai.kilocode.backend.testing.TestLog
@@ -35,7 +38,12 @@ class KiloConnectionServiceTest {
     @Test
     fun `connect transitions to Connected`() = runBlocking {
         val reconnects = AtomicInteger(0)
-        val svc = KiloConnectionService(scope, fake, { reconnects.incrementAndGet() }, log)
+        val svc = KiloConnectionService(
+          scope,
+          fake,
+          { reconnects.incrementAndGet() },
+          log
+        )
 
         svc.connect()
 

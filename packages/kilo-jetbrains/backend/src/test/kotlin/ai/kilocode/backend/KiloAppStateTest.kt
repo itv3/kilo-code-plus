@@ -1,5 +1,10 @@
 package ai.kilocode.backend
 
+import ai.kilocode.backend.app.AppData
+import ai.kilocode.backend.app.KiloAppState
+import ai.kilocode.backend.app.LoadError
+import ai.kilocode.backend.app.LoadProgress
+import ai.kilocode.backend.app.ProfileResult
 import ai.kilocode.jetbrains.api.model.Config
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -42,8 +47,8 @@ class KiloAppStateTest {
     @Test
     fun `KiloAppState Error with errors list`() {
         val errors = listOf(
-            LoadError("config", status = 500, detail = "server error"),
-            LoadError("notifications", detail = "timeout"),
+          LoadError("config", status = 500, detail = "server error"),
+          LoadError("notifications", detail = "timeout"),
         )
         val state = KiloAppState.Error("Failed", errors = errors)
         assertEquals(2, state.errors.size)
@@ -55,7 +60,8 @@ class KiloAppStateTest {
     @Test
     fun `AppData construction`() {
         val cfg = Config(model = "test")
-        val data = AppData(profile = null, config = cfg, notifications = emptyList())
+        val data =
+          AppData(profile = null, config = cfg, notifications = emptyList())
         assertNull(data.profile)
         assertEquals(cfg, data.config)
         assertTrue(data.notifications.isEmpty())
@@ -63,7 +69,11 @@ class KiloAppStateTest {
 
     @Test
     fun `LoadError with all fields`() {
-        val err = LoadError(resource = "config", status = 503, detail = "Service Unavailable")
+        val err = LoadError(
+          resource = "config",
+          status = 503,
+          detail = "Service Unavailable"
+        )
         assertEquals("config", err.resource)
         assertEquals(503, err.status)
         assertEquals("Service Unavailable", err.detail)
@@ -79,7 +89,8 @@ class KiloAppStateTest {
     @Test
     fun `ProfileResult enum values`() {
         assertEquals(3, ProfileResult.entries.size)
-        assertTrue(ProfileResult.entries.containsAll(
+        assertTrue(
+          ProfileResult.entries.containsAll(
             listOf(ProfileResult.PENDING, ProfileResult.LOADED, ProfileResult.NOT_LOGGED_IN)
         ))
     }

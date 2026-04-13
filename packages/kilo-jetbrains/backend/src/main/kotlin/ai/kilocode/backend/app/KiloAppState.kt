@@ -1,4 +1,4 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.app
 
 import ai.kilocode.jetbrains.api.model.Config
 import ai.kilocode.jetbrains.api.model.KiloNotifications200ResponseInner

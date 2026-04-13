@@ -1,6 +1,6 @@
 package ai.kilocode.backend.testing
 
-import ai.kilocode.backend.CliServer
+import ai.kilocode.backend.app.CliServer
 
 /**
  * Fake [CliServer] that delegates to a [MockCliServer] instead of

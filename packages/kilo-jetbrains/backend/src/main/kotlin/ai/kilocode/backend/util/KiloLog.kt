@@ -1,4 +1,4 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.util
 
 import com.intellij.openapi.diagnostic.Logger
 

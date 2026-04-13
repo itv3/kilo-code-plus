@@ -2,11 +2,11 @@
 
 package ai.kilocode.backend.rpc
 
-import ai.kilocode.backend.KiloAppState
-import ai.kilocode.backend.KiloBackendAppService
-import ai.kilocode.backend.LoadError
-import ai.kilocode.backend.LoadProgress
-import ai.kilocode.backend.ProfileResult
+import ai.kilocode.backend.app.KiloAppState
+import ai.kilocode.backend.app.KiloBackendAppService
+import ai.kilocode.backend.app.LoadError
+import ai.kilocode.backend.app.LoadProgress
+import ai.kilocode.backend.app.ProfileResult
 import ai.kilocode.rpc.KiloAppRpcApi
 import ai.kilocode.rpc.dto.HealthDto
 import ai.kilocode.rpc.dto.KiloAppStateDto

@@ -1,7 +1,11 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.app
 
+import ai.kilocode.backend.util.IntellijLog
+import ai.kilocode.backend.util.KiloLog
 import ai.kilocode.jetbrains.api.client.DefaultApi
+import ai.kilocode.jetbrains.api.infrastructure.ClientError
 import ai.kilocode.jetbrains.api.infrastructure.ClientException
+import ai.kilocode.jetbrains.api.infrastructure.ServerError
 import ai.kilocode.jetbrains.api.infrastructure.ServerException
 import ai.kilocode.jetbrains.api.model.Config
 import ai.kilocode.jetbrains.api.model.KiloNotifications200ResponseInner
@@ -21,6 +25,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.net.ConnectException
+import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -41,16 +47,16 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @Service(Service.Level.APP)
 class KiloBackendAppService private constructor(
-    private val cs: CoroutineScope,
-    private val server: CliServer,
-    private val log: KiloLog,
+  private val cs: CoroutineScope,
+  private val server: CliServer,
+  private val log: KiloLog,
 ) : Disposable {
 
     /** IntelliJ service injection entry point. */
     constructor(cs: CoroutineScope) : this(
         cs,
         KiloBackendCliManager(),
-        IntellijLog(KiloBackendAppService::class.java),
+      IntellijLog(KiloBackendAppService::class.java),
     )
 
     companion object {
@@ -59,9 +65,9 @@ class KiloBackendAppService private constructor(
 
         /** Test factory — no IntelliJ deps needed. */
         internal fun create(
-            cs: CoroutineScope,
-            server: CliServer,
-            log: KiloLog,
+          cs: CoroutineScope,
+          server: CliServer,
+          log: KiloLog,
         ) = KiloBackendAppService(cs, server, log)
     }
 
@@ -280,8 +286,8 @@ class KiloBackendAppService private constructor(
      */
     private fun logResponseBody(resource: String, e: Exception) {
         val body = when (e) {
-            is ClientException -> (e.response as? ai.kilocode.jetbrains.api.infrastructure.ClientError<*>)?.body
-            is ServerException -> (e.response as? ai.kilocode.jetbrains.api.infrastructure.ServerError<*>)?.body
+            is ClientException -> (e.response as? ClientError<*>)?.body
+            is ServerException -> (e.response as? ServerError<*>)?.body
             else -> null
         }
         if (body != null) {
@@ -376,8 +382,8 @@ private data class FetchResult<T>(val value: T?, val error: LoadError?) {
             when (e) {
                 is ClientException -> "HTTP ${e.statusCode}: ${e.message}"
                 is ServerException -> "HTTP ${e.statusCode}: ${e.message}"
-                is java.net.ConnectException -> "Connection refused: ${e.message}"
-                is java.net.SocketTimeoutException -> "Timeout: ${e.message}"
+                is ConnectException -> "Connection refused: ${e.message}"
+                is SocketTimeoutException -> "Timeout: ${e.message}"
                 else -> e.message
             }
     }

@@ -1,5 +1,7 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.app
 
+import ai.kilocode.backend.util.IntellijLog
+import ai.kilocode.backend.util.KiloLog
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.system.CpuArch
@@ -16,7 +18,7 @@ import java.util.concurrent.TimeUnit
  * Manages the Kilo CLI binary lifecycle.
  *
  * Extracts the bundled CLI from JAR resources into IntelliJ's system directory,
- * spawns `kilo serve --port 0`, and exposes the result as [CliServer.State].
+ * spawns `kilo serve --port 0`, and exposes the result as [State].
  *
  * Concurrency is handled by the owning [KiloBackendAppService] — all public
  * methods are called under its mutex so no internal synchronization is needed.

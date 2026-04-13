@@ -1,5 +1,7 @@
 package ai.kilocode.backend
 
+import ai.kilocode.backend.app.KiloAppState
+import ai.kilocode.backend.app.KiloBackendAppService
 import ai.kilocode.backend.testing.FakeCliServer
 import ai.kilocode.backend.testing.MockCliServer
 import ai.kilocode.backend.testing.TestLog
