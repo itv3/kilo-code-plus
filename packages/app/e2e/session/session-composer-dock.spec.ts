@@ -298,152 +298,6 @@ test("auto-accept toggle works before first submit", async ({ page, project }) =
   await setAutoAccept(page, false)
 })
 
-<<<<<<< HEAD
-test("blocked question flow unblocks after submit", async ({ page, sdk, gotoSession }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due interaction issues") // kilocode_change
-  await withDockSession(sdk, "e2e composer dock question", async (session) => {
-    await withDockSeed(sdk, session.id, async () => {
-      await gotoSession(session.id)
-
-      await seedSessionQuestion(sdk, {
-        sessionID: session.id,
-        questions: [
-          {
-            header: "Need input",
-            question: "Pick one option",
-            multiple: true, // kilocode_change
-            options: [
-              { label: "Continue", description: "Continue now" },
-              { label: "Stop", description: "Stop here" },
-            ],
-          },
-        ],
-      })
-
-      const dock = page.locator(questionDockSelector)
-      await expectQuestionBlocked(page)
-
-      await dock.locator('[data-slot="question-option"]').first().click()
-      await dock.getByRole("button", { name: /submit/i }).click()
-
-      await expectQuestionOpen(page)
-    })
-  })
-})
-
-test("blocked permission flow supports allow once", async ({ page, sdk, gotoSession }) => {
-  await withDockSession(sdk, "e2e composer dock permission once", async (session) => {
-    await gotoSession(session.id)
-    await setAutoAccept(page, false)
-    await withMockPermission(
-      page,
-      {
-        id: "per_e2e_once",
-        sessionID: session.id,
-        permission: "bash",
-        patterns: ["/tmp/opencode-e2e-perm-once"],
-        metadata: { description: "Need permission for command" },
-      },
-      undefined,
-      async (state) => {
-        await page.goto(page.url())
-        await expectPermissionBlocked(page)
-
-        await clearPermissionDock(page, /allow once/i)
-        await state.resolved()
-        await page.goto(page.url())
-        await expectPermissionOpen(page)
-      },
-    )
-  })
-})
-
-test("blocked permission flow supports reject", async ({ page, sdk, gotoSession }) => {
-  await withDockSession(sdk, "e2e composer dock permission reject", async (session) => {
-    await gotoSession(session.id)
-    await setAutoAccept(page, false)
-    await withMockPermission(
-      page,
-      {
-        id: "per_e2e_reject",
-        sessionID: session.id,
-        permission: "bash",
-        patterns: ["/tmp/opencode-e2e-perm-reject"],
-      },
-      undefined,
-      async (state) => {
-        await page.goto(page.url())
-        await expectPermissionBlocked(page)
-
-        await clearPermissionDock(page, /deny/i)
-        await state.resolved()
-        await page.goto(page.url())
-        await expectPermissionOpen(page)
-      },
-    )
-  })
-})
-
-test("blocked permission flow supports allow always", async ({ page, sdk, gotoSession }) => {
-  await withDockSession(sdk, "e2e composer dock permission always", async (session) => {
-    await gotoSession(session.id)
-    await setAutoAccept(page, false)
-    await withMockPermission(
-      page,
-      {
-        id: "per_e2e_always",
-        sessionID: session.id,
-        permission: "bash",
-        patterns: ["/tmp/opencode-e2e-perm-always"],
-        metadata: { description: "Need permission for command" },
-      },
-      undefined,
-      async (state) => {
-        await page.goto(page.url())
-        await expectPermissionBlocked(page)
-
-        await clearPermissionDock(page, /allow always/i)
-        await state.resolved()
-        await page.goto(page.url())
-        await expectPermissionOpen(page)
-      },
-    )
-  })
-})
-
-test("child session question request blocks parent dock and unblocks after submit", async ({
-  page,
-  sdk,
-  gotoSession,
-}) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due interaction issues") // kilocode_change
-  await withDockSession(sdk, "e2e composer dock child question parent", async (session) => {
-    await gotoSession(session.id)
-
-    const child = await sdk.session
-      .create({
-        title: "e2e composer dock child question",
-        parentID: session.id,
-      })
-      .then((r) => r.data)
-    if (!child?.id) throw new Error("Child session create did not return an id")
-
-    try {
-      await withDockSeed(sdk, child.id, async () => {
-        await seedSessionQuestion(sdk, {
-          sessionID: child.id,
-          questions: [
-            {
-              header: "Child input",
-              question: "Pick one child option",
-              multiple: true, // kilocode_change
-              options: [
-                { label: "Continue", description: "Continue child" },
-                { label: "Stop", description: "Stop child" },
-              ],
-            },
-          ],
-=======
 test("blocked question flow unblocks after submit", async ({ page, llm, project }) => {
   await project.open()
   await withDockSession(
@@ -457,7 +311,6 @@ test("blocked question flow unblocks after submit", async ({ page, llm, project 
         await seedSessionQuestion(project.sdk, {
           sessionID: session.id,
           questions: defaultQuestions,
->>>>>>> imanolmaiztegui/opencode-v1.3.14
         })
 
         const dock = page.locator(questionDockSelector)
@@ -601,13 +454,6 @@ test("blocked permission flow supports reject", async ({ page, project }) => {
   )
 })
 
-<<<<<<< HEAD
-test("keyboard focus stays off prompt while blocked", async ({ page, sdk, gotoSession }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due interaction issues") // kilocode_change
-  await withDockSession(sdk, "e2e composer dock keyboard", async (session) => {
-    await withDockSeed(sdk, session.id, async () => {
-      await gotoSession(session.id)
-=======
 test("blocked permission flow supports allow always", async ({ page, project }) => {
   await project.open()
   await withDockSession(
@@ -629,7 +475,6 @@ test("blocked permission flow supports allow always", async ({ page, project }) 
         async (state) => {
           await page.goto(page.url())
           await expectPermissionBlocked(page)
->>>>>>> imanolmaiztegui/opencode-v1.3.14
 
           await clearPermissionDock(page, /allow always/i)
           await state.resolved()

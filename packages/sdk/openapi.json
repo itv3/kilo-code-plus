@@ -7345,7 +7345,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createOpencodeClient } from \"@opencode-ai/sdk\n\nconst client = createOpencodeClient()\nawait client.vcs.diff({\n  ...\n})"
+            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.vcs.diff({\n  ...\n})"
           }
         ]
       }
@@ -10936,6 +10936,48 @@
         },
         "required": ["type", "properties"]
       },
+      "Event.session.turn.open": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.turn.open"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "sessionID": {
+                "type": "string"
+              }
+            },
+            "required": ["sessionID"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.session.turn.close": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.turn.close"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "sessionID": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string",
+                "enum": ["completed", "error", "interrupted"]
+              }
+            },
+            "required": ["sessionID", "reason"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
       "SessionStatus": {
         "anyOf": [
           {
@@ -11138,48 +11180,6 @@
               }
             },
             "required": ["name", "sessionID", "arguments", "messageID"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.session.turn.open": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "session.turn.open"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "sessionID": {
-                "type": "string"
-              }
-            },
-            "required": ["sessionID"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.session.turn.close": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "session.turn.close"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "sessionID": {
-                "type": "string"
-              },
-              "reason": {
-                "type": "string",
-                "enum": ["completed", "error", "interrupted"]
-              }
-            },
-            "required": ["sessionID", "reason"]
           }
         },
         "required": ["type", "properties"]
@@ -13156,6 +13156,12 @@
             "$ref": "#/components/schemas/Event.todo.updated"
           },
           {
+            "$ref": "#/components/schemas/Event.session.turn.open"
+          },
+          {
+            "$ref": "#/components/schemas/Event.session.turn.close"
+          },
+          {
             "$ref": "#/components/schemas/Event.session.status"
           },
           {
@@ -13172,12 +13178,6 @@
           },
           {
             "$ref": "#/components/schemas/Event.command.executed"
-          },
-          {
-            "$ref": "#/components/schemas/Event.session.turn.open"
-          },
-          {
-            "$ref": "#/components/schemas/Event.session.turn.close"
           },
           {
             "$ref": "#/components/schemas/Event.session.diff"

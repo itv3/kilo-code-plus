@@ -13,7 +13,6 @@ import type { SessionID } from "@/session/schema"
 import { Database, eq } from "@/storage/db"
 import { Config } from "@/config/config"
 import { Log } from "@/util/log"
-import type * as SDK from "@kilocode/sdk/v2"
 import { SessionShareTable } from "./share.sql"
 
 export namespace ShareNext {

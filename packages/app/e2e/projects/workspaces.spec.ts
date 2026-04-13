@@ -53,13 +53,7 @@ async function setupWorkspaceTest(page: Page, project: { slug: string; trackDire
   return { rootSlug, slug: next.slug, directory: next.directory }
 }
 
-<<<<<<< HEAD
-// kilocode_change: skip
-test.skip("can enable and disable workspaces from project menu", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to hover/menu interaction issues") // kilocode_change
-=======
 test("can enable and disable workspaces from project menu", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   await page.setViewportSize({ width: 1400, height: 800 })
   await project.open()
 
@@ -77,11 +71,6 @@ test("can enable and disable workspaces from project menu", async ({ page, proje
   await expect(page.locator(workspaceItemSelector(project.slug))).toHaveCount(0)
 })
 
-<<<<<<< HEAD
-// kilocode_change: skip
-test.skip("can create a workspace", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace creation issues") // kilocode_change
-=======
 test("can create a workspace", async ({ page, project }) => {
   await page.setViewportSize({ width: 1400, height: 800 })
   await project.open()
@@ -117,7 +106,6 @@ test("can create a workspace", async ({ page, project }) => {
 })
 
 test("non-git projects keep workspace mode disabled", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   await page.setViewportSize({ width: 1400, height: 800 })
 
   const nonGit = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-e2e-project-nongit-"))
@@ -261,69 +249,11 @@ test("can reorder workspaces by drag and drop", async ({ page, project }) => {
         { timeout: 60_000 },
       )
       .toBe(true)
-<<<<<<< HEAD
-
-    await expect(page.locator(workspaceItemSelector(next.slug)).first()).toBeVisible()
-
-    await cleanupTestProject(next.directory)
-  })
-})
-
-// kilocode_change: skip
-test.skip("non-git projects keep workspace mode disabled", async ({ page, withProject }) => {
-  await page.setViewportSize({ width: 1400, height: 800 })
-
-  const nonGit = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-e2e-project-nongit-"))
-  const nonGitSlug = dirSlug(nonGit)
-
-  await fs.writeFile(path.join(nonGit, "README.md"), "# e2e nongit\n")
-
-  try {
-    await withProject(async () => {
-      await page.goto(`/${nonGitSlug}/session`)
-
-      await expect.poll(() => slugFromUrl(page.url()), { timeout: 30_000 }).not.toBe("")
-
-      const activeDir = await resolveSlug(slugFromUrl(page.url())).then((item) => item.directory)
-      expect(path.basename(activeDir)).toContain("opencode-e2e-project-nongit-")
-
-      await openSidebar(page)
-      await expect(page.getByRole("button", { name: "New workspace" })).toHaveCount(0)
-
-      const trigger = page.locator('[data-action="project-menu"]').first()
-      const hasMenu = await trigger
-        .isVisible()
-        .then((x) => x)
-        .catch(() => false)
-      if (!hasMenu) return
-
-      await trigger.click({ force: true })
-
-      const menu = page.locator(dropdownMenuContentSelector).first()
-      await expect(menu).toBeVisible()
-
-      const toggle = menu.locator('[data-action="project-workspaces-toggle"]').first()
-
-      await expect(toggle).toBeVisible()
-      await expect(toggle).toBeDisabled()
-      await expect(menu.getByRole("menuitem", { name: "New workspace" })).toHaveCount(0)
-    })
-  } finally {
-    await cleanupTestProject(nonGit)
-=======
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   }
 
-<<<<<<< HEAD
-// kilocode_change: skip
-test.skip("can rename a workspace", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-  await page.setViewportSize({ width: 1400, height: 800 })
-=======
   const drag = async (from: string, to: string) => {
     const src = page.locator(workspaceItemSelector(from)).first()
     const dst = page.locator(workspaceItemSelector(to)).first()
->>>>>>> imanolmaiztegui/opencode-v1.3.14
 
     const a = await src.boundingBox()
     const b = await dst.boundingBox()
@@ -339,114 +269,6 @@ test.skip("can rename a workspace", async ({ page, withProject }) => {
 
   await setWorkspacesEnabled(page, rootSlug, true)
 
-<<<<<<< HEAD
-// kilocode_change: skip
-test.skip("can reset a workspace", async ({ page, sdk, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-  await page.setViewportSize({ width: 1400, height: 800 })
-
-  await withProject(async (project) => {
-    const { slug, directory: createdDir } = await setupWorkspaceTest(page, project)
-
-    const readme = path.join(createdDir, "README.md")
-    const extra = path.join(createdDir, `e2e_reset_${Date.now()}.txt`)
-    const original = await fs.readFile(readme, "utf8")
-    const dirty = `${original.trimEnd()}\n\nchange_${Date.now()}\n`
-    await fs.writeFile(readme, dirty, "utf8")
-    await fs.writeFile(extra, `created_${Date.now()}\n`, "utf8")
-
-    await expect
-      .poll(async () => {
-        return await fs
-          .stat(extra)
-          .then(() => true)
-          .catch(() => false)
-      })
-      .toBe(true)
-
-    await expect
-      .poll(async () => {
-        const files = await sdk.file
-          .status({ directory: createdDir })
-          .then((r) => r.data ?? [])
-          .catch(() => [])
-        return files.length
-      })
-      .toBeGreaterThan(0)
-
-    const menu = await openWorkspaceMenu(page, slug)
-    await clickMenuItem(menu, /^Reset$/i, { force: true })
-    await confirmDialog(page, /^Reset workspace$/i)
-
-    await expect
-      .poll(
-        async () => {
-          const files = await sdk.file
-            .status({ directory: createdDir })
-            .then((r) => r.data ?? [])
-            .catch(() => [])
-          return files.length
-        },
-        { timeout: 60_000 },
-      )
-      .toBe(0)
-
-    await expect.poll(() => fs.readFile(readme, "utf8"), { timeout: 60_000 }).toBe(original)
-
-    await expect
-      .poll(async () => {
-        return await fs
-          .stat(extra)
-          .then(() => true)
-          .catch(() => false)
-      })
-      .toBe(false)
-  })
-})
-
-// kilocode_change: skip
-test.skip("can delete a workspace", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-  await page.setViewportSize({ width: 1400, height: 800 })
-
-  await withProject(async (project) => {
-    const sdk = createSdk(project.directory)
-    const { rootSlug, slug, directory } = await setupWorkspaceTest(page, project)
-
-    await expect
-      .poll(
-        async () => {
-          const worktrees = await sdk.worktree
-            .list()
-            .then((r) => r.data ?? [])
-            .catch(() => [] as string[])
-          return worktrees.includes(directory)
-        },
-        { timeout: 30_000 },
-      )
-      .toBe(true)
-
-    const menu = await openWorkspaceMenu(page, slug)
-    await clickMenuItem(menu, /^Delete$/i, { force: true })
-    await confirmDialog(page, /^Delete workspace$/i)
-
-    await expect.poll(() => base64Decode(slugFromUrl(page.url()))).toBe(project.directory)
-
-    await expect
-      .poll(
-        async () => {
-          const worktrees = await sdk.worktree
-            .list()
-            .then((r) => r.data ?? [])
-            .catch(() => [] as string[])
-          return worktrees.includes(directory)
-        },
-        { timeout: 60_000 },
-      )
-      .toBe(false)
-
-    await project.gotoSession()
-=======
   const workspaces = [] as { directory: string; slug: string }[]
   for (const _ of [0, 1]) {
     const prev = slugFromUrl(page.url())
@@ -455,7 +277,6 @@ test.skip("can delete a workspace", async ({ page, withProject }) => {
     await waitDir(page, next.directory)
     project.trackDirectory(next.directory)
     workspaces.push(next)
->>>>>>> imanolmaiztegui/opencode-v1.3.14
 
     await openSidebar(page)
   }
@@ -490,13 +311,7 @@ test.skip("can delete a workspace", async ({ page, withProject }) => {
   await expect.poll(async () => await list()).toEqual([from, to])
 })
 
-<<<<<<< HEAD
-// kilocode_change: skip
-test.skip("can reorder workspaces by drag and drop", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-=======
 test("can delete a workspace", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   await page.setViewportSize({ width: 1400, height: 800 })
   await project.open()
 

@@ -49,12 +49,7 @@ async function seedConversation(input: {
   return { prompt, userMessageID }
 }
 
-<<<<<<< HEAD
-test("slash undo sets revert and restores prior prompt", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-=======
 test("slash undo sets revert and restores prior prompt", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   test.setTimeout(120_000)
 
   const token = `undo_${Date.now()}`
@@ -86,12 +81,7 @@ test("slash undo sets revert and restores prior prompt", async ({ page, project 
   })
 })
 
-<<<<<<< HEAD
-test("slash redo clears revert and restores latest state", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-=======
 test("slash redo clears revert and restores latest state", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   test.setTimeout(120_000)
 
   const token = `redo_${Date.now()}`
@@ -138,12 +128,7 @@ test("slash redo clears revert and restores latest state", async ({ page, projec
   })
 })
 
-<<<<<<< HEAD
-test("slash undo/redo traverses multi-step revert stack", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-=======
 test("slash undo/redo traverses multi-step revert stack", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   test.setTimeout(120_000)
 
   const firstToken = `undo_redo_first_${Date.now()}`

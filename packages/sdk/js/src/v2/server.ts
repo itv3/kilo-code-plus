@@ -67,7 +67,7 @@ export async function createKiloServer(options?: ServerOptions) {
 
   // kilocode_change start
   const proc = launch(`kilo`, args, {
-  // kilocode_change end
+    // kilocode_change end
     env: {
       ...process.env,
       KILO_CONFIG_CONTENT: buildConfigEnv(options.config), // kilocode_change
@@ -154,7 +154,7 @@ export function createKiloTui(options?: TuiOptions) {
 
   // kilocode_change start
   const proc = launch(`kilo`, args, {
-  // kilocode_change end
+    // kilocode_change end
     stdio: "inherit",
     windowsHide: true,
     env: {

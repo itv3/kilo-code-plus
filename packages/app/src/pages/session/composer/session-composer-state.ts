@@ -1,9 +1,6 @@
 import { createEffect, createMemo, on, onCleanup, onMount } from "solid-js"
 import { createStore } from "solid-js/store"
-<<<<<<< HEAD
-=======
 import { makeEventListener } from "@solid-primitives/event-listener"
->>>>>>> imanolmaiztegui/opencode-v1.3.14
 import type { PermissionRequest, QuestionRequest, Todo } from "@kilocode/sdk/v2"
 import { useParams } from "@solidjs/router"
 import { showToast } from "@opencode-ai/ui/toast"

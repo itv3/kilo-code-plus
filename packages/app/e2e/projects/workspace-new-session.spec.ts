@@ -57,12 +57,7 @@ async function createSessionFromWorkspace(
   return project.user(text)
 }
 
-<<<<<<< HEAD
-test("new sessions from sidebar workspace actions stay in selected workspace", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-=======
 test("new sessions from sidebar workspace actions stay in selected workspace", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   await page.setViewportSize({ width: 1400, height: 800 })
 
   await project.open()

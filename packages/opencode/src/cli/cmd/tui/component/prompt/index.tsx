@@ -1109,11 +1109,11 @@ export function Prompt(props: PromptProps) {
             <box flexDirection="row" flexShrink={0} paddingTop={1} gap={1} justifyContent="space-between">
               <box flexDirection="row" gap={1}>
                 <text fg={highlight()}>
-                {/* kilocode_change start */}
-                {store.mode === "shell"
-                  ? "Shell"
-                  : (local.agent.current()?.displayName ?? Locale.titlecase(local.agent.current()?.name ?? ""))}{" "}
-                {/* kilocode_change end */}
+                  {/* kilocode_change start */}
+                  {store.mode === "shell"
+                    ? "Shell"
+                    : (local.agent.current()?.displayName ?? Locale.titlecase(local.agent.current()?.name ?? ""))}{" "}
+                  {/* kilocode_change end */}
                 </text>
                 <Show when={store.mode === "normal"}>
                   <box flexDirection="row" gap={1}>

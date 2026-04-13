@@ -3,12 +3,7 @@ import { createTestProject, cleanupTestProject, openSidebar, clickMenuItem, open
 import { projectSwitchSelector } from "../selectors"
 import { dirSlug } from "../utils"
 
-<<<<<<< HEAD
-test("closing active project navigates to another open project", async ({ page, withProject }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to workspace interaction issues") // kilocode_change
-=======
 test("closing active project navigates to another open project", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   await page.setViewportSize({ width: 1400, height: 800 })
 
   const other = await createTestProject()

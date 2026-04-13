@@ -95,7 +95,7 @@ const deps = Layer.mergeAll(
   Session.defaultLayer,
   Snapshot.defaultLayer,
   AgentSvc.defaultLayer,
-  Permission.layer,
+  Permission.defaultLayer,
   Plugin.defaultLayer,
   Config.defaultLayer,
   status,

@@ -65,7 +65,8 @@ export async function createKiloServer(options?: ServerOptions) {
   const args = [`serve`, `--hostname=${options.hostname}`, `--port=${options.port}`]
   if (options.config?.logLevel) args.push(`--log-level=${options.config.logLevel}`)
 
-  const proc = launch(`kilo`, args, { // kilocode_change
+  const proc = launch(`kilo`, args, {
+    // kilocode_change
     env: {
       ...process.env,
       KILO_CONFIG_CONTENT: buildConfigEnv(options.config), // kilocode_change
@@ -150,7 +151,8 @@ export function createKiloTui(options?: TuiOptions) {
     args.push(`--agent=${options.agent}`)
   }
 
-  const proc = launch(`kilo`, args, {// kilocode_change
+  const proc = launch(`kilo`, args, {
+    // kilocode_change
     stdio: "inherit",
     windowsHide: true,
     env: {

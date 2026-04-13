@@ -67,12 +67,7 @@ test("session can be renamed via header menu", async ({ page, project }) => {
   })
 })
 
-<<<<<<< HEAD
-test("session can be archived via header menu", async ({ page, sdk, gotoSession }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to hover/menu interaction issues") // kilocode_change
-=======
 test("session can be archived via header menu", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   const stamp = Date.now()
   const title = `e2e archive test ${stamp}`
 
@@ -99,12 +94,7 @@ test("session can be archived via header menu", async ({ page, project }) => {
   })
 })
 
-<<<<<<< HEAD
-test("session can be deleted via header menu", async ({ page, sdk, gotoSession }) => {
-  test.skip(process.platform === "win32", "Skipping on Windows due to hover/menu interaction issues") // kilocode_change
-=======
 test("session can be deleted via header menu", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   const stamp = Date.now()
   const title = `e2e delete test ${stamp}`
 
@@ -135,11 +125,7 @@ test("session can be deleted via header menu", async ({ page, project }) => {
   })
 })
 
-<<<<<<< HEAD
-test("session can be shared and unshared via header button", async ({ page, sdk, gotoSession }) => {
-=======
 test("session can be shared and unshared via header button", async ({ page, project }) => {
->>>>>>> imanolmaiztegui/opencode-v1.3.14
   test.skip(shareDisabled, "Share is disabled in this environment (KILO_DISABLE_SHARE).")
 
   const stamp = Date.now()
