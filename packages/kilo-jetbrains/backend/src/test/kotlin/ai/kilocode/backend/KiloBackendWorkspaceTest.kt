@@ -10,6 +10,8 @@ import ai.kilocode.backend.testing.TestLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -359,6 +361,110 @@ class KiloBackendWorkspaceTest {
         val session = ws.createSession()
         assertEquals("ses_new", session.id)
         assertEquals("/test/project", session.directory)
+    }
+
+    // ------ Concurrency tests ------
+
+    @Test
+    fun `concurrent get for same directory returns same instance`() = runBlocking {
+        val app = setup()
+        app.connect()
+        withTimeout(10_000) { app.appState.first { it is KiloAppState.Ready } }
+
+        // Launch many concurrent get() calls for the same directory
+        val results = (1..10).map {
+            async(Dispatchers.Default) {
+                app.workspaces.get("/same/dir")
+            }
+        }.awaitAll()
+
+        // All must return the exact same instance
+        val first = results[0]
+        results.forEach { assertTrue(it === first) }
+    }
+
+    @Test
+    fun `concurrent load calls on workspace produce valid final state`() = runBlocking {
+        mock.providers = PROVIDERS_JSON
+        mock.agents = AGENTS_JSON
+        mock.commands = COMMANDS_JSON
+        mock.skills = SKILLS_JSON
+
+        val app = setup()
+        val ws = ready(app)
+
+        withTimeout(15_000) {
+            ws.state.first { it is KiloWorkspaceState.Ready }
+        }
+
+        // Fire rapid reloads — simulates rapid SSE disposed events
+        repeat(5) { ws.reload() }
+
+        // Final state must be valid Ready
+        withTimeout(15_000) {
+            while (true) {
+                val state = ws.state.value
+                if (state is KiloWorkspaceState.Ready) {
+                    delay(300)
+                    if (ws.state.value is KiloWorkspaceState.Ready) break
+                }
+                delay(100)
+            }
+        }
+
+        val state = ws.state.value as KiloWorkspaceState.Ready
+        assertEquals(1, state.providers.providers.size)
+        assertEquals(1, state.agents.agents.size)
+    }
+
+    @Test
+    fun `SSE global disposed triggers full app reload with new data`() = runBlocking {
+        mock.providers = PROVIDERS_JSON
+        mock.agents = AGENTS_JSON
+        mock.commands = COMMANDS_JSON
+        mock.skills = SKILLS_JSON
+
+        val app = setup()
+        ready(app)
+
+        // Change providers response then fire disposed event
+        mock.providers = """{
+            "all": [{
+                "id": "openai",
+                "name": "OpenAI",
+                "env": [],
+                "models": {}
+            }],
+            "default": {},
+            "connected": ["openai"]
+        }"""
+
+        mock.awaitSseConnection()
+        mock.pushEvent("global.disposed", """{"type":"global.disposed"}""")
+
+        // global.disposed triggers full app reload which restarts the
+        // workspace manager (stop + start), clearing all cached workspaces.
+        // Wait for app to reach Ready again after reload.
+        withTimeout(15_000) {
+            // App may briefly leave Ready during reload
+            while (true) {
+                val state = app.appState.value
+                if (state is KiloAppState.Ready) {
+                    delay(300)
+                    if (app.appState.value is KiloAppState.Ready) break
+                }
+                delay(100)
+            }
+        }
+
+        // Get a fresh workspace — old one was stopped during reload
+        val ws = app.workspaces.get("/test/project")
+        withTimeout(15_000) {
+            ws.state.first { it is KiloWorkspaceState.Ready }
+        }
+
+        val state = ws.state.value as KiloWorkspaceState.Ready
+        assertEquals("openai", state.providers.providers[0].id)
     }
 
     companion object {

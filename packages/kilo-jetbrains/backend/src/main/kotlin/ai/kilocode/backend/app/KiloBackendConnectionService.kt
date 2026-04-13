@@ -197,6 +197,9 @@ class KiloConnectionService(
                 .readTimeout(0, TimeUnit.MILLISECONDS)
                 .build()
         )
+        // Reset heartbeat timestamp before connecting so the watcher
+        // doesn't fire against a stale timestamp from the old connection.
+        lastEvent.set(System.currentTimeMillis())
         source.set(factory.newEventSource(request, listener))
         log.info("SSE: connecting to port $port")
     }

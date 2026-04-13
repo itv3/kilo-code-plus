@@ -60,9 +60,9 @@ class KiloBackendWorkspaceManager(
     fun get(dir: String): KiloBackendWorkspace {
         val client = api ?: throw IllegalStateException("Workspace manager not started")
         val ev = events!!
-        return workspaces.getOrPut(dir) {
-            log.info("Creating workspace for $dir")
-            KiloBackendWorkspace(dir, cs, client, ev, sessions, log).also { it.load() }
+        return workspaces.computeIfAbsent(dir) { d ->
+            log.info("Creating workspace for $d")
+            KiloBackendWorkspace(d, cs, client, ev, sessions, log).also { it.load() }
         }
     }
 

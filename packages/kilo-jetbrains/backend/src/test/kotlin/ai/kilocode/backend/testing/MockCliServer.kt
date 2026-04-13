@@ -10,6 +10,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Lightweight mock HTTP server simulating the Kilo CLI server.
@@ -53,6 +55,18 @@ class MockCliServer : AutoCloseable {
     @Volatile var sessionGetStatus = 200
     @Volatile var sessionDeleteStatus = 200
     @Volatile var sessionStatusesStatus = 200
+
+    /** Configurable delay for all endpoint responses (ms). 0 = no delay. */
+    @Volatile var responseDelay: Long = 0
+
+    /** Request counts by bare path (e.g. "/session" or "/global/config"). Thread-safe. */
+    private val counts = ConcurrentHashMap<String, AtomicInteger>()
+
+    /** Return the number of requests received for [path] (bare, no query). */
+    fun requestCount(path: String): Int = counts[path]?.get() ?: 0
+
+    /** Reset all request counters. */
+    fun resetCounts() { counts.clear() }
 
     private val executor = Executors.newCachedThreadPool { r ->
         Thread(r, "mock-cli-${Thread.currentThread().id}").apply { isDaemon = true }
@@ -159,6 +173,13 @@ class MockCliServer : AutoCloseable {
 
             val output = BufferedWriter(OutputStreamWriter(socket.getOutputStream()))
             val bare = path.substringBefore("?")
+
+            // Track request counts
+            counts.computeIfAbsent(bare) { AtomicInteger(0) }.incrementAndGet()
+
+            // Optional delay for race condition testing
+            val delay = responseDelay
+            if (delay > 0) Thread.sleep(delay)
 
             when {
                 path == "/global/health" -> respond(output, 200, health)

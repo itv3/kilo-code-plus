@@ -10,7 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
@@ -244,6 +246,68 @@ class KiloBackendSessionManagerTest {
 
         app.sessions.stop()
         assertTrue(app.sessions.statuses.value.isEmpty())
+    }
+
+    // ------ Concurrency ------
+
+    @Test
+    fun `concurrent status updates are not lost`() = runBlocking {
+        mock.sessionStatuses = "{}"
+        val app = setup()
+        ready(app)
+
+        // Seed statuses from multiple coroutines while SSE events arrive
+        val ids = (1..20).map { "ses_concurrent_$it" }
+        val half = ids.size / 2
+
+        // First half: seed via SSE events
+        mock.awaitSseConnection()
+        ids.take(half).forEach { id ->
+            mock.pushEvent(
+                "session.status",
+                """{"type":"session.status","properties":{"sessionID":"$id","status":{"type":"busy"}}}""",
+            )
+        }
+
+        // Second half: seed via server-side status endpoint
+        val statusJson = ids.drop(half).joinToString(",") { id ->
+            """"$id":{"type":"idle","attempt":0,"message":"","next":0,"requestID":""}"""
+        }
+        mock.sessionStatuses = "{$statusJson}"
+        app.sessions.seed("/test")
+
+        // Wait for all statuses to be present
+        withTimeout(10_000) {
+            while (true) {
+                val statuses = app.sessions.statuses.value
+                val found = ids.count { it in statuses }
+                if (found == ids.size) break
+                delay(100)
+            }
+        }
+
+        val statuses = app.sessions.statuses.value
+        ids.forEach { id -> assertTrue(id in statuses, "Missing status for $id") }
+    }
+
+    @Test
+    fun `start after stop re-activates`() = runBlocking {
+        val app = setup()
+        ready(app)
+
+        // Verify it works
+        app.sessions.list("/test")
+
+        // Stop and restart
+        app.sessions.stop()
+        assertFailsWith<IllegalStateException> { app.sessions.list("/test") }
+
+        // Re-start (simulate what app service does on reconnect)
+        app.sessions.start(app.api!!, app.events)
+
+        // CRUD should work again
+        val result = app.sessions.list("/test")
+        assertNotNull(result)
     }
 
     // ------ Session with summary ------

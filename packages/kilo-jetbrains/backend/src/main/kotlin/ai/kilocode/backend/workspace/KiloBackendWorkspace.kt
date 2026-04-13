@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,11 +50,14 @@ class KiloBackendWorkspace(
 
     private var loader: Job? = null
     private var eventWatcher: Job? = null
+    private val loadLock = Any()
 
     /** Load project data (providers, agents, commands, skills). */
     fun load() {
-        loader?.cancel()
-        loader = cs.launch {
+        synchronized(loadLock) {
+            loader?.cancel()
+            eventWatcher?.cancel()
+            loader = cs.launch {
             log.info("Loading workspace data for $directory")
             val progress = AtomicReference(KiloWorkspaceLoadProgress())
             _state.value = KiloWorkspaceState.Loading(progress.get())
@@ -119,6 +123,7 @@ class KiloBackendWorkspace(
                     skills = sk!!,
                 )
                 log.info("Workspace data loaded for $directory")
+                ensureActive()
                 startWatchingGlobalSseEvents()
             } catch (e: CancellationException) {
                 throw e
@@ -127,6 +132,7 @@ class KiloBackendWorkspace(
                 _state.value = KiloWorkspaceState.Error(
                     "Failed to load: ${synchronized(errors) { errors.joinToString() }}"
                 )
+            }
             }
         }
     }
@@ -138,8 +144,10 @@ class KiloBackendWorkspace(
 
     /** Stop all background work. */
     fun stop() {
-        loader?.cancel()
-        eventWatcher?.cancel()
+        synchronized(loadLock) {
+            loader?.cancel()
+            eventWatcher?.cancel()
+        }
         _state.value = KiloWorkspaceState.Pending
     }
 
@@ -161,18 +169,20 @@ class KiloBackendWorkspace(
      * Idempotent — only one watcher runs at a time.
      */
     private fun startWatchingGlobalSseEvents() {
-        if (eventWatcher?.isActive == true) return
-        log.info("Started watching global SSE events for workspace $directory")
-        eventWatcher = cs.launch {
-            events.collect { event ->
-                when (event.type) {
-                    "global.disposed" -> {
-                        log.info("SSE global.disposed — reloading workspace data for $directory")
-                        load()
-                    }
-                    "server.instance.disposed" -> {
-                        log.info("SSE server.instance.disposed — reloading workspace data for $directory")
-                        load()
+        synchronized(loadLock) {
+            if (eventWatcher?.isActive == true) return
+            log.info("Started watching global SSE events for workspace $directory")
+            eventWatcher = cs.launch {
+                events.collect { event ->
+                    when (event.type) {
+                        "global.disposed" -> {
+                            log.info("SSE global.disposed — reloading workspace data for $directory")
+                            load()
+                        }
+                        "server.instance.disposed" -> {
+                            log.info("SSE server.instance.disposed — reloading workspace data for $directory")
+                            load()
+                        }
                     }
                 }
             }

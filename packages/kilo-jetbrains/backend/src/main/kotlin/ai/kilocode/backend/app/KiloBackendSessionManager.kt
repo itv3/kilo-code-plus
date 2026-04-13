@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
@@ -131,7 +132,7 @@ class KiloBackendSessionManager(
         try {
             val raw = requireClient().sessionStatus(directory = dir)
             val mapped = raw.mapValues { (_, v) -> statusDto(v) }
-            _statuses.value = _statuses.value + mapped
+            _statuses.update { it + mapped }
             log.info("Seeded ${mapped.size} session statuses for $dir")
         } catch (e: Exception) {
             log.warn("Session status seed failed: ${e.message}", e)
@@ -153,7 +154,7 @@ class KiloBackendSessionManager(
         val id = extractField(data, "sessionID") ?: return
         val type = extractNested(data, "status", "type") ?: "idle"
         val msg = extractNested(data, "status", "message")
-        _statuses.value = _statuses.value + (id to SessionStatusDto(type, msg))
+        _statuses.update { it + (id to SessionStatusDto(type, msg)) }
     }
 
     // ------ mapping ------
