@@ -3,7 +3,6 @@ import { useDialog } from "@kilocode/kilo-ui/context/dialog"
 import { Dialog } from "@kilocode/kilo-ui/dialog"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { ProviderIcon } from "@kilocode/kilo-ui/provider-icon"
-import { Select } from "@kilocode/kilo-ui/select"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { TextField } from "@kilocode/kilo-ui/text-field"
 import { showToast } from "@kilocode/kilo-ui/toast"
@@ -16,6 +15,14 @@ import { useVSCode } from "../../context/vscode"
 import type { ExtensionMessage, ProviderConfig } from "../../types/messages"
 import { createProviderAction } from "../../utils/provider-action"
 import { MASKED_CUSTOM_PROVIDER_KEY, resolveCustomProviderKey } from "../../../../src/shared/custom-provider"
+import { ModelCard } from "./CustomProviderModelCard"
+import type {
+  EnableThinkingValue,
+  ModelEntry,
+  ReasoningEffortValue,
+  ThinkingTypeValue,
+  VariantEntry,
+} from "./CustomProviderModelCard"
 
 const PROVIDER_ID = /^[a-z0-9][a-z0-9-_]*$/
 const OPENAI_COMPATIBLE = "@ai-sdk/openai-compatible"
@@ -33,27 +40,6 @@ function fuzzy(query: string, target: string) {
   return qi === q.length
 }
 
-type Translator = ReturnType<typeof useLanguage>["t"]
-
-// undefined = not set; true/false = enable_thinking value
-type EnableThinkingValue = undefined | boolean
-type ThinkingTypeValue = undefined | "enabled" | "disabled"
-type ReasoningEffortValue = undefined | "none" | "minimal" | "low" | "medium" | "high"
-
-type VariantRow = {
-  name: string
-  enableThinking: EnableThinkingValue
-  thinking: ThinkingTypeValue
-  reasoningEffort: ReasoningEffortValue
-}
-
-type ModelRow = {
-  id: string
-  name: string
-  reasoning: boolean
-  variants: VariantRow[]
-}
-
 type HeaderRow = {
   key: string
   value: string
@@ -64,7 +50,7 @@ type FormState = {
   name: string
   baseURL: string
   apiKey: string
-  models: ModelRow[]
+  models: ModelEntry[]
   headers: HeaderRow[]
   saving: boolean
 }
@@ -78,29 +64,6 @@ type FormErrors = {
 }
 
 type FetchedModel = { id: string; name: string }
-
-type SelectOption<T> = { value: T; labelKey: string }
-
-const ENABLE_THINKING_OPTIONS: SelectOption<EnableThinkingValue>[] = [
-  { value: undefined, labelKey: "provider.custom.models.variants.option.unset" },
-  { value: true, labelKey: "provider.custom.models.variants.enableThinking.true" },
-  { value: false, labelKey: "provider.custom.models.variants.enableThinking.false" },
-]
-
-const THINKING_OPTIONS: SelectOption<ThinkingTypeValue>[] = [
-  { value: undefined, labelKey: "provider.custom.models.variants.option.unset" },
-  { value: "enabled", labelKey: "provider.custom.models.variants.thinking.enabled" },
-  { value: "disabled", labelKey: "provider.custom.models.variants.thinking.disabled" },
-]
-
-const REASONING_EFFORT_OPTIONS: SelectOption<ReasoningEffortValue>[] = [
-  { value: undefined, labelKey: "provider.custom.models.variants.option.unset" },
-  { value: "none", labelKey: "provider.custom.models.variants.reasoningEffort.none" },
-  { value: "minimal", labelKey: "provider.custom.models.variants.reasoningEffort.minimal" },
-  { value: "low", labelKey: "provider.custom.models.variants.reasoningEffort.low" },
-  { value: "medium", labelKey: "provider.custom.models.variants.reasoningEffort.medium" },
-  { value: "high", labelKey: "provider.custom.models.variants.reasoningEffort.high" },
-]
 
 type ValidateArgs = {
   form: FormState
@@ -274,14 +237,14 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
 
   const editing = () => !!props.existing
 
-  function initModels(): ModelRow[] {
+  function initModels(): ModelEntry[] {
     const cfg = props.existing?.config
     if (!cfg?.models || typeof cfg.models !== "object") return [{ id: "", name: "", reasoning: false, variants: [] }]
     const entries = Object.entries(cfg.models)
     if (entries.length === 0) return [{ id: "", name: "", reasoning: false, variants: [] }]
     return entries.map(([id, m]) => {
       const raw = m as { name?: string; reasoning?: boolean; variants?: Record<string, Record<string, unknown>> }
-      const variants: VariantRow[] = Object.entries(raw?.variants ?? {}).map(([vname, vcfg]) => ({
+      const variants: VariantEntry[] = Object.entries(raw?.variants ?? {}).map(([vname, vcfg]) => ({
         name: vname,
         enableThinking: typeof vcfg.enable_thinking === "boolean" ? (vcfg.enable_thinking as boolean) : undefined,
         thinking:
@@ -499,7 +462,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     // Replace the single empty row or append
     const row = form.models[0]
     const empty = form.models.length === 1 && !!row && !row.id.trim() && !row.name.trim()
-    const defaults = (m: FetchedModel): ModelRow => ({ ...m, reasoning: false, variants: [] })
+    const defaults = (m: FetchedModel): ModelEntry => ({ ...m, reasoning: false, variants: [] })
     const merged = empty ? picked.map(defaults) : [...form.models, ...picked.map(defaults)]
 
     setForm("models", merged)
@@ -550,7 +513,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
   }
 
   function addVariant(mi: number) {
-    const blank: VariantRow = { name: "", enableThinking: undefined, thinking: undefined, reasoningEffort: undefined }
+    const blank: VariantEntry = { name: "", enableThinking: undefined, thinking: undefined, reasoningEffort: undefined }
     setForm("models", mi, "variants", (v) => [...v, blank])
     setErrors("models", mi, "variants", (v) => [...(v ?? []), {}])
   }
@@ -720,191 +683,27 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
             </div>
             <For each={form.models}>
               {(m, i) => (
-                <div
-                  style={{
-                    display: "flex",
-                    "flex-direction": "column",
-                    gap: "8px",
-                    padding: "8px",
-                    border: "1px solid var(--border-weak-base, var(--vscode-panel-border))",
-                    "border-radius": "6px",
-                  }}
-                >
-                  {/* Model id + name + remove */}
-                  <div style={{ display: "flex", gap: "8px", "align-items": "start" }}>
-                    <div style={{ flex: 1 }}>
-                      <TextField
-                        label={language.t("provider.custom.models.id.label")}
-                        placeholder={language.t("provider.custom.models.id.placeholder")}
-                        value={m.id}
-                        onChange={(v) => setForm("models", i(), "id", v)}
-                        validationState={errors.models[i()]?.id ? "invalid" : undefined}
-                        error={errors.models[i()]?.id}
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <TextField
-                        label={language.t("provider.custom.models.name.label")}
-                        placeholder={language.t("provider.custom.models.name.placeholder")}
-                        value={m.name}
-                        onChange={(v) => setForm("models", i(), "name", v)}
-                        validationState={errors.models[i()]?.name ? "invalid" : undefined}
-                        error={errors.models[i()]?.name}
-                      />
-                    </div>
-                    <IconButton
-                      type="button"
-                      icon="trash"
-                      variant="ghost"
-                      onClick={() => removeModel(i())}
-                      disabled={form.models.length <= 1}
-                      aria-label={language.t("provider.custom.models.remove")}
-                      style={{ "margin-top": "22px" }}
-                    />
-                  </div>
-
-                  {/* Reasoning toggle */}
-                  <label
-                    style={{
-                      display: "flex",
-                      "align-items": "center",
-                      gap: "8px",
-                      cursor: "pointer",
-                      "font-size": "13px",
-                      color: "var(--vscode-foreground)",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={m.reasoning}
-                      onChange={(e) => setForm("models", i(), "reasoning", e.currentTarget.checked)}
-                    />
-                    {language.t("provider.custom.models.reasoning.label")}
-                  </label>
-
-                  {/* Variants — only available when reasoning is enabled */}
-                  <Show when={m.reasoning}>
-                    <Show when={m.variants.length > 0}>
-                      <div style={{ display: "flex", "flex-direction": "column", gap: "6px" }}>
-                        <label style={{ "font-size": "11px", "font-weight": "500", color: "var(--text-weak-base)" }}>
-                          {language.t("provider.custom.models.variants.label")}
-                        </label>
-                        <For each={m.variants}>
-                          {(v, vi) => (
-                            <div style={{ display: "flex", gap: "6px", "align-items": "start", "flex-wrap": "wrap" }}>
-                              <div style={{ "min-width": "100px", flex: "1 1 80px" }}>
-                                <TextField
-                                  label={language.t("provider.custom.models.variants.name.label")}
-                                  placeholder={language.t("provider.custom.models.variants.name.placeholder")}
-                                  value={v.name}
-                                  onChange={(val) => setForm("models", i(), "variants", vi(), "name", val)}
-                                  validationState={errors.models[i()]?.variants?.[vi()]?.name ? "invalid" : undefined}
-                                  error={errors.models[i()]?.variants?.[vi()]?.name}
-                                />
-                              </div>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  "flex-direction": "column",
-                                  gap: "4px",
-                                  flex: "0 0 auto",
-                                }}
-                              >
-                                <label
-                                  style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}
-                                >
-                                  {language.t("provider.custom.models.variants.enableThinking.label")}
-                                </label>
-                                <Select
-                                  options={ENABLE_THINKING_OPTIONS}
-                                  current={ENABLE_THINKING_OPTIONS.find((o) => o.value === v.enableThinking)}
-                                  value={(o) => String(o.value)}
-                                  label={(o) => language.t(o.labelKey)}
-                                  onSelect={(o) => setForm("models", i(), "variants", vi(), "enableThinking", o?.value)}
-                                  placeholder={language.t("provider.custom.models.variants.enableThinking.placeholder")}
-                                  variant="secondary"
-                                  size="small"
-                                  triggerVariant="settings"
-                                />
-                              </div>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  "flex-direction": "column",
-                                  gap: "4px",
-                                  flex: "0 0 auto",
-                                }}
-                              >
-                                <label
-                                  style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}
-                                >
-                                  {language.t("provider.custom.models.variants.thinking.label")}
-                                </label>
-                                <Select
-                                  options={THINKING_OPTIONS}
-                                  current={THINKING_OPTIONS.find((o) => o.value === v.thinking)}
-                                  value={(o) => String(o.value)}
-                                  label={(o) => language.t(o.labelKey)}
-                                  onSelect={(o) => setForm("models", i(), "variants", vi(), "thinking", o?.value)}
-                                  placeholder={language.t("provider.custom.models.variants.thinking.placeholder")}
-                                  variant="secondary"
-                                  size="small"
-                                  triggerVariant="settings"
-                                />
-                              </div>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  "flex-direction": "column",
-                                  gap: "4px",
-                                  flex: "0 0 auto",
-                                }}
-                              >
-                                <label
-                                  style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}
-                                >
-                                  {language.t("provider.custom.models.variants.reasoningEffort.label")}
-                                </label>
-                                <Select
-                                  options={REASONING_EFFORT_OPTIONS}
-                                  current={REASONING_EFFORT_OPTIONS.find((o) => o.value === v.reasoningEffort)}
-                                  value={(o) => String(o.value)}
-                                  label={(o) => language.t(o.labelKey)}
-                                  onSelect={(o) =>
-                                    setForm("models", i(), "variants", vi(), "reasoningEffort", o?.value)
-                                  }
-                                  placeholder={language.t(
-                                    "provider.custom.models.variants.reasoningEffort.placeholder",
-                                  )}
-                                  variant="secondary"
-                                  size="small"
-                                  triggerVariant="settings"
-                                />
-                              </div>
-                              <IconButton
-                                type="button"
-                                icon="trash"
-                                variant="ghost"
-                                onClick={() => removeVariant(i(), vi())}
-                                aria-label={language.t("provider.custom.models.variants.remove")}
-                                style={{ "margin-top": "20px" }}
-                              />
-                            </div>
-                          )}
-                        </For>
-                      </div>
-                    </Show>
-                    <Button
-                      type="button"
-                      size="small"
-                      variant="ghost"
-                      icon="plus-small"
-                      onClick={() => addVariant(i())}
-                    >
-                      {language.t("provider.custom.models.variants.add")}
-                    </Button>
-                  </Show>
-                </div>
+                <ModelCard
+                  m={m}
+                  i={i}
+                  errors={errors.models[i()] ?? {}}
+                  t={language.t}
+                  canRemove={form.models.length > 1}
+                  onChangeId={(v) => setForm("models", i(), "id", v)}
+                  onChangeName={(v) => setForm("models", i(), "name", v)}
+                  onChangeReasoning={(v) => setForm("models", i(), "reasoning", v)}
+                  onRemove={() => removeModel(i())}
+                  onAddVariant={() => addVariant(i())}
+                  onRemoveVariant={(vi) => removeVariant(i(), vi)}
+                  onChangeVariantName={(vi, val) => setForm("models", i(), "variants", vi, "name", val)}
+                  onChangeVariantEnableThinking={(vi, val) =>
+                    setForm("models", i(), "variants", vi, "enableThinking", val)
+                  }
+                  onChangeVariantThinking={(vi, val) => setForm("models", i(), "variants", vi, "thinking", val)}
+                  onChangeVariantReasoningEffort={(vi, val) =>
+                    setForm("models", i(), "variants", vi, "reasoningEffort", val)
+                  }
+                />
               )}
             </For>
             <Button type="button" size="small" variant="ghost" icon="plus-small" onClick={addModel}>
