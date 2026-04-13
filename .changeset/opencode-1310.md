@@ -1,5 +1,6 @@
 ---
 "kilo-code": patch
+"@kilocode/cli": patch
 ---
 
 Merged upstream opencode changes from v1.3.10:
