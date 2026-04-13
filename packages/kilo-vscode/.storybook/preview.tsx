@@ -6,7 +6,6 @@ import { applyKiloTheme, applyVscodeTheme, clearVscodeTheme } from "../../kilo-u
 import "../../kilo-ui/.storybook/fonts.css"
 import "@kilocode/kilo-ui/styles"
 import "../webview-ui/src/styles/chat.css"
-import "../webview-ui/src/styles/settings.css"
 
 // Make the Kilo logo available in Storybook (normally injected by the extension host)
 ;(window as { ICONS_BASE_URI?: string }).ICONS_BASE_URI = "/icons"
