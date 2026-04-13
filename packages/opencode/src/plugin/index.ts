@@ -1,8 +1,8 @@
-import type { Hooks, PluginInput, Plugin as PluginInstance, PluginModule } from "@opencode-ai/plugin"
+import type { Hooks, PluginInput, Plugin as PluginInstance, PluginModule } from "@kilocode/plugin"
 import { Config } from "../config/config"
 import { Bus } from "../bus"
 import { Log } from "../util/log"
-import { createOpencodeClient } from "@opencode-ai/sdk"
+import { createKiloClient } from "@kilocode/sdk"
 import { Flag } from "../flag/flag"
 import { CodexAuthPlugin } from "./codex"
 import { Session } from "../session"
@@ -103,12 +103,12 @@ export namespace Plugin {
 
           const { Server } = yield* Effect.promise(() => import("../server/server"))
 
-          const client = createOpencodeClient({
+          const client = createKiloClient({
             baseUrl: "http://localhost:4096",
             directory: ctx.directory,
-            headers: Flag.OPENCODE_SERVER_PASSWORD
+            headers: Flag.KILO_SERVER_PASSWORD
               ? {
-                  Authorization: `Basic ${Buffer.from(`${Flag.OPENCODE_SERVER_USERNAME ?? "opencode"}:${Flag.OPENCODE_SERVER_PASSWORD}`).toString("base64")}`,
+                  Authorization: `Basic ${Buffer.from(`${Flag.KILO_SERVER_USERNAME ?? "opencode"}:${Flag.KILO_SERVER_PASSWORD}`).toString("base64")}`,
                 }
               : undefined,
             fetch: async (...args) => Server.Default().fetch(...args),
@@ -136,8 +136,8 @@ export namespace Plugin {
             if (init._tag === "Some") hooks.push(init.value)
           }
 
-          const plugins = Flag.OPENCODE_PURE ? [] : (cfg.plugin_origins ?? [])
-          if (Flag.OPENCODE_PURE && cfg.plugin_origins?.length) {
+          const plugins = Flag.KILO_PURE ? [] : (cfg.plugin_origins ?? [])
+          if (Flag.KILO_PURE && cfg.plugin_origins?.length) {
             log.info("skipping external plugins in pure mode", { count: cfg.plugin_origins.length })
           }
           if (plugins.length) yield* config.waitForDependencies()
