@@ -71,7 +71,6 @@ You must define at least one model with its `name` and token `limit` values:
 {
   "provider": {
     "vllm": {
-      "api": "openai",
       "models": {
         "qwen35": {
           "name": "Qwen 3.5",
@@ -100,10 +99,11 @@ Then set your default model using the `provider-id/model-id` format:
 
 **Configuration fields:**
 
-- **`api`** — (Optional) The upstream API URL. For local or self-hosted models, this can be any string — the actual endpoint is set via `options.baseURL`.
 - **`models`** — A map of model IDs to model definitions. Each model needs at minimum a `name` and `limit` with `context` and `output` token counts.
 - **`options.baseURL`** — The base URL of your OpenAI-compatible API endpoint.
 - **`options.apiKey`** — Your API key. Use any non-empty string (e.g., `"none"`) if the provider doesn't require authentication.
+- **`api`** — (Optional) A fallback base URL for the provider's API. When `options.baseURL` is set, it takes priority and `api` is not used. This field exists mainly for built-in providers fetched from [models.dev](https://models.dev) and is rarely needed in custom configurations.
+- **`npm`** — (Optional) The npm package name of the [Vercel AI SDK](https://ai-sdk.dev) provider to use (e.g., `"@ai-sdk/anthropic"`, `"@ai-sdk/openai"`). Defaults to `"@ai-sdk/openai-compatible"` for custom providers, which uses the OpenAI Chat Completions protocol.
 
 You can also set the API key via an environment variable instead of putting it in the config file. Use the `env` field to specify which variable to read:
 
