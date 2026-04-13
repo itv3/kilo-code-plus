@@ -1,7 +1,7 @@
 package ai.kilocode.backend.app
 
 import ai.kilocode.backend.util.IntellijLog
-import ai.kilocode.backend.KiloBackendHttpClients
+import ai.kilocode.backend.util.KiloBackendHttpClients
 import ai.kilocode.backend.util.KiloLog
 import ai.kilocode.jetbrains.api.client.DefaultApi
 import kotlinx.coroutines.CoroutineScope
