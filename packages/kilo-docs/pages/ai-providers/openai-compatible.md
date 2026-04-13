@@ -99,7 +99,7 @@ Then set your default model using the `provider-id/model-id` format:
 
 **Configuration fields:**
 
-- **`models`** — A map of model IDs to model definitions. Each model should include a `name` and `limit` with `context` and `output` token counts (both default to `0` if omitted, which will limit context management).
+- **`models`** — A map of model IDs to model definitions. Each model should include a `name` and `limit` with `context` and `output` token counts. If `limit.context` or `limit.output` is omitted, it defaults to `0`, which limits context management.
 - **`options.baseURL`** — The base URL of your OpenAI-compatible API endpoint.
 - **`options.apiKey`** — Your API key. Use any non-empty string (e.g., `"none"`) if the provider doesn't require authentication.
 
