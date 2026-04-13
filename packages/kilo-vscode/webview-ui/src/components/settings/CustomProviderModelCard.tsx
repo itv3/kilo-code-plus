@@ -5,7 +5,7 @@ import { TextField } from "@kilocode/kilo-ui/text-field"
 import { For, Show } from "solid-js"
 import { useLanguage } from "../../context/language"
 
-type Translator = ReturnType<typeof useLanguage>["t"]
+export type Translator = ReturnType<typeof useLanguage>["t"]
 
 // undefined = not set; true/false = enable_thinking value
 export type EnableThinkingValue = undefined | boolean

@@ -21,6 +21,7 @@ import type {
   ModelEntry,
   ReasoningEffortValue,
   ThinkingTypeValue,
+  Translator,
   VariantEntry,
 } from "./CustomProviderModelCard"
 
