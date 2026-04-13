@@ -16,10 +16,11 @@ if (!Script.preview) {
     console.warn("changeset version failed (exit " + result.exitCode + "), continuing with fallback notes")
   }
 
-  // Extract the latest version section from CHANGELOG.md for release notes.
-  // CHANGELOG.md is created by changeset version above — it won't exist until
-  // the first release that consumes changesets.
-  const changelog = await Bun.file(`${process.cwd()}/CHANGELOG.md`)
+  // Extract the latest version section from the kilo-code extension changelog.
+  // Changesets writes to packages/kilo-vscode/CHANGELOG.md (not root) because
+  // the changeset targets the "kilo-code" package. This is also the file the
+  // VS Code Marketplace reads at publish time.
+  const changelog = await Bun.file(`${process.cwd()}/packages/kilo-vscode/CHANGELOG.md`)
     .text()
     .catch(() => "")
   const body = extractLatestSection(changelog) || "No notable changes"
