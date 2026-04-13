@@ -65,7 +65,7 @@ For additional model configuration (token limits, tool calling, variants), edit 
 
 Define a custom provider in your `kilo.json` config file (`~/.config/kilo/kilo.json` or `./kilo.json`). The provider key (e.g., `"vllm"`) is your chosen identifier — it can be any name you like.
 
-You must define at least one model with its `name` and token `limit` values:
+You must define at least one model. Setting `name` and `limit` (context window and max output tokens) is recommended so the agent can manage context correctly:
 
 ```jsonc
 {
@@ -99,11 +99,9 @@ Then set your default model using the `provider-id/model-id` format:
 
 **Configuration fields:**
 
-- **`models`** — A map of model IDs to model definitions. Each model needs at minimum a `name` and `limit` with `context` and `output` token counts.
+- **`models`** — A map of model IDs to model definitions. Each model should include a `name` and `limit` with `context` and `output` token counts (both default to `0` if omitted, which will limit context management).
 - **`options.baseURL`** — The base URL of your OpenAI-compatible API endpoint.
 - **`options.apiKey`** — Your API key. Use any non-empty string (e.g., `"none"`) if the provider doesn't require authentication.
-- **`api`** — (Optional) A fallback base URL for the provider's API. When `options.baseURL` is set, it takes priority and `api` is not used. This field exists mainly for built-in providers fetched from [models.dev](https://models.dev) and is rarely needed in custom configurations.
-- **`npm`** — (Optional) The npm package name of the [Vercel AI SDK](https://ai-sdk.dev) provider to use (e.g., `"@ai-sdk/anthropic"`, `"@ai-sdk/openai"`). Defaults to `"@ai-sdk/openai-compatible"` for custom providers, which uses the OpenAI Chat Completions protocol.
 
 You can also set the API key via an environment variable instead of putting it in the config file. Use the `env` field to specify which variable to read:
 
