@@ -447,6 +447,11 @@ export interface ReadyMessage {
   workspaceDirectory?: string
 }
 
+export interface GitStatusMessage {
+  type: "gitStatus"
+  repo: boolean
+}
+
 export interface WorkspaceDirectoryChangedMessage {
   type: "workspaceDirectoryChanged"
   directory: string
@@ -1403,6 +1408,7 @@ export interface CustomProviderModelsFetchedMessage {
 
 export type ExtensionMessage =
   | ReadyMessage
+  | GitStatusMessage
   | ConnectionStateMessage
   | ErrorMessage
   | SendMessageFailedMessage
