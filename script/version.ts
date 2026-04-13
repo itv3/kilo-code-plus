@@ -10,9 +10,15 @@ if (!Script.preview) {
   // Run changeset version to consume .changeset/*.md files into CHANGELOG.md.
   // This also bumps package.json versions, but publish.ts overwrites them with
   // Script.version later, so the changeset-computed versions are irrelevant.
-  await $`bunx changeset version`.nothrow()
+  // If no changesets exist yet, changeset version exits 0 but writes nothing.
+  const result = await $`bunx changeset version`.nothrow()
+  if (result.exitCode !== 0) {
+    console.warn("changeset version failed (exit " + result.exitCode + "), continuing with fallback notes")
+  }
 
-  // Extract the latest version section from CHANGELOG.md for release notes
+  // Extract the latest version section from CHANGELOG.md for release notes.
+  // CHANGELOG.md is created by changeset version above — it won't exist until
+  // the first release that consumes changesets.
   const changelog = await Bun.file(`${process.cwd()}/CHANGELOG.md`)
     .text()
     .catch(() => "")
