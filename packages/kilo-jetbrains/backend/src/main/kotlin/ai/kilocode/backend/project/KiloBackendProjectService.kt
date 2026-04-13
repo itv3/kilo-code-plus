@@ -24,38 +24,58 @@ import java.util.concurrent.atomic.AtomicReference
  * Project-level backend service that loads project-scoped data
  * from the CLI server when the app reaches [KiloAppState.Ready].
  *
- * Watches [KiloBackendAppService.appState] and triggers parallel
- * data fetches for providers, agents, commands, and skills.
- * Progress is tracked via [KiloProjectLoadProgress] and emitted as
- * [KiloProjectState.Loading] → [KiloProjectState.Ready] or [KiloProjectState.Error].
+ * Construction is side-effect-free — call [start] to begin
+ * watching [KiloBackendAppService.appState] and loading data.
+ * [start] is idempotent and safe to call multiple times.
  *
  * Each fetch is retried up to [MAX_RETRIES] times, matching the
  * pattern in [KiloBackendAppService].
  */
 @Service(Service.Level.PROJECT)
-class KiloBackendProjectService(
-    private val project: Project,
+class KiloBackendProjectService private constructor(
+    val directory: String,
     private val cs: CoroutineScope,
+    private val appState: () -> StateFlow<KiloAppState>,
+    private val api: () -> DefaultApi?,
+    private val log: KiloLog,
 ) {
+    /** IntelliJ service injection entry point. */
+    constructor(project: Project, cs: CoroutineScope) : this(
+        directory = project.basePath ?: "",
+        cs = cs,
+        appState = { service<KiloBackendAppService>().appState },
+        api = { service<KiloBackendAppService>().api },
+        log = IntellijLog(KiloBackendProjectService::class.java),
+    )
+
     companion object {
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 1000L
+
+        /** Test factory — no IntelliJ deps needed. */
+        internal fun create(
+            dir: String,
+            cs: CoroutineScope,
+            appState: () -> StateFlow<KiloAppState>,
+            api: () -> DefaultApi?,
+            log: KiloLog,
+        ) = KiloBackendProjectService(dir, cs, appState, api, log)
     }
-
-    /** Project working directory sent as the `directory` parameter. */
-    val directory: String
-        get() = project.basePath ?: ""
-
-    private val log: KiloLog = IntellijLog(KiloBackendProjectService::class.java)
 
     private val _state = MutableStateFlow<KiloProjectState>(KiloProjectState.Pending)
     val state: StateFlow<KiloProjectState> = _state.asStateFlow()
 
+    private var watcher: Job? = null
     private var loader: Job? = null
 
-    init {
-        cs.launch {
-            service<KiloBackendAppService>().appState.collect { state ->
+    /**
+     * Begin watching app state and loading project data when ready.
+     * Idempotent — safe to call multiple times.
+     */
+    fun start() {
+        if (watcher?.isActive == true) return
+        watcher = cs.launch {
+            appState().collect { state ->
                 when (state) {
                     is KiloAppState.Ready -> load()
                     is KiloAppState.Disconnected,
@@ -81,16 +101,16 @@ class KiloBackendProjectService(
     /**
      * Launch all project data fetches in parallel.
      *
-     * Each resource is retried up to [MAX_RETRIES] times.
-     * Progress is tracked via [AtomicReference] and emitted
-     * as [KiloProjectState.Loading].
+     * Cancels any in-flight load first. Each resource is retried
+     * up to [MAX_RETRIES] times. Progress is tracked via
+     * [AtomicReference] and emitted as [KiloProjectState.Loading].
      */
     private fun load() {
         loader?.cancel()
         loader = cs.launch {
             val dir = directory
-            val api = service<KiloBackendAppService>().api
-            if (api == null) {
+            val client = api()
+            if (client == null) {
                 _state.value = KiloProjectState.Error("CLI server not connected")
                 return@launch
             }
@@ -99,13 +119,18 @@ class KiloBackendProjectService(
             val progress = AtomicReference(KiloProjectLoadProgress())
             _state.value = KiloProjectState.Loading(progress.get())
 
+            var prov: ProviderData? = null
+            var ag: AgentData? = null
+            var cmd: List<CommandInfo>? = null
+            var sk: List<SkillInfo>? = null
             val errors = mutableListOf<String>()
 
             try {
                 coroutineScope {
                     launch {
-                        val result = fetchWithRetry("providers") { fetchProviders(api, dir) }
+                        val result = fetchWithRetry("providers") { fetchProviders(client, dir) }
                         if (result != null) {
+                            prov = result
                             progress.updateAndGet { it.copy(providers = true) }
                                 .also { _state.value = KiloProjectState.Loading(it) }
                         } else {
@@ -114,8 +139,9 @@ class KiloBackendProjectService(
                         }
                     }
                     launch {
-                        val result = fetchWithRetry("agents") { fetchAgents(api, dir) }
+                        val result = fetchWithRetry("agents") { fetchAgents(client, dir) }
                         if (result != null) {
+                            ag = result
                             progress.updateAndGet { it.copy(agents = true) }
                                 .also { _state.value = KiloProjectState.Loading(it) }
                         } else {
@@ -124,8 +150,9 @@ class KiloBackendProjectService(
                         }
                     }
                     launch {
-                        val result = fetchWithRetry("commands") { fetchCommands(api, dir) }
+                        val result = fetchWithRetry("commands") { fetchCommands(client, dir) }
                         if (result != null) {
+                            cmd = result
                             progress.updateAndGet { it.copy(commands = true) }
                                 .also { _state.value = KiloProjectState.Loading(it) }
                         } else {
@@ -134,8 +161,9 @@ class KiloBackendProjectService(
                         }
                     }
                     launch {
-                        val result = fetchWithRetry("skills") { fetchSkills(api, dir) }
+                        val result = fetchWithRetry("skills") { fetchSkills(client, dir) }
                         if (result != null) {
+                            sk = result
                             progress.updateAndGet { it.copy(skills = true) }
                                 .also { _state.value = KiloProjectState.Loading(it) }
                         } else {
@@ -145,12 +173,11 @@ class KiloBackendProjectService(
                     }
                 }
 
-                // All succeeded — assemble Ready state
                 _state.value = KiloProjectState.Ready(
-                    providers = providers!!,
-                    agents = agents!!,
-                    commands = commands!!,
-                    skills = skills!!,
+                    providers = prov!!,
+                    agents = ag!!,
+                    commands = cmd!!,
+                    skills = sk!!,
                 )
                 log.info("Project data loaded for $dir")
             } catch (e: CancellationException) {
@@ -164,87 +191,78 @@ class KiloBackendProjectService(
         }
     }
 
-    // ------ cached results from each fetch ------
-
-    @Volatile private var providers: ProviderData? = null
-    @Volatile private var agents: AgentData? = null
-    @Volatile private var commands: List<CommandInfo>? = null
-    @Volatile private var skills: List<SkillInfo>? = null
-
     // ------ individual fetch methods ------
 
-    private fun fetchProviders(api: DefaultApi, dir: String): ProviderData? =
+    private fun fetchProviders(client: DefaultApi, dir: String): ProviderData? =
         try {
-            val response = api.providerList(directory = dir)
-            val mapped = response.all.map { p ->
-                ProviderInfo(
-                    id = p.id,
-                    name = p.name,
-                    source = p.api,
-                    models = p.models.mapValues { (_, m) ->
-                        ModelInfo(
-                            id = m.id,
-                            name = m.name,
-                            attachment = m.attachment,
-                            reasoning = m.reasoning,
-                            temperature = m.temperature,
-                            toolCall = m.toolCall,
-                            free = m.isFree ?: false,
-                            status = m.status?.value,
-                        )
-                    },
-                )
-            }
+            val response = client.providerList(directory = dir)
             ProviderData(
-                providers = mapped,
+                providers = response.all.map { p ->
+                    ProviderInfo(
+                        id = p.id,
+                        name = p.name,
+                        source = p.api,
+                        models = p.models.mapValues { (_, m) ->
+                            ModelInfo(
+                                id = m.id,
+                                name = m.name,
+                                attachment = m.attachment,
+                                reasoning = m.reasoning,
+                                temperature = m.temperature,
+                                toolCall = m.toolCall,
+                                free = m.isFree ?: false,
+                                status = m.status?.value,
+                            )
+                        },
+                    )
+                },
                 connected = response.connected,
                 defaults = response.default,
-            ).also { providers = it }
+            )
         } catch (e: Exception) {
             log.warn("Providers fetch failed: ${e.message}", e)
             null
         }
 
-    private fun fetchAgents(api: DefaultApi, dir: String): AgentData? =
+    private fun fetchAgents(client: DefaultApi, dir: String): AgentData? =
         try {
-            val response = api.appAgents(directory = dir)
+            val response = client.appAgents(directory = dir)
             val mapped = response.map(::mapAgent)
             val visible = response.filter { it.mode != Agent.Mode.SUBAGENT && it.hidden != true }
-            val default = visible.firstOrNull()?.name ?: "code"
             AgentData(
                 agents = visible.map(::mapAgent),
                 all = mapped,
-                default = default,
-            ).also { agents = it }
+                default = visible.firstOrNull()?.name ?: "code",
+            )
         } catch (e: Exception) {
             log.warn("Agents fetch failed: ${e.message}", e)
             null
         }
 
-    private fun fetchCommands(api: DefaultApi, dir: String): List<CommandInfo>? =
+    private fun fetchCommands(client: DefaultApi, dir: String): List<CommandInfo>? =
         try {
-            api.commandList(directory = dir).map { c ->
+            client.commandList(directory = dir).map { c ->
                 CommandInfo(
                     name = c.name,
                     description = c.description,
                     source = c.source?.value,
                     hints = c.hints,
                 )
-            }.also { commands = it }
+            }
         } catch (e: Exception) {
             log.warn("Commands fetch failed: ${e.message}", e)
             null
         }
 
-    private fun fetchSkills(api: DefaultApi, dir: String): List<SkillInfo>? =
+    private fun fetchSkills(client: DefaultApi, dir: String): List<SkillInfo>? =
         try {
-            api.appSkills(directory = dir).map { s ->
+            client.appSkills(directory = dir).map { s ->
                 SkillInfo(
                     name = s.name,
                     description = s.description,
                     location = s.location,
                 )
-            }.also { skills = it }
+            }
         } catch (e: Exception) {
             log.warn("Skills fetch failed: ${e.message}", e)
             null

@@ -34,6 +34,16 @@ class MockCliServer : AutoCloseable {
     @Volatile var configStatus = 200
     @Volatile var notificationsStatus = 200
 
+    // Project-scoped REST responses
+    @Volatile var providers = """{"all":[],"default":{},"connected":[]}"""
+    @Volatile var agents = "[]"
+    @Volatile var commands = "[]"
+    @Volatile var skills = "[]"
+    @Volatile var providersStatus = 200
+    @Volatile var agentsStatus = 200
+    @Volatile var commandsStatus = 200
+    @Volatile var skillsStatus = 200
+
     private val executor = Executors.newCachedThreadPool { r ->
         Thread(r, "mock-cli-${Thread.currentThread().id}").apply { isDaemon = true }
     }
@@ -150,6 +160,10 @@ class MockCliServer : AutoCloseable {
                     }
                 }
                 path == "/global/event" -> handleSse(output)
+                path == "/provider" || path.startsWith("/provider?") -> respond(output, providersStatus, providers)
+                path == "/agent" || path.startsWith("/agent?") -> respond(output, agentsStatus, agents)
+                path == "/command" || path.startsWith("/command?") -> respond(output, commandsStatus, commands)
+                path == "/skill" || path.startsWith("/skill?") -> respond(output, skillsStatus, skills)
                 else -> respond(output, 404, """{"error":"Not found"}""")
             }
         } catch (_: SocketException) {

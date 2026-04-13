@@ -76,6 +76,7 @@ class KiloBackendAppService private constructor(
         cs.launch { reconnect() }
     }, log = log)
 
+    private var watcher: Job? = null
     private var router: Job? = null
     private var loader: Job? = null
 
@@ -98,6 +99,7 @@ class KiloBackendAppService private constructor(
         mutex.withLock {
             val current = _appState.value
             if (current is KiloAppState.Ready || current is KiloAppState.Connecting || current is KiloAppState.Loading) return
+            ensureWatcher()
             connection.connect()
         }
     }
@@ -135,8 +137,9 @@ class KiloBackendAppService private constructor(
         }
     }
 
-    init {
-        cs.launch {
+    private fun ensureWatcher() {
+        if (watcher?.isActive == true) return
+        watcher = cs.launch {
             connection.state.collect { next ->
                 when (next) {
                     ConnectionState.Disconnected -> _appState.value = KiloAppState.Disconnected
@@ -344,6 +347,8 @@ class KiloBackendAppService private constructor(
     }
 
     override fun dispose() {
+        watcher?.cancel()
+        watcher = null
         clear()
         connection.dispose()
         server.dispose()

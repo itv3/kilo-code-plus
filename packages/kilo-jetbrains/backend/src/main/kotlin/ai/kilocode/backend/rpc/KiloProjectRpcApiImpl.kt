@@ -44,6 +44,7 @@ class KiloProjectRpcApiImpl : KiloProjectRpcApi {
                 status = KiloProjectStatusDto.ERROR,
                 error = "Project not found for directory: $directory",
             ))
+        svc.start()
         return svc.state
             .map(::dto)
             .distinctUntilChanged()
