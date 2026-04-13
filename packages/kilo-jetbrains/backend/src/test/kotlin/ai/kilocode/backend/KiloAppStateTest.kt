@@ -54,7 +54,7 @@ class KiloAppStateTest {
 
     @Test
     fun `AppData construction`() {
-        val cfg = Config()
+        val cfg = Config(model = "test")
         val data = AppData(profile = null, config = cfg, notifications = emptyList())
         assertNull(data.profile)
         assertEquals(cfg, data.config)

@@ -4,7 +4,7 @@ intellij-gradle-plugin = "2.10.5"
 intellij-rpc-plugin = "2.1.20-0.1"
 kotlin-jvm-plugin = "2.1.20"
 kotlin-serialization-plugin = "2.1.20"
-kotlin-serialization = "1.7.3"
+kotlin-serialization = "1.8.1"
 okhttp = "4.12.0"
 openapi-generator = "7.21.0"
 
