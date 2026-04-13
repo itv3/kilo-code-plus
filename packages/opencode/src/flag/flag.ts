@@ -12,6 +12,7 @@ function falsy(key: string) {
 
 export namespace Flag {
   export const KILO_AUTO_SHARE = truthy("KILO_AUTO_SHARE")
+  export const KILO_AUTO_HEAP_SNAPSHOT = truthy("KILO_AUTO_HEAP_SNAPSHOT")
   export const KILO_GIT_BASH_PATH = process.env["KILO_GIT_BASH_PATH"]
   export const KILO_CONFIG = process.env["KILO_CONFIG"]
   export declare const KILO_PURE: boolean

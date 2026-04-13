@@ -1,15 +1,7 @@
 import { Popover as Kobalte } from "@kobalte/core/popover"
-import {
-  ComponentProps,
-  JSXElement,
-  ParentProps,
-  Show,
-  createEffect,
-  onCleanup,
-  splitProps,
-  ValidComponent,
-} from "solid-js"
+import { ComponentProps, JSXElement, ParentProps, Show, createEffect, splitProps, ValidComponent } from "solid-js"
 import { createStore } from "solid-js/store"
+import { makeEventListener } from "@solid-primitives/event-listener"
 import { useI18n } from "../context/i18n"
 import { IconButton } from "./icon-button"
 
@@ -118,30 +110,9 @@ export function Popover<T extends ValidComponent = "div">(props: PopoverProps<T>
       close("outside")
     }
 
-    window.addEventListener("keydown", onKeyDown, true)
-
-    // Defer outside-dismiss arming so portal mount and parent dialog focus
-    // reconciliation finish before the popover starts reacting to external
-    // focus or pointer events. This avoids first-click flicker when opening
-    // from an already focused field inside a dialog.
-    const pending = {
-      id: requestAnimationFrame(() => {
-        pending.id = requestAnimationFrame(() => {
-          pending.id = 0
-          setState("ready", true)
-          window.addEventListener("pointerdown", onPointerDown, true)
-          window.addEventListener("focusin", onFocusIn, true)
-        })
-      }),
-    }
-
-    onCleanup(() => {
-      setState("ready", true)
-      window.removeEventListener("keydown", onKeyDown, true)
-      window.removeEventListener("pointerdown", onPointerDown, true)
-      window.removeEventListener("focusin", onFocusIn, true)
-      if (pending.id) cancelAnimationFrame(pending.id)
-    })
+    makeEventListener(window, "keydown", onKeyDown, { capture: true })
+    makeEventListener(window, "pointerdown", onPointerDown, { capture: true })
+    makeEventListener(window, "focusin", onFocusIn, { capture: true })
   })
 
   createEffect(() => {
