@@ -2,39 +2,14 @@
 
 ## 7.2.1
 
-### Core
 - Preserve write tool alongside apply_patch for GPT-5 models (@jacksonkasi1)
-- Align /local-review diff with agent manager diff viewer
-- Make 'kilo help' show same output as 'kilo -h'
-- Restore native --help for subcommands
-- Add workflows section to CLI documentation
-- Add KILO_CONFIG_DIR to command paths in CLI documentation
-- Disable built-in help command to allow `kilo help --all` to work
-- Add completion command to commands array for help --all and cli-reference
-- Guard session import in config error handlers
-- Let managed config errors propagate
-- Include detail in validation error
-- Move commands barrel to kilocode directory and restore upstream-style index.ts chain
-- Improve config warning UX across CLI, TUI, and VS Code
-- Add documentation explaining the purpose of commands.ts barrel file
-- Add RemoteCommand to barrel exports, fix recursive subcommands, and include $0 commands in help --all output
-- Add config warnings endpoint and surface errors to TUI/extension
-- Add CONTEXT.md to CLI instructions list
-- Add KILO_CONFIG_DIR to command lookup
-- Widen KILO_DISABLE_PROJECT_CONFIG description in CLI documentation
-- List all managed configuration files in CLI documentation
-- Fix instructions auto-discovery list in CLI documentation
-- Add missing opencode.jsonc to global paths documentation
-- Add named-command lookup guidance to kilo-config skill
-- Widened kilo-config skill to cover path location questions
-- Add legacy paths to kilo-config skill documentation
-- Surface schema validation errors to user in CLI
-- Remove unscoped session.error publish from CLI
-- Skip invalid agent/command configs instead of crashing
+- Add `kilo help --all` command for full CLI reference in markdown or text (@maphew)
 - Auto-generate CLI reference docs from help.ts (@maphew)
-- Add kilo help --all command for full CLI reference in markdown or text (@maphew)
-### TUI
-- Add flexShrink={0} to prompt border box to prevent shrinking
+- Improve config warning UX across CLI, TUI, and VS Code
+- Surface schema validation errors to user in CLI
+- Skip invalid agent/command configs instead of crashing
+- Align /local-review diff with agent manager diff viewer
+- Various CLI documentation improvements
 
 **Thank you to 6 community contributors:**
 - @maphew:
@@ -53,9 +28,7 @@
 
 ## 7.2.0
 
-### Core
-- Remove local storage from ignored folder
-- Add mutex lock, incremental add, and batched revert to snapshot performance (@johnnyeric)
+- Improve snapshot performance with mutex lock, incremental add, and batched revert (@johnnyeric)
 
 **Thank you to 1 community contributor:**
 - @johnnyeric:
@@ -63,20 +36,13 @@
 
 ## 7.1.23
 
-### Core
 - Guard against prompt injection in commits
-- Add scope context and better git commands to review prompt
-- Inject --rm flag for Docker MCP containers to prevent accumulation (@johnnyeric)
 - Add support for GLM, Kimi, and Qwen reasoning models
 - Follow-up execution is now aware of the saved plan file (@shssoichiro)
-- Update minimatch, @modelcontextprotocol/sdk, and @aws-sdk dependencies
 - Update Hono to fix authentication bypass and server vulnerabilities
 - Update simple-git dependency to fix critical remote code execution vulnerability
-- Preserve specific MCP tool rules when propagating permissions to sub-agents
-- Propagate MCP restrictions to sub-agents alongside edit and bash
-- Preserve inherited restrictions across multi-hop sub-agent chains
-- Apply read-only bash and MCP restrictions to plan mode and propagate bash restrictions to sub-agents
-- Plan mode now respects edit restrictions and sub-agents inherit caller's file access permissions
+- Propagate MCP and bash restrictions to sub-agents and plan mode
+- Inject --rm flag for Docker MCP containers to prevent accumulation (@johnnyeric)
 
 **Thank you to 2 community contributors:**
 - @shssoichiro:
@@ -86,7 +52,6 @@
 
 ## 7.1.22
 
-### Core
 - Cache full diff and ignore legacy local storage to prevent redundant git processes (@Varuu-0)
 
 **Thank you to 1 community contributor:**
@@ -95,9 +60,7 @@
 
 ## 7.1.21
 
-### Core
 - Session migration improvements for better handling of session state transitions
-- Exclude /global/health from request logging
 - Add org support for /kiloclaw command
 
 **Thank you to 1 community contributor:**
@@ -111,13 +74,9 @@ No notable changes
 
 ## 7.1.19
 
-### Core
 - Fixed hung state disposal during provider authentication refresh
 - RevertBanner UI now shows no changes after successful file revert (@IamCoder18)
-- Improve SDK claw types
 - Add KiloClaw Chat to TUI
-### TUI
-- Guard against null theme in TUI resolveTheme and Proxy
 
 **Thank you to 1 community contributor:**
 - @IamCoder18:
@@ -125,10 +84,8 @@ No notable changes
 
 ## 7.1.18
 
-### Core
 - Prevent unbounded log file growth with size-based rotation
 - Import disabled MCPs with enabled: false instead of skipping them
-- Skip logging for /log and /telemetry/capture endpoints to improve performance
 
 **Thank you to 2 community contributors:**
 - @wiliyam:
@@ -144,37 +101,26 @@ No notable changes
 
 ## 7.1.16
 
-### Core
 - Inject plan file path into non-experimental plan mode prompt
 
 ## 7.1.15
 
-### Core
 - Keep plan follow-up sessions in the same worktree
-### TUI
-- Revert prevention of zombie `kilo serve` processes on extension host crash
 
 ## 7.1.14
 
-### Core
-- Skip request logging for /telemetry/capture endpoint
-### TUI
 - Prevent zombie kilo serve processes on extension host crash
 
 ## 7.1.13
 
-### Core
 - Revert restoration of directory tree in system prompt
 
 ## 7.1.12
 
-### Core
 - Migrate legacy sessions into new extension
-- Fix global skills overriding project skills in skillDirectories()
+- Fix global skills overriding project skills
 - Handle tool-call without prior tool-input-start event
-- Simplify self-config tips in CLI
 - Register Apertis as CLI provider with dynamic model fetching (@theQuert)
-### SDK
 - Pass duplex in fetch init to survive VS Code proxy-agent wrapper
 
 **Thank you to 2 community contributors:**
@@ -186,30 +132,17 @@ No notable changes
 
 ## 7.1.11
 
-### Core
 - Normalize directory path when listing sessions to fix Windows case mismatch
 
 ## 7.1.10
 
-### Core
-- Restore agent picker labels
-- Propagate deprecated field in agent merge and show description in dialog (@IamCoder18)
-- Read remote_control from global config only
-- Add remote_control config to auto-enable remote session relay
-- Restore directory tree in system prompt
-- Use git branch --list instead of -l flag
+- Add MCP tool support and read-only bash commands to Ask agent
 - Add WebSocket activity watchdog with heartbeat acknowledgment support
-- Clarify read-only wording in ask prompt
-- Restrict git branch/tag/remote commands to read-only flags
-- Use allowlist for read-only git commands
-- Fix user denying override MCP ask rules
-- Remove find from Ask allowlist and add git write denials
-- Add Ask agent permission tests
-- Add MCP tool support to Ask agent
-- Cache MCP listTools results to avoid redundant RPCs per loop step
-- Add read-only bash commands to Ask agent
-- Prevent CMD window flash on Windows by adding windowsHide flag to all spawn/exec calls
+- Add remote_control config to auto-enable remote session relay
 - Deprecated orchestrator agent with visual badge across UI (@IamCoder18)
+- Prevent CMD window flash on Windows
+- Restore agent picker labels
+- Fix user denying override MCP ask rules
 
 **Thank you to 4 community contributors:**
 - @cyphercodes:
@@ -225,28 +158,13 @@ No notable changes
 
 ## 7.1.9
 
-### Core
+- Add built-in kilo-config skill for on-demand config reference
+- Force permission prompt for config file edits; hide 'Always allow' for config edits in TUI
+- Normalize paths to prevent directory traversal bypass
 - Gate Kilo API calls behind enabled_providers to prevent data leaks
 - Make FreeUsageLimitError non-retryable to prevent unrecoverable backoff loop
 - Prevent infinite loop when agent returns empty tool calls
-- Add failing test for empty tool-calls loop
-- Added TUI settings reference to kilo-config skill
-- Guard builtin skill removal after lookup
-- Fixed managed config paths for all platforms in CLI documentation
 - Reject removal of built-in skills
-- Normalize paths to prevent directory traversal bypass
-- Include parent session ID in heartbeat session info
-- Exempt plan files and protect global config directory from silent access
-- Extract helpers to reduce duplication in CLI
-- Check movePath in apply_patch config guard
-- Detect nested config directories in isRelative function
-- Add built-in kilo-config skill for on-demand config reference
-- Close absolute-path bypass and extract DISABLE_ALWAYS_KEY constant
-- Force permission prompt for config file edits
-- Add config path detection for permission protection
-### TUI
-- Hide 'Always allow' option in TUI for config file edits
-### SDK
 - Add duplex: half to fix fetch in Node.js/Electron environments
 
 ## 7.1.8
@@ -259,36 +177,17 @@ No notable changes
 
 ## 7.1.6
 
-### Core
 - Isolate checkpoints per worktree
-- Strip bloated file contents from tool metadata to fix session loading performance
-- Use load-time constant for KILO_SESSION_RETRY_LIMIT
-- Hide commit-message git windows on Windows
-- Reuse MAX_DIFF_SIZE constant across CLI
+- Fix session loading performance by stripping bloated file contents from tool metadata
 - Add configurable session retry limit
-- Extract maximum diff size constant in CLI
-- Remove /new worker/subprocess restart functionality
+- Reclaim native memory on /new by restarting worker subprocess
+- Cap file content at 256 KB and scrub oversized diffs from stored sessions
 - Update Vercel AI SDK OpenAI Provider to support phase configuration
-- Use subprocess instead of Worker thread for actual memory reclamation
-- Restart worker on /new to reclaim native memory
-- Use byte length for size check in CLI
-- Scrub oversized diffs from stored session_diff on read
-- Use git cat-file -s to pre-check size before reading file content
-- Cap file content at 256 KB in Snapshot.diffFull()
-### TUI
-- Replay workspace after restart
-- Detach RPC listener on cleanup
-- Evict child sessions recursively
-- Strip summary.diffs from messages in TUI store
-- Keep permission and question on evict
-- Evict per-session data from TUI store on navigation
-- Strip before/after from TUI session_diff store
 
 ## 7.1.5
 
-### Core
 - Deny task tool usage in subagent sessions unless explicitly allowed by agent (@Githubguy132010)
-- Always deny task permission in subagent sessions (@Githubguy132010)
+- Add open locally action for unassigned sessions (@AnDr-WaY)
 
 **Thank you to 3 community contributors:**
 - @Githubguy132010:
@@ -301,26 +200,13 @@ No notable changes
 
 ## 7.1.4
 
-### Core
-- Remove commands that can execute arbitrary code from bash allowlist
-- Check legacy TOML config for bash permission in migration
-- Trim bash allowlist to safe commands and handle legacy config
-- Change default bash permission to ask for new users only
-- Enforce bash deny after user config in orchestrator permissions
+- Tighten bash permissions: trim allowlist to safe commands, handle legacy TOML config, and change default to ask for new users
 - Add OpenAI-compatible API settings
-- Handle Windows cross-drive paths in ignore checks
-- User config now overrides orchestrator allowlist for deny rules
-- Convert Kilo/OpenRouter variants to OpenAI/Anthropic format if necessary
-- Remove bash access from orchestrator mode to prevent direct file editing (@Kilo)
-- Address remote relay review feedback — race, leak, and stuck-state fixes
-- Centralized process spawning in util/process.ts to enforce windowsHide option
-- Added support for custom modes in Kilo gateway
-- Scope process.type shim to VS Code context via KILO_PLATFORM environment variable
-- Honor ai_sdk_provider metadata for Vercel AI SDK provider selection
 - Add remote session relay over WebSocket
+- Added support for custom modes in Kilo gateway
+- Fix infinite loading issue when generating commit messages
 - Prevent cmd.exe windows from appearing on Windows
-- Fix infinite loading issue when generating commit messages by explicitly consuming response streams
-- Improve agent handling in CLI (@shssoichiro)
+- Handle Windows cross-drive paths in ignore checks
 - Preserve selected model variant across sessions (@shssoichiro)
 - Use configured Code model when implementing a plan (@shssoichiro)
 
@@ -334,18 +220,11 @@ No notable changes
 
 ## 7.1.3
 
-### Core
-- Reverted default bash auto-approve rule back to original setting
-- Clarify configuration file paths
-- Use strict .kilo/ directive in config hint
-- Remove `.opencode/` from config directory hint
-- Prefer existing config directory over creating .kilo/
+- Clarify configuration file paths and add config location awareness to system prompt
 - Add tip about saving repetitive tasks as commands
-- Add config location awareness to system prompt
 
 ## 7.1.2
 
-### Core
 - Always use kilo.db regardless of channel
 - Add missing git config flags to cleanup() for Windows (@mvanhorn)
 
@@ -355,18 +234,10 @@ No notable changes
 
 ## 7.1.1
 
-### Core
 - Change default bash auto-approve rule to ask
-- Remove context-1m-2025-08-07 anthropic-beta header
-### TUI
-- Remove dead docs link from GitHub setup wizard output
-- Replace dead documentation and GitHub links, exclude vercel.link from link checker
-### Desktop
-- Complete Dutch language registrations (@Githubguy132010)
-- Add Dutch (nl) language to desktop internationalization index files (@Githubguy132010)
 - Add Dutch language support (@Githubguy132010)
-### SDK
 - Add drag-and-drop reordering for sidebar worktrees in Agent Manager
+- Fix dead documentation and GitHub links
 
 **Thank you to 2 community contributors:**
 - @Githubguy132010:
@@ -378,51 +249,19 @@ No notable changes
 
 ## 7.1.0
 
-### Core
+- Add initial support for workspaces into the TUI (@jlongster)
 - Improved subagent permissions handling
 - Save changes automatically when settings are updated
-- Mention config paths in /status tip
 - Show onboarding tip for first-time users on free model
-- Add initial support for workspaces into the TUI (@jlongster)
 - Send context-1m-2025-08-07 beta header to GitLab to enable 1M context window (@Krule)
 - Add Copilot GPT-5.4 xhigh support (@MrMushrooooom)
 - Disable fallback to free nano for small model (@thdxr)
-- Canonicalize working directory after changing directory in TUI (@Hona)
-- Fix broken /mcp toggling in TUI (@natewill)
-- Update database path test to verify correct channel-based filename (@thdxr)
 - Allow beta channel to share database with stable channel (@thdxr)
-- Add OPENCODE_SKIP_MIGRATIONS flag to bypass database migrations (@thdxr)
-### TUI
-- Pass missing auth headers in `run --attach` (@ericclemmons)
-- Exclude anonymous Kilo provider from connected check
-- Show tips for connected first-time users
-- Respect tips toggle during onboarding
-- Show config and project paths in /status dialog
-- Prevent TUI from exiting prematurely with proper exit guards (@kommander)
+- Fix broken /mcp toggling in TUI (@natewill)
+- Canonicalize working directory after changing directory in TUI (@Hona)
+- Prevent TUI from exiting prematurely (@kommander)
 - Avoid TTY corruption from double cleanup (@tobwen)
-### Desktop
-- Remove oc-1 theme from app (@adamdotdevin)
-- Fixed sidebar workspace container sizing to prevent content overflow (@iamdavidhill)
-- Don't animate review panel in/out (@adamdotdevin)
-- Reverted "Stupid Sexy Timeline" feature from app (@adamdotdevin)
-- Sanitize workspace store filenames on Windows (@Hona)
-- Add color palette generation to the app (@adamdotdevin)
-- Fixed scroll jitter and infinite scroll loop in app (@adamdotdevin)
-- Fix session title turn spinner in app (@iamdavidhill)
-- Dismiss toast notifications when questions or permissions are shown (@neriousy)
-- Fixed sidebar background color when collapsed (@iamdavidhill)
-- Suppress hover when opening project menu or right-clicking to prevent flickering (@iamdavidhill)
-- Trim retained desktop terminal buffers (@nexxeln)
-- Messages not loading reliably in app (@adamdotdevin)
-- Prune and evict stale app session caches (@nexxeln)
-- Restore new-session logo on dev so users recognize OpenCode immediately (@iamdavidhill)
-- Revert new-session logo on dev so this UI change only ships with auto-accept-permissions (@iamdavidhill)
-- Add OpenCode logo to new session screen for immediate app identification (@iamdavidhill)
-- Revert prompt control docking in TUI (@iamdavidhill)
-- Dock auto-accept after thinking and move Add file button to bottom-left (@iamdavidhill)
-- Balance titlebar columns so center content doesn't get squeezed by long side content (@iamdavidhill)
-- Center empty states vertically in session view and improve review panel messaging for projects without version control (@iamdavidhill)
-- Review panel transition fixed (@adamdotdevin)
+- Various desktop app fixes: scroll jitter, sidebar sizing, session title spinner, review panel transition
 
 **Thank you to 22 community contributors:**
 - @adamdotdevin:
@@ -502,75 +341,20 @@ No notable changes
 
 ## 7.0.51
 
-### Core
-- Save permissions without disposing instances
 - Add Windows ARM64 build support for CLI and VS Code extension
-- Delay paste summary in CLI
-- Add bell() utility for terminal attention requests
+- Add prompt history navigation with ArrowUp/ArrowDown
+- Add bell notifications: ring on task completion, permission/question prompts, with toggles in settings
 - Preserve original line endings in edit tool (@ranqn)
 - Fix git path resolution for modified files across Git Bash, MSYS2, and Cygwin on Windows (@Hona)
 - Fix PTY session handle leak (@kikuchan)
-- Sanitize preview database filenames (@Hona)
-- Log stack trace when schema validation fails (@jlongster)
-- Fix issue with migration (@thdxr)
-- Add project git init API (@nexxeln)
-- Update Drizzle ORM and improve channel database handling (@thdxr)
 - Speed up share loads (@nexxeln)
 - Enable auto-accept keybind regardless of permission config (@luisfelipesena)
-- Stop leaking fsmonitor daemons causing 60GB+ of committed memory after running tests (@Hona)
 - Add GPT-5.4 to Codex allowed models list (@msadiks)
 - Handle SIGHUP signal and kill process gracefully (@jlongster)
-### TUI
-- Add prompt history navigation with ArrowUp/ArrowDown in VS Code extension
-- Show notifications in ctrl+p menu
-- Add notifications toggle to CLI
-- Add bell toggle to CLI settings
-- Remove terminal bell sound from CLI run command
-- Skip input bell sound on route change
-- Skip bell sound on session route change
-- Skip bell sound in JSON format mode for kilo run command
-- Ring bell on task completion in kilo run
-- Ring bell on permission and question prompts
-- Ring bell when task completes in TUI
-- Fix broken /export toggling in TUI (@natewill)
-- Add onClick handler to InlineTool and Task components in TUI (@thdxr)
 - Add options to auth login command to skip interactive questions (@dbpolito)
-- Don't let Dax touch the UI (@Hona)
-### Desktop
-- Guard session-header current() against undefined when options is empty (@cyberprophet)
-- Preserve file tree tab on reopen and fix E2E test regressions (@neriousy)
-- Remove close button from project hover popover in TUI (@iamdavidhill)
-- Add support for using agent model/variant when creating new sessions (@adamdotdevin)
-- Model selection now persists correctly across sessions (@adamdotdevin)
-- All panels transition in app (@adamdotdevin)
-- Can't scroll files in app (@adamdotdevin)
-- Fix max-width on timeline in app (@adamdotdevin)
-- Align session empty states in TUI (@iamdavidhill)
 - Add interactive timeline visualization to Agent Manager (@kitlangton)
-- Share workspace slug wait helper across e2e specs (@Hona)
-- Abort sessions and wait for idle before e2e cleanup (@Hona)
-- Show skill issue when snapshotting is disabled in desktop app (@Hona)
-- Fix portal positioning for sidebar menus and tooltips by removing conditional mount logic (@iamdavidhill)
-- Add end-to-end tests for app (part 67) (@neriousy)
-- Sidebar reveal animation, hover peek overlay, and weaker dividers (@iamdavidhill)
-- Better review and file tree empty states in the app (@iamdavidhill)
-- Enable Safari autocorrect in normal mode, disable in shell mode (@alexandrereyes)
-- Add English to locale matchers (@KirillTregubov)
-- Fix stale show in app (@neriousy)
-- Remove keyboard shortcut tooltips from new session and new workspace buttons in the sidebar (@iamdavidhill)
-- Load tab when opening file (@adamdotdevin)
-- Fork Ghostty Web terminal emulator for integration (@adamdotdevin)
-- Fix stale keyed show errors in app (@adamdotdevin)
-- Fix locale error in app (@adamdotdevin)
-- Provider settings consistency across the application (@adamdotdevin)
-- Preserve question dock state across session switches (@ualtinok)
-- Fix icon jiggle animation in app interface (@adamdotdevin)
-- Mod+F always opens search in the application (@adamdotdevin)
-- Improve error handling and translation in server error formatting (@OpeOginni)
-- Improve agent selection logic to correctly pass configured models and variants (@OpeOginni)
-- Remove unnecessary macOS entitlements from desktop app (@nexxeln)
-- Add deep link support for creating new sessions in desktop app (@Brendonovich)
-- Prefer using useLocation instead of window.location in app (@Brendonovich)
+- Add slash command support to chat input (@Githubguy132010)
+- Various desktop app improvements: model persistence, file tree, sidebar animations, search, deep links
 
 **Thank you to 30 community contributors:**
 - @iamdavidhill:
@@ -700,34 +484,14 @@ No notable changes
 
 ## 7.0.50
 
-### Core
-- Remove allow always button (@imanolmzd-svg)
-- Propagate isFree flag from cloud API through CLI to extension (@kirillk)
-- Update mDNS runtime defaults from opencode.local to kilo.local (@kilo-code-bot[bot])
-- Updated retry logic in session management
-- Use .cmd shim for local tsc on Windows (@alex-alecu)
 - Add undo/redo functionality with per-message revert button in VS Code extension
-- Reset global config lazy cache on session dispose so marketplace writes take effect
-- Race pipe drains against timeout so tsc hangs are killed (@alex-alecu)
+- Replace TypeScript language server with lightweight tsgo client for faster diagnostics (@alex-alecu)
+- Propagate isFree flag from cloud API through CLI to extension (@kirillk)
+- Improved model picker: Recommended group, alphabetical sorting, free badge, scroll-to-active (@kirillk)
 - Save permission rules to configuration file (@imanolmzd-svg)
-- Add timeout to TypeScript diagnostic wait to prevent indefinite hanging (@alex-alecu)
-- Kill stuck tsgo process after timeout (@alex-alecu)
-- Resolve workspace-local tsc from node_modules (@alex-alecu)
-- Fallback to TsClient when tsgo LSP spawn fails in experimental mode (@alex-alecu)
-- Use persistent tsgo LSP server when KILO_EXPERIMENTAL_LSP_TOOL is enabled (@alex-alecu)
-- Remove process tree status dialog feature (@alex-alecu)
-- Enable incremental mode for warm tsgo runs, reducing subsequent checks to 200-400ms (@alex-alecu)
-- Defer tsgo to waitForDiagnostics and skip warm-up calls (@alex-alecu)
-- Resolve native tsgo binary directly, skip node.js wrapper (@alex-alecu)
-- Replace TypeScript language server with lightweight tsgo client (@alex-alecu)
-- Add lightweight LSPClient adapter backed by tsgo diagnostics (@alex-alecu)
-- Add tsgo/tsc diagnostic runner for lightweight TypeScript checking (@alex-alecu)
-- Cap TypeScript server memory at 1.5 GB and disable automatic typing acquisition (@alex-alecu)
-- Use ucomm for reliable ps parsing and extract script names from args (@alex-alecu)
-- Add GET /process server route for process status (@alex-alecu)
-- Add process tree utility for memory diagnostics (@alex-alecu)
-### TUI
-- Display process tree with memory usage in TUI status dialog (@alex-alecu)
+- Remove allow always button (@imanolmzd-svg)
+- Add CI check for missing translation keys (@kilo-code-bot[bot])
+- Preview pasted images in chat input (@Githubguy132010)
 
 **Thank you to 5 community contributors:**
 - @alex-alecu:
@@ -783,8 +547,8 @@ No notable changes
 
 ## 7.0.49
 
-### Core
 - Don't dispose all instances on global config update
+- Reload autocomplete when CLI backend connection state changes (@kilo-code-bot[bot])
 
 **Thank you to 1 community contributor:**
 - @kilo-code-bot[bot]:
@@ -792,34 +556,20 @@ No notable changes
 
 ## 7.0.48
 
-### Core
 - Add WarpGrep AI-powered codebase search tool (@DhruvBhatia0)
-- Comment out proxy code instead of deleting it (@kilo-code-bot[bot])
-- Disable external proxy to app.opencode.ai (@kilo-code-bot[bot])
-- Granular bash permission rules (@imanolmzd-svg)
-- Use correct config.json schema URL (app.kilo.ai) (@brick-pixel)
-- Guard temperature and prevent prompt injection in enhance-prompt
-- Also remove mode from legacy .kilocodemodes files used by ModesMigrator
-- Add backend route to delete custom mode files from disk
-- Use direct generateText for prompt enhancement instead of LLM.stream
-- Validate skill location against registry before deletion and re-sync webview on failure
-- Adjust for OpenRouter and improve various components
+- Granular bash permission rules with per-pattern toggles in permission dock (@imanolmzd-svg)
 - Add DELETE /skill endpoint and use CLI backend for skill removal
-- Add styling and tooltips to permissions UI (@imanolmzd-svg)
-- Permission toggles per-pattern in permission dock (@imanolmzd-svg)
+- Guard temperature and prevent prompt injection in enhance-prompt
+- Use correct config.json schema URL (app.kilo.ai) (@brick-pixel)
 - Rework workspace integration and adaptor interface (@jlongster)
-- Clarify output capture guidance in Bash tool documentation (@thdxr)
-### TUI
-- Show scrollbar by default (@kommander)
+- Show scrollbar by default in TUI (@kommander)
 - Prevent orphaned opencode subprocesses on shutdown (@thdxr)
 - Validate agent existence when using run --attach command (@alberti42)
-### Desktop
-- Remove blur from todos in app (@adamdotdevin)
-- Delay dock animation on session load (@adamdotdevin)
-- Remove diff lines from sessions in sidebar (@adamdotdevin)
-- Loading session should be scrolled to the bottom (@adamdotdevin)
-- Fix terminal tab close functionality in app (@adamdotdevin)
-- Add Electron version to desktop app (@Brendonovich)
+- Remove (NEW) labels and feature toggle from VS Code extension
+- Change default model from kilo-auto/frontier to kilo-auto/balanced
+- Surface CLI startup errors in the extension (@kirillk)
+- Dev snapshot build script for dogfooding (@kirillk)
+- Fix laggy hover and debounce search in ModelSelector (@kirillk)
 
 **Thank you to 16 community contributors:**
 - @Copilot:
@@ -890,74 +640,23 @@ No notable changes
 
 ## 7.0.47
 
-### Core
 - Handle malformed JSON in legacy .kilocode/mcp.json files (@marius-kiloclaw)
-- Restore Kilo share URL support in import command
 - Use .kilo instead of .kilocode for config directories
 - Lazy-load worktree diff details in Agent Manager
-- Use mercury-2 model ID in tests instead of mercury-2-coder (@apoorvumang)
-- Remove instant reasoning effort for Mercury-2 on Kilo Gateway and direct Inception (@apoorvumang)
 - Add reasoning effort support for Inception Mercury-2 (@apoorvumang)
 - Normalize trailing slashes in authentication login URLs (@elithrar)
 - Upgrade OpenTUI to v0.1.86 and enable markdown rendering by default (@kommander)
 - Avoid Gemini combiner schema sibling injection (@nexxeln)
 - Forward metadata options to Cloudflare AI Gateway provider (@ryanskidmore)
-- Clone part data in Bus event to preserve token values (@ryanskidmore)
 - Recover from 413 Request Entity Too Large errors via automatic context compaction (@bentrd)
 - Show human-readable message for HTML error responses (@rianvdm)
-- Kill orphaned MCP child processes and expose OPENCODE_PID on shutdown (@ryanwyler)
-- Add workspace_id to session table (@jlongster)
-- Add WorkspaceContext to provide workspace-level state management (@jlongster)
-- Add basic implementation of remote workspace support (@jlongster)
-- Change keybindings to navigate between child sessions (@jlongster)
-- Terminal rendering and interaction fixes in desktop app (@adamdotdevin)
-### TUI
-- Replace curved arrow with straight arrow for better terminal compatibility (@thdxr)
-- Show pending tool call count in TUI instead of generic 'Running...' message (@thdxr)
-- Use arrow indicator for active tool execution in TUI (@thdxr)
-- Disable session navigation commands when no parent session (@jerome-benoit)
-- Fix project ID conflict and update handling for same session ID (@noamzbr)
-- Improve task tool display with subagent keybind hints and spinner animations (@thdxr)
-### Desktop
-- Defer diff rendering in app (@adamdotdevin)
-- Reduce timeline jank in app (@adamdotdevin)
-- Tighten up header elements in app (@adamdotdevin)
-- Stabilize project close navigation in app (@MrMushrooooom)
-- Added comprehensive animation system with multiple animation types and controls (@kitlangton)
-- Default auto-respond to false in app (@adamdotdevin)
-- Move session review bottom padding to UI component (@iamdavidhill)
-- Fix desktop app update finalizer for latest.json publishing (@Brendonovich)
-- Revert Polish Turkish translations (@nexxeln)
-- Use correct download link in finalize-latest-json for desktop app (@Brendonovich)
+- Kill orphaned MCP child processes on shutdown (@ryanwyler)
+- Add initial remote workspace support (@jlongster)
+- Improved task tool display with subagent keybind hints and spinner animations (@thdxr)
 - Faster session switching via windowed rendering and staged timeline (@kitlangton)
-- Add compact UI to app (@neriousy)
-- Polish Turkish translations (@vaur94)
-- Fallback to synthetic icon for unknown provider IDs in app (@rexdotsh)
-- Fix scroll issues in the app (@adamdotdevin)
-- Synchronize internationalization translations for the app (@adamdotdevin)
-- Add Warp to the open menu (@kitlangton)
-- Add latest.json finalizer script for desktop builds (@Brendonovich)
-- Auto-accept permissions in app (@adamdotdevin)
-- Add Turkish locale support for app and UI packages (@vaur94)
-- Add recent projects section in command palette (@neriousy)
-- Move desktop open_path functionality to Rust (@Brendonovich)
-- Allow providing username and password when connecting to remote server (@Brendonovich)
-- Add permission indicator to app (@adamdotdevin)
-- Add permission notifications to the app (@adamdotdevin)
-- Show keybind hint on context tab close button (@iamdavidhill)
-- Better diff and code comments in app (@adamdotdevin)
-- Deduplicate file tree scroll state management (@kitlangton)
-- Align review changes select height in app (@iamdavidhill)
-- Mute inactive file tab icons (@iamdavidhill)
-- Add max-width to session when review is closed but file tree is open (@iamdavidhill)
-- Add border to file tree on scroll (@iamdavidhill)
-- Fix session tab alignment in compact view to prevent vertical overflow (@iamdavidhill)
-- New tabs styling in app (@adamdotdevin)
-- Auto-accept all permissions mode (@adamdotdevin)
-- Enhance project tile interaction with suppress hover functionality in desktop app (@OpeOginni)
-### SDK
-- Add workspace query parameter to worktree diff endpoints (@kilo-code-bot[bot])
-- Enable Zen mode for focused coding sessions (@fwang)
+- Add compact UI to desktop app (@neriousy)
+- Add Turkish locale support (@vaur94)
+- Various desktop app improvements: permissions UI, auto-accept mode, tabs styling, diff/code comments
 
 **Thank you to 36 community contributors:**
 - @niushuai1991:
@@ -1108,10 +807,9 @@ No notable changes
 
 ## 7.0.45
 
-### Core
-- Remove Kilo PR command from README (@kilo-code-bot[bot])
-- Fix README based on review feedback (@kilo-code-bot[bot])
 - Add README for npm package (@kilo-code-bot[bot])
+- Add beta notice banner to provider settings screen (@kilo-code-bot[bot])
+- Fix TextPartDisplay crash in cloud session messages (@kirillk)
 
 **Thank you to 2 community contributors:**
 - @kilo-code-bot[bot]:
@@ -1128,11 +826,7 @@ No notable changes
 
 ## 7.0.44
 
-### Core
-- Wait for stdio streams to drain before flushing decoders in bash tool (@evanjacobson)
-- Flush StringDecoder at EOF to surface trailing buffered bytes (@evanjacobson)
-- Use separate StringDecoder per stream to prevent cross-pipe corruption (@evanjacobson)
-- Use StringDecoder for UTF-8 multi-byte stream decoding (@evanjacobson)
+- Fix UTF-8 multi-byte stream decoding in bash tool output (@evanjacobson)
 
 **Thank you to 2 community contributors:**
 - @kilo-code-bot[bot]:
@@ -1153,7 +847,6 @@ No notable changes
 
 ## 7.0.42
 
-### Core
 - Add windowsHide option to all spawn calls to prevent CMD window flash on Windows
 - Add --cloud-fork CLI option to import cloud sessions locally
 
@@ -1163,13 +856,11 @@ No notable changes
 
 ## 7.0.41
 
-### Core
-- Update permission config from string to object format
 - Save and load per-agent model selection in CLI (@shssoichiro)
 - Migrate .opencode project folder to .kilo
 - Use separate task ID for title generation to prevent model leak
-### Desktop
-- Add missing translations for provider toggle and mode switch dialog keys
+- Open Settings and Profile in editor panes instead of sidebar (@kilo-code-bot[bot])
+- Show todo permission prompts in bottom dock (@kilo-code-bot[bot])
 
 **Thank you to 3 community contributors:**
 - @kilo-code-bot[bot]:
@@ -1196,21 +887,10 @@ No notable changes
 
 ## 7.0.40
 
-### Core
-- Adjusted copy on connect message (@imanolmzd-svg)
-- Avoid parsing provider-less Kilo default models in ACP (@Snow-in-Dublin)
-- Added toast notifications for Kilo errors (@imanolmzd-svg)
-- Moved Kilo-specific code to kilocode folder (@imanolmzd-svg)
-- Better messages for authentication required errors (@imanolmzd-svg)
-- Kilo-auto is not a provider
-- Rename auto-small model to kilo-auto/small
-- Migrate default model to kilo-auto/frontier across codebase (@kilo-code-bot[bot])
-- Disallow plan_exit from batch tool execution (@alex-alecu)
-- Restore unconditional plan_exit tool registration (@alex-alecu)
+- Better messages for authentication required errors with toast notifications (@imanolmzd-svg)
 - Add model per mode settings
-- Removed dependencies (@imanolmzd-svg)
-- Remove disposeAll() call on auth to prevent premature resource cleanup (@imanolmzd-svg)
-### TUI
+- Migrate default model to kilo-auto/frontier (@kilo-code-bot[bot])
+- Fix plan_exit regression in batch tool execution (@alex-alecu)
 - Prevent extension hang on server shutdown
 
 **Thank you to 4 community contributors:**
@@ -1242,9 +922,8 @@ No notable changes
 
 ## 7.0.39
 
-### Core
-- Invalidate model cache on authentication and organization changes and reload state after disposal (@imanolmzd-svg)
-- Remove duplicate reasoning hack for Kilo provider (@kilo-code-bot[bot])
+- Invalidate model cache on authentication and organization changes (@imanolmzd-svg)
+- Various VS Code extension UI fixes: cursor pointers, sidebar colors, button alignment, subagent session filtering (@kilo-code-bot[bot])
 
 **Thank you to 3 community contributors:**
 - @Br1an67:
@@ -1263,13 +942,9 @@ No notable changes
 
 ## 7.0.38
 
-### Core
-- Disable 'kilo web' command (unsupported OpenCode web UI) (@kilo-code-bot[bot])
 - Improve migration with shared disposeAll debounce, MCP timeout handling, and bash rule merge
-- Add KILOCODE_VERSION environment variable support to editor header (@kilo-code-bot[bot])
 - Switch Kilo default model to auto-small (@kilo-code-bot[bot])
-- Update migration UI
-### TUI
+- Add KILOCODE_VERSION environment variable support to editor header (@kilo-code-bot[bot])
 - Add colorblind-friendly theme to the CLI (@idreesmuhammadqazi-create)
 
 **Thank you to 2 community contributors:**
@@ -1285,13 +960,9 @@ No notable changes
 
 ## 7.0.37
 
-### Core
 - Ask mode respects user permission configuration for edit tools
-- Guard npm-dependent install artifact test (@sonwr)
-- Clean up temporary install artifact fixture in CLI tests (@sonwr)
-- Clarify hidden .kilo install artifact behavior in CLI documentation (@sonwr)
-### TUI
-- Stop doing models.length for every model to improve performance (@tspader)
+- Improve model filtering performance in TUI (@tspader)
+- Fix chat input buttons wrapping on narrow sidebar (@Br1an67)
 
 **Thank you to 4 community contributors:**
 - @Br1an67:
@@ -1308,17 +979,13 @@ No notable changes
 
 ## 7.0.36
 
-### Core
 - Fix agent interrupt AbortError leak
 - Add sparkle button to enhance prompts before sending in VS Code extension
-- Bootstrap session ingest after import
 
 ## 7.0.35
 
-### Core
 - Fix Agent Manager worktree diff base branch calculation
-- Check if current branch tracks a remote branch and is up to date with the remote
-- Use the family property for model configuration
+- Chat message autocomplete respects autocomplete switch (@mikij)
 
 **Thank you to 2 community contributors:**
 - @mikij:
@@ -1330,22 +997,12 @@ No notable changes
 
 ## 7.0.34
 
-### Core
 - Filter notifications by showIn property to target CLI-only and extension-only notifications to the correct client (@kilo-code-bot[bot])
-- Improve error logging and test type safety in VS Code extension (@imanolmzd-svg)
+- Migrate VS Code extension to use SDK KiloClient (@imanolmzd-svg)
 - Fixed most segfaults on Windows with Bun v1.3.10 stable (@Hona)
 - Split TUI and server configuration (@kommander)
-### TUI
-- Publish Session.Event.Created on import to trigger session ingestion
-- Add missing closing quote in SDK import code sample (@imanolmzd-svg)
-### Desktop
-- Add context-free package name patterns to auto-transform mock.module references (@imanolmzd-svg)
 - Remove interactive shell flag from sidecar spawn to prevent hang on macOS (@kilhyeonjun)
-- Fixed permissions and questions handling from child sessions in the app (@adamdotdevin)
-- Add keyboard navigation to move between previous and next messages (@neriousy)
-- Correct Copilot provider description in i18n files (@Oleksii-Pavliuk)
-### SDK
-- Type FIM stream response instead of using z.any() or unknown (@imanolmzd-svg)
+- Add keyboard navigation between previous and next messages in desktop app (@neriousy)
 
 **Thank you to 16 community contributors:**
 - @PeterDaveHello:
@@ -1431,66 +1088,17 @@ No notable changes
 
 ## 7.0.33
 
-### Core
-- Honor model metadata values from API responses
-- Add family, prompt, and variants fields to the Kilo gateway
 - Add message delete endpoint (@shantur)
-- Restore Claude tool call ID normalization from upstream (@kilo-code-bot[bot])
 - Prevent MCP child process orphaning on close/dispose (@alex-alecu)
-- Temporarily disable plan enter tool to prevent unintended mode switches during task execution (@thdxr)
-- Await git ID cache write to prevent race conditions (@Hona)
+- Fix /exit hang and improve TUI worker shutdown reliability (@alex-alecu)
 - Import custom tools via file URL (@Hona)
 - Add experimental workspace-serve command for multi-workspace server management (@jlongster)
-- Fix ACP live and load share synthetic pending status preceding issue (@noamzbr)
-- Normalize backslash paths in configuration relative paths and file ignore on Windows (@Hona)
-- Fix plugin resolution on Windows using createRequire fallback (@Hona)
-- Stream bash output and add synthetic pending events for ACP (@noamzbr)
-- Add git flags for snapshot operations and fix tests for cross-platform compatibility (@Hona)
-- Handle CRLF line endings in markdown frontmatter parsing on Windows (@Hona)
-- Upgrade to Bun 1.3.10 canary and force baseline builds always (@Hona)
-- Normalize paths at Windows permission boundaries (@Hona)
-- Windows path support and canonicalization (@edemaine)
-- Upgrade OpenTUI to v0.1.81 (@kommander)
-- Change detection on Windows, especially Cygwin (@edemaine)
+- Comprehensive Windows support: path canonicalization, CRLF handling, permission boundaries, plugin resolution (@Hona, @edemaine)
 - Cache platform binary in postinstall for faster startup (@rekram1-node)
-- Revert caching of platform binary in postinstall for faster startup (@rekram1-node)
-- Cache platform binary in postinstall for faster startup (@rekram1-node)
-- Publish desktop beta releases to a separate repository (@Brendonovich)
-- Add experimental endpoint to list all sessions across workspaces (@R44VC0RP)
-- Fix terminal issues in app (@adamdotdevin)
-- Respect info exclude in snapshot staging (@nexxeln)
-### TUI
-- Allow TUI worker termination retries after failure (@alex-alecu)
-- Terminate orphaned CLI when terminal parent exits (@alex-alecu)
-- Clear RPC channel for faster shutdown (@alex-alecu)
-- Unref shutdown timer in TUI worker to avoid keeping process alive (@alex-alecu)
-- Consume stdout concurrently with process exit in auth login to prevent deadlocks (@Ayushlm10)
-- Guard terminateWorker against multiple invocations (@alex-alecu)
-- Resolve /exit hang caused by undelivered worker RPC response (@alex-alecu)
 - Add Go language support to the CLI (@thdxr)
 - Show LSP errors for apply_patch tool (@thdxr)
-- Support variant in GitHub Action and OpenCode GitHub run (@elithrar)
-### Desktop
 - Stabilize diff viewer state and improve large-file review UX in agent manager
-- Enhance Windows app resolution and UI loading states in desktop application (@neriousy)
-- Make desktop README more accurate (@Brendonovich)
-- Ignore stale part deltas in app (@adamdotdevin)
-- On cancel comment, unhighlight lines (@neriousy)
-- Replace error handling with serverErrorMessage utility and add ConfigInvalidError checks (@OpeOginni)
-- Preserve native path separators in file path helpers (@Hona)
-- Remove filetree tooltips (@adamdotdevin)
-- Wait for loadFile before opening file tab (@Brendonovich)
-- Windows sometimes uses IPv6 which can cause E2E test failures (@Hona)
-- Correct inverted chevron direction in todo list (@kevinWangSheng)
-- Add feed customization options to app (@adamdotdevin)
-- Add beta icon to desktop app (@Brendonovich)
-- Remove double-border in share button (@adamdotdevin)
-- Better sound effect disabling UX (@adamdotdevin)
-- Add custom scroll view component to app (@adamdotdevin)
-- Show and hide reasoning summaries in the app (@adamdotdevin)
-- Stay pinned with auto-scroll on todos, questions, and permissions (@adamdotdevin)
-- Bring back -i flag in desktop sidecar arguments (@Brendonovich)
-- Large text pasted into prompt-input causes main thread lock (@adamdotdevin)
+- Various desktop app improvements: feed customization, reasoning summaries, scroll behavior, sound effect UX
 
 **Thank you to 26 community contributors:**
 - @nexxeln:
@@ -1616,17 +1224,12 @@ No notable changes
 
 ## 7.0.30
 
-### Core
-- Resolve diff viewer race condition and add diagnostics for Agent Manager
-- Use Anthropic prompt for kilo/auto model
+- Resolve diff viewer race condition in Agent Manager
 - Filter tool diagnostics to only edited files, reducing session payload 50-77%
 
 ## 7.0.29
 
-### Core
 - Add diff viewer panel to Agent Manager
-- Update Kilo-specific code markers and documentation
-- Fix plugin package name from @opencode-ai/plugin to @kilocode/plugin
 - Fix plan_exit call (@alex-alecu)
 - Show implementation suggestions only when LLM has all the information (@alex-alecu)
 
@@ -1637,43 +1240,15 @@ No notable changes
 
 ## 7.0.28
 
-### Core
-- Use toDateString() instead of toISOString() in system prompt to preserve caching
-- Add support for .kilo configuration file
-- Write imported sessions to SQLite instead of filesystem
-- Add telemetry tracking for agent-manager sessions
 - Add endpoint to import Kilo Cloud sessions
-- Add missing id, sessionID, and messageID to MCP tool attachments (@NatChung)
-- Remove unnecessary deep clones from session loop and LLM stream (@thdxr)
-- Remove User-Agent header assertion from LLM test to fix failing test (@thdxr)
 - Support adaptive thinking for Claude Sonnet 4.6 (@tctev)
-- Fix terminal issues in the app (@adamdotdevin)
-- Normalize file.status paths relative to instance directory (@shantur)
-- Bump AI SDK packages for Google, Google Vertex, Anthropic, Bedrock, and provider utilities (@rekram1-node)
 - Add support for medium reasoning with Gemini 3.1 (@rekram1-node)
-- Text files misclassified as binary (@adamdotdevin)
-- Fetch default server at top level in desktop application (@Brendonovich)
-- Terminal rework in app (@adamdotdevin)
-- Bake in AWS and Google authentication packages (@rekram1-node)
+- Add support for .kilo configuration file
+- Add missing id, sessionID, and messageID to MCP tool attachments (@NatChung)
 - Token substitution in OPENCODE_CONFIG_CONTENT now works correctly (@ariane-emory)
-### TUI
-- Add custom tool and MCP call responses that are visible and collapsible in TUI (@yanosh-k)
-- Improve GitHub action branch detection and handle 422 errors (@elithrar)
-- Ensure TUI onExit callback fires after terminal output is written (@thdxr)
-### Desktop
-- Don't spawn sidecar in desktop app if default server is localhost (@Brendonovich)
-- Restore settings header mask in desktop app (@iamdavidhill)
-- Black screen on launch with sidecar server fixed (@adamdotdevin)
-- Clear todos on abort (@adamdotdevin)
-- Update Japanese translations to WSL integration (@taroj1205)
-- Make localhost URLs work in isLocal utility function (@Brendonovich)
-- Navigate to last session on project navigation (@adamdotdevin)
-- Fix typecheck errors in app package (@Brendonovich)
-- Deduplicate allServers list in app (@Brendonovich)
-- Adjust session turn horizontal padding in app (@iamdavidhill)
-- Tighten prompt dock padding in app (@iamdavidhill)
-### SDK
-- Support session IDs starting with "ses_" in cloud import dialog and remove cloud_agent_session_id field
+- Add custom tool and MCP call responses visible and collapsible in TUI (@yanosh-k)
+- Normalize file.status paths relative to instance directory (@shantur)
+- Various desktop app fixes: terminal rework, sidecar server, settings header, session navigation
 
 **Thank you to 17 community contributors:**
 - @thdxr:
@@ -1741,7 +1316,6 @@ if anything goes wrong you can retrigger the migration by deleting ~/.local/shar
 
 If you have any issues with the migration the original data is not yet deleted and downgrading should work. But please open an issue so we can investigate and include sqlite in the issue title.
 
-### Core
 - Ensure Anthropic models on OpenRouter also have variant support (@rekram1-node)
 - Add WAL checkpoint on database open (@thdxr)
 - Ensure Vercel variants pass Amazon models under Bedrock key (@rekram1-node)
@@ -1761,29 +1335,15 @@ if anything goes wrong you can retrigger the migration by deleting ~/.local/shar
 
 If you have any issues with the migration the original data is not yet deleted and downgrading should work. But please open an issue so we can investigate and include sqlite in the issue title.
 
-### Core
-- Allow reasoning for Claude models on Kilo gateway and restore preserved reasoning
-- Filter sessions at database level to improve session list loading performance (@thdxr)
-- Fix Vercel gateway variants (@rekram1-node)
-- Bump Vertex AI packages (@rekram1-node)
-- Show all project sessions from any working directory in TUI (@thdxr)
-- Tweak websearch tool description date info to avoid cache busts (@rekram1-node)
 - Use SQLite for database operations (@thdxr)
-- Move timeout config to CLI flag (@yanhao98)
+- Filter sessions at database level to improve session list loading performance (@thdxr)
+- Show all project sessions from any working directory in TUI (@thdxr)
+- Allow reasoning for Claude models on Kilo gateway
 - Update AI SDK packages and use adaptive reasoning for Claude Opus 4.6 on Vertex, Bedrock, and Anthropic (@rekram1-node)
-### TUI
+- Move timeout config to CLI flag (@yanhao98)
 - Prevent OpenCode run crash on malformed tool inputs (@0xK3vin)
 - Add --dir option to run command (@BlankParticle)
-### Desktop
-- Fix Rust build issues in desktop application (@Brendonovich)
-- Remove OPENCODE_SQLITE environment variable from desktop app (@Brendonovich)
-- Terminal resize handling fixed in app (@adamdotdevin)
-- Use prompt_async endpoint to avoid timeout over VPN/tunnel in web interface (@eytans)
-- Remount SDK and sync tree when server URL changes (@ysm-dev)
-- Sync docs locale cookie on alias redirects (@Seungjun0906)
-- Performance optimization for showing large diff and files in desktop app (@neriousy)
-### SDK
-- Use Kilo binary instead of OpenCode in SDK server and TUI spawn
+- Performance optimization for showing large diffs and files in desktop app (@neriousy)
 
 **Thank you to 20 community contributors:**
 - @rekram1-node:
