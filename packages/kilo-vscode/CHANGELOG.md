@@ -10,29 +10,11 @@
 - Skip invalid agent/command configs instead of crashing
 - Align /local-review diff with agent manager diff viewer
 - Various CLI documentation improvements
-
-**Thank you to 6 community contributors:**
-- @maphew:
-  - feat: add kilo help --all command for full CLI reference in markdown or text
-  - feat: auto-generate CLI reference docs from help.ts
-  - fix: remove invalid ResolveMessage import and fix cli-reference link path
-  - fix: remove empty openapi.json artifact, add DbCommand to test fixture
-- @justincqz:
-  - remove references to 'kilo web' in documentation
-- @thomasboom:
-  - Update bonus credits and AI model versions in README
-- @jacksonkasi1:
-  - fix: preserve write tool alongside apply_patch for gpt-5 models
-- @ScuttleBot:
-  - docs: update for task timeline graph and Agent Manager PR badges (#8532)
+- Thanks also to @justincqz, @thomasboom, @ScuttleBot
 
 ## 7.2.0
 
 - Improve snapshot performance with mutex lock, incremental add, and batched revert (@johnnyeric)
-
-**Thank you to 1 community contributor:**
-- @johnnyeric:
-  - perf(snapshot): add mutex lock, incremental add, and batched revert
 
 ## 7.1.23
 
@@ -44,29 +26,15 @@
 - Propagate MCP and bash restrictions to sub-agents and plan mode
 - Inject --rm flag for Docker MCP containers to prevent accumulation (@johnnyeric)
 
-**Thank you to 2 community contributors:**
-- @shssoichiro:
-  - fix(core): make follow-up execution aware of the saved plan file
-- @johnnyeric:
-  - fix(mcp): inject --rm flag for Docker MCP containers to prevent accumulation
-
 ## 7.1.22
 
 - Cache full diff and ignore legacy local storage to prevent redundant git processes (@Varuu-0)
-
-**Thank you to 1 community contributor:**
-- @Varuu-0:
-  - fix(cli): cache diffFull and ignore legacy local storage to prevent redundant git processes (#8400)
 
 ## 7.1.21
 
 - Session migration improvements for better handling of session state transitions
 - Add org support for /kiloclaw command
-
-**Thank you to 1 community contributor:**
-- @St0rmz1:
-  - docs: add scheduled triggers documentation
-  - docs: fix scheduled trigger example to use weekly frequency for weekdays
+- Thanks also to @St0rmz1
 
 ## 7.1.20
 
@@ -78,22 +46,11 @@ No notable changes
 - RevertBanner UI now shows no changes after successful file revert (@IamCoder18)
 - Add KiloClaw Chat to TUI
 
-**Thank you to 1 community contributor:**
-- @IamCoder18:
-  - fix: RevertBanner UI shows no changes after successful file revert (#8121)
-
 ## 7.1.18
 
 - Prevent unbounded log file growth with size-based rotation
 - Import disabled MCPs with enabled: false instead of skipping them
-
-**Thank you to 2 community contributors:**
-- @wiliyam:
-  - fix: register tr, nl, uk locales in i18n test coverage (#7271)
-  - fix: add missing agentBehaviour and profile keys to tr/nl/uk locales
-  - fix: remove duplicate profile.switchingAccount English fallback from nl.ts
-- @St0rmz1:
-  - docs(kiloclaw): add Triggers section with webhooks documentation
+- Thanks also to @wiliyam, @St0rmz1
 
 ## 7.1.17
 
@@ -122,13 +79,7 @@ No notable changes
 - Handle tool-call without prior tool-input-start event
 - Register Apertis as CLI provider with dynamic model fetching (@theQuert)
 - Pass duplex in fetch init to survive VS Code proxy-agent wrapper
-
-**Thank you to 2 community contributors:**
-- @theQuert:
-  - feat: add Apertis provider to VS Code legacy migration mapping
-  - feat: register Apertis as CLI provider with dynamic model fetching
-- @halaxa:
-  - Fix typo in Linux x64 download link
+- Thanks also to @halaxa
 
 ## 7.1.11
 
@@ -143,18 +94,7 @@ No notable changes
 - Prevent CMD window flash on Windows
 - Restore agent picker labels
 - Fix user denying override MCP ask rules
-
-**Thank you to 4 community contributors:**
-- @cyphercodes:
-  - fix: Reset All Settings now clears globalState items (variantSelections, recentModels, dismissedNotificationIds)
-- @IamCoder18:
-  - fix(vscode): enable scrolling in local session history list
-  - core: deprecate orchestrator agent with visual badge across UI
-  - fix: propagate deprecated field in agent merge and show description in dialog
-- @armaniacs:
-  - fix: prevent Enter from sending message during IME composition
-- @so-nerdyy:
-  - fix: preserve separator style when migrating .kilocode to .kilo paths (#7562)
+- Thanks also to @cyphercodes, @armaniacs, @so-nerdyy
 
 ## 7.1.9
 
@@ -188,15 +128,7 @@ No notable changes
 
 - Deny task tool usage in subagent sessions unless explicitly allowed by agent (@Githubguy132010)
 - Add open locally action for unassigned sessions (@AnDr-WaY)
-
-**Thank you to 3 community contributors:**
-- @Githubguy132010:
-  - fix: always deny task permission in subagent sessions
-  - fix: deny task in subagent sessions unless agent explicitly allows it
-- @AnDr-WaY:
-  - feat(vscode): add open locally action for unassigned sessions (#7627)
-- @ScuttleBot:
-  - docs: add Inception to supported BYOK providers list (#7638)
+- Thanks also to @ScuttleBot
 
 ## 7.1.4
 
@@ -210,14 +142,6 @@ No notable changes
 - Preserve selected model variant across sessions (@shssoichiro)
 - Use configured Code model when implementing a plan (@shssoichiro)
 
-**Thank you to 2 community contributors:**
-- @shssoichiro:
-  - fix(cli): use configured Code model when implementing a plan
-  - fix(cli): preserve selected variant as well
-  - fix(cli): improve agent handling
-- @Kilo:
-  - fix(cli): remove bash access from orchestrator mode to prevent direct file editing
-
 ## 7.1.3
 
 - Clarify configuration file paths and add config location awareness to system prompt
@@ -228,24 +152,13 @@ No notable changes
 - Always use kilo.db regardless of channel
 - Add missing git config flags to cleanup() for Windows (@mvanhorn)
 
-**Thank you to 1 community contributor:**
-- @mvanhorn:
-  - fix(snapshot): add missing git config flags to cleanup() for Windows
-
 ## 7.1.1
 
 - Change default bash auto-approve rule to ask
 - Add Dutch language support (@Githubguy132010)
 - Add drag-and-drop reordering for sidebar worktrees in Agent Manager
 - Fix dead documentation and GitHub links
-
-**Thank you to 2 community contributors:**
-- @Githubguy132010:
-  - feat: add Dutch language support
-  - fix: add nl to desktop i18n index files
-  - fix: complete Dutch language registrations
-- @Darkatek7:
-  - fix(docs): correct kilocode-docs path reference in contributing guide (#7390)
+- Thanks also to @Darkatek7
 
 ## 7.1.0
 
@@ -262,82 +175,7 @@ No notable changes
 - Prevent TUI from exiting prematurely (@kommander)
 - Avoid TTY corruption from double cleanup (@tobwen)
 - Various desktop app fixes: scroll jitter, sidebar sizing, session title spinner, review panel transition
-
-**Thank you to 22 community contributors:**
-- @adamdotdevin:
-  - fix(app): review panel transition
-  - fix(app): messages not loading reliably
-  - fix(app): less auto-expand/collapse
-  - feat(app): generate color palettes (#16232)
-  - revert(app): "STUPID SEXY TIMELINE (#16420)" (#16745)
-  - fix(app): don't animate review panel in/out
-  - fix(app): remove oc-1 theme
-  - fix(app): scroll jitter/loop
-- @thdxr:
-  - core: add OPENCODE_SKIP_MIGRATIONS flag to bypass database migrations
-  - core: allow beta channel to share database with stable channel
-  - core: update database path test to verify correct channel-based filename
-  - disable fallback to free nano for small model
-  - core: prevent accidental edits to migration files by restricting agent access
-- @iamdavidhill:
-  - tui: center empty states vertically in session view and improve review panel messaging for projects without version control
-  - tui: align numeric displays consistently across tool outputs and diff counters using tabular numerals
-  - tui: balance titlebar columns so center content doesn't get squeezed by long side content
-  - tui: dock auto-accept after thinking and move Add file to bottom-left
-  - tui: revert prompt control docking
-  - tui: keep model + thinking selectors beside Add file
-  - tui: add more editor bottom padding for prompt controls
-  - tui: expose auto-accept as a permissions select
-  - tui: use text-base color for prompt selects
-  - tui: add opencode logo to new session screen so users can immediately identify the app when starting a fresh session
-  - tui: revert new-session logo on dev so this UI change only ships with auto-accept-permissions
-  - tui: restore new-session logo on dev so users recognize OpenCode immediately
-  - tui: remove prompt model/thinking/permissions selectors on dev so the composer stays simple
-  - app: suppress hover when opening project menu or right-clicking to prevent flickering
-  - tui: fix sidebar background color when collapsed
-  - tui: fix sidebar workspace container sizing by adding box-border class to prevent content overflow issues
-  - fix(app): session title turn spinner (#16764)
-- @natewill:
-  - fix(tui): fix broken /mcp toggling (#16431)
-- @tobwen:
-  - fix(opencode): avoid TTY corruption from double cleanup (#16565)
-- @Bezkup:
-  - docs(zen.mdx): correct Italian grammar and punctuation errors (#16590)
-- @nexxeln:
-  - fix: prune and evict stale app session caches (#16584)
-  - fix: trim retained desktop terminal buffers (#16583)
-- @Hona:
-  - fix(tui): canonicalize cwd after chdir (#16641)
-  - fix(app): sanitize workspace store filenames on Windows (#16703)
-- @kommander:
-  - guard tui exit (#16640)
-- @ariane-emory:
-  - docs: add session_child_first keybinding to documentation (#16631)
-- @opencode-agent[bot]:
-  - docs(i18n): sync locale docs from english changes
-- @ericclemmons:
-  - fix(opencode): pass missing auth headers in `run --attach` (#16097)
-- @yihuikhuu:
-  - fix(app): fix issue with scroll jumping when pressing escape in comment text area (#15374)
-- @MrMushrooooom:
-  - add copilot gpt-5.4 xhigh support (#16294)
-- @Krule:
-  - feat(gitlab): send context-1m-2025-08-07 beta header to enable 1M context window (#16153)
-- @jlongster:
-  - feat(tui): add initial support for workspaces into the tui (#16230)
-- @ShriKaranHanda:
-  - fix(storybook): add ci build workflow (#16760)
-- @neriousy:
-  - fix(app): dismiss toast notifications when questions or permissions a… (#16758)
-- @johnnyeric:
-  - fix: Update kilo-ui and kilo-vscode to use BasicTool that replaced ToolCall from previous OpenCode releases
-  - fix(kilo-ui): Restore kilo-ui message-part fork dependencies removed by upstream v1.2.23
-  - fix: Add unit test to cover BasicTool and GenericTool export
-  - fix(kilo-vscode): Update storybook due to theme name change in upstream v1.2.23
-- @marius-kiloclaw:
-  - fix(vscode): add upper bounds check in mode switcher keyboard navigation (#7335)
-- @Githubguy132010:
-  - docs(kilo-docs): add VS Code rollback install guidance (#7372)
+- Thanks also to @adamdotdevin, @iamdavidhill, @Bezkup, @nexxeln, @ariane-emory, @ericclemmons, @yihuikhuu, @ShriKaranHanda, @neriousy, @johnnyeric, @marius-kiloclaw, @Githubguy132010
 
 ## 7.0.51
 
@@ -355,132 +193,7 @@ No notable changes
 - Add interactive timeline visualization to Agent Manager (@kitlangton)
 - Add slash command support to chat input (@Githubguy132010)
 - Various desktop app improvements: model persistence, file tree, sidebar animations, search, deep links
-
-**Thank you to 30 community contributors:**
-- @iamdavidhill:
-  - docs: send Go landing page links to Go docs
-  - docs: replace Go landing page video with interactive limits graph
-  - docs: clarify Go models in FAQ answer
-  - docs: update Go privacy copy for global hosting
-  - docs: de-link Go testimonials and swap Zen→Go
-  - docs: localize Go graph and testimonial copy
-  - docs: make Go hero CTA translatable with pricing emphasis
-  - tui: reduce excessive spacing in go route layout to improve visual balance
-  - tui: clarify which models are available in Go subscription
-  - tui: show Go request limits per 5-hour session
-  - docs: redesign Go pricing graph with horizontal bars and inline request labels
-  - tui: clarify free tier includes Big Pickle and promotional requests on Go pricing page
-  - tui: clearer graph labels and responsive layout for usage visualization
-  - tui: prevent Go pricing graph from overflowing on medium screens by constraining width and moving axis labels outside SVG for sharper rendering
-  - tui: remove keyboard shortcut tooltips from new session and new workspace buttons in the sidebar
-  - fix(app): better review/filetree empty states (#16221)
-  - feat(app): sidebar reveal animation, hover peek overlay, and weaker dividers (#16374)
-  - app: fix portal positioning for sidebar menus and tooltips by removing conditional mount logic
-  - tui: align session empty states (#16412)
-  - tui: remove close button from project hover popover (#16403)
-- @stolinski:
-  - docs: Add opencode-sentry-monitor to ecosystem documentation (#16037)
-- @opencode-agent[bot]:
-  - docs(i18n): sync locale docs from english changes
-- @jlongster:
-  - fix(core): handle SIGHUP and kill process (#16057)
-  - fix(core): log stack trace when schema validation fails (#16401)
-- @Hona:
-  - dont let dax touch the ui (#16060)
-  - fix(git): stop leaking fsmonitor daemons e.g. 60GB+ of commited memory after running tests (#16249)
-  - fix(opencode): sanitize preview database filenames (#16430)
-  - feat(desktop): show skill issue when snapshotting is off (#16432)
-  - fix(windows): git path resolution for modified files across Git Bash, MSYS2, and Cygwin (#16422)
-  - test(app): abort sessions and wait for idle before e2e cleanup (#16439)
-  - test(app): share workspace slug wait helper across e2e specs (#16446)
-- @dbpolito:
-  - feat(opencode): Adding options to auth login to skip questions (#14470)
-- @Brendonovich:
-  - app: prefer using useLocation instead of window.location (#15989)
-  - desktop-electon: handle latest version update check properly
-  - desktop: new-session deeplink (#15322)
-- @nexxeln:
-  - desktop: remove unnecessary macOS entitlements (#16161)
-  - share: speed up share loads (#16165)
-  - feat: add project git init api (#16383)
-- @OpeOginni:
-  - fix(app): improve agent selection logic passing in configured models and variants correctly (#16072)
-  - refactor(desktop): improve error handling and translation in server error formatting (#16171)
-- @adamdotdevin:
-  - fix(app): no delay on tooltip close
-  - fix(app): mod+f always opens search
-  - fix(app): icon jiggle
-  - fix(app): file icon stability
-  - fix(app): file path truncation in session turn
-  - fix(app): provider settings consistency
-  - fix(app): websearch and codesearch tool rendering
-  - fix(app): stale read error
-  - fix(app): locale error
-  - fix(app): stale keyed show errors
-  - chore(app): ghostty-web fork
-  - fix(app): load tab on open file
-  - fix(app): part type gate
-  - fix(app): fix max-width on timeline
-  - fix(app): task agent title
-  - fix(app): can't scroll files
-  - fix(app): all panels transition
-  - fix(app): model sticks to session
-  - fix(app): new session uses agent model/variant
-- @ualtinok:
-  - fix(app): preserve question dock state across session switches (#16173)
-- @thdxr:
-  - feat(tui): add onClick handler to InlineTool and Task components (#16187)
-  - refactor: replace Bun.sleep with node timers (#15013)
-  - refactor: replace Bun.write/file with Filesystem utilities in snapshot
-  - refactor: replace Bun.write with Filesystem.write in config files
-  - refactor: replace Bun.hash with Hash.fast using xxhash3-xxh64
-  - refactor: replace Bun.stdin.text with Node.js stream reading
-  - refactor: use node:stream/consumers for stdin reading
-  - fix: use sha1 for hash instead of unsupported xxhash3-xxh64
-  - refactor: replace Bun.connect with net.createConnection
-  - refactor: replace Bun.stderr and Bun.color with Node.js equivalents
-  - refactor(opencode): replace Bun.which with npm which (#15012)
-  - fix: restore Bun stdin reads for prompt input (#16300)
-  - chore(storage): update drizzle and channel db handling
-  - fix issue with migration
-- @Seungjun0906:
-  - fix(console): follow-up for #13108 docs/en routing and locale cookie sync (#13608)
-- @neriousy:
-  - fix(app): stale show (#16236)
-  - tests(app): e2e tests part 67 (#16406)
-  - fix(app): preserve file tree tab on reopen + fix e2e test regressions (#16482)
-- @msadiks:
-  - feat: add "gpt-5.4" to codex allowed models list (#16274)
-- @luisfelipesena:
-  - fix(app): enable auto-accept keybind regardless of permission config (#16259)
-- @imdzx:
-  - feat: Add Vietnamese README and update all language navigation links … (#16322)
-- @KirillTregubov:
-  - fix(app): add english to locale matchers (#16280)
-- @hoshiumiarata:
-  - fix(ui): prevent unwanted key events during composition in LineCommentEditor (#16361)
-- @alexandrereyes:
-  - fix(app): enable Safari autocorrect in normal mode, disable in shell mode (#15563)
-- @jayair:
-  - docs: update legal policies for 2026 terms refresh
-- @kikuchan:
-  - fix(pty): pty session handle leak (#15599)
-- @ShriKaranHanda:
-  - fix(config): point GitHub PR search tool at current repository (#16441)
-  - fix(storybook): restore build by mocking useLocation (#16472)
-- @natewill:
-  - fix(tui): fix broken /export toggling (#16443)
-- @ranqn:
-  - fix(opencode): preserve original line endings in 'edit' tool (#9443)
-- @kitlangton:
-  - STUPID SEXY TIMELINE (#16420)
-- @cyberprophet:
-  - fix(app): guard session-header current() against undefined when options is empty (#16478)
-- @Eric-Guo:
-  - fix(app): text-shimmer undefined length (#16475)
-- @Githubguy132010:
-  - feat(vscode): add slash command support to chat input (#7263)
-  - feat(vscode): implement client-side slash commands (/new, /sessions, /models, etc.) (#7296)
+- Thanks also to @iamdavidhill, @stolinski, @Brendonovich, @OpeOginni, @adamdotdevin, @ualtinok, @thdxr, @Seungjun0906, @neriousy, @imdzx, @KirillTregubov, @hoshiumiarata, @alexandrereyes, @jayair, @ShriKaranHanda, @natewill, @cyberprophet, @Eric-Guo
 
 ## 7.0.50
 
@@ -493,66 +206,10 @@ No notable changes
 - Add CI check for missing translation keys (@kilo-code-bot[bot])
 - Preview pasted images in chat input (@Githubguy132010)
 
-**Thank you to 5 community contributors:**
-- @alex-alecu:
-  - feat: add process tree utility for memory diagnostics
-  - feat: add GET /process server route for process status
-  - chore(sdk): regenerate SDK with ProcessInfo and ProcessStatus types
-  - feat: display process tree with memory usage in TUI status dialog
-  - fix: use ucomm for reliable ps parsing and extract script names from args
-  - fix: cap tsserver memory at 1.5 GB and disable automatic typing acquisition
-  - feat: add tsgo/tsc diagnostic runner for lightweight TypeScript checking
-  - feat: add lightweight LSPClient adapter backed by tsgo diagnostics
-  - feat: replace typescript-language-server with lightweight tsgo client
-  - fix: resolve native tsgo binary directly, skip node.js wrapper
-  - fix: defer tsgo to waitForDiagnostics, skip warm-up calls
-  - perf: enable --incremental for warm tsgo runs (~200-400ms after first check)
-  - refactor: remove process tree status dialog feature
-  - feat: use persistent tsgo --lsp server when KILO_EXPERIMENTAL_LSP_TOOL is enabled
-  - fix: fallback to TsClient when tsgo LSP spawn fails in experimental mode
-  - fix: resolve workspace-local tsc from node_modules
-  - kill stuck tsgo process after timeout
-  - add timeout to TsClient diagnostic wait
-  - fix(cli): race pipe drains against timeout so tsc hangs are killed
-  - fix(cli): use .cmd shim for local tsc on Windows
-- @kirillk:
-  - feat(vscode): add Recommended group to model selector
-  - feat(vscode): align model selector active state and group label styling with kilo-ui design system
-  - feat(vscode): filter model selector by model name only
-  - feat(vscode): sort models within groups alphabetically to cluster same-prefix models together
-  - feat(vscode): wire isFree attribute to free badge with cost fallback, use kilo-ui Tag
-  - feat(vscode): scroll active model into center view when model picker opens
-  - feat(vscode): set selectedIndex to active model when model picker opens
-  - fix(vscode): update isFree tests to match new isFree/cost-based signature
-  - fix(vscode): gate isFree on kilo gateway provider with cost fallback
-  - feat(vscode): propagate isFree from cloud API through CLI to extension
-  - test(vscode): remove isFree fallback tests now handled by backend
-- @kilo-code-bot[bot]:
-  - test(vscode): add CI check for missing translation keys
-  - test(vscode): add locale completeness checks and fix missing translations
-  - fix(vscode): address i18n test review feedback
-  - fix(cli): replace remaining "opencode" branding references with "kilo"
-  - fix(cli): rename shadowed args variable in pr command to fix typecheck
-  - fix(cli): use variable for binary name in pr.ts to minimize upstream diff
-  - fix(cli): update mDNS runtime defaults from opencode.local to kilo.local
-  - test(vscode): add marketplace screenshot stories for MCP and Modes tabs
-  - fix(vscode): re-fetch merged config after settings update to prevent revert
-- @imanolmzd-svg:
-  - Save permission rules to config (#7143)
-  - Remove allow always button (#7159)
-  - Rename PermissionDock dropdown (#7212)
-  - Rename permission dock button (#7214)
-- @Githubguy132010:
-  - fix(vscode): preview pasted images in chat input (#7052)
-
 ## 7.0.49
 
 - Don't dispose all instances on global config update
 - Reload autocomplete when CLI backend connection state changes (@kilo-code-bot[bot])
-
-**Thank you to 1 community contributor:**
-- @kilo-code-bot[bot]:
-  - fix(vscode): reload autocomplete when CLI backend connection state changes
 
 ## 7.0.48
 
@@ -570,73 +227,7 @@ No notable changes
 - Surface CLI startup errors in the extension (@kirillk)
 - Dev snapshot build script for dogfooding (@kirillk)
 - Fix laggy hover and debounce search in ModelSelector (@kirillk)
-
-**Thank you to 16 community contributors:**
-- @Copilot:
-  - revert: undo turbo typecheck dependency change from #14828 (#15902)
-- @alberti42:
-  - fix: `run --attach` agent validation (#11812)
-- @thdxr:
-  - docs(bash): clarify output capture guidance (#15928)
-  - fix(process): prevent orphaned opencode subprocesses on shutdown (#15924)
-- @jlongster:
-  - feat(core): rework workspace integration and adaptor interface (#15895)
-- @Brendonovich:
-  - desktop: add electron version (#15663)
-  - ui: rely on task part href instead of onClick handler (#15978)
-- @Niraj12chaudhary:
-  - fix(docs): update dead opencode-daytona ecosystem link (#15979)
-- @opencode-agent[bot]:
-  - docs(i18n): sync locale docs from english changes
-- @adamdotdevin:
-  - fix(app): terminal tab close
-  - fix(app): loading session should be scrolled to the bottom
-  - fix(app): remove diff lines from sessions in sidebar
-  - fix(app): delay dock animation on session load
-  - fix(app): remove blur from todos
-- @kommander:
-  - show scrollbar by default (#15282)
-- @imanolmzd-svg:
-  - Permission toggles per-pattern in permission dock (#6977)
-  - Permissions: styling and tooltips (#7025)
-  - Improved permission prompt layout (#7037)
-  - Permission prompt style improvements (#7050)
-  - chore(sdk): regenerate endpoints (#7062)
-  - Granular bash permission rules (#7091)
-  - Visual regression tests for PermissionDock dropdown states (#7146)
-- @kilo-code-bot[bot]:
-  - fix: remove redundant vscode.env.openExternal call during login flow
-  - docs: add Android Studio known issues to JetBrains troubleshooting section
-  - Add CI check to prevent kilocode_change markers in kilo packages
-  - Move kilocode_change check into existing test-vscode workflow instead of separate workflow
-  - Move kilocode_change check to package.json script following knip pattern
-  - refactor: pass settings command URI as i18n interpolation variable instead of hardcoding in locale files
-  - fix(vscode): append to prompt instead of replacing on Add to Context
-  - fix(vscode): implement terminal Add to Context using clipboard-based selection
-  - docs: prune migration plan to remaining work only
-  - Remove (NEW) labels and feature toggle from VS Code extension
-  - feat(gateway): change default model from kilo-auto/frontier to kilo-auto/balanced
-  - fix(kilo-docs): replace broken Unbound gateway link with working /connect URL
-  - fix(cli): disable external proxy to app.opencode.ai
-  - fix(cli): comment out proxy code instead of deleting it
-- @kirillk:
-  - feat(vscode): add dev-snapshot build script with username in version
-  - docs(vscode): update snapshot build docs with directory and version info
-  - fix(vscode): include username in vsix filename, deduplicate path output
-  - chore(vscode): move snapshot scripts to bottom of package.json
-  - fix(vscode): semver-safe sanitization of git user.name in snapshot version
-  - fix(vscode): run full typecheck (extension + webview) in snapshot build
-  - chore(vscode): replace install-dev-extension with snapshot:install task
-  - chore(vscode): add DevSnapshot Build and Install tasks
-  - chore(vscode): use green checkmark for install success message
-  - fix(vscode): fix laggy hover in ModelSelector, clarify naming
-  - fix(vscode): debounce ModelSelector search input by 250ms
-- @St0rmz1:
-  - docs(kiloclaw): add GitHub integration page and nav entry
-- @brick-pixel:
-  - fix: use correct config.json schema URL (app.kilo.ai) (#7086)
-- @DhruvBhatia0:
-  - feat: add WarpGrep AI-powered codebase search tool (#6685)
+- Thanks also to @Brendonovich, @Niraj12chaudhary, @adamdotdevin, @St0rmz1
 
 ## 7.0.47
 
@@ -657,149 +248,7 @@ No notable changes
 - Add compact UI to desktop app (@neriousy)
 - Add Turkish locale support (@vaur94)
 - Various desktop app improvements: permissions UI, auto-accept mode, tabs styling, diff/code comments
-
-**Thank you to 36 community contributors:**
-- @niushuai1991:
-  - docs: Sync zh_CN docs with English Version (#15228)
-- @OpeOginni:
-  - refactor(desktop): enhance project tile interaction with suppress hover functionality (#15214)
-- @adamdotdevin:
-  - feat(app): auto-accept all permissions mode
-  - feat(app): new tabs styling (#15284)
-  - fix(app): terminal issues
-  - fix: test
-  - feat(app): better diff/code comments (#14621)
-  - fix(app): permission notifications
-  - fix(app): permission indicator
-  - fix(app): scroll jacking
-  - fix(app): update provider sprite
-  - fix(app): auto-accept permissions
-  - fix(app): scroll issues
-  - chore(app): solidjs refactoring (#13399)
-  - fix(app): default auto-respond to false
-  - fix(app): timeline jank
-  - fix(app): tighten up header elements
-  - fix(app): defer diff rendering
-- @nexxeln:
-  - fix(ui): avoid truncating workspace paths in assistant text (#14584)
-  - fix(ui): prevent filename and diff count overlap in session changes (#14773)
-  - Revert "fix(i18n): polish turkish translations" (#15656)
-  - fix(opencode): avoid gemini combiner schema sibling injection (#15318)
-- @iamdavidhill:
-  - tui: fix session tab alignment in compact view to prevent vertical overflow
-  - fix(ui): mute inactive file tab icons
-  - core: keep review header buttons visible when scroll thumb shows
-  - ui: widen scroll thumb hit area
-  - ui: tighten scroll thumb and review padding
-  - ui: avoid session review header clipping
-  - ui: move session review bottom padding
-- @kitlangton:
-  - refactor(app): dedupe filetree scroll state
-  - feat(app): add Warp to the open menu (#15368)
-  - perf(session): faster session switching via windowed rendering and staged timeline (#15474)
-  - Animation Smorgasbord (#15637)
-- @Brendonovich:
-  - app: allow providing username and password when connecting to remote server (#14872)
-  - desktop: move open_path to rust (#15323)
-  - desktop: add latest.json finalizer script (#15335)
-  - desktop: use correct download link in finalize-latest-json
-  - desktop: fix latest.json finalizer
-- @neriousy:
-  - feat(app): recent projects section in command pallette (#15270)
-  - fix(app): show proper usage limit errors (#15496)
-  - fix(app): make provider icon resolved id reactive (#15583)
-  - feat(app): add compact ui (#15578)
-  - feat(app): show which messages are queued (#15587)
-- @pirrozani:
-  - docs(readme): add Greek translation and update language navigation (#15281)
-- @vaur94:
-  - feat(app): add Turkish (tr) locale for app and ui packages (#15278)
-  - fix(i18n): polish turkish translations (#15491)
-- @jlongster:
-  - Change keybindings to navigate between child sessions (#14814)
-  - feat(core): basic implementation of remote workspace support (#15120)
-  - feat(core): add WorkspaceContext (#15409)
-  - feat(core): add workspace_id to `session` table (#15410)
-- @Niraj12chaudhary:
-  - docs: add missing Bosanski link to Arabic README (#15399)
-- @alexyaroshuk:
-  - fix(app): make bash output selectable (#15378)
-  - fix(app): display skill name in skill tool call (#15413)
-- @jayair:
-  - docs: Update OpenCode Go subscription and usage details (#15415)
-- @rexdotsh:
-  - fix(app): fallback to synthetic icon for unknown provider IDs (#15295)
-- @thdxr:
-  - docs: fix broken config imports in translated documentation
-  - feat(tui): improve task tool display with subagent keybind hints and spinner animations (#15607)
-  - tui: use arrow indicator for active tool execution (#15887)
-  - tui: show pending toolcall count instead of generic 'Running...' message
-  - tui: replace curved arrow with straight arrow for better terminal compatibility
-- @inkdust2021:
-  - docs(ecosystem): add opencode-vibeguard (#15464)
-- @ryanwyler:
-  - fix: kill orphaned MCP child processes and expose OPENCODE_PID on shu… (#15516)
-- @rianvdm:
-  - fix(opencode): show human-readable message for HTML error responses (#15407)
-- @noamzbr:
-  - fix: project ID conflict, and update on same session id (#15596)
-- @bentrd:
-  - fix: recover from 413 Request Entity Too Large via auto-compaction (#14707)
-- @ryanskidmore:
-  - fix(opencode): clone part data in Bus event to preserve token values (#15780)
-  - fix(provider): forward metadata options to cloudflare-ai-gateway provider (#15619)
-- @jerome-benoit:
-  - fix(opencode): disable session navigation commands when no parent session (#15762)
-- @MrMushrooooom:
-  - fix(app): stabilize project close navigation (#15817)
-- @06ergin06:
-  - fix: update Turkish translations (#15835)
-- @opencode-agent[bot]:
-  - docs(i18n): sync locale docs from english changes
-- @kommander:
-  - Upgrade opentui to v0.1.86 and activate markdown renderable by default (#14974)
-- @elithrar:
-  - fix(auth): normalize trailing slashes in auth login URLs (#15874)
-- @hdcodedev:
-  - fix: correct package paths and commands in CONTRIBUTING.md
-- @apoorvumang:
-  - feat: add reasoning effort support for Inception Mercury-2
-  - fix: remove instant reasoning effort for mercury-2 on kilo gateway and direct inception
-  - fix: use mercury-2 model ID in tests instead of mercury-2-coder
-- @kilo-code-bot[bot]:
-  - docs: update Auto Model Frontier tier from Sonnet 4.5 to Sonnet 4.6
-  - Remove outdated vercel-ai-gateway architecture doc
-  - Remove references to deleted vercel-ai-gateway architecture doc
-  - fix: prevent infinite loop in visual regression CI when screenshots are non-deterministic
-  - fix: use commit message check instead of re-running tests for loop prevention
-  - fix: eliminate network dependency in avatar visual regression test
-  - feat(sdk): add workspace query param to worktree diff endpoints
-  - fix: use avatar silhouette image instead of solid black for WithImage story
-  - fix: remove stale screenshots for deleted stories in visual regression CI
-  - fix: use timestamp-based stale screenshot detection instead of deleting all baselines
-  - fix: use storybook index to detect stale baselines instead of timestamps
-  - revert: restore original baseline screenshots
-- @evanjacobson:
-  - Add KiloClaw architecture diagram to architecture overview docs
-  - feat(kilo-docs): add PostHog reverse proxy via Next.js rewrites
-  - chore(kilo-docs): remove dead POSTHOG_HOST env var comment
-  - chore(kilo-docs): add inline comments to PostHog proxy config
-  - fix(kilo-docs): add basePath: false to PostHog proxy rewrites
-- @kirillk:
-  - feat(vscode): surface CLI startup errors in the extension
-  - style(vscode): remove redundant color declarations from startup error banner
-  - fix(vscode): include CLI path in startup error message
-  - style(vscode): use editor background for startup error details panel
-  - feat(vscode): surface userMessage/userDetails in StartupErrorBanner
-  - test(vscode): add tests for toErrorMessage and improve Error: line matching
-  - feat(vscode): add i18n for cli-backend server errors and translate all locales
-  - fix(vscode): deduplicate concurrent initializeConnection calls to prevent orphaned subscriptions
-  - fix: show full text in question option descriptions instead of truncating with ellipsis
-  - fix: wrap long mode descriptions instead of truncating with ellipsis
-  - fix(vscode): use vscode-font-size token for mode switcher item
-  - fix(vscode): selected mode description inherits active selection foreground
-- @marius-kiloclaw:
-  - fix(mcp-migrator): handle malformed JSON in legacy .kilocode/mcp.json (#7012)
+- Thanks also to @niushuai1991, @OpeOginni, @adamdotdevin, @iamdavidhill, @Brendonovich, @pirrozani, @Niraj12chaudhary, @alexyaroshuk, @jayair, @rexdotsh, @inkdust2021, @noamzbr, @jerome-benoit, @MrMushrooooom, @06ergin06, @hdcodedev, @evanjacobson, @kirillk
 
 ## 7.0.46
 
@@ -811,35 +260,9 @@ No notable changes
 - Add beta notice banner to provider settings screen (@kilo-code-bot[bot])
 - Fix TextPartDisplay crash in cloud session messages (@kirillk)
 
-**Thank you to 2 community contributors:**
-- @kilo-code-bot[bot]:
-  - fix: remove rounded corners from bash output box in vscode extension
-  - Add README for npm package
-  - Fix README based on review feedback
-  - Remove kilo pr command from README
-  - chore(kilo-vscode): run prettier on unformatted i18n files
-  - ci(kilo-vscode): add prettier format check to CI
-  - feat(vscode): add beta notice banner to provider settings screen
-- @kirillk:
-  - fix: pass time field in cloud session messages to fix TextPartDisplay crash
-  - refactor: extract CloudSessionMessage type and mapCloudSessionMessageToWebviewMessage utility
-
 ## 7.0.44
 
 - Fix UTF-8 multi-byte stream decoding in bash tool output (@evanjacobson)
-
-**Thank you to 2 community contributors:**
-- @kilo-code-bot[bot]:
-  - docs(kilo-docs): remove model-provider-blocklist doc and nav item
-  - Validate cloud session ID starts with 'ses_' on import
-  - Revise legacy session ID message and remove formatting-only changes
-  - Remove unhelpful 'use a different session ID' guidance from legacy session error
-- @evanjacobson:
-  - fix: use StringDecoder for UTF-8 multi-byte stream decoding
-  - fix: use separate StringDecoder per stream to prevent cross-pipe corruption
-  - docs: add before/after screenshots for UTF-8 bug fix PR
-  - fix: flush StringDecoder at EOF to surface trailing buffered bytes
-  - fix: wait for stdio streams to drain before flushing decoders in bash tool
 
 ## 7.0.43
 
@@ -850,10 +273,6 @@ No notable changes
 - Add windowsHide option to all spawn calls to prevent CMD window flash on Windows
 - Add --cloud-fork CLI option to import cloud sessions locally
 
-**Thank you to 2 community contributors:**
-- @kilo-code-bot[bot]:
-  - docs: remove exec approvals info callout from Control UI page
-
 ## 7.0.41
 
 - Save and load per-agent model selection in CLI (@shssoichiro)
@@ -861,29 +280,7 @@ No notable changes
 - Use separate task ID for title generation to prevent model leak
 - Open Settings and Profile in editor panes instead of sidebar (@kilo-code-bot[bot])
 - Show todo permission prompts in bottom dock (@kilo-code-bot[bot])
-
-**Thank you to 3 community contributors:**
-- @kilo-code-bot[bot]:
-  - docs: add custom subagents configuration page to CLI documentation
-  - docs: convert Copy page button into dropdown menu with Open markdown and Edit page options (#6763)
-  - docs: remove Kilo Web reference from architecture overview
-  - fix: skip auto-commit of visual regression screenshots for fork PRs
-  - fix: update fork PR error message to direct contributors to Kilo developers
-  - fix(vscode): show todo permission prompts in bottom dock
-  - feat(kilo-vscode): open Settings and Profile in editor panes instead of sidebar
-  - docs: add AWS Bedrock as a supported BYOK provider
-  - fix: add foreground color to selected mode/thinking selector items for light theme contrast
-  - Replace discord.gg/kilocode URLs with kilo.ai/discord
-- @ParthProLegend:
-  - Add installation instructions for GitHub Releases
-  - Update README with x64-baseline instruction details
-  - Fix download links in README for Linux and Windows ARM
-  - Add npm install note for hidden `.kilo` file
-  - Fix typo in Linux ARM download link
-  - Update README.md
-  - Document hidden .kilo file for npm installation
-- @shssoichiro:
-  - fix(cli): save and load per-agent model selection
+- Thanks also to @ParthProLegend
 
 ## 7.0.40
 
@@ -892,53 +289,13 @@ No notable changes
 - Migrate default model to kilo-auto/frontier (@kilo-code-bot[bot])
 - Fix plan_exit regression in batch tool execution (@alex-alecu)
 - Prevent extension hang on server shutdown
-
-**Thank you to 4 community contributors:**
-- @imanolmzd-svg:
-  - fix: Remove disposeAll() on auth
-  - fix: Removed dependencies
-  - refactor: extract ErrorDisplay component and shared unwrapError utility
-  - refactor: use shared unwrapError in VscodeSessionTurn
-  - feat: add error parsing and classification helpers for Kilo API errors
-  - feat: add specific error displays for paid model and promotion limit in ErrorDisplay
-  - feat: wire up login callback from VscodeSessionTurn to ErrorDisplay
-  - style: use plain layout with legacy copy for auth error displays
-  - style: add auth-prompt component styles using data-component/data-slot convention
-  - feat: add i18n keys and wire up useLanguage for error displays
-  - fix: Translations formatting
-  - fix: use SDK AssistantMessage type for parseAssistantError parameter
-  - feat: Better messages for auth required errors
-  - fix: Moved kilocode specific code to kilocode folder
-  - fix: Added toast for Kilo errors
-  - fix: Adjusted copy on connect message
-- @alex-alecu:
-  - fix(plan): restore unconditional plan_exit tool registration
-  - fix(batch): disallow plan_exit from batch tool execution
-- @kilo-code-bot[bot]:
-  - refactor(model): migrate default to kilo-auto/frontier across codebase
-  - docs: add KiloClaw pre-installed software reference (#6720)
-- @Snow-in-Dublin:
-  - fix(acp): avoid parsing provider-less kilo default models
+- Thanks also to @Snow-in-Dublin
 
 ## 7.0.39
 
 - Invalidate model cache on authentication and organization changes (@imanolmzd-svg)
 - Various VS Code extension UI fixes: cursor pointers, sidebar colors, button alignment, subagent session filtering (@kilo-code-bot[bot])
-
-**Thank you to 3 community contributors:**
-- @Br1an67:
-  - fix: add cursor pointer to subagent link in chat messages
-- @kilo-code-bot[bot]:
-  - fix: remove duplicate reasoning hack for kilo provider
-  - fix: add redirect for broken voice transcription docs link (#6051)
-  - fix: use sidebar background color for chat panel to distinguish from editor
-  - Change worktree remove icon from X to trash can (#6611)
-  - fix: add cursor pointer to clickable elements (#6255)
-  - fix: remove borders from reasoning blocks and text parts in agent responses
-  - fix: right-align prompt enhance and send buttons in chat input
-  - fix: filter subagent sessions from session history
-- @imanolmzd-svg:
-  - fix: invalidate model cache on auth/org changes and reload state after dispose
+- Thanks also to @Br1an67
 
 ## 7.0.38
 
@@ -947,35 +304,12 @@ No notable changes
 - Add KILOCODE_VERSION environment variable support to editor header (@kilo-code-bot[bot])
 - Add colorblind-friendly theme to the CLI (@idreesmuhammadqazi-create)
 
-**Thank you to 2 community contributors:**
-- @kilo-code-bot[bot]:
-  - fix(opencode-provider): switch kilo default model to auto-small
-  - feat(kilo-gateway): add KILOCODE_VERSION support to editor header
-  - fix: docs banner respects dark/light mode theme (#6576)
-  - disable 'kilo web' command (unsupported opencode web UI)
-  - docs: high-priority screenshot test coverage gaps
-  - feat: add Storybook stories for all high-priority screenshot test coverage gaps
-- @idreesmuhammadqazi-create:
-  - Add colorblind-friendly theme to the cli (again) (#6493)
-
 ## 7.0.37
 
 - Ask mode respects user permission configuration for edit tools
 - Improve model filtering performance in TUI (@tspader)
 - Fix chat input buttons wrapping on narrow sidebar (@Br1an67)
-
-**Thank you to 4 community contributors:**
-- @Br1an67:
-  - fix: wrap chat input buttons on narrow sidebar
-- @tspader:
-  - fix: stop doing models.length for every model
-- @sonwr:
-  - docs(cli): clarify hidden .kilo install artifact behavior
-  - test(cli): clean up temp install artifact fixture
-  - test(cli): guard npm-dependent install artifact test
-- @kilo-code-bot[bot]:
-  - docs: add RELEASING.md documenting the release process
-  - docs: clarify that version input should be left empty by default
+- Thanks also to @sonwr
 
 ## 7.0.36
 
@@ -986,14 +320,7 @@ No notable changes
 
 - Fix Agent Manager worktree diff base branch calculation
 - Chat message autocomplete respects autocomplete switch (@mikij)
-
-**Thank you to 2 community contributors:**
-- @mikij:
-  - fix: chat message autocomplete respects autocomplete switch
-- @imanolmzd-svg:
-  - fix: migrate kilo gifs to LFS pointer
-  - fix: Remove old kilo gif
-  - Update README.md
+- Thanks also to @imanolmzd-svg
 
 ## 7.0.34
 
@@ -1003,88 +330,7 @@ No notable changes
 - Split TUI and server configuration (@kommander)
 - Remove interactive shell flag from sidecar spawn to prevent hang on macOS (@kilhyeonjun)
 - Add keyboard navigation between previous and next messages in desktop app (@neriousy)
-
-**Thank you to 16 community contributors:**
-- @PeterDaveHello:
-  - Update and refine zh-TW locale translations
-- @R44VC0RP:
-  - chore(workflows): label vouched users and restrict vouch managers (#15075)
-- @Oleksii-Pavliuk:
-  - fix(app): correct Copilot provider description in i18n files (#15071)
-- @neriousy:
-  - fix(app): keyboard navigation previous/next message (#15047)
-- @kommander:
-  - split tui/server config (#13968)
-- @OpeOginni:
-  - fix(docs): update schema URL in share configuration examples across multiple languages (#15114)
-- @adamdotdevin:
-  - fix(app): permissions and questions from child sessions (#15105)
-- @kilhyeonjun:
-  - fix(desktop): remove interactive shell flag from sidecar spawn to prevent hang on macOS (#15136)
-- @choephix:
-  - fix(app): middle-click tab close in scrollable tab bar (#15081)
-- @Hona:
-  - fix: most segfaults on windows with Bun v1.3.10 stable (#15181)
-- @imanolmzd-svg:
-  - chore(sdk): rename public API to Kilo branding
-  - chore(sdk): rename OpencodeClient to KiloClient in generated files
-  - chore(sdk): update consumers to use renamed Kilo SDK exports
-  - chore(upstream): add SDK rename rules to prevent reversion on merge
-  - chore(kilo-vscode): switch tsconfig to bundler module resolution
-  - refactor(kilo-vscode): replace HttpClient with SDK KiloClient in ConnectionService
-  - chore(kilo-vscode): migrate consumers from HttpClient to SDK KiloClient
-  - chore(kilo-vscode): replace SSEClient with SDK-based SdkSSEAdapter
-  - chore(kilo-vscode): eliminate duplicate types and delete obsolete files
-  - fix(kilo-vscode): resolve tsc errors from bundler resolution and SDK DOM types
-  - fix(kilo-vscode): use fire-and-forget for profile calls to handle gateway 401 gracefully
-  - fix(kilo-vscode): Restore SSE logging
-  - chore(kilo-vscode): log full SSE event payload in SdkSSEAdapter for debugging
-  - chore(kilo-vscode): migrate cloud sessions and worktree diff to SDK after rebase
-  - fix(opencode): add missing closing quote in SDK import code sample
-  - fix(kilo-vscode): wrap profile refresh after org switch in try/catch for best-effort handling
-  - fix(vscode): increase SSE heartbeat timeout to 90s to prevent unnecessary reconnections
-  - chore(kilo-vscode): improve error logging and test type safety
-  - refactor(kilo-vscode): use typed SDK events in kilo-provider-utils tests
-  - refactor(kilo-vscode): remove unnecessary type casts where SDK types are already correct
-  - fix(upstream): add context-free package name patterns to auto-transform mock.module references
-  - build(kilo-vscode): regenerate SDK types before extension build
-  - fix(kilo-vscode): migrate WorktreeStatsPoller from HttpClient to SDK after rebase
-  - fix(sdk): regenerate stale SDK types that drifted from server API after rebase
-  - feat(gateway): pass organization context to FIM autocomplete reqs
-  - refactor: remove unnecessary type assertions in AgentManagerProvider
-  - refactor: remove unnecessary type assertions in KiloProvider and BrowserAutomationService
-  - refactor: remove weak typing on KiloProvider.ts
-  - refactor: replace weak typing in normalizeProviders, AutocompleteModel and BrowserAutomationService
-  - refactor: rename normalizeProviders to indexProvidersById
-  - fix(autocomplete): restore OpenAI-compatible SSE chunk parsing in FIM completion
-  - refactor(autocomplete): use SDK client for FIM completion instead of manual fetch
-  - refactor: move ProfileView import to profile/ subfolder (align with upstream)
-  - revert: undo DiffPanel/FullScreenDiffView auto-open changes (upstream has better solution)
-  - revert: remove manual sessionKey prop (upstream uses diffSessionKey memo)
-  - feat: add isEventFromForeignProject to kilo-provider-utils for SDK event types
-  - feat: add projectID filtering and pendingSessionRefresh to KiloProvider (SDK)
-  - fix: wrap handleLogout throwOnError in try/catch to prevent unhandled rejection
-  - refactor: simplify SSE event extraction using typed GlobalEvent.payload
-  - fix: wrap cloud session import in try/catch to prevent unhandled rejection
-  - fix(tests): migrate upstream tests from HttpClient to SDK KiloClient
-  - fix(kilo-vscode): add .catch() to consumeLoop fire-and-forget to prevent silent rejections
-  - fix(kilo-vscode): remove unsafe as cast for cloudSessions response, use SDK types directly
-  - feat(autocomplete): abort stale FIM requests on new keystrokes
-  - fix(tests): fix session refresh test mock for CI compatibility
-  - fix(sdk): clean tsbuildinfo on build, auto-rebuild SDK, remove skipLibCheck
-  - fix: type FIM stream response instead of z.any()/unknown
-- @Phoen1xCode:
-  - feat(vscode): add back button to ProfileView
-- @kilo-code-bot[bot]:
-  - fix: filter notifications by showIn so CLI-only and extension-only notifications target the right client
-  - Update SECURITY.md to align with kilo.ai/security messaging
-  - fix(docs): self-host favicon assets and fix broken head declarations (#6463)
-  - Add pink pony message to 404 page (#6518)
-  - Rename 'Kilo Claw' to 'KiloClaw' in architecture docs (#6524)
-  - Skip visual regression tests on macOS (darwin)
-  - Add paths filter to docs link checker pull_request trigger
-- @dennismeister93:
-  - docs: update kilo for slack part with gitlab
+- Thanks also to @PeterDaveHello, @R44VC0RP, @Oleksii-Pavliuk, @OpeOginni, @adamdotdevin, @choephix, @Phoen1xCode, @dennismeister93
 
 ## 7.0.33
 
@@ -1099,128 +345,7 @@ No notable changes
 - Show LSP errors for apply_patch tool (@thdxr)
 - Stabilize diff viewer state and improve large-file review UX in agent manager
 - Various desktop app improvements: feed customization, reasoning summaries, scroll behavior, sound effect UX
-
-**Thank you to 26 community contributors:**
-- @nexxeln:
-  - fix(snapshot): respect info exclude in snapshot staging (#13495)
-  - fix(ui): preserve url slashes for root workspace (#14294)
-- @elithrar:
-  - fix(github): support variant in github action and opencode github run (#14431)
-- @adamdotdevin:
-  - fix(app): terminal issues (#14435)
-  - fix(app): large text pasted into prompt-input causes main thread lock
-  - fix(app): patch tool renders like edit tool
-  - fix(app): stay pinned with auto-scroll on todos/questions/perms
-  - feat(app): show/hide reasoning summaries
-  - wip(app): custom scroll view
-  - fix(app): session review re-rendering too aggressively
-  - fix(app): better sound effect disabling ux
-  - fix(app): remove double-border in share button
-  - fix: e2e test outdated
-  - fix(app): terminal issues
-  - feat(app): feed customization options
-  - fix(app): duplicate markdown
-  - fix(app): remove filetree tooltips
-  - fix(app): ignore stale part deltas
-- @R44VC0RP:
-  - feat: add list sessions for all sessions (experimental) (#14038)
-  - fix: update workflows for better automation (#14809)
-- @Brendonovich:
-  - desktop: bring back -i in sidecar arguments
-  - desktop: publish betas to separate repo (#14376)
-  - desktop: beta icon
-  - app: wait for loadFile before opening file tab
-  - desktop: make readme more accurate
-- @rekram1-node:
-  - cache platform binary in postinstall for faster startup (#14396)
-  - Revert "cache platform binary in postinstall for faster startup" (#14457)
-  - cache platform binary in postinstall for faster startup (#14467)
-- @tuhin-cmd:
-  - docs: add Bangla README translation (#14331)
-- @Seungjun0906:
-  - docs(ko): improve wording in gitlab, ide, index, keybinds, and lsp docs (#14517)
-- @Phoen1xCode:
-  - feat(vscode): add back button to ProfileView
-- @github-actions[bot]:
-  - Update VOUCHED list
-- @pirrozani:
-  - docs(tui): correct typo in TUI documentation (#14604)
-- @edemaine:
-  - fix(desktop): change detection on Windows, especially Cygwin (#13659)
-  - fix: Windows path support and canonicalization (#13671)
-- @kommander:
-  - upgrade opentui to v0.1.81 (#14605)
-- @Hona:
-  - fix(win32): normalize paths at permission boundaries (#14738)
-  - fix(cicd): flakey typecheck (#14828)
-  - fix(win32): scripts/turbo commands would not run (#14829)
-  - fix(win32): e2e sometimes fails because windows is weird and sometimes ipv6 (#14833)
-  - upgrade to bun 1.3.10 canary and force baseline builds always (#14843)
-  - fix: update createOpenReviewFile test to match new call order (#14881)
-  - fix(test): use path.join for cross-platform glob test assertions (#14837)
-  - fix(win32): add bun prefix to console app build scripts (#14884)
-  - fix(win32): handle CRLF line endings in markdown frontmatter parsing (#14886)
-  - fix(win32): add git flags for snapshot operations and fix tests for cross-platform (#14890)
-  - fix(test): normalize git excludesFile path for Windows (#14893)
-  - fix(test): harden preload cleanup against Windows EBUSY (#14895)
-  - fix(win32): fix plugin resolution with createRequire fallback (#14898)
-  - fix(win32): normalize backslash paths in config rel() and file ignore (#14903)
-  - fix(test): use path.sep in discovery test for cross-platform path matching (#14905)
-  - fix(test): replace Unix-only assumptions with cross-platform alternatives (#14906)
-  - fix(win32): add 50ms tolerance for NTFS mtime fuzziness in FileTime assert (#14907)
-  - fix(test): replace structuredClone with spread for process.env (#14908)
-  - fix(app): preserve native path separators in file path helpers (#14912)
-  - fix(opencode): import custom tools via file URL (#14971)
-  - fix(project): await git id cache write (#14977)
-  - fix(opencode): disable config bun cache in CI (#14985)
-- @kevinWangSheng:
-  - fix(app): correct inverted chevron direction in todo list (#14628)
-- @noamzbr:
-  - feat: ACP - stream bash output and synthetic pending events (#14079)
-  - fix: ACP both live and load share synthetic pending status preceeding… (#14916)
-- @alex-alecu:
-  - feat: Add memory leak tests to reproduce the bug
-  - fix: prevent MCP child process orphaning on close/dispose
-  - fix: resolve /exit hang caused by undelivered worker RPC response
-  - fix: guard terminateWorker against multiple invocations
-  - fix: document SDK version for private _process field access
-  - fix: close existing MCP client before spawning replacement in connect()
-  - fix: close existing MCP client before create() in add() to prevent process map corruption
-  - fix: replace empty catch blocks in memory test helpers with isAlive/trySendSignal utilities
-  - fix: unref shutdown timer in TUI worker to avoid keeping process alive
-  - fix: ensure MCP process tracking cleanup runs even if close rejects
-  - fix: Clear RPC channel for faster shutdown
-  - fix(tui): terminate orphaned CLI when terminal parent exits
-  - test(memory): make isAlive errno-aware
-  - test(memory): remove unsafe LSP any casts
-  - test(memory): isolate MCP baseline per test
-  - test(memory): scope orphan baselines per test
-  - test(memory): wait for MCP process exit before counting
-  - test(memory): replace orphan sleeps with exit waits
-  - fix: drop MCP transport monkey patching
-  - test(memory): remove MCP-specific docs and lifecycle tests
-  - test(memory): remove broad memory regression suite
-  - fix(tui): allow terminateWorker retries after failure
-- @OpeOginni:
-  - refactor: replace error handling with serverErrorMessage utility and checks for if error is ConfigInvalidError (#14685)
-- @neriousy:
-  - fix(app): on cancel comment unhighlight lines (#14103)
-  - feat(desktop): enhance Windows app resolution and UI loading states (#13320)
-- @jlongster:
-  - feat(core): add workspace-serve command (experimental) (#14960)
-- @thdxr:
-  - refactor: migrate Bun.spawn to Process utility with timeout and cleanup (#14448)
-  - core: temporarily disable plan enter tool to prevent unintended mode switches during task execution
-  - feat: show LSP errors for apply_patch tool (#14715)
-- @Ayushlm10:
-  - fix: consume stdout concurrently with process exit in auth login (#15058)
-- @kilo-code-bot[bot]:
-  - fix: restore Claude tool call ID normalization from upstream
-  - docs(kiloclaw): clarify redeploy options — same version or upgrade to latest (#6456)
-- @shantur:
-  - feat(core): add message delete endpoint (#14417)
-- @imanolmzd-svg:
-  - feat(gateway): pass organization context to FIM autocomplete reqs
+- Thanks also to @nexxeln, @elithrar, @adamdotdevin, @R44VC0RP, @Brendonovich, @tuhin-cmd, @Seungjun0906, @Phoen1xCode, @pirrozani, @kommander, @kevinWangSheng, @noamzbr, @OpeOginni, @neriousy, @Ayushlm10, @imanolmzd-svg
 
 ## 7.0.30
 
@@ -1233,11 +358,6 @@ No notable changes
 - Fix plan_exit call (@alex-alecu)
 - Show implementation suggestions only when LLM has all the information (@alex-alecu)
 
-**Thank you to 1 community contributor:**
-- @alex-alecu:
-  - fix(plan): Show implementation suggestions only when LLM has all the information
-  - fix: Fix plan_exit call
-
 ## 7.0.28
 
 - Add endpoint to import Kilo Cloud sessions
@@ -1249,64 +369,7 @@ No notable changes
 - Add custom tool and MCP call responses visible and collapsible in TUI (@yanosh-k)
 - Normalize file.status paths relative to instance directory (@shantur)
 - Various desktop app fixes: terminal rework, sidecar server, settings header, session navigation
-
-**Thank you to 17 community contributors:**
-- @thdxr:
-  - refactor: migrate remaining tool files from Bun.file() to Filesystem/stat modules (#14121)
-  - refactor: migrate src/tool/edit.ts from Bun.file() to Filesystem module (#14120)
-  - refactor: migrate src/tool/write.ts from Bun.file() to Filesystem module (#14119)
-  - refactor: migrate src/tool/read.ts from Bun.file() to Filesystem module (#14118)
-  - refactor: migrate src/project/project.ts from Bun.file() to Filesystem/stat modules (#14126)
-  - Revert: all refactor commits migrating from Bun.file() to Filesystem module
-  - tui: ensure onExit callback fires after terminal output is written
-  - sdk: fix nested exports transformation in publish script
-  - refactor: migrate from Bun.Glob to npm glob package
-  - refactor: migrate from Bun.Glob to npm glob package (#14317)
-  - core: remove User-Agent header assertion from LLM test to fix failing test
-  - fix(web): correct config import path in Korean enterprise docs
-  - remove unnecessary deep clones from session loop and LLM stream (#14354)
-- @iamdavidhill:
-  - fix(desktop): restore settings header mask
-- @Brendonovich:
-  - app: deduplicate allServers list
-  - desktop: fetch defaultServer at top level
-  - app: fix typecheck
-  - app: make localhost urls work in isLocal
-  - desktop: don't spawn sidecar if default is localhost server
-  - sdk: build to dist/ instead of dist/src (#14383)
-- @ariane-emory:
-  - fix: token substitution in OPENCODE_CONFIG_CONTENT (alternate take) (#14047)
-- @rekram1-node:
-  - tweak: bake in the aws and google auth pkgs (#14241)
-  - tweak: add support for medium reasoning w/ gemini 3.1 (#14316)
-  - core: bump ai sdk packages for google, google vertex, anthropic, bedrock, and provider utils (#14318)
-  - fix: issue from structuredClone addition by using unwrap (#14359)
-- @adamdotdevin:
-  - fix(app): terminal rework (#14217)
-  - fix(core): text files missclassified as binary
-  - fix(app): accordion styles
-  - fix(app): navigate to last session on project nav
-  - fix(app): terminal issues (#14329)
-  - fix(app): clear todos on abort
-  - fix(app): black screen on launch with sidecar server
-- @Seungjun0906:
-  - docs(ko): improve wording in ecosystem, enterprise, formatters, and github docs (#14220)
-- @shantur:
-  - fix(core): normalize file.status paths relative to instance dir (#14207)
-- @taroj1205:
-  - feat(i18n): update Japanese translations to WSL integration (#13160)
-- @elithrar:
-  - fix(github): action branch detection and 422 handling (#14322)
-- @yanosh-k:
-  - feat(tui): add custom tool and mcp call responses visible and collapsable (#10649)
-- @tctev:
-  - feat(opencode): support adaptive thinking for claude sonnet 4.6 (#14283)
-- @jayair:
-  - docs: update providers layout and Windows sidebar label
-- @NatChung:
-  - fix: add missing id/sessionID/messageID to MCP tool attachments (#14345)
-- @rmk40:
-  - docs: clarify tool name collision precedence (#14313)
+- Thanks also to @thdxr, @iamdavidhill, @Brendonovich, @adamdotdevin, @Seungjun0906, @taroj1205, @elithrar, @jayair, @rmk40
 
 ## 7.0.27
 
@@ -1319,13 +382,6 @@ If you have any issues with the migration the original data is not yet deleted a
 - Ensure Anthropic models on OpenRouter also have variant support (@rekram1-node)
 - Add WAL checkpoint on database open (@thdxr)
 - Ensure Vercel variants pass Amazon models under Bedrock key (@rekram1-node)
-
-**Thank you to 2 community contributors:**
-- @rekram1-node:
-  - fix: ensure vercel variants pass amazon models under bedrock key (#13631)
-  - fix: ensure anthropic models on OR also have variant support (#13498)
-- @thdxr:
-  - fix: add WAL checkpoint on database open (#13633)
 
 ## 7.0.26
 
@@ -1344,52 +400,7 @@ If you have any issues with the migration the original data is not yet deleted a
 - Prevent OpenCode run crash on malformed tool inputs (@0xK3vin)
 - Add --dir option to run command (@BlankParticle)
 - Performance optimization for showing large diffs and files in desktop app (@neriousy)
-
-**Thank you to 20 community contributors:**
-- @rekram1-node:
-  - feat: update some ai sdk packages and uuse adaptive reasoning for opus 4.6 on vertex/bedrock/anthropic (#13439)
-  - fix: tweak websearch tool description date info to avoid cache busts (#13559)
-  - bump vertex ai packages (#13625)
-  - fix vercel gateway variants (#13541)
-- @BlankParticle:
-  - feat(cli): add --dir option to run command (#12443)
-- @neriousy:
-  - fix(desktop): performance optimization for showing large diff & files  (#13460)
-- @Seungjun0906:
-  - fix(web): sync docs locale cookie on alias redirects (#13109)
-  - docs(ko): polish Korean phrasing in acp, agents, config, and custom-tools docs (#13446)
-- @ysm-dev:
-  - fix(app): remount SDK/sync tree when server URL changes (#13437)
-- @Annopick:
-  - docs: Fix zh-cn translation mistake in tools.mdx (#13407)
-- @eytans:
-  - fix(web): use prompt_async endpoint to avoid timeout over VPN/tunnel (#12749)
-- @adamdotdevin:
-  - fix(app): terminal resize
-- @G36maid:
-  - docs: add pacman installation option for Arch Linux alongside AUR (#13293)
-- @yanhao98:
-  - fix(test): move timeout config to CLI flag (#13494)
-- @niushuai1991:
-  - fix: standardize zh-CN docs character set and terminology (#13500)
-- @kitlangton:
-  - fix(ui): support cmd-click links in inline code (#12552)
-- @0xK3vin:
-  - fix: prevent opencode run crash on malformed tool inputs (#13051)
-- @thdxr:
-  - sqlite again (#10597)
-  - tui: show all project sessions from any working directory
-  - core: filter sessions at database level to improve session list loading performance
-  - core: add comprehensive test coverage for Session.list() filters
-- @Brendonovich:
-  - desktop: remote OPENCODE_SQLITE env (#13545)
-  - desktop: fix rust
-- @pschiel:
-  - fix: use kilo.exe as binary name on win32
-- @thomasboom:
-  - Revise model details in README to reference SOTA models
-- @alex-alecu:
-  - feat(telemetry): add plan followup tracking
+- Thanks also to @Seungjun0906, @ysm-dev, @Annopick, @eytans, @adamdotdevin, @G36maid, @niushuai1991, @kitlangton, @Brendonovich, @pschiel, @thomasboom, @alex-alecu
 
 ## 5.12.0
 
