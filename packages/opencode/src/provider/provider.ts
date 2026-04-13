@@ -1133,6 +1133,10 @@ export namespace Provider {
                 headers: mergeDeep(existingModel?.headers ?? {}, model.headers ?? {}),
                 family: model.family ?? existingModel?.family ?? "",
                 release_date: model.release_date ?? existingModel?.release_date ?? "",
+                recommendedIndex: model.recommendedIndex ?? existingModel?.recommendedIndex,
+                prompt: model.prompt ?? existingModel?.prompt,
+                isFree: model.isFree ?? existingModel?.isFree,
+                ai_sdk_provider: model.ai_sdk_provider ?? existingModel?.ai_sdk_provider,
                 variants: {},
               }
               const merged = mergeDeep(ProviderTransform.variants(parsedModel), model.variants ?? {})
