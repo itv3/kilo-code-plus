@@ -18,7 +18,7 @@
     "test": "echo 'do not run tests from root' && exit 1",
     "extension": "bun --cwd packages/kilo-vscode script/launch.ts",
     "changeset": "bunx changeset",
-    "changeset:version": "bunx changeset version"
+    "changeset:version": "bunx changeset version && bun install --lockfile-only"
   },
   "workspaces": {
     "packages": [
