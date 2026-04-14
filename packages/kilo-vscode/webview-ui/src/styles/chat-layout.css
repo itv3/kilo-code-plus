@@ -179,6 +179,6 @@
 
 .vscode-session-turn-diffs [data-slot="session-turn-diffs-title"] {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
 }
