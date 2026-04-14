@@ -37,11 +37,22 @@ export interface TextPart extends BasePart {
   text: string
 }
 
+export interface FilePartSource {
+  type: "file"
+  path: string
+  text: {
+    value: string
+    start: number
+    end: number
+  }
+}
+
 export interface FilePart extends BasePart {
   type: "file"
   mime: string
   url: string
   filename?: string
+  source?: FilePartSource
 }
 
 export interface ToolPart extends BasePart {
@@ -737,6 +748,19 @@ export interface FileSearchResultMessage {
   paths: string[]
   dir: string
   requestId: string
+}
+
+export interface TerminalContextResultMessage {
+  type: "terminalContextResult"
+  requestId: string
+  content: string
+  truncated?: boolean
+}
+
+export interface TerminalContextErrorMessage {
+  type: "terminalContextError"
+  requestId: string
+  error: string
 }
 
 export interface QuestionRequestMessage {
@@ -1494,6 +1518,8 @@ export type ExtensionMessage =
   | AutocompleteSettingsLoadedMessage
   | ChatCompletionResultMessage
   | FileSearchResultMessage
+  | TerminalContextResultMessage
+  | TerminalContextErrorMessage
   | QuestionRequestMessage
   | QuestionResolvedMessage
   | QuestionErrorMessage
@@ -1578,6 +1604,7 @@ export interface FileAttachment {
   mime: string
   url: string
   filename?: string
+  source?: FilePartSource
 }
 
 export interface SendMessageRequest {
@@ -1852,6 +1879,12 @@ export interface RequestFileSearchMessage {
   type: "requestFileSearch"
   query: string
   requestId: string
+}
+
+export interface RequestTerminalContextMessage {
+  type: "requestTerminalContext"
+  requestId: string
+  sessionID?: string
 }
 
 export interface ChatCompletionAcceptedMessage {
@@ -2459,6 +2492,7 @@ export type WebviewMessage =
   | UpdateAutocompleteSettingMessage
   | RequestChatCompletionMessage
   | RequestFileSearchMessage
+  | RequestTerminalContextMessage
   | ChatCompletionAcceptedMessage
   | UpdateSettingRequest
   | RequestTimelineSettingMessage

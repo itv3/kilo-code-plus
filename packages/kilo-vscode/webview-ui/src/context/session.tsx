@@ -1457,6 +1457,7 @@ export const SessionProvider: ParentComponent = (props) => {
         mime: file.mime,
         url: file.url,
         filename: file.filename,
+        source: file.source,
       })
     }
 
