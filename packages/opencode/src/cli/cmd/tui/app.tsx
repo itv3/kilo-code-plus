@@ -1,7 +1,7 @@
 import { render, TimeToFirstDraw, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
 import { Clipboard } from "@tui/util/clipboard"
 import { Selection } from "@tui/util/selection"
-import { createCliRenderer, MouseButton, TextAttributes, type CliRendererConfig } from "@opentui/core"
+import { createCliRenderer, MouseButton, TextAttributes, type CliRendererConfig } from "@opentui/core" // kilocode_change
 import { RouteProvider, useRoute } from "@tui/context/route"
 import {
   Switch,
@@ -16,12 +16,12 @@ import {
   on,
   onCleanup,
 } from "solid-js"
-import { win32DisableProcessedInput, win32FlushInputBuffer, win32InstallCtrlCGuard } from "./win32"
+import { win32DisableProcessedInput, win32FlushInputBuffer, win32InstallCtrlCGuard } from "./win32" // kilocode_change
 import { Flag } from "@/flag/flag"
 import semver from "semver"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
 import { DialogProvider as DialogProviderList } from "@tui/component/dialog-provider"
-import { Installation } from "@/installation"
+import { Installation } from "@/installation" // kilocode_change
 import { PluginRouteMissing } from "@tui/component/plugin-route-missing"
 import { SDKProvider, useSDK } from "@tui/context/sdk"
 import { StartupLoading } from "@tui/component/startup-loading"
@@ -202,6 +202,7 @@ export function tui(input: {
     await render(() => {
       return (
         <ErrorBoundary
+          // kilocode_change
           fallback={(error, reset) => <ErrorComponent error={error} reset={reset} onExit={onExit} mode={mode} />}
         >
           <ArgsProvider {...input.args}>
@@ -966,7 +967,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       <StartupLoading ready={ready} />
     </box>
   )
-}
+} // kilocode_change
 
 // kilocode_change start — guard against missing renderer context in ErrorBoundary fallback
 function tryUseRenderer() {
@@ -986,13 +987,13 @@ function tryUseTerminalDimensions() {
 }
 // kilocode_change end
 
+// kilocode_change start — inlined ErrorComponent with safe renderer/keyboard guards
 function ErrorComponent(props: {
   error: Error
   reset: () => void
   onExit: () => Promise<void>
   mode?: "dark" | "light"
 }) {
-  // kilocode_change start — use safe accessors so ErrorComponent renders even without renderer context
   const term = tryUseTerminalDimensions()
   const renderer = tryUseRenderer()
 
@@ -1015,7 +1016,7 @@ function ErrorComponent(props: {
     // Keyboard handler unavailable — renderer context may be missing.
     // Ctrl+C will still work via the default signal handler.
   }
-  // kilocode_change end
+
   const [copied, setCopied] = createSignal(false)
 
   const issueURL = new URL("https://github.com/Kilo-Org/kilocode/issues/new?template=bug-report.yml")
@@ -1077,3 +1078,4 @@ function ErrorComponent(props: {
     </box>
   )
 }
+// kilocode_change end
