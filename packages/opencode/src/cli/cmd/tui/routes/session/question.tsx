@@ -387,6 +387,7 @@ export function QuestionPrompt(props: {
                       <textarea
                         ref={(val: TextareaRenderable) => {
                           textarea = val
+                          val.traits = { status: "ANSWER" }
                           queueMicrotask(() => {
                             val.focus()
                             val.gotoLineEnd()

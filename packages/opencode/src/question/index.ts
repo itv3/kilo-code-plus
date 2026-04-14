@@ -110,6 +110,7 @@ export namespace Question {
   export const layer = Layer.effect(
     Service,
     Effect.gen(function* () {
+      const bus = yield* Bus.Service
       const state = yield* InstanceState.make<State>(
         Effect.fn("Question.state")(function* () {
           const state = {
@@ -146,7 +147,7 @@ export namespace Question {
           tool: input.tool,
         }
         pending.set(id, { info, deferred })
-        Bus.publish(Event.Asked, info)
+        yield* bus.publish(Event.Asked, info)
 
         return yield* Effect.ensuring(
           Deferred.await(deferred),
@@ -165,7 +166,7 @@ export namespace Question {
         }
         pending.delete(input.requestID)
         log.info("replied", { requestID: input.requestID, answers: input.answers })
-        Bus.publish(Event.Replied, {
+        yield* bus.publish(Event.Replied, {
           sessionID: existing.info.sessionID,
           requestID: existing.info.id,
           answers: input.answers,
@@ -182,7 +183,7 @@ export namespace Question {
         }
         pending.delete(requestID)
         log.info("rejected", { requestID })
-        Bus.publish(Event.Rejected, {
+        yield* bus.publish(Event.Rejected, {
           sessionID: existing.info.sessionID,
           requestID: existing.info.id,
         })
@@ -198,7 +199,9 @@ export namespace Question {
     }),
   )
 
-  const { runPromise } = makeRuntime(Service, layer)
+  export const defaultLayer = layer.pipe(Layer.provide(Bus.layer))
+
+  const { runPromise } = makeRuntime(Service, defaultLayer)
 
   export async function ask(input: {
     sessionID: SessionID

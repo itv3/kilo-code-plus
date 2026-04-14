@@ -1,16 +1,12 @@
 import { describe, expect, test } from "bun:test"
-// kilocode_change start
 import { afterEach, mock, spyOn } from "bun:test"
-// kilocode_change end
-import { RemoteSender } from "../../src/kilo-sessions/remote-sender"
-import type { RemoteWS } from "../../src/kilo-sessions/remote-ws"
-import type { RemoteProtocol } from "../../src/kilo-sessions/remote-protocol"
-// kilocode_change start
-import { SessionPrompt } from "../../src/session/prompt"
-import { Question } from "../../src/question"
-import { Permission } from "../../src/permission"
-import { Suggestion } from "../../src/kilocode/suggestion"
-// kilocode_change end
+import { RemoteSender } from "../../../src/kilo-sessions/remote-sender"
+import type { RemoteWS } from "../../../src/kilo-sessions/remote-ws"
+import type { RemoteProtocol } from "../../../src/kilo-sessions/remote-protocol"
+import { SessionPrompt } from "../../../src/session/prompt"
+import { Question } from "../../../src/question"
+import { Permission } from "../../../src/permission"
+import { Suggestion } from "../../../src/kilocode/suggestion" // kilocode_change
 
 function fakeConn() {
   const sent: any[] = []
@@ -997,7 +993,7 @@ describe("RemoteSender", () => {
       } as any,
     ])
     spyOn(Question, "list").mockResolvedValue([])
-    spyOn(PermissionNext, "list").mockResolvedValue([])
+    spyOn(Permission, "list").mockResolvedValue([])
 
     const sender = RemoteSender.create({
       conn,
