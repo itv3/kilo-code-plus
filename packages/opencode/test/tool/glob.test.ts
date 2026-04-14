@@ -3,12 +3,13 @@ import { describe, expect, test } from "bun:test"
 import path from "path"
 import { GlobTool } from "../../src/tool/glob"
 import { Instance } from "../../src/project/instance"
+import { SessionID, MessageID } from "../../src/session/schema"
 import { tmpdir } from "../fixture/fixture"
 
 describe("tool.glob", () => {
   const ctx = {
-    sessionID: "test",
-    messageID: "",
+    sessionID: SessionID.make("test"),
+    messageID: MessageID.make("test"),
     callID: "",
     agent: "code",
     abort: AbortSignal.any([]),

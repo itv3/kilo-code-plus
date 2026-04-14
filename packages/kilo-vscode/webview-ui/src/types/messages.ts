@@ -8,13 +8,14 @@ import type { ProviderAuthAuthorization, ProviderAuthMethod } from "@kilocode/sd
 export type ConnectionState = "connecting" | "connected" | "disconnected" | "error"
 
 // Session status (simplified from backend)
-export type SessionStatus = "idle" | "busy" | "retry"
+export type SessionStatus = "idle" | "busy" | "retry" | "offline"
 
 // Rich status info for retry countdown and future extensions
 export type SessionStatusInfo =
   | { type: "idle" }
   | { type: "busy" }
   | { type: "retry"; attempt: number; message: string; next: number }
+  | { type: "offline"; message: string }
 
 // Tool state for tool parts
 export type ToolState =
@@ -36,11 +37,22 @@ export interface TextPart extends BasePart {
   text: string
 }
 
+export interface FilePartSource {
+  type: "file"
+  path: string
+  text: {
+    value: string
+    start: number
+    end: number
+  }
+}
+
 export interface FilePart extends BasePart {
   type: "file"
   mime: string
   url: string
   filename?: string
+  source?: FilePartSource
 }
 
 export interface ToolPart extends BasePart {
@@ -421,6 +433,7 @@ export interface Config {
   instructions?: string[]
   skills?: SkillsConfig
   snapshot?: boolean
+  remote_control?: boolean
   share?: "manual" | "auto" | "disabled"
   username?: string
   watcher?: WatcherConfig
@@ -443,6 +456,11 @@ export interface ReadyMessage {
   vscodeLanguage?: string
   languageOverride?: string
   workspaceDirectory?: string
+}
+
+export interface GitStatusMessage {
+  type: "gitStatus"
+  repo: boolean
 }
 
 export interface WorkspaceDirectoryChangedMessage {
@@ -713,6 +731,19 @@ export interface FileSearchResultMessage {
   requestId: string
 }
 
+export interface TerminalContextResultMessage {
+  type: "terminalContextResult"
+  requestId: string
+  content: string
+  truncated?: boolean
+}
+
+export interface TerminalContextErrorMessage {
+  type: "terminalContextError"
+  requestId: string
+  error: string
+}
+
 export interface QuestionRequestMessage {
   type: "questionRequest"
   question: QuestionRequest
@@ -892,6 +923,18 @@ export interface PRStatus {
   files: number
 }
 
+export type RunState = "idle" | "running" | "stopping"
+
+export interface RunStatus {
+  worktreeId: string
+  state: RunState
+  exitCode?: number
+  signal?: string
+  startedAt?: string
+  finishedAt?: string
+  error?: string
+}
+
 export interface ManagedSessionState {
   id: string
   worktreeId: string | null
@@ -926,6 +969,13 @@ export interface AgentManagerStateMessage {
   reviewDiffStyle?: "unified" | "split"
   isGitRepo?: boolean
   defaultBaseBranch?: string
+  runStatuses?: RunStatus[]
+  runScriptConfigured?: boolean
+  runScriptPath?: string
+}
+
+export interface AgentManagerRunStatusMessage extends RunStatus {
+  type: "agentManager.runStatus"
 }
 
 // Resolved keybindings for agent manager actions
@@ -1041,6 +1091,15 @@ export interface AgentManagerApplyWorktreeDiffResultMessage {
   status: AgentManagerApplyWorktreeDiffStatus
   message: string
   conflicts?: AgentManagerApplyWorktreeDiffConflict[]
+}
+
+// Agent Manager: Revert single file result (extension → webview)
+export interface AgentManagerRevertWorktreeFileResultMessage {
+  type: "agentManager.revertWorktreeFileResult"
+  sessionId: string
+  file: string
+  status: "success" | "error"
+  message: string
 }
 
 // Per-worktree git stats: diff additions/deletions and ahead/behind counts
@@ -1391,6 +1450,7 @@ export interface CustomProviderModelsFetchedMessage {
 
 export type ExtensionMessage =
   | ReadyMessage
+  | GitStatusMessage
   | ConnectionStateMessage
   | ErrorMessage
   | SendMessageFailedMessage
@@ -1424,6 +1484,8 @@ export type ExtensionMessage =
   | AutocompleteSettingsLoadedMessage
   | ChatCompletionResultMessage
   | FileSearchResultMessage
+  | TerminalContextResultMessage
+  | TerminalContextErrorMessage
   | QuestionRequestMessage
   | QuestionResolvedMessage
   | QuestionErrorMessage
@@ -1441,6 +1503,7 @@ export type ExtensionMessage =
   | AgentManagerSessionAddedMessage
   | AgentManagerSessionForkedMessage
   | AgentManagerStateMessage
+  | AgentManagerRunStatusMessage
   | AgentManagerKeybindingsMessage
   | AgentManagerMultiVersionProgressMessage
   | AgentManagerSetSessionModelMessage
@@ -1462,6 +1525,7 @@ export type ExtensionMessage =
   | AgentManagerWorktreeDiffFileMessage
   | AgentManagerWorktreeDiffLoadingMessage
   | AgentManagerApplyWorktreeDiffResultMessage
+  | AgentManagerRevertWorktreeFileResultMessage
   | AgentManagerWorktreeStatsMessage
   | AgentManagerLocalStatsMessage
   | AgentManagerPRStatusMessage
@@ -1493,6 +1557,7 @@ export type ExtensionMessage =
   | McpStatusLoadedMessage
   | ClearPendingPromptsMessage
   | ExtensionDataReadyMessage
+  | RemoteStatusMessage
 
 // ============================================
 // Messages FROM webview TO extension
@@ -1502,6 +1567,7 @@ export interface FileAttachment {
   mime: string
   url: string
   filename?: string
+  source?: FilePartSource
 }
 
 export interface SendMessageRequest {
@@ -1767,6 +1833,12 @@ export interface RequestFileSearchMessage {
   requestId: string
 }
 
+export interface RequestTerminalContextMessage {
+  type: "requestTerminalContext"
+  requestId: string
+  sessionID?: string
+}
+
 export interface ChatCompletionAcceptedMessage {
   type: "chatCompletionAccepted"
   suggestionLength?: number
@@ -1856,6 +1928,7 @@ export interface CreateWorktreeRequest {
   type: "agentManager.createWorktree"
   baseBranch?: string
   branchName?: string
+  variant?: string
 }
 
 // Delete a worktree and dissociate its sessions
@@ -1901,6 +1974,18 @@ export interface CloseSessionRequest {
   sessionId: string
 }
 
+/** Persist a non-worktree session to agent-manager.json (worktreeId = null). */
+export interface PersistSessionRequest {
+  type: "agentManager.persistSession"
+  sessionId: string
+}
+
+/** Remove a non-worktree session from agent-manager.json. */
+export interface ForgetSessionRequest {
+  type: "agentManager.forgetSession"
+  sessionId: string
+}
+
 // Rename a worktree's display label
 export interface RenameWorktreeRequest {
   type: "agentManager.renameWorktree"
@@ -1919,6 +2004,20 @@ export interface RequestStateMessage {
 // Configure worktree setup script
 export interface ConfigureSetupScriptRequest {
   type: "agentManager.configureSetupScript"
+}
+
+export interface ConfigureRunScriptRequest {
+  type: "agentManager.configureRunScript"
+}
+
+export interface RunScriptRequest {
+  type: "agentManager.runScript"
+  worktreeId: string
+}
+
+export interface StopRunScriptRequest {
+  type: "agentManager.stopRunScript"
+  worktreeId: string
 }
 
 // Show terminal for a session
@@ -1986,6 +2085,7 @@ export interface CreateMultiVersionRequest {
   // Per-version model allocations for multi-model comparison mode.
   // When set, each entry expands to `count` versions with that model.
   // Overrides `versions`, `providerID`, and `modelID`.
+  variant?: string
   modelAllocations?: ModelAllocation[]
 }
 
@@ -2082,6 +2182,13 @@ export interface ApplyWorktreeDiffMessage {
   selectedFiles?: string[]
 }
 
+// Agent Manager: Revert a single file in a worktree (webview → extension)
+export interface RevertWorktreeFileMessage {
+  type: "agentManager.revertWorktreeFile"
+  sessionId: string
+  file: string
+}
+
 // Variant persistence (webview → extension)
 export interface PersistVariantRequest {
   type: "persistVariant"
@@ -2134,6 +2241,31 @@ export interface PreviewImageRequest {
 export interface SetDefaultBaseBranchRequest {
   type: "agentManager.setDefaultBaseBranch"
   branch?: string
+}
+
+// Report all open session IDs to extension for heartbeat (webview → extension)
+export interface AgentManagerOpenSessionsMessage {
+  type: "agentManager.openSessions"
+  sessionIDs: string[]
+}
+
+export interface RemoteStatusMessage {
+  type: "remoteStatus"
+  enabled: boolean
+  connected: boolean
+}
+
+export interface ToggleRemoteMessage {
+  type: "toggleRemote"
+}
+
+export interface SetRemoteEnabledMessage {
+  type: "setRemoteEnabled"
+  enabled: boolean
+}
+
+export interface RequestRemoteStatusMessage {
+  type: "requestRemoteStatus"
 }
 
 export interface ConnectProviderMessage {
@@ -2310,6 +2442,7 @@ export type WebviewMessage =
   | UpdateAutocompleteSettingMessage
   | RequestChatCompletionMessage
   | RequestFileSearchMessage
+  | RequestTerminalContextMessage
   | ChatCompletionAcceptedMessage
   | UpdateSettingRequest
   | RequestTimelineSettingMessage
@@ -2333,11 +2466,16 @@ export type WebviewMessage =
   | AddSessionToWorktreeRequest
   | ForkSessionRequest
   | CloseSessionRequest
+  | PersistSessionRequest
+  | ForgetSessionRequest
   | RenameWorktreeRequest
   | TelemetryRequest
   | RequestRepoInfoMessage
   | RequestStateMessage
   | ConfigureSetupScriptRequest
+  | ConfigureRunScriptRequest
+  | RunScriptRequest
+  | StopRunScriptRequest
   | ShowTerminalRequest
   | ShowLocalTerminalRequest
   | OpenWorktreeRequest
@@ -2373,6 +2511,7 @@ export type WebviewMessage =
   | FinalizeLegacyMigrationMessage
   // legacy-migration end
   | ApplyWorktreeDiffMessage
+  | RevertWorktreeFileMessage
   | EnhancePromptRequest
   | OpenChangesRequest
   | OpenDiffVirtualRequest
@@ -2380,6 +2519,7 @@ export type WebviewMessage =
   | OpenSubAgentViewerRequest
   | PreviewImageRequest
   | SetDefaultBaseBranchRequest
+  | AgentManagerOpenSessionsMessage
   | FetchMarketplaceDataMessage
   | FilterMarketplaceItemsMessage
   | InstallMarketplaceItemMessage
@@ -2394,6 +2534,9 @@ export type WebviewMessage =
   | RequestRecentsMessage
   | ToggleFavoriteRequest
   | RequestFavoritesMessage
+  | ToggleRemoteMessage
+  | SetRemoteEnabledMessage
+  | RequestRemoteStatusMessage
   | ContinueInWorktreeRequest
   | CreateSectionRequest
   | RenameSectionRequest

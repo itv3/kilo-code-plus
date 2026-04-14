@@ -3,6 +3,7 @@ import * as path from "path"
 import type { KiloClient, FileDiff } from "@kilocode/sdk/v2/client"
 import { remoteRef, type Worktree } from "./WorktreeStateManager"
 import type { GitOps } from "./GitOps"
+import type { Semaphore } from "./semaphore"
 import { normalizePath } from "./git-import"
 
 export interface WorktreeStats {
@@ -45,6 +46,9 @@ interface GitStatsPollerOptions {
   onWorktreePresence?: (result: WorktreePresenceResult) => void
   log: (...args: unknown[]) => void
   intervalMs?: number
+  /** Shared concurrency gate for child process spawning. */
+  semaphore?: Semaphore
+  hiddenIntervalMs?: number
 }
 
 export class GitStatsPoller {
@@ -59,12 +63,25 @@ export class GitStatsPoller {
     { files: number; additions: number; deletions: number; ahead: number; behind: number }
   > = {}
   private readonly intervalMs: number
+  private readonly hiddenIntervalMs: number
   private readonly git: GitOps
   private skipWorktreeIds = new Set<string>()
+  private visible = true
 
   constructor(private readonly options: GitStatsPollerOptions) {
     this.intervalMs = options.intervalMs ?? 5000
+    this.hiddenIntervalMs = options.hiddenIntervalMs ?? 60000
     this.git = options.git
+  }
+
+  setVisible(visible: boolean): void {
+    if (this.visible === visible) return
+    this.visible = visible
+    if (this.active && this.timer) {
+      clearTimeout(this.timer)
+      this.timer = undefined
+      this.schedule(this.visible ? this.intervalMs : this.hiddenIntervalMs)
+    }
   }
 
   skipWorktree(id: string): void {
@@ -78,7 +95,8 @@ export class GitStatsPoller {
   setEnabled(enabled: boolean): void {
     if (enabled) {
       if (this.active) return
-      this.start()
+      this.active = true
+      void this.poll()
       return
     }
     this.stop()
@@ -97,10 +115,8 @@ export class GitStatsPoller {
     this.lastStats = {}
   }
 
-  private start(): void {
-    this.stop()
-    this.active = true
-    void this.poll()
+  private currentInterval(): number {
+    return this.visible ? this.intervalMs : this.hiddenIntervalMs
   }
 
   private schedule(delay: number): void {
@@ -116,7 +132,7 @@ export class GitStatsPoller {
     this.busy = true
     return this.fetch().finally(() => {
       this.busy = false
-      this.schedule(this.intervalMs)
+      this.schedule(this.currentInterval())
     })
   }
 
@@ -154,15 +170,20 @@ export class GitStatsPoller {
       return
     }
 
+    // Gate the HTTP diffSummary call through the semaphore but NOT the
+    // aheadBehind call — that goes through GitOps.raw() which already
+    // acquires the same semaphore. Wrapping both would deadlock.
+    const gate = this.options.semaphore
+    const diff = (dir: string, base: string) => {
+      const invoke = () => client.worktree.diffSummary({ directory: dir, base }, { throwOnError: true })
+      return gate ? gate.run(invoke) : invoke()
+    }
     const stats = (
       await Promise.all(
         active.map(async (wt) => {
           try {
             const base = remoteRef(wt)
-            const [{ data: diffs }, ab] = await Promise.all([
-              client.worktree.diffSummary({ directory: wt.path, base }, { throwOnError: true }),
-              this.git.aheadBehind(wt.path, base),
-            ])
+            const [{ data: diffs }, ab] = await Promise.all([diff(wt.path, base), this.git.aheadBehind(wt.path, base)])
             const files = diffs.length
             const additions = diffs.reduce((sum: number, diff: FileDiff) => sum + diff.additions, 0)
             const deletions = diffs.reduce((sum: number, diff: FileDiff) => sum + diff.deletions, 0)
@@ -260,8 +281,10 @@ export class GitStatsPoller {
       try {
         if (base && client) {
           this.options.log(`Local stats: using HTTP client with base=${base}`)
+          const gate = this.options.semaphore
+          const invoke = () => client.worktree.diffSummary({ directory: root, base }, { throwOnError: true })
           const [{ data: diffs }, ab] = await Promise.all([
-            client.worktree.diffSummary({ directory: root, base }, { throwOnError: true }),
+            gate ? gate.run(invoke) : invoke(),
             this.git.aheadBehind(root, base),
           ])
           files = diffs.length
