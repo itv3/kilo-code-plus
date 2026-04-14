@@ -122,7 +122,7 @@ export namespace Plugin {
                   Authorization: `Basic ${Buffer.from(`${Flag.KILO_SERVER_USERNAME ?? "opencode"}:${Flag.KILO_SERVER_PASSWORD}`).toString("base64")}`,
                 }
               : undefined,
-            fetch: async (...args) => Server.Default().fetch(...args),
+            fetch: async (...args) => Server.Default().app.fetch(...args),
           })
           const cfg = yield* config.get()
           const input: PluginInput = {

@@ -1,7 +1,6 @@
 import type { Target } from "@/control-plane/types"
-import { lazy } from "@/util/lazy"
 import { Hono } from "hono"
-import { upgradeWebSocket } from "hono/bun"
+import type { UpgradeWebSocket } from "hono/ws"
 
 const hop = new Set([
   "connection",
@@ -56,10 +55,10 @@ function send(ws: { send(data: string | ArrayBuffer): void }, data: any) {
   return ws.send(data)
 }
 
-const app = lazy(() =>
+const app = (upgrade: UpgradeWebSocket) =>
   new Hono().get(
     "/__workspace_ws",
-    upgradeWebSocket((c) => {
+    upgrade((c) => {
       const url = c.req.header("x-kilo-proxy-url")
       const queue: Msg[] = []
       let remote: WebSocket | undefined
@@ -100,8 +99,7 @@ const app = lazy(() =>
         },
       }
     }),
-  ),
-)
+  )
 
 export namespace ServerProxy {
   export function http(target: Extract<Target, { type: "remote" }>, req: Request) {
@@ -116,13 +114,18 @@ export namespace ServerProxy {
     )
   }
 
-  export function websocket(target: Extract<Target, { type: "remote" }>, req: Request, env: unknown) {
+  export function websocket(
+    upgrade: UpgradeWebSocket,
+    target: Extract<Target, { type: "remote" }>,
+    req: Request,
+    env: unknown,
+  ) {
     const url = new URL(req.url)
     url.pathname = "/__workspace_ws"
     url.search = ""
     const next = new Headers(req.headers)
     next.set("x-kilo-proxy-url", socket(target.url))
-    return app().fetch(
+    return app(upgrade).fetch(
       new Request(url, {
         method: req.method,
         headers: next,

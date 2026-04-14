@@ -160,7 +160,7 @@ export namespace Project {
           // kilocode change end
           Effect.map((x) => x.trim()),
           Effect.map(ProjectID.make),
-          Effect.catch(() => Effect.succeed(undefined)),
+          Effect.catch(() => Effect.void),
         )
       })
 
