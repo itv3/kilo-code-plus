@@ -98,6 +98,7 @@ export namespace Question {
     readonly ask: (input: {
       sessionID: SessionID
       questions: Info[]
+      blocking?: boolean // kilocode_change
       tool?: { messageID: MessageID; callID: string }
     }) => Effect.Effect<Answer[], RejectedError>
     readonly reply: (input: { requestID: QuestionID; answers: Answer[] }) => Effect.Effect<void>
@@ -133,6 +134,7 @@ export namespace Question {
       const ask = Effect.fn("Question.ask")(function* (input: {
         sessionID: SessionID
         questions: Info[]
+        blocking?: boolean // kilocode_change
         tool?: { messageID: MessageID; callID: string }
       }) {
         const pending = (yield* InstanceState.get(state)).pending
@@ -144,6 +146,7 @@ export namespace Question {
           id,
           sessionID: input.sessionID,
           questions: input.questions,
+          blocking: input.blocking, // kilocode_change
           tool: input.tool,
         }
         pending.set(id, { info, deferred })
