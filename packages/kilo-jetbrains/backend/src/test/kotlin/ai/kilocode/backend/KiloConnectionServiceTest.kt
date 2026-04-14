@@ -1,6 +1,6 @@
 package ai.kilocode.backend
 
-import ai.kilocode.backend.app.CliServer
+import ai.kilocode.backend.cli.CliServer
 import ai.kilocode.backend.app.ConnectionState
 import ai.kilocode.backend.app.KiloConnectionService
 import ai.kilocode.backend.testing.FakeCliServer
@@ -147,18 +147,7 @@ class KiloConnectionServiceTest {
         assertTrue(fake.forceExtract)
     }
 
-    @Test
-    fun `extractType parses type from JSON data`() {
-        val svc = KiloConnectionService(scope, fake, {}, log)
-        val result = svc.extractType("""{"type":"global.config.updated","payload":{}}""")
-        assertEquals("global.config.updated", result)
-    }
-
-    @Test
-    fun `extractType returns unknown for missing type`() {
-        val svc = KiloConnectionService(scope, fake, {}, log)
-        assertEquals("unknown", svc.extractType("""{"data":"something"}"""))
-    }
+    // extractType tests moved to KiloCliDataParserTest
 
     @Test
     fun `dispose transitions to Disconnected`() = runBlocking {

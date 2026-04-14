@@ -303,7 +303,7 @@ class KiloBackendSessionManagerTest {
         assertFailsWith<IllegalStateException> { app.sessions.list("/test") }
 
         // Re-start (simulate what app service does on reconnect)
-        app.sessions.start(app.api!!, app.events)
+        app.sessions.start(app.api!!, app.http!!, app.port, app.events)
 
         // CRUD should work again
         val result = app.sessions.list("/test")

@@ -1,4 +1,4 @@
-package ai.kilocode.backend.app
+package ai.kilocode.backend.cli
 
 /**
  * Abstraction over the CLI process lifecycle.

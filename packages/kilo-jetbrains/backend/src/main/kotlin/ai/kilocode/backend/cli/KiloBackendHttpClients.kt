@@ -1,4 +1,4 @@
-package ai.kilocode.backend.util
+package ai.kilocode.backend.cli
 
 import okhttp3.ConnectionPool
 import okhttp3.Interceptor

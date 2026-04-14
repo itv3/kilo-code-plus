@@ -1,4 +1,4 @@
-package ai.kilocode.backend.app
+package ai.kilocode.backend.cli
 
 import ai.kilocode.backend.util.IntellijLog
 import ai.kilocode.backend.util.KiloLog
@@ -43,21 +43,11 @@ class KiloBackendCliManager(
     private var process: Process? = null
     private var hook: Thread? = null
 
-    /**
-     * When true, the next [extractCli] call deletes and re-extracts the binary
-     * regardless of the size check. Reset to false after extraction.
-     */
     @Volatile
     override var forceExtract = false
 
     override fun process(): Process? = process
 
-    /**
-     * Extract the CLI binary (if needed) and spawn `kilo serve`.
-     *
-     * Must be called under [KiloBackendAppService]'s mutex — no internal
-     * synchronization is performed.
-     */
     override suspend fun init(): CliServer.State {
         return try {
             val path = extractCli()
@@ -67,8 +57,6 @@ class KiloBackendCliManager(
             }
         } catch (e: Exception) {
             log.warn("CLI startup failed", e)
-            // If spawn started a process but timed out (or failed after start),
-            // kill the orphaned process so it doesn't leak.
             process?.let { proc ->
                 log.info("Cleaning up orphaned CLI process (pid=${proc.pid()})")
                 process = null
@@ -82,19 +70,12 @@ class KiloBackendCliManager(
         }
     }
 
-    /**
-     * Mark the given process as exited and clear state.
-     * Called from the process monitor when the CLI process dies.
-     */
     override fun exited(proc: Process) {
         if (process != proc) return
         process = null
         uninstall()
     }
 
-    /**
-     * Kill the running CLI process and reset state so the next [init] spawns fresh.
-     */
     override fun stop() {
         val proc = process ?: return
         process = null
@@ -209,38 +190,27 @@ class KiloBackendCliManager(
         val proc = process ?: return
         process = null
         uninstall()
-
         kill(proc, "Disposing")
     }
 
     private fun install(proc: Process) {
         uninstall()
-
         val next = Thread({
             log.info("Shutdown hook — killing CLI process tree (pid ${proc.pid()})")
             kill(proc, "Shutdown hook", wait = false)
         }, "kilo-cli-shutdown")
-
-        val ok = runCatching {
-            Runtime.getRuntime().addShutdownHook(next)
-        }
-
+        val ok = runCatching { Runtime.getRuntime().addShutdownHook(next) }
         if (ok.isFailure) {
             log.warn("Failed to install CLI shutdown hook", ok.exceptionOrNull())
             return
         }
-
         hook = next
     }
 
     private fun uninstall() {
         val curr = hook ?: return
         hook = null
-
-        val ok = runCatching {
-            Runtime.getRuntime().removeShutdownHook(curr)
-        }
-
+        val ok = runCatching { Runtime.getRuntime().removeShutdownHook(curr) }
         if (ok.isFailure) {
             log.info("Skipping CLI shutdown hook removal: ${ok.exceptionOrNull()?.message}")
         }
@@ -250,9 +220,7 @@ class KiloBackendCliManager(
         log.info("$source — killing CLI process tree (pid ${proc.pid()})")
         children(proc).forEach { it.destroy() }
         proc.destroy()
-
         if (!wait) return
-
         if (!proc.waitFor(KILL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
             log.warn("CLI process did not exit after SIGTERM, sending SIGKILL")
             children(proc).forEach { it.destroyForcibly() }
@@ -260,22 +228,15 @@ class KiloBackendCliManager(
         }
     }
 
-    private fun children(proc: Process): List<ProcessHandle> {
-        return proc.toHandle().descendants().toList().asReversed()
-    }
+    private fun children(proc: Process): List<ProcessHandle> =
+        proc.toHandle().descendants().toList().asReversed()
 
     private fun platform(): String {
         val os = when {
             SystemInfo.isMac -> "darwin"
             SystemInfo.isLinux -> "linux"
             SystemInfo.isWindows -> "windows"
-            else -> throw IllegalStateException(
-                "Unsupported OS: ${
-                    System.getProperty(
-                        "os.name"
-                    )
-                }"
-            )
+            else -> throw IllegalStateException("Unsupported OS: ${System.getProperty("os.name")}")
         }
         val arch = when (CpuArch.CURRENT) {
             CpuArch.ARM64 -> "arm64"
@@ -285,11 +246,6 @@ class KiloBackendCliManager(
         return "$os-$arch"
     }
 
-    /**
-     * Collect IDE-specific env vars for telemetry and gateway attribution.
-     * Catches all exceptions since these are best-effort — missing values
-     * won't prevent the CLI from starting.
-     */
     private fun ideEnv(): Map<String, String> = buildMap {
         runCatching {
             val info = ApplicationInfo.getInstance()
@@ -310,10 +266,6 @@ class KiloBackendCliManager(
         }.onFailure { log.info("Could not read machine ID: ${it.message}") }
     }
 
-    /**
-     * Persistent machine ID stored in the IntelliJ system directory.
-     * Generated once and reused across restarts.
-     */
     private fun machineId(): String {
         val file = File(PathManager.getSystemPath(), "kilo/machine-id")
         if (file.exists()) return file.readText().trim()

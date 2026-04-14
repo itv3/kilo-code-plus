@@ -1,6 +1,6 @@
 package ai.kilocode.backend
 
-import ai.kilocode.backend.util.KiloBackendHttpClients
+import ai.kilocode.backend.cli.KiloBackendHttpClients
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import java.util.Base64
