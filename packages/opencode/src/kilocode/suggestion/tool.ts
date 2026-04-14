@@ -63,7 +63,7 @@ export const SuggestTool = Tool.define<typeof Params, Meta>("suggest", {
 
     const listener = () =>
       Suggestion.list().then((items: Suggestion.Request[]) => {
-        const match = items.find((item: Suggestion.Request) => item.sessionID === ctx.sessionID)
+        const match = items.find((item: Suggestion.Request) => item.tool?.callID === ctx.callID)
         if (match) return Suggestion.dismiss(match.id)
       })
     ctx.abort.addEventListener("abort", listener, { once: true })
