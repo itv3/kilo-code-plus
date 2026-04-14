@@ -149,7 +149,16 @@ export const EditTool = Tool.define("edit", {
       await FileTime.read(ctx.sessionID, filePath)
     })
 
-    const filediff = cachedFilediff ?? buildFileDiff(filePath, contentOld, contentNew) // kilocode_change
+    const filediff: Snapshot.FileDiff = {
+      file: filePath,
+      patch: diff,
+      additions: 0,
+      deletions: 0,
+    }
+    for (const change of diffLines(contentOld, contentNew)) {
+      if (change.added) filediff.additions += change.count || 0
+      if (change.removed) filediff.deletions += change.count || 0
+    }
 
     ctx.metadata({
       metadata: {

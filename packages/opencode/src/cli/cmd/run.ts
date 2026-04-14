@@ -311,6 +311,11 @@ export const RunCommand = cmd({
         describe: "show thinking blocks",
         default: false,
       })
+      .option("dangerously-skip-permissions", {
+        type: "boolean",
+        describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
+        default: false,
+      })
   },
   handler: async (args) => {
     let message = [...args.message, ...(args["--"] || [])]
@@ -584,27 +589,23 @@ export const RunCommand = cmd({
             const permission = event.properties
             if (permission.sessionID !== sessionID) continue
 
-            // kilocode_change start - In auto mode, automatically approve all permissions without prompting
-            if (args.auto) {
-              await sdk.permission.respond({
-                sessionID,
-                permissionID: permission.id,
-                response: "always",
+            if (args.auto) { // kilocode_change - In auto mode, automatically approve all permissions without prompting
+              await sdk.permission.reply({
+                requestID: permission.id,
+                reply: "once",
               })
-              continue
+            } else {
+              UI.println(
+                UI.Style.TEXT_WARNING_BOLD + "!",
+                UI.Style.TEXT_NORMAL +
+                  `permission requested: ${permission.permission} (${permission.patterns.join(", ")}); auto-rejecting`,
+              )
+              await sdk.permission.reply({
+                requestID: permission.id,
+                reply: "reject",
+              })
             }
-            // kilocode_change end
-
-            UI.println(
-              UI.Style.TEXT_WARNING_BOLD + "!",
-              UI.Style.TEXT_NORMAL +
-                `permission requested: ${permission.permission} (${permission.patterns.join(", ")}); auto-rejecting`,
-            )
-            await sdk.permission.reply({
-              requestID: permission.id,
-              reply: "reject",
-            }) // kilocode_change
-          } // kilocode_change
+          }
           // kilocode_change start - network retry handling
           if (event.type === "session.network.asked") {
             const request = event.properties

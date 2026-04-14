@@ -750,6 +750,7 @@ export namespace Config {
       agent_cycle: z.string().optional().default("tab").describe("Next agent"),
       agent_cycle_reverse: z.string().optional().default("shift+tab").describe("Previous agent"),
       variant_cycle: z.string().optional().default("ctrl+t").describe("Cycle model variants"),
+      variant_list: z.string().optional().default("none").describe("List model variants"),
       input_clear: z.string().optional().default("ctrl+c").describe("Clear input field"),
       input_paste: z.string().optional().default("ctrl+v").describe("Paste from clipboard"),
       input_submit: z.string().optional().default("return").describe("Submit input"),
@@ -1439,7 +1440,6 @@ export namespace Config {
           for (const [key, value] of Object.entries(auth)) {
             if (value.type === "wellknown") {
               const url = key.replace(/\/+$/, "")
-              // kilocode_change start
               const source = `${url}/.well-known/opencode`
               process.env[value.key] = value.token
               log.debug("fetching remote config", { url: source })
@@ -1494,6 +1494,7 @@ export namespace Config {
           merge(Global.Path.config, global, "global")
 
           if (Flag.KILO_CONFIG) {
+            // kilocode_change start
             merge(
               Flag.KILO_CONFIG,
               yield* loadFile(Flag.KILO_CONFIG).pipe(
@@ -1577,18 +1578,20 @@ export namespace Config {
 
           if (process.env.KILO_CONFIG_CONTENT) {
             // kilocode_change start
+            const source = "KILO_CONFIG_CONTENT"
             merge(
-              "KILO_CONFIG_CONTENT",
+              source,
               yield* loadConfig(process.env.KILO_CONFIG_CONTENT, {
                 dir: ctx.directory,
-                source: "KILO_CONFIG_CONTENT",
+                source,
               }).pipe(
                 Effect.tap(() => Effect.sync(() => log.debug("loaded custom config from KILO_CONFIG_CONTENT"))),
                 Effect.catchDefect((err: unknown) => {
-                  caughtWarning(warnings, "KILO_CONFIG_CONTENT", err)
+                  caughtWarning(warnings, source, err)
                   return Effect.succeed({} as Info)
                 }),
               ),
+              "local",
             )
             // kilocode_change end
           }
