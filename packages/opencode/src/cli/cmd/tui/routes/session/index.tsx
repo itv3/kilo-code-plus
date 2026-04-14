@@ -21,15 +21,7 @@ import { Spinner } from "@tui/component/spinner"
 import { selectedForeground, useTheme } from "@tui/context/theme"
 import { BoxRenderable, ScrollBoxRenderable, addDefaultParsers, TextAttributes, RGBA } from "@opentui/core"
 import { Prompt, type PromptRef } from "@tui/component/prompt"
-import type {
-  AssistantMessage,
-  Part,
-  Provider,
-  ToolPart,
-  UserMessage,
-  TextPart,
-  ReasoningPart,
-} from "@kilocode/sdk/v2"
+import type { AssistantMessage, Part, Provider, ToolPart, UserMessage, TextPart, ReasoningPart } from "@kilocode/sdk/v2"
 import { useLocal } from "@tui/context/local"
 import { Locale } from "@/util/locale"
 import type { Tool } from "@/tool/tool"
@@ -173,7 +165,6 @@ export function Session() {
       blockingSuggestions().length > 0 ||
       network().length > 0,
   )
-  // kilocode_change end
 
   const pending = createMemo(() => {
     return messages().findLast((x) => x.role === "assistant" && !x.time.completed)?.id
@@ -182,6 +173,7 @@ export function Session() {
   const lastAssistant = createMemo(() => {
     return messages().findLast((x) => x.role === "assistant")
   })
+  // kilocode_change end
 
   // kilocode_change start - ring terminal bell on task completion
   createEffect(
@@ -1241,6 +1233,7 @@ export function Session() {
               <Show when={permissions().length > 0}>
                 <PermissionPrompt request={permissions()[0]} />
               </Show>
+              {/* kilocode_change start */}
               <Show when={permissions().length === 0 && question()} keyed>
                 {(request) => (
                   <QuestionPrompt
@@ -1251,6 +1244,7 @@ export function Session() {
                 )}
               </Show>
               <Show when={permissions().length === 0 && !question()}>
+                {/* kilocode_change end */}
                 {/* kilocode_change start */}
                 <Show when={suggestion()} keyed>
                   {(request) => (
@@ -1261,11 +1255,11 @@ export function Session() {
                     />
                   )}
                 </Show>
-                {/* kilocode_change end */}
               </Show>
               <Show when={session()?.parentID}>
                 <SubagentFooter />
               </Show>
+              {/* kilocode_change end */}
               {/* kilocode_change start */}
               <Show when={networkVisible()}>
                 <NetworkPrompt request={network()[0]} />
@@ -1683,9 +1677,11 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
         <Match when={props.part.tool === "question"}>
           <Question {...toolprops} />
         </Match>
+        {/* kilocode_change start */}
         <Match when={props.part.tool === "suggest"}>
           <Suggest {...toolprops} InlineTool={InlineTool} BlockTool={BlockTool} />
         </Match>
+        {/* kilocode_change end */}
         <Match when={props.part.tool === "skill"}>
           <Skill {...toolprops} />
         </Match>

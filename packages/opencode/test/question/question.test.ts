@@ -72,12 +72,12 @@ test("ask - adds to pending list", async () => {
   })
 })
 
+// kilocode_change start - review follow-up uses non-blocking question prompts
 test("ask - preserves blocking flag", async () => {
   await using tmp = await tmpdir({ git: true })
   await Instance.provide({
     directory: tmp.path,
     fn: async () => {
-      // kilocode_change - review follow-up uses non-blocking question prompts
       const askPromise = Question.ask({
         sessionID: SessionID.make("ses_test"),
         blocking: false,
@@ -98,6 +98,7 @@ test("ask - preserves blocking flag", async () => {
     },
   })
 })
+// kilocode_change end
 
 // reply tests
 

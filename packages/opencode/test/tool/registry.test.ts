@@ -32,6 +32,7 @@ describe("tool.registry", () => {
   })
   // kilocode_change end
 
+  // kilocode_change start
   test("suggest is registered for cli and vscode only", async () => {
     const original = process.env["KILO_CLIENT"]
     const originalQuestion = process.env["KILO_ENABLE_QUESTION_TOOL"]
@@ -60,6 +61,7 @@ describe("tool.registry", () => {
       else process.env["KILO_CONFIG_DIR"] = originalConfig
     }
   })
+  // kilocode_change end
 
   test("loads tools from .opencode/tool (singular)", async () => {
     await using tmp = await tmpdir({

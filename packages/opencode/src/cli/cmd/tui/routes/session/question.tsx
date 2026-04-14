@@ -10,11 +10,13 @@ import { SplitBorder } from "../../component/border"
 import { useTextareaKeybindings } from "../../component/textarea-keybindings"
 import { useDialog } from "../../ui/dialog"
 
+// kilocode_change start
 export function QuestionPrompt(props: {
   request: QuestionRequest
-  nonBlocking?: boolean // kilocode_change
-  inputFocused?: () => boolean // kilocode_change
+  nonBlocking?: boolean
+  inputFocused?: () => boolean
 }) {
+  // kilocode_change end
   const sdk = useSDK()
   const { theme } = useTheme()
   const keybind = useKeybind()

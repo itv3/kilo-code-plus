@@ -8,7 +8,7 @@ export namespace Identifier {
     message: "msg",
     permission: "per",
     question: "que",
-    suggestion: "sug",
+    suggestion: "sug", // kilocode_change
     user: "usr",
     part: "prt",
     pty: "pty",

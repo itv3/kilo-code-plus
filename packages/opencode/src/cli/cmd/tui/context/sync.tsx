@@ -9,7 +9,7 @@ import type {
   Command,
   PermissionRequest,
   QuestionRequest,
-  SuggestionRequest,
+  SuggestionRequest, // kilocode_change
   SessionNetworkWait, // kilocode_change
   LspStatus,
   McpStatus,
@@ -265,14 +265,14 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
+        // kilocode_change start
         case "suggestion.accepted":
         case "suggestion.dismissed":
         case "suggestion.shown": {
-          // kilocode_change start
           handleSuggestionEvent(event, store, setStore)
-          // kilocode_change end
           break
         }
+        // kilocode_change end
 
         case "session.network.restored": {
           const requests = store.network[event.properties.sessionID]

@@ -270,11 +270,13 @@ export namespace SessionProcessor {
                   time: { start: match.state.time.start, end: Date.now() },
                 },
               })
+              // kilocode_change start
               if (
                 value.error instanceof Permission.RejectedError ||
                 value.error instanceof Question.RejectedError ||
-                value.error instanceof Suggestion.DismissedError // kilocode_change
+                value.error instanceof Suggestion.DismissedError
               ) {
+                // kilocode_change end
                 ctx.blocked = ctx.shouldBreak
               }
               delete ctx.toolcalls[value.toolCallId]

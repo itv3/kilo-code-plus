@@ -155,6 +155,7 @@ export namespace ToolRegistry {
       const lsp = yield* build(LspTool)
       const batch = yield* build(BatchTool)
       const plan = yield* build(PlanExitTool)
+      const suggest = yield* build(SuggestTool) // kilocode_change
       const kilo = yield* KiloToolRegistry.build(build) // kilocode_change
 
       const all = Effect.fn("ToolRegistry.all")(function* (custom: Tool.Info[]) {
@@ -180,6 +181,7 @@ export namespace ToolRegistry {
           ...(Flag.KILO_EXPERIMENTAL_LSP_TOOL ? [lsp] : []),
           ...(cfg.experimental?.batch_tool === true ? [batch] : []),
           ...KiloToolRegistry.plan(plan), // kilocode_change
+          ...KiloToolRegistry.suggest(suggest), // kilocode_change
           ...KiloToolRegistry.extra(kilo, cfg), // kilocode_change
           ...custom,
         ]
