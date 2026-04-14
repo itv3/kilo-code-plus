@@ -1,5 +1,6 @@
 import { RGBA } from "@opentui/core"
 
+// kilocode_change start
 /**
  * Write escape sequences to disable all mouse tracking modes and reset terminal state.
  * This is a safety net to ensure the terminal is clean after exit, even if the renderer's
@@ -18,10 +19,10 @@ export function resetTerminalState() {
   try {
     process.stdout.write(sequences.join(""))
   } catch (err) {
-    // kilocode_change - stdout may already be closed during exit
     console.error("resetTerminalState failed", err)
   }
 }
+// kilocode_change end
 
 export namespace Terminal {
   export type Colors = Awaited<ReturnType<typeof colors>>
