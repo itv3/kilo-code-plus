@@ -607,7 +607,7 @@ it.live(
           const end = Date.now() + 5_000
           while (Date.now() < end) {
             const msgs = await Effect.runPromise(MessageV2.filterCompactedEffect(chat.id))
-            const assistant = msgs.findLast((item) => item.info.role === "assistant" && item.info.agent === "build")
+            const assistant = msgs.findLast((item) => item.info.role === "assistant" && item.info.agent === "code") // kilocode_change
             const tool = assistant?.parts.find(
               (part): part is MessageV2.ToolPart => part.type === "tool" && part.tool === "task",
             )
