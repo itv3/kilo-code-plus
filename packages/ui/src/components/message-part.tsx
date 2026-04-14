@@ -2144,7 +2144,7 @@ ToolRegistry.register({
                             </Accordion.Trigger>
                           </StickyAccordionHeader>
                           <Accordion.Content>
-                            <Show when={visible() && file.before !== undefined}>
+                            <Show when={visible()}>
                               <div data-component="apply-patch-file-diff">
                                 <Dynamic component={fileComponent} mode="diff" fileDiff={file.view.fileDiff} />
                               </div>

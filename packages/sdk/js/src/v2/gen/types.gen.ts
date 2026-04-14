@@ -33,6 +33,13 @@ export type EventProjectUpdated = {
   properties: Project
 }
 
+export type EventServerInstanceDisposed = {
+  type: "server.instance.disposed"
+  properties: {
+    directory: string
+  }
+}
+
 export type EventInstallationUpdated = {
   type: "installation.updated"
   properties: {
@@ -44,13 +51,6 @@ export type EventInstallationUpdateAvailable = {
   type: "installation.update-available"
   properties: {
     version: string
-  }
-}
-
-export type EventServerInstanceDisposed = {
-  type: "server.instance.disposed"
-  properties: {
-    directory: string
   }
 }
 
@@ -209,6 +209,21 @@ export type EventMessagePartDelta = {
   }
 }
 
+export type EventSessionTurnOpen = {
+  type: "session.turn.open"
+  properties: {
+    sessionID: string
+  }
+}
+
+export type EventSessionTurnClose = {
+  type: "session.turn.close"
+  properties: {
+    sessionID: string
+    reason: "completed" | "error" | "interrupted"
+  }
+}
+
 export type PermissionRequest = {
   id: string
   sessionID: string
@@ -352,75 +367,6 @@ export type EventVcsBranchUpdated = {
   }
 }
 
-export type EventTuiPromptAppend = {
-  type: "tui.prompt.append"
-  properties: {
-    text: string
-  }
-}
-
-export type EventTuiCommandExecute = {
-  type: "tui.command.execute"
-  properties: {
-    command:
-      | "session.list"
-      | "session.new"
-      | "session.share"
-      | "session.interrupt"
-      | "session.compact"
-      | "session.page.up"
-      | "session.page.down"
-      | "session.line.up"
-      | "session.line.down"
-      | "session.half.page.up"
-      | "session.half.page.down"
-      | "session.first"
-      | "session.last"
-      | "prompt.clear"
-      | "prompt.submit"
-      | "agent.cycle"
-      | string
-  }
-}
-
-export type EventTuiToastShow = {
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    /**
-     * Duration in milliseconds
-     */
-    duration?: number
-  }
-}
-
-export type EventTuiSessionSelect = {
-  type: "tui.session.select"
-  properties: {
-    /**
-     * Session ID to navigate to
-     */
-    sessionID: string
-  }
-}
-
-export type EventMcpToolsChanged = {
-  type: "mcp.tools.changed"
-  properties: {
-    server: string
-  }
-}
-
-export type EventMcpBrowserOpenFailed = {
-  type: "mcp.browser.open.failed"
-  properties: {
-    mcpName: string
-    url: string
-  }
-}
-
 export type EventCommandExecuted = {
   type: "command.executed"
   properties: {
@@ -428,20 +374,6 @@ export type EventCommandExecuted = {
     sessionID: string
     arguments: string
     messageID: string
-  }
-}
-
-export type EventWorkspaceReady = {
-  type: "workspace.ready"
-  properties: {
-    name: string
-  }
-}
-
-export type EventWorkspaceFailed = {
-  type: "workspace.failed"
-  properties: {
-    message: string
   }
 }
 
@@ -516,6 +448,29 @@ export type EventQuestionRejected = {
   }
 }
 
+export type Todo = {
+  /**
+   * Brief description of the task
+   */
+  content: string
+  /**
+   * Current status of the task: pending, in_progress, completed, cancelled
+   */
+  status: string
+  /**
+   * Priority level of the task: high, medium, low
+   */
+  priority: string
+}
+
+export type EventTodoUpdated = {
+  type: "todo.updated"
+  properties: {
+    sessionID: string
+    todos: Array<Todo>
+  }
+}
+
 export type SessionStatus =
   | {
       type: "idle"
@@ -528,6 +483,11 @@ export type SessionStatus =
     }
   | {
       type: "busy"
+    }
+  | {
+      type: "offline"
+      requestID: string
+      message: string
     }
 
 export type EventSessionStatus = {
@@ -552,26 +512,25 @@ export type EventSessionCompacted = {
   }
 }
 
-export type Todo = {
-  /**
-   * Brief description of the task
-   */
-  content: string
-  /**
-   * Current status of the task: pending, in_progress, completed, cancelled
-   */
-  status: string
-  /**
-   * Priority level of the task: high, medium, low
-   */
-  priority: string
+export type EventKiloSessionsRemoteStatusChanged = {
+  type: "kilo-sessions.remote-status-changed"
+  properties: {
+    enabled: boolean
+    connected: boolean
+  }
 }
 
-export type EventTodoUpdated = {
-  type: "todo.updated"
+export type EventWorkspaceReady = {
+  type: "workspace.ready"
   properties: {
-    sessionID: string
-    todos: Array<Todo>
+    name: string
+  }
+}
+
+export type EventWorkspaceFailed = {
+  type: "workspace.failed"
+  properties: {
+    message: string
   }
 }
 
@@ -1090,22 +1049,14 @@ export type EventSessionDeleted = {
 
 export type Event =
   | EventProjectUpdated
+  | EventServerInstanceDisposed
   | EventInstallationUpdated
   | EventInstallationUpdateAvailable
-  | EventServerInstanceDisposed
   | EventServerConnected
   | EventGlobalDisposed
   | EventGlobalConfigUpdated
   | EventLspClientDiagnostics
   | EventLspUpdated
-  | EventMessagePartDelta
-  | EventPermissionAsked
-  | EventPermissionReplied
-  | EventSessionDiff
-  | EventSessionError
-  | EventFileEdited
-  | EventFileWatcherUpdated
-  | EventVcsBranchUpdated
   | EventTuiPromptAppend
   | EventTuiCommandExecute
   | EventTuiToastShow
@@ -1117,29 +1068,26 @@ export type Event =
   | EventSessionNetworkRejected
   | EventSessionNetworkRestored
   | EventMessagePartDelta
-  | EventPermissionAsked
-  | EventPermissionReplied
-  | EventQuestionAsked
-  | EventQuestionReplied
-  | EventQuestionRejected
-  | EventTodoUpdated
   | EventSessionTurnOpen
   | EventSessionTurnClose
-  | EventSessionStatus
-  | EventSessionIdle
-  | EventSessionCompacted
+  | EventPermissionAsked
+  | EventPermissionReplied
+  | EventSessionDiff
+  | EventSessionError
   | EventFileEdited
   | EventFileWatcherUpdated
+  | EventVcsBranchUpdated
   | EventCommandExecuted
-  | EventWorkspaceReady
-  | EventWorkspaceFailed
   | EventQuestionAsked
   | EventQuestionReplied
   | EventQuestionRejected
+  | EventTodoUpdated
   | EventSessionStatus
   | EventSessionIdle
   | EventSessionCompacted
-  | EventTodoUpdated
+  | EventKiloSessionsRemoteStatusChanged
+  | EventWorkspaceReady
+  | EventWorkspaceFailed
   | EventPtyCreated
   | EventPtyUpdated
   | EventPtyExited
@@ -1416,7 +1364,7 @@ export type ProviderConfig = {
      */
     setCacheKey?: boolean
     /**
-     * Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.
+     * Timeout in milliseconds for requests to this provider. Default is 120000 (2 minutes). Set to false to disable timeout.
      */
     timeout?: number | false
     /**
@@ -1461,10 +1409,6 @@ export type ProviderConfig = {
         input: Array<"text" | "audio" | "image" | "video" | "pdf">
         output: Array<"text" | "audio" | "image" | "video" | "pdf">
       }
-      recommendedIndex?: number
-      prompt?: "codex" | "gemini" | "beast" | "anthropic" | "trinity" | "anthropic_without_todo"
-      isFree?: boolean
-      ai_sdk_provider?: "anthropic" | "openai" | "openai-compatible" | "openrouter"
       experimental?: boolean
       status?: "alpha" | "beta" | "deprecated"
       provider?: {
