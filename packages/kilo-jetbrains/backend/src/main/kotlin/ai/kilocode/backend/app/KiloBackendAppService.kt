@@ -29,6 +29,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.net.ConnectException
 import java.net.SocketTimeoutException
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -176,7 +177,7 @@ class KiloBackendAppService private constructor(
                 val progress = AtomicReference(LoadProgress())
                 _appState.value = KiloAppState.Loading(progress.get())
 
-                val errors = mutableListOf<LoadError>()
+                val errors = CopyOnWriteArrayList<LoadError>()
                 var cfg: Config? = null
                 var prof: KiloProfile200Response? = null
                 var notifs: List<KiloNotifications200ResponseInner> = emptyList()
@@ -187,7 +188,7 @@ class KiloBackendAppService private constructor(
                             val result = fetchProfile()
                             val status = when {
                                 result.error != null -> {
-                                    synchronized(errors) { errors.add(result.error) }
+                                    errors.add(result.error)
                                     throw LoadFailure(result.error)
                                 }
                                 result.value != null -> {
@@ -207,7 +208,7 @@ class KiloBackendAppService private constructor(
                                     .also { _appState.value = KiloAppState.Loading(it) }
                             } else {
                                 val err = result.error!!
-                                synchronized(errors) { errors.add(err) }
+                                errors.add(err)
                                 throw LoadFailure(err)
                             }
                         }
@@ -219,7 +220,7 @@ class KiloBackendAppService private constructor(
                                     .also { _appState.value = KiloAppState.Loading(it) }
                             } else {
                                 val err = result.error!!
-                                synchronized(errors) { errors.add(err) }
+                                errors.add(err)
                                 throw LoadFailure(err)
                             }
                         }
@@ -246,7 +247,7 @@ class KiloBackendAppService private constructor(
                     log.warn("Application start failed: ${e.message}")
                     _appState.value = KiloAppState.Error(
                         message = "Failed to load required data",
-                        errors = synchronized(errors) { errors.toList() },
+                        errors = errors.toList(),
                     )
                 }
             }
