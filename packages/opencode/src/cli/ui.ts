@@ -4,6 +4,15 @@ import { NamedError } from "@opencode-ai/util/error"
 import { logo as glyphs } from "./logo"
 
 export namespace UI {
+  const wordmark = [
+    // kilocode_change start
+    `██ ▄█▀ ██ ██     ▄████▄   ▄█████ ██     ██ `,
+    `████   ██ ██     ██~~██   ██~~~~ ██     ██ `,
+    `██ ▀█▄ ██ ██████ ▀████▀   ▀█████ ██████ ██ `,
+    `~~  ~~ ~~ ~~~~~~  ~~~~     ~~~~~ ~~~~~~ ~~ `,
+    // kilocode_change end
+  ]
+
   export const CancelledError = NamedError.create("UICancelledError", z.void())
 
   export const Style = {
@@ -25,12 +34,12 @@ export namespace UI {
 
   export function println(...message: string[]) {
     print(...message)
-    Bun.stderr.write(EOL)
+    process.stderr.write(EOL)
   }
 
   export function print(...message: string[]) {
     blank = false
-    Bun.stderr.write(message.join(" "))
+    process.stderr.write(message.join(" "))
   }
 
   let blank = false
@@ -42,10 +51,20 @@ export namespace UI {
 
   // kilocode_change start
   export function logo(pad?: string) {
+    if (!process.stdout.isTTY && !process.stderr.isTTY) {
+      const result = []
+      for (const row of wordmark) {
+        if (pad) result.push(pad)
+        result.push(row)
+        result.push(EOL)
+      }
+      return result.join("").trimEnd()
+    }
+
     const result: string[] = []
     const reset = "\x1b[0m"
     const left = {
-      fg: Bun.color("gray", "ansi") ?? "",
+      fg: "\x1b[90m",
       shadow: "\x1b[38;5;235m",
       bg: "\x1b[48;5;235m",
     }
@@ -106,6 +125,9 @@ export namespace UI {
   }
 
   export function error(message: string) {
+    if (message.startsWith("Error: ")) {
+      message = message.slice("Error: ".length)
+    }
     println(Style.TEXT_DANGER_BOLD + "Error: " + Style.TEXT_NORMAL + message)
   }
 

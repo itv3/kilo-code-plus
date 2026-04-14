@@ -1,17 +1,130 @@
 import { Hono } from "hono"
 import { describeRoute, validator, resolver } from "hono-openapi"
 import z from "zod"
+import { ProviderID, ModelID } from "../../provider/schema"
 import { ToolRegistry } from "../../tool/registry"
 import { Worktree } from "../../worktree"
 import { Instance } from "../../project/instance"
 import { Project } from "../../project/project"
 import { MCP } from "../../mcp"
+import { Session } from "../../session"
+import { Config } from "../../config/config"
+import { ConsoleState } from "../../config/console-state"
+import { Account, AccountID, OrgID } from "../../account"
 import { zodToJsonSchema } from "zod-to-json-schema"
 import { errors } from "../error"
 import { lazy } from "../../util/lazy"
+import { Snapshot } from "../../snapshot" // kilocode_change
+import { Review } from "../../kilocode/review/review" // kilocode_change
+import { WorktreeDiff } from "../../kilocode/review/worktree-diff" // kilocode_change
+import { WorktreeFamily } from "../../kilocode/worktree-family" // kilocode_change
+import { Log } from "../../util/log" // kilocode_change
+import { WorkspaceRoutes } from "./workspace"
+import { Filesystem } from "../../util/filesystem" // kilocode_change
+import path from "path" // kilocode_change
+
+const ConsoleOrgOption = z.object({
+  accountID: z.string(),
+  accountEmail: z.string(),
+  accountUrl: z.string(),
+  orgID: z.string(),
+  orgName: z.string(),
+  active: z.boolean(),
+})
+
+const ConsoleOrgList = z.object({
+  orgs: z.array(ConsoleOrgOption),
+})
+
+const ConsoleSwitchBody = z.object({
+  accountID: z.string(),
+  orgID: z.string(),
+})
 
 export const ExperimentalRoutes = lazy(() =>
   new Hono()
+    .get(
+      "/console",
+      describeRoute({
+        summary: "Get active Console provider metadata",
+        description: "Get the active Console org name and the set of provider IDs managed by that Console org.",
+        operationId: "experimental.console.get",
+        responses: {
+          200: {
+            description: "Active Console provider metadata",
+            content: {
+              "application/json": {
+                schema: resolver(ConsoleState),
+              },
+            },
+          },
+        },
+      }),
+      async (c) => {
+        const [consoleState, groups] = await Promise.all([Config.getConsoleState(), Account.orgsByAccount()])
+        return c.json({
+          ...consoleState,
+          switchableOrgCount: groups.reduce((count, group) => count + group.orgs.length, 0),
+        })
+      },
+    )
+    .get(
+      "/console/orgs",
+      describeRoute({
+        summary: "List switchable Console orgs",
+        description: "Get the available Console orgs across logged-in accounts, including the current active org.",
+        operationId: "experimental.console.listOrgs",
+        responses: {
+          200: {
+            description: "Switchable Console orgs",
+            content: {
+              "application/json": {
+                schema: resolver(ConsoleOrgList),
+              },
+            },
+          },
+        },
+      }),
+      async (c) => {
+        const [groups, active] = await Promise.all([Account.orgsByAccount(), Account.active()])
+
+        const orgs = groups.flatMap((group) =>
+          group.orgs.map((org) => ({
+            accountID: group.account.id,
+            accountEmail: group.account.email,
+            accountUrl: group.account.url,
+            orgID: org.id,
+            orgName: org.name,
+            active: !!active && active.id === group.account.id && active.active_org_id === org.id,
+          })),
+        )
+        return c.json({ orgs })
+      },
+    )
+    .post(
+      "/console/switch",
+      describeRoute({
+        summary: "Switch active Console org",
+        description: "Persist a new active Console account/org selection for the current local OpenCode state.",
+        operationId: "experimental.console.switchOrg",
+        responses: {
+          200: {
+            description: "Switch success",
+            content: {
+              "application/json": {
+                schema: resolver(z.boolean()),
+              },
+            },
+          },
+        },
+      }),
+      validator("json", ConsoleSwitchBody),
+      async (c) => {
+        const body = c.req.valid("json")
+        await Account.switchOrg(AccountID.make(body.accountID), OrgID.make(body.orgID))
+        return c.json(true)
+      },
+    )
     .get(
       "/tool/ids",
       describeRoute({
@@ -75,7 +188,7 @@ export const ExperimentalRoutes = lazy(() =>
       ),
       async (c) => {
         const { provider, model } = c.req.valid("query")
-        const tools = await ToolRegistry.tools({ providerID: provider, modelID: model })
+        const tools = await ToolRegistry.tools({ providerID: ProviderID.make(provider), modelID: ModelID.make(model) })
         return c.json(
           tools.map((t) => ({
             id: t.id,
@@ -86,6 +199,7 @@ export const ExperimentalRoutes = lazy(() =>
         )
       },
     )
+    .route("/workspace", WorkspaceRoutes())
     .post(
       "/worktree",
       describeRoute({
@@ -104,7 +218,7 @@ export const ExperimentalRoutes = lazy(() =>
           ...errors(400),
         },
       }),
-      validator("json", Worktree.create.schema),
+      validator("json", Worktree.CreateInput.optional()),
       async (c) => {
         const body = c.req.valid("json")
         const worktree = await Worktree.create(body)
@@ -151,7 +265,7 @@ export const ExperimentalRoutes = lazy(() =>
           ...errors(400),
         },
       }),
-      validator("json", Worktree.remove.schema),
+      validator("json", Worktree.RemoveInput),
       async (c) => {
         const body = c.req.valid("json")
         await Worktree.remove(body)
@@ -177,11 +291,207 @@ export const ExperimentalRoutes = lazy(() =>
           ...errors(400),
         },
       }),
-      validator("json", Worktree.reset.schema),
+      validator("json", Worktree.ResetInput),
       async (c) => {
         const body = c.req.valid("json")
         await Worktree.reset(body)
         return c.json(true)
+      },
+    )
+    // kilocode_change start - worktree diff endpoint for agent manager
+    .get(
+      "/worktree/diff",
+      describeRoute({
+        summary: "Get worktree diff",
+        description: "Get file diffs for a worktree compared to its base branch. Includes uncommitted changes.",
+        operationId: "worktree.diff",
+        responses: {
+          200: {
+            description: "File diffs",
+            content: {
+              "application/json": {
+                schema: resolver(z.array(Snapshot.FileDiff)),
+              },
+            },
+          },
+          ...errors(400),
+        },
+      }),
+      // kilocode_change start
+      validator(
+        "query",
+        z.object({
+          base: z.string().optional().meta({ description: "Base branch or ref to diff against" }),
+        }),
+      ),
+      async (c) => {
+        const log = Log.create({ service: "worktree-diff" })
+        const query = c.req.valid("query")
+        const base = query.base || (await Review.getBaseBranch())
+        // kilocode_change end
+        const dir = Instance.directory
+        log.info("computing diff", { dir, base })
+        const diffs = await WorktreeDiff.full({ dir, base, log })
+        return c.json(
+          diffs.map((diff) => ({
+            file: diff.file,
+            before: diff.before,
+            after: diff.after,
+            additions: diff.additions,
+            deletions: diff.deletions,
+            status: diff.status,
+          })),
+        )
+      },
+    )
+    .get(
+      "/worktree/diff/summary",
+      describeRoute({
+        summary: "Get worktree diff summary",
+        description: "Get lightweight file diff metadata for a worktree compared to its base branch.",
+        operationId: "worktree.diffSummary",
+        responses: {
+          200: {
+            description: "Diff summary items",
+            content: {
+              "application/json": {
+                schema: resolver(z.array(WorktreeDiff.Item)),
+              },
+            },
+          },
+          ...errors(400),
+        },
+      }),
+      validator(
+        "query",
+        z.object({
+          base: z.string().optional().meta({ description: "Base branch or ref to diff against" }),
+        }),
+      ),
+      async (c) => {
+        const log = Log.create({ service: "worktree-diff" })
+        const query = c.req.valid("query")
+        const base = query.base || (await Review.getBaseBranch())
+        const dir = Instance.directory
+        log.info("computing diff summary", { dir, base })
+        return c.json(await WorktreeDiff.summary({ dir, base, log }))
+      },
+    )
+    .get(
+      "/worktree/diff/file",
+      describeRoute({
+        summary: "Get worktree diff detail",
+        description: "Get full diff contents for one worktree file compared to its base branch.",
+        operationId: "worktree.diffFile",
+        responses: {
+          200: {
+            description: "Diff detail item",
+            content: {
+              "application/json": {
+                schema: resolver(WorktreeDiff.Item.nullable()),
+              },
+            },
+          },
+          ...errors(400),
+        },
+      }),
+      validator(
+        "query",
+        z.object({
+          base: z.string().optional().meta({ description: "Base branch or ref to diff against" }),
+          file: z.string().meta({ description: "Relative file path to load diff contents for" }),
+        }),
+      ),
+      async (c) => {
+        const log = Log.create({ service: "worktree-diff" })
+        const query = c.req.valid("query")
+        const base = query.base || (await Review.getBaseBranch())
+        const dir = Instance.directory
+        log.info("computing diff detail", { dir, base, file: query.file })
+        return c.json((await WorktreeDiff.detail({ dir, base, file: query.file, log })) ?? null)
+      },
+    )
+    // kilocode_change end
+    .get(
+      "/session",
+      describeRoute({
+        summary: "List sessions",
+        description:
+          "Get a list of all OpenCode sessions across projects, sorted by most recently updated. Archived sessions are excluded by default.",
+        operationId: "experimental.session.list",
+        responses: {
+          200: {
+            description: "List of sessions",
+            content: {
+              "application/json": {
+                schema: resolver(Session.GlobalInfo.array()),
+              },
+            },
+          },
+        },
+      }),
+      validator(
+        "query",
+        z.object({
+          // kilocode_change start
+          projectID: z.string().optional().meta({ description: "Filter sessions by project ID" }),
+          directory: z.string().optional().meta({ description: "Filter sessions by project directory" }),
+          worktrees: z.coerce
+            .boolean()
+            .optional()
+            .meta({ description: "Restrict sessions to the current repo worktree family or current directory" }),
+          // kilocode_change end
+          roots: z.coerce.boolean().optional().meta({ description: "Only return root sessions (no parentID)" }),
+          start: z.coerce
+            .number()
+            .optional()
+            .meta({ description: "Filter sessions updated on or after this timestamp (milliseconds since epoch)" }),
+          cursor: z.coerce
+            .number()
+            .optional()
+            .meta({ description: "Return sessions updated before this timestamp (milliseconds since epoch)" }),
+          search: z.string().optional().meta({ description: "Filter sessions by title (case-insensitive)" }),
+          limit: z.coerce.number().optional().meta({ description: "Maximum number of sessions to return" }),
+          archived: z.coerce.boolean().optional().meta({ description: "Include archived sessions (default false)" }),
+        }),
+      ),
+      async (c) => {
+        const query = c.req.valid("query")
+        const limit = query.limit ?? 100 // kilocode_change
+        // kilocode_change start
+        const projectID = query.worktrees && !query.projectID ? Instance.project.id : query.projectID
+        // kilocode_change end
+        const directories = query.worktrees ? await WorktreeFamily.list() : undefined // kilocode_change
+        // kilocode_change start - sort longest-first so most specific worktree matches first
+        const sorted = directories ? [...directories].sort((a, b) => b.length - a.length) : undefined
+        // kilocode_change end
+        const sessions: Session.GlobalInfo[] = []
+        for await (const session of Session.listGlobal({
+          projectID, // kilocode_change
+          directory: query.directory,
+          directories, // kilocode_change
+          roots: query.roots,
+          start: query.start,
+          cursor: query.cursor,
+          search: query.search,
+          limit: limit + 1,
+          archived: query.archived,
+        })) {
+          // kilocode_change start - resolve worktree folder name for each session
+          if (sorted) {
+            const root = sorted.find((d) => Filesystem.contains(d, session.directory))
+            sessions.push({ ...session, worktreeName: path.basename(root ?? session.directory) })
+            continue
+          }
+          // kilocode_change end
+          sessions.push(session)
+        }
+        const hasMore = sessions.length > limit
+        const list = hasMore ? sessions.slice(0, limit) : sessions
+        if (hasMore && list.length > 0) {
+          c.header("x-next-cursor", String(list[list.length - 1].time.updated))
+        }
+        return c.json(list)
       },
     )
     .get(

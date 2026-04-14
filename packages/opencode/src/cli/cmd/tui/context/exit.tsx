@@ -14,9 +14,10 @@ type Exit = ((reason?: unknown) => Promise<void>) & {
 
 export const { use: useExit, provider: ExitProvider } = createSimpleContext({
   name: "Exit",
-  init: (input: { onExit?: () => Promise<void> }) => {
+  init: (input: { onBeforeExit?: () => Promise<void>; onExit?: () => Promise<void> }) => {
     const renderer = useRenderer()
     let message: string | undefined
+    let task: Promise<void> | undefined
     const store = {
       set: (value?: string) => {
         const prev = message
@@ -31,28 +32,33 @@ export const { use: useExit, provider: ExitProvider } = createSimpleContext({
       get: () => message,
     }
     const exit: Exit = Object.assign(
-      async (reason?: unknown) => {
-        // Reset window title before destroying renderer
-        renderer.setTerminalTitle("")
-        renderer.destroy()
-        win32FlushInputBuffer()
-        // kilocode_change - reset terminal state to disable mouse tracking
-        resetTerminalState()
-        await input.onExit?.()
-        if (reason) {
-          const formatted = FormatError(reason) ?? FormatUnknownError(reason)
-          if (formatted) {
-            process.stderr.write(formatted + "\n")
+      (reason?: unknown) => {
+        if (task) return task
+        task = (async () => {
+          await input.onBeforeExit?.()
+          // Reset window title before destroying renderer
+          renderer.setTerminalTitle("")
+          renderer.destroy()
+          win32FlushInputBuffer()
+          // kilocode_change - reset terminal state to disable mouse tracking
+          resetTerminalState()
+          if (reason) {
+            const formatted = FormatError(reason) ?? FormatUnknownError(reason)
+            if (formatted) {
+              process.stderr.write(formatted + "\n")
+            }
           }
-        }
-        const text = store.get()
-        if (text) process.stdout.write(text + "\n")
-        process.exit(0)
+          const text = store.get()
+          if (text) process.stdout.write(text + "\n")
+          await input.onExit?.()
+        })()
+        return task
       },
       {
         message: store,
       },
     )
+    process.on("SIGHUP", () => exit())
     return exit
   },
 })

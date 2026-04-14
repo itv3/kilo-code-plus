@@ -7,11 +7,13 @@ import DESCRIPTION from "./write.txt"
 import { Bus } from "../bus"
 import { File } from "../file"
 import { FileWatcher } from "../file/watcher"
+import { Format } from "../format"
 import { FileTime } from "../file/time"
 import { Filesystem } from "../util/filesystem"
 import { Instance } from "../project/instance"
-import { trimDiff } from "./edit"
+import { trimDiff, buildFileDiff } from "./edit" // kilocode_change
 import { assertExternalDirectory } from "./external-directory"
+import { filterDiagnostics } from "./diagnostics" // kilocode_change
 
 const MAX_DIAGNOSTICS_PER_FILE = 20
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5
@@ -26,12 +28,12 @@ export const WriteTool = Tool.define("write", {
     const filepath = path.isAbsolute(params.filePath) ? params.filePath : path.join(Instance.directory, params.filePath)
     await assertExternalDirectory(ctx, filepath)
 
-    const file = Bun.file(filepath)
-    const exists = await file.exists()
-    const contentOld = exists ? await file.text() : ""
+    const exists = await Filesystem.exists(filepath)
+    const contentOld = exists ? await Filesystem.readText(filepath) : ""
     if (exists) await FileTime.assert(ctx.sessionID, filepath)
 
     const diff = trimDiff(createTwoFilesPatch(filepath, filepath, contentOld, params.content))
+    const filediff = buildFileDiff(filepath, contentOld, params.content) // kilocode_change
     await ctx.ask({
       permission: "edit",
       patterns: [path.relative(Instance.worktree, filepath)],
@@ -39,18 +41,18 @@ export const WriteTool = Tool.define("write", {
       metadata: {
         filepath,
         diff,
+        filediff, // kilocode_change
       },
     })
 
-    await Bun.write(filepath, params.content)
-    await Bus.publish(File.Event.Edited, {
-      file: filepath,
-    })
+    await Filesystem.write(filepath, params.content)
+    await Format.file(filepath)
+    Bus.publish(File.Event.Edited, { file: filepath })
     await Bus.publish(FileWatcher.Event.Updated, {
       file: filepath,
       event: exists ? "change" : "add",
     })
-    FileTime.read(ctx.sessionID, filepath)
+    await FileTime.read(ctx.sessionID, filepath)
 
     let output = "Wrote file successfully."
     await LSP.touchFile(filepath, true)
@@ -75,9 +77,11 @@ export const WriteTool = Tool.define("write", {
     return {
       title: path.relative(Instance.worktree, filepath),
       metadata: {
-        diagnostics,
+        diagnostics: filterDiagnostics(diagnostics, [normalizedFilepath]), // kilocode_change
         filepath,
         exists: exists,
+        diff, // kilocode_change
+        filediff, // kilocode_change
       },
       output,
     }

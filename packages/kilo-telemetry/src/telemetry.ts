@@ -135,9 +135,9 @@ export namespace Telemetry {
 
   // LLM
   export function trackLlmCompletion(properties: {
-    sessionId?: string
-    provider: string
-    model: string
+    taskId?: string
+    apiProvider: string
+    modelId: string
     inputTokens?: number
     outputTokens?: number
     cacheReadTokens?: number
@@ -182,6 +182,11 @@ export namespace Telemetry {
 
   export function trackMcpServerError(server: string, error?: string) {
     track(TelemetryEvent.MCP_SERVER_ERROR, { server, error })
+  }
+
+  // Remote
+  export function trackRemoteConnectionOpened() {
+    track(TelemetryEvent.REMOTE_CONNECTION_OPENED)
   }
 
   // Auth

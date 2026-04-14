@@ -59,8 +59,8 @@ const keepSandbox = process.env.KILO_E2E_KEEP_SANDBOX === "1"
 
 const serverEnv = {
   ...process.env,
-  KILO_DISABLE_SHARE: process.env.KILO_DISABLE_SHARE ?? "true", // kilocode_change
   KILO_DISABLE_SESSION_INGEST: "true", // kilocode_change
+  KILO_DISABLE_SHARE: process.env.KILO_DISABLE_SHARE ?? "true",
   KILO_DISABLE_LSP_DOWNLOAD: "true",
   KILO_DISABLE_DEFAULT_PLUGINS: "true",
   KILO_EXPERIMENTAL_DISABLE_FILEWATCHER: "true",
@@ -72,8 +72,9 @@ const serverEnv = {
   KILO_E2E_PROJECT_DIR: repoDir,
   KILO_E2E_SESSION_TITLE: "E2E Session",
   KILO_E2E_MESSAGE: "Seeded for UI e2e",
-  KILO_E2E_MODEL: "kilo/kilo/auto", // kilocode_change
+  KILO_E2E_MODEL: "kilo/kilo-auto/frontier", // kilocode_change
   KILO_CLIENT: "app",
+  KILO_STRICT_CONFIG_DEPS: "true",
 } satisfies Record<string, string>
 
 const runnerEnv = {
@@ -145,7 +146,8 @@ try {
   } else {
     Object.assign(process.env, serverEnv)
     process.env.AGENT = "1"
-    process.env.OPENCODE = "1"
+    process.env.KILO = "1"
+    process.env.KILO_PID = String(process.pid)
 
     const log = await import("../../opencode/src/util/log")
     const install = await import("../../opencode/src/installation")

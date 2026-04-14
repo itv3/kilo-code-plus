@@ -13,10 +13,6 @@ export const ContributingNav: NavSection[] = [
         href: "/contributing/ecosystem",
         children: "Ecosystem",
       },
-      {
-        href: "/contributing/cline-to-kilo-migration",
-        children: "Cline to Kilo Migration",
-      },
     ],
   },
   {
@@ -35,6 +31,10 @@ export const ContributingNav: NavSection[] = [
             children: "Agent Observability",
           },
           {
+            href: "/contributing/architecture/auto-model-tiers",
+            children: "Auto Model Tiers",
+          },
+          {
             href: "/contributing/architecture/benchmarking",
             children: "Benchmarking",
           },
@@ -45,10 +45,6 @@ export const ContributingNav: NavSection[] = [
           {
             href: "/contributing/architecture/mcp-oauth-authorization",
             children: "MCP OAuth Authorization",
-          },
-          {
-            href: "/contributing/architecture/model-provider-blocklist",
-            children: "Model/Provider Blocklist",
           },
           {
             href: "/contributing/architecture/onboarding-improvements",
@@ -65,10 +61,6 @@ export const ContributingNav: NavSection[] = [
           {
             href: "/contributing/architecture/track-repo-url",
             children: "Track Repo URL",
-          },
-          {
-            href: "/contributing/architecture/vercel-ai-gateway",
-            children: "Vercel AI Gateway",
           },
           {
             href: "/contributing/architecture/voice-transcription",

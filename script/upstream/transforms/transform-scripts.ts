@@ -3,16 +3,17 @@
  * Transform script files with GitHub API references
  *
  * This script handles script files that contain GitHub API references
- * by transforming them from anomalyco/opencode to Kilo-Org/kilo.
+ * by transforming them from anomalyco/opencode to Kilo-Org/kilocode.
  */
 
 import { $ } from "bun"
 import { info, success, warn, debug } from "../utils/logger"
 import { defaultConfig } from "../utils/config"
+import { oursHasKilocodeChanges } from "../utils/git"
 
 export interface ScriptTransformResult {
   file: string
-  action: "transformed" | "skipped" | "failed"
+  action: "transformed" | "skipped" | "failed" | "flagged"
   replacements: number
   dryRun: boolean
 }
@@ -33,19 +34,19 @@ const SCRIPT_REPLACEMENTS: ScriptReplacement[] = [
   // GitHub API URLs
   {
     pattern: /api\.github\.com\/repos\/anomalyco\/opencode/g,
-    replacement: "api.github.com/repos/Kilo-Org/kilo",
+    replacement: "api.github.com/repos/Kilo-Org/kilocode",
     description: "GitHub API URL",
   },
   {
     pattern: /\/repos\/anomalyco\/opencode/g,
-    replacement: "/repos/Kilo-Org/kilo",
+    replacement: "/repos/Kilo-Org/kilocode",
     description: "GitHub repos path",
   },
 
   // gh CLI commands
   {
     pattern: /gh api "\/repos\/anomalyco\/opencode/g,
-    replacement: 'gh api "/repos/Kilo-Org/kilo',
+    replacement: 'gh api "/repos/Kilo-Org/kilocode',
     description: "gh api command",
   },
 
@@ -57,7 +58,7 @@ const SCRIPT_REPLACEMENTS: ScriptReplacement[] = [
   },
   {
     pattern: /anomalyco\/opencode/g,
-    replacement: "Kilo-Org/kilo",
+    replacement: "Kilo-Org/kilocode",
     description: "GitHub repo reference",
   },
 
@@ -128,6 +129,12 @@ export async function transformScriptFile(
   if (options.dryRun) {
     info(`[DRY-RUN] Would transform script: ${file}`)
     return { file, action: "transformed", replacements: 0, dryRun: true }
+  }
+
+  // If our version has kilocode_change markers, flag for manual resolution
+  if (await oursHasKilocodeChanges(file)) {
+    warn(`${file} has kilocode_change markers — skipping auto-transform, needs manual resolution`)
+    return { file, action: "flagged", replacements: 0, dryRun: false }
   }
 
   try {

@@ -14,7 +14,7 @@
  * - OpenCode -> Kilo (product name in user-visible text)
  * - opencode upgrade -> kilo upgrade (CLI commands)
  * - npx opencode -> npx kilo (CLI invocation)
- * - anomalyco/opencode -> Kilo-Org/kilo (GitHub repo)
+ * - anomalyco/opencode -> Kilo-Org/kilocode (GitHub repo)
  *
  * Preserved (not replaced):
  * - opencode.json (actual config filename)
@@ -26,12 +26,14 @@ import { $ } from "bun"
 import { Glob } from "bun"
 import { info, success, warn, debug } from "../utils/logger"
 import { defaultConfig } from "../utils/config"
+import { oursHasKilocodeChanges } from "../utils/git"
 
 export interface I18nTransformResult {
   file: string
   replacements: number
   preserved: number
   dryRun: boolean
+  flagged?: boolean
 }
 
 export interface I18nTransformOptions {
@@ -56,7 +58,7 @@ const I18N_REPLACEMENTS: StringReplacement[] = [
   },
   {
     pattern: /anomalyco\/opencode/g,
-    replacement: "Kilo-Org/kilo",
+    replacement: "Kilo-Org/kilocode",
     description: "GitHub repo reference",
   },
 
@@ -300,6 +302,13 @@ export async function transformConflictedI18n(
   for (const file of files) {
     if (!isI18nFile(file)) {
       debug(`Skipping non-i18n file: ${file}`)
+      continue
+    }
+
+    // If our version has kilocode_change markers, flag for manual resolution
+    if (!options.dryRun && (await oursHasKilocodeChanges(file))) {
+      warn(`${file} has kilocode_change markers — skipping auto-transform, needs manual resolution`)
+      results.push({ file, replacements: 0, preserved: 0, dryRun: false, flagged: true })
       continue
     }
 

@@ -1,16 +1,18 @@
 import type { Argv } from "yargs"
 import path from "path"
-import { pathToFileURL } from "bun"
+import { pathToFileURL } from "url"
 import { UI } from "../ui"
 import { cmd } from "./cmd"
 import { Flag } from "../../flag/flag"
 import { bootstrap } from "../bootstrap"
 import { EOL } from "os"
-import { createOpencodeClient, type Message, type OpencodeClient, type ToolPart } from "@kilocode/sdk/v2"
+import { text as streamText } from "node:stream/consumers"
+import { Filesystem } from "../../util/filesystem"
+import { createKiloClient, type Message, type KiloClient, type ToolPart } from "@kilocode/sdk/v2"
 import { Server } from "../../server/server"
 import { Provider } from "../../provider/provider"
 import { Agent } from "../../agent/agent"
-import { PermissionNext } from "../../permission/next"
+import { Permission } from "../../permission"
 import { Tool } from "../../tool/tool"
 import { GlobTool } from "../../tool/glob"
 import { GrepTool } from "../../tool/grep"
@@ -26,14 +28,15 @@ import { SkillTool } from "../../tool/skill"
 import { BashTool } from "../../tool/bash"
 import { TodoWriteTool } from "../../tool/todo"
 import { Locale } from "../../util/locale"
+import { importCloudSession, validateCloudFork } from "@/kilocode/cloud-session" // kilocode_change
 
-type ToolProps<T extends Tool.Info> = {
+type ToolProps<T> = {
   input: Tool.InferParameters<T>
   metadata: Tool.InferMetadata<T>
   part: ToolPart
 }
 
-function props<T extends Tool.Info>(part: ToolPart): ToolProps<T> {
+function props<T>(part: ToolPart): ToolProps<T> {
   const state = part.state
   return {
     input: state.input as Tool.InferParameters<T>,
@@ -167,12 +170,17 @@ function websearch(info: ToolProps<typeof WebSearchTool>) {
 }
 
 function task(info: ToolProps<typeof TaskTool>) {
-  const agent = Locale.titlecase(info.input.subagent_type)
-  const desc = info.input.description
-  const started = info.part.state.status === "running"
+  const input = info.part.state.input
+  const status = info.part.state.status
+  const subagent =
+    typeof input.subagent_type === "string" && input.subagent_type.trim().length > 0 ? input.subagent_type : "unknown"
+  const agent = Locale.titlecase(subagent)
+  const desc =
+    typeof input.description === "string" && input.description.trim().length > 0 ? input.description : undefined
+  const icon = status === "error" ? "✗" : status === "running" ? "•" : "✓"
   const name = desc ?? `${agent} Task`
   inline({
-    icon: started ? "•" : "✓",
+    icon,
     title: name,
     description: desc ? `${agent} Agent` : undefined,
   })
@@ -216,90 +224,93 @@ export const RunCommand = cmd({
   command: "run [message..]",
   describe: "run kilo with a message", // kilocode_change
   builder: (yargs: Argv) => {
-    return (
-      yargs
-        .positional("message", {
-          describe: "message to send",
-          type: "string",
-          array: true,
-          default: [],
-        })
-        .option("command", {
-          describe: "the command to run, use message for args",
-          type: "string",
-        })
-        .option("continue", {
-          alias: ["c"],
-          describe: "continue the last session",
-          type: "boolean",
-        })
-        .option("session", {
-          alias: ["s"],
-          describe: "session id to continue",
-          type: "string",
-        })
-        .option("fork", {
-          describe: "fork the session before continuing (requires --continue or --session)",
-          type: "boolean",
-        })
-        .option("share", {
-          type: "boolean",
-          describe: "share the session",
-        })
-        .option("model", {
-          type: "string",
-          alias: ["m"],
-          describe: "model to use in the format of provider/model",
-        })
-        .option("agent", {
-          type: "string",
-          describe: "agent to use",
-        })
-        .option("format", {
-          type: "string",
-          choices: ["default", "json"],
-          default: "default",
-          describe: "format: default (formatted) or json (raw JSON events)",
-        })
-        .option("file", {
-          alias: ["f"],
-          type: "string",
-          array: true,
-          describe: "file(s) to attach to message",
-        })
-        .option("title", {
-          type: "string",
-          describe: "title for the session (uses truncated prompt if no value provided)",
-        })
-        .option("attach", {
-          type: "string",
-          describe: "attach to a running opencode server (e.g., http://localhost:4096)",
-        })
-        .option("dir", {
-          type: "string",
-          describe: "directory to run in, path on remote server if attaching",
-        })
-        .option("port", {
-          type: "number",
-          describe: "port for the local server (defaults to random port if no value provided)",
-        })
-        .option("variant", {
-          type: "string",
-          describe: "model variant (provider-specific reasoning effort, e.g., high, max, minimal)",
-        })
-        .option("thinking", {
-          type: "boolean",
-          describe: "show thinking blocks",
-          default: false,
-        })
-        // kilocode_change start - auto approve all permissions
-        .option("auto", {
-          type: "boolean",
-          describe: "auto-approve all permissions (for autonomous/pipeline usage)",
-          default: false,
-        })
-    )
-    // kilocode_change end
+    return yargs
+      .positional("message", {
+        describe: "message to send",
+        type: "string",
+        array: true,
+        default: [],
+      })
+      .option("command", {
+        describe: "the command to run, use message for args",
+        type: "string",
+      })
+      .option("continue", {
+        alias: ["c"],
+        describe: "continue the last session",
+        type: "boolean",
+      })
+      .option("session", {
+        alias: ["s"],
+        describe: "session id to continue",
+        type: "string",
+      })
+      .option("fork", {
+        describe: "fork the session before continuing (requires --continue or --session)",
+        type: "boolean",
+      })
+      .option("share", {
+        type: "boolean",
+        describe: "share the session",
+      })
+      .option("model", {
+        type: "string",
+        alias: ["m"],
+        describe: "model to use in the format of provider/model",
+      })
+      .option("agent", {
+        type: "string",
+        describe: "agent to use",
+      })
+      .option("format", {
+        type: "string",
+        choices: ["default", "json"],
+        default: "default",
+        describe: "format: default (formatted) or json (raw JSON events)",
+      })
+      .option("file", {
+        alias: ["f"],
+        type: "string",
+        array: true,
+        describe: "file(s) to attach to message",
+      })
+      .option("title", {
+        type: "string",
+        describe: "title for the session (uses truncated prompt if no value provided)",
+      })
+      .option("attach", {
+        type: "string",
+        describe: "attach to a running opencode server (e.g., http://localhost:4096)",
+      })
+      .option("password", {
+        alias: ["p"],
+        type: "string",
+        describe: "basic auth password (defaults to KILO_SERVER_PASSWORD)",
+      })
+      .option("dir", {
+        type: "string",
+        describe: "directory to run in, path on remote server if attaching",
+      })
+      .option("port", {
+        type: "number",
+        describe: "port for the local server (defaults to random port if no value provided)",
+      })
+      .option("variant", {
+        type: "string",
+        describe: "model variant (provider-specific reasoning effort, e.g., high, max, minimal)",
+      })
+      // kilocode_change start - auto approve all permissions
+      .option("auto", {
+        type: "boolean",
+        describe: "auto-approve all permissions (for autonomous/pipeline usage)",
+        default: false,
+      })
+      // kilocode_change end
+      .option("thinking", {
+        type: "boolean",
+        describe: "show thinking blocks",
+        default: false,
+      })
   },
   handler: async (args) => {
     let message = [...args.message, ...(args["--"] || [])]
@@ -324,19 +335,12 @@ export const RunCommand = cmd({
 
       for (const filePath of list) {
         const resolvedPath = path.resolve(process.cwd(), filePath)
-        const file = Bun.file(resolvedPath)
-        const stats = await file.stat().catch(() => {})
-        if (!stats) {
-          UI.error(`File not found: ${filePath}`)
-          process.exit(1)
-        }
-        if (!(await file.exists())) {
+        if (!(await Filesystem.exists(resolvedPath))) {
           UI.error(`File not found: ${filePath}`)
           process.exit(1)
         }
 
-        const stat = await file.stat()
-        const mime = stat.isDirectory() ? "application/x-directory" : "text/plain"
+        const mime = (await Filesystem.isDir(resolvedPath)) ? "application/x-directory" : "text/plain"
 
         files.push({
           type: "file",
@@ -347,7 +351,7 @@ export const RunCommand = cmd({
       }
     }
 
-    if (!process.stdin.isTTY) message += "\n" + (await Bun.stdin.text())
+    if (!process.stdin.isTTY) message += "\n" + (await streamText(process.stdin))
 
     if (message.trim().length === 0 && !args.command) {
       UI.error("You must provide a message or a command")
@@ -358,8 +362,15 @@ export const RunCommand = cmd({
       UI.error("--fork requires --continue or --session")
       process.exit(1)
     }
+    // kilocode_change start
+    const cloudForkError = validateCloudFork(args)
+    if (cloudForkError) {
+      UI.error(cloudForkError)
+      process.exit(1)
+    }
+    // kilocode_change end
 
-    const rules: PermissionNext.Ruleset = [
+    const rules: Permission.Ruleset = [
       {
         permission: "question",
         action: "deny",
@@ -383,8 +394,19 @@ export const RunCommand = cmd({
       return message.slice(0, 50) + (message.length > 50 ? "..." : "")
     }
 
-    async function session(sdk: OpencodeClient) {
+    async function session(sdk: KiloClient) {
       const baseID = args.continue ? (await sdk.session.list()).data?.find((s) => !s.parentID)?.id : args.session
+
+      // kilocode_change start
+      if (baseID && args.cloudFork) {
+        const id = await importCloudSession(sdk, baseID).catch(() => undefined)
+        if (!id) {
+          UI.error("Failed to import session from cloud")
+          process.exit(1)
+        }
+        return id
+      }
+      // kilocode_change end
 
       if (baseID && args.fork) {
         const forked = await sdk.session.fork({ sessionID: baseID })
@@ -398,7 +420,7 @@ export const RunCommand = cmd({
       return result.data?.id
     }
 
-    async function share(sdk: OpencodeClient, sessionID: string) {
+    async function share(sdk: KiloClient, sessionID: string) {
       const cfg = await sdk.config.get()
       if (!cfg.data) return
       if (cfg.data.share !== "auto" && !Flag.KILO_AUTO_SHARE && !args.share) return
@@ -413,7 +435,7 @@ export const RunCommand = cmd({
       }
     }
 
-    async function execute(sdk: OpencodeClient) {
+    async function execute(sdk: KiloClient) {
       function tool(part: ToolPart) {
         try {
           if (part.tool === "bash") return bash(props<typeof BashTool>(part))
@@ -448,6 +470,8 @@ export const RunCommand = cmd({
 
       async function loop() {
         const toggles = new Map<string, boolean>()
+        const MAX_RETRIES = 3 // kilocode_change
+        let retries = 0 // kilocode_change
 
         for await (const event of events.stream) {
           if (
@@ -466,9 +490,17 @@ export const RunCommand = cmd({
             const part = event.properties.part
             if (part.sessionID !== sessionID) continue
 
-            if (part.type === "tool" && part.state.status === "completed") {
+            if (part.type === "tool" && (part.state.status === "completed" || part.state.status === "error")) {
               if (emit("tool_use", { part })) continue
-              tool(part)
+              if (part.state.status === "completed") {
+                tool(part)
+                continue
+              }
+              inline({
+                icon: "✗",
+                title: `${part.tool} failed`,
+              })
+              UI.error(part.state.error)
             }
 
             if (
@@ -530,6 +562,16 @@ export const RunCommand = cmd({
             UI.error(err)
           }
 
+          // kilocode_change start
+          if (
+            event.type === "session.status" &&
+            event.properties.sessionID === sessionID &&
+            event.properties.status.type === "busy"
+          ) {
+            retries = 0
+          }
+          // kilocode_change end
+
           if (
             event.type === "session.status" &&
             event.properties.sessionID === sessionID &&
@@ -561,14 +603,73 @@ export const RunCommand = cmd({
             await sdk.permission.reply({
               requestID: permission.id,
               reply: "reject",
+            }) // kilocode_change
+          } // kilocode_change
+          // kilocode_change start - network retry handling
+          if (event.type === "session.network.asked") {
+            const request = event.properties
+            if (request.sessionID !== sessionID) continue
+            retries++
+            if (retries > MAX_RETRIES) {
+              UI.println(
+                UI.Style.TEXT_WARNING_BOLD + "!",
+                UI.Style.TEXT_NORMAL + `network retry limit reached (${MAX_RETRIES}); rejecting`,
+              )
+              await sdk.network.reject({ requestID: request.id })
+              continue
+            }
+            const delay = Math.min(5000 * Math.pow(2, retries - 1), 60000)
+            await new Promise((r) => setTimeout(r, delay))
+            await sdk.network.reply({
+              requestID: request.id,
             })
           }
+          // kilocode_change end
         }
       }
 
       // Validate agent if specified
       const agent = await (async () => {
         if (!args.agent) return undefined
+
+        // When attaching, validate against the running server instead of local Instance state.
+        if (args.attach) {
+          const modes = await sdk.app
+            .agents(undefined, { throwOnError: true })
+            .then((x) => x.data ?? [])
+            .catch(() => undefined)
+
+          if (!modes) {
+            UI.println(
+              UI.Style.TEXT_WARNING_BOLD + "!",
+              UI.Style.TEXT_NORMAL,
+              `failed to list agents from ${args.attach}. Falling back to default agent`,
+            )
+            return undefined
+          }
+
+          const agent = modes.find((a) => a.name === args.agent)
+          if (!agent) {
+            UI.println(
+              UI.Style.TEXT_WARNING_BOLD + "!",
+              UI.Style.TEXT_NORMAL,
+              `agent "${args.agent}" not found. Falling back to default agent`,
+            )
+            return undefined
+          }
+
+          if (agent.mode === "subagent") {
+            UI.println(
+              UI.Style.TEXT_WARNING_BOLD + "!",
+              UI.Style.TEXT_NORMAL,
+              `agent "${args.agent}" is a subagent, not a primary agent. Falling back to default agent`,
+            )
+            return undefined
+          }
+
+          return args.agent
+        }
+
         const entry = await Agent.get(args.agent)
         if (!entry) {
           UI.println(
@@ -623,16 +724,23 @@ export const RunCommand = cmd({
     }
 
     if (args.attach) {
-      const sdk = createOpencodeClient({ baseUrl: args.attach, directory })
+      const headers = (() => {
+        const password = args.password ?? process.env.KILO_SERVER_PASSWORD
+        if (!password) return undefined
+        const username = process.env.KILO_SERVER_USERNAME ?? "kilo" // kilocode_change
+        const auth = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`
+        return { Authorization: auth }
+      })()
+      const sdk = createKiloClient({ baseUrl: args.attach, directory, headers })
       return await execute(sdk)
     }
 
     await bootstrap(process.cwd(), async () => {
       const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
         const request = new Request(input, init)
-        return Server.App().fetch(request)
+        return Server.Default().fetch(request)
       }) as typeof globalThis.fetch
-      const sdk = createOpencodeClient({ baseUrl: "http://opencode.internal", fetch: fetchFn })
+      const sdk = createKiloClient({ baseUrl: "http://kilo.internal", fetch: fetchFn })
       await execute(sdk)
     })
   },

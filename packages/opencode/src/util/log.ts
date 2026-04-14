@@ -2,6 +2,8 @@ import path from "path"
 import fs from "fs/promises"
 import { Global } from "../global"
 import z from "zod"
+import { Glob } from "./glob"
+import { createStream } from "rotating-file-stream" // kilocode_change
 
 export namespace Log {
   export const Level = z.enum(["DEBUG", "INFO", "WARN", "ERROR"]).meta({ ref: "LogLevel", description: "Log level" })
@@ -63,24 +65,34 @@ export namespace Log {
       Global.Path.log,
       options.dev ? "dev.log" : new Date().toISOString().split(".")[0].replace(/:/g, "") + ".log",
     )
-    const logfile = Bun.file(logpath)
     await fs.truncate(logpath).catch(() => {})
-    const writer = logfile.writer()
-    write = async (msg: any) => {
-      const num = writer.write(msg)
-      writer.flush()
-      return num
+    // kilocode_change start - use rotating-file-stream to cap log files at 50 MB
+    const dir = path.dirname(logpath)
+    const stream = createStream(path.basename(logpath), {
+      size: "50M",
+      maxFiles: 10,
+      history: path.join(dir, ".log-history"),
+      path: dir,
+    })
+    stream.on("error", (err: Error) => {
+      process.stderr.write("log stream error: " + err.message + "\n")
+    })
+    stream.on("warning", (err: Error) => {
+      process.stderr.write("log stream warning: " + err.message + "\n")
+    })
+    write = (msg: any) => {
+      stream.write(msg)
+      return msg.length
     }
+    // kilocode_change end
   }
 
   async function cleanup(dir: string) {
-    const glob = new Bun.Glob("????-??-??T??????.log")
-    const files = await Array.fromAsync(
-      glob.scan({
-        cwd: dir,
-        absolute: true,
-      }),
-    )
+    const files = await Glob.scan("????-??-??T??????.log", {
+      cwd: dir,
+      absolute: true,
+      include: "file",
+    })
     if (files.length <= 5) return
 
     const filesToDelete = files.slice(0, -10)

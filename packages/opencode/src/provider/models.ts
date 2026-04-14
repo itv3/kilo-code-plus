@@ -8,7 +8,10 @@ import { lazy } from "@/util/lazy"
 import { Config } from "../config/config" // kilocode_change
 import { ModelCache } from "./model-cache" // kilocode_change
 import { Auth } from "../auth" // kilocode_change
-import { KILO_OPENROUTER_BASE } from "@kilocode/kilo-gateway" // kilocode_change
+import { AI_SDK_PROVIDERS, KILO_OPENROUTER_BASE, PROMPTS } from "@kilocode/kilo-gateway" // kilocode_change
+import { Filesystem } from "../util/filesystem"
+import { Flock } from "@/util/flock"
+import { Hash } from "@/util/hash"
 
 // Try to import bundled snapshot (generated at build time)
 // Falls back to undefined in dev mode when snapshot doesn't exist
@@ -26,11 +29,21 @@ const normalizeKiloBaseURL = (baseURL: string | undefined, orgId: string | undef
   if (trimmed.includes("/openrouter")) return trimmed
   if (trimmed.endsWith("/api")) return `${trimmed}/openrouter`
   return `${trimmed}/api/openrouter`
-} // kilocode_change end
+}
+
+export const Prompt = z.enum(PROMPTS)
+
+export const AiSdkProvider = z.enum(AI_SDK_PROVIDERS)
+// kilocode_change end
 
 export namespace ModelsDev {
   const log = Log.create({ service: "models.dev" })
-  const filepath = path.join(Global.Path.cache, "models.json")
+  const source = url()
+  const filepath = path.join(
+    Global.Path.cache,
+    source === "https://models.dev" ? "models.json" : `models-${Hash.fast(source)}.json`,
+  )
+  const ttl = 5 * 60 * 1000
 
   export const Model = z.object({
     id: z.string(),
@@ -78,8 +91,14 @@ export namespace ModelsDev {
         output: z.array(z.enum(["text", "audio", "image", "video", "pdf"])),
       })
       .optional(),
-    recommended: z.boolean().optional(), // kilocode_change
-    recommendedIndex: z.number().optional(), // kilocode_change
+
+    // kilocode_change start
+    recommendedIndex: z.number().optional(),
+    prompt: Prompt.optional().catch(undefined),
+    isFree: z.boolean().optional(),
+    ai_sdk_provider: AiSdkProvider.optional().catch(undefined),
+    // kilocode_change end
+
     experimental: z.boolean().optional(),
     status: z.enum(["alpha", "beta", "deprecated"]).optional(),
     options: z.record(z.string(), z.any()),
@@ -104,18 +123,42 @@ export namespace ModelsDev {
     return Flag.KILO_MODELS_URL || "https://models.dev"
   }
 
+  function fresh() {
+    return Date.now() - Number(Filesystem.stat(filepath)?.mtimeMs ?? 0) < ttl
+  }
+
+  function skip(force: boolean) {
+    return !force && fresh()
+  }
+
+  const fetchApi = async () => {
+    const result = await fetch(`${url()}/api.json`, {
+      headers: { "User-Agent": Installation.USER_AGENT },
+      signal: AbortSignal.timeout(10000),
+    })
+    return { ok: result.ok, text: await result.text() }
+  }
+
   export const Data = lazy(async () => {
-    const file = Bun.file(Flag.KILO_MODELS_PATH ?? filepath)
-    const result = await file.json().catch(() => {})
+    const result = await Filesystem.readJson(Flag.KILO_MODELS_PATH ?? filepath).catch(() => {})
     if (result) return result
     // @ts-ignore
-    const snapshot = await import("./models-snapshot")
+    const snapshot = await import("./models-snapshot.js")
       .then((m) => m.snapshot as Record<string, unknown>)
       .catch(() => undefined)
     if (snapshot) return snapshot
     if (Flag.KILO_DISABLE_MODELS_FETCH) return {}
-    const json = await fetch(`${url()}/api.json`).then((x) => x.text())
-    return JSON.parse(json)
+    return Flock.withLock(`models-dev:${filepath}`, async () => {
+      const result = await Filesystem.readJson(Flag.KILO_MODELS_PATH ?? filepath).catch(() => {})
+      if (result) return result
+      const result2 = await fetchApi()
+      if (result2.ok) {
+        await Filesystem.write(filepath, result2.text).catch((e) => {
+          log.error("Failed to write models cache", { error: e })
+        })
+      }
+      return JSON.parse(result2.text)
+    })
   })
 
   export async function get() {
@@ -128,14 +171,20 @@ export namespace ModelsDev {
     }
 
     // Inject kilo provider with dynamic model fetching
-    if (!providers["kilo"]) {
-      const config = await Config.get()
+    // Skip injection entirely when enabled_providers is set and doesn't include "kilo",
+    // or when "kilo" is in disabled_providers. This prevents unnecessary network calls
+    // to the Kilo API for teams using only their own providers (e.g. LiteLLM).
+    const config = await Config.get()
+    const disabled = new Set(config.disabled_providers ?? [])
+    const enabled = config.enabled_providers ? new Set(config.enabled_providers) : null
+    const kiloAllowed = (!enabled || enabled.has("kilo")) && !disabled.has("kilo")
+
+    if (kiloAllowed && !providers["kilo"]) {
       const kiloOptions = config.provider?.kilo?.options
-      // kilocode_change start - resolve org ID from auth (OAuth accountId) not just config
+      // resolve org ID from auth (OAuth accountId) not just config
       const kiloAuth = await Auth.get("kilo")
       const kiloOrgId =
         kiloOptions?.kilocodeOrganizationId ?? (kiloAuth?.type === "oauth" ? kiloAuth.accountId : undefined)
-      // kilocode_change end
       const normalizedBaseURL = normalizeKiloBaseURL(kiloOptions?.baseURL, kiloOrgId)
       const kiloFetchOptions = {
         ...(normalizedBaseURL ? { baseURL: normalizedBaseURL } : {}),
@@ -146,7 +195,19 @@ export namespace ModelsDev {
         : "https://api.kilo.ai/api/openrouter"
       const providerBaseURL = normalizedBaseURL ?? defaultBaseURL
       const ensureTrailingSlash = (value: string): string => (value.endsWith("/") ? value : `${value}/`)
-      const kiloModels = await ModelCache.fetch("kilo", kiloFetchOptions).catch(() => ({}))
+      const apertisConfig = config.provider?.apertis?.options
+      const apertisBaseURL = apertisConfig?.baseURL ?? "https://api.apertis.ai/v1"
+      const apertisFetchOptions = {
+        ...(apertisConfig?.baseURL ? { baseURL: apertisConfig.baseURL } : {}),
+      }
+
+      const [kiloModels, apertisModels] = await Promise.all([
+        ModelCache.fetch("kilo", kiloFetchOptions).catch(() => ({})),
+        !providers["apertis"]
+          ? ModelCache.fetch("apertis", apertisFetchOptions).catch(() => ({}))
+          : Promise.resolve(null),
+      ])
+
       providers["kilo"] = {
         id: "kilo",
         name: "Kilo Gateway",
@@ -158,32 +219,61 @@ export namespace ModelsDev {
       if (Object.keys(kiloModels).length === 0) {
         ModelCache.refresh("kilo", kiloFetchOptions).catch(() => {})
       }
+
+      if (!providers["apertis"] && apertisModels !== null) {
+        providers["apertis"] = {
+          id: "apertis",
+          name: "Apertis",
+          env: ["APERTIS_API_KEY"],
+          api: apertisBaseURL,
+          npm: "@ai-sdk/openai-compatible",
+          models: apertisModels,
+        }
+        if (Object.keys(apertisModels).length === 0) {
+          ModelCache.refresh("apertis", apertisFetchOptions).catch(() => {})
+        }
+      }
+    } else if (!providers["apertis"]) {
+      const apertisConfig = config.provider?.apertis?.options
+      const apertisBaseURL = apertisConfig?.baseURL ?? "https://api.apertis.ai/v1"
+      const apertisFetchOptions = {
+        ...(apertisConfig?.baseURL ? { baseURL: apertisConfig.baseURL } : {}),
+      }
+      const apertisModels = await ModelCache.fetch("apertis", apertisFetchOptions).catch(() => ({}))
+      providers["apertis"] = {
+        id: "apertis",
+        name: "Apertis",
+        env: ["APERTIS_API_KEY"],
+        api: apertisBaseURL,
+        npm: "@ai-sdk/openai-compatible",
+        models: apertisModels,
+      }
+      if (Object.keys(apertisModels).length === 0) {
+        ModelCache.refresh("apertis", apertisFetchOptions).catch(() => {})
+      }
     }
 
     return providers
     // kilocode_change end
   }
 
-  export async function refresh() {
-    const file = Bun.file(filepath)
-    const result = await fetch(`${url()}/api.json`, {
-      headers: {
-        "User-Agent": Installation.USER_AGENT,
-      },
-      signal: AbortSignal.timeout(10 * 1000),
+  export async function refresh(force = false) {
+    if (skip(force)) return ModelsDev.Data.reset()
+    await Flock.withLock(`models-dev:${filepath}`, async () => {
+      if (skip(force)) return ModelsDev.Data.reset()
+      const result = await fetchApi()
+      if (!result.ok) return
+      await Filesystem.write(filepath, result.text)
+      ModelsDev.Data.reset()
     }).catch((e) => {
       log.error("Failed to fetch models.dev", {
         error: e,
       })
     })
-    if (result && result.ok) {
-      await Bun.write(file, await result.text())
-      ModelsDev.Data.reset()
-    }
   }
 }
 
-if (!Flag.KILO_DISABLE_MODELS_FETCH) {
+if (!Flag.KILO_DISABLE_MODELS_FETCH && !process.argv.includes("--get-yargs-completions")) {
   ModelsDev.refresh()
   setInterval(
     async () => {
