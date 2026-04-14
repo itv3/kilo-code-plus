@@ -15485,6 +15485,12 @@
             "type": "string",
             "enum": ["added", "deleted", "modified"]
           },
+          "before": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
           "tracked": {
             "type": "boolean"
           },
@@ -15498,7 +15504,18 @@
             "type": "string"
           }
         },
-        "required": ["file", "patch", "additions", "deletions", "tracked", "generatedLike", "summarized", "stamp"]
+        "required": [
+          "file",
+          "patch",
+          "additions",
+          "deletions",
+          "before",
+          "after",
+          "tracked",
+          "generatedLike",
+          "summarized",
+          "stamp"
+        ]
       },
       "ProjectSummary": {
         "type": "object",

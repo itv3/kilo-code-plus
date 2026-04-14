@@ -1910,6 +1910,8 @@ export type WorktreeDiffItem = {
   additions: number
   deletions: number
   status?: "added" | "deleted" | "modified"
+  before: string
+  after: string
   tracked: boolean
   generatedLike: boolean
   summarized: boolean

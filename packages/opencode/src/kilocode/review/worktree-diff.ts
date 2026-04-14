@@ -9,6 +9,8 @@ import { Log } from "@/util/log"
 
 export namespace WorktreeDiff {
   export const Item = Snapshot.FileDiff.extend({
+    before: z.string(),
+    after: z.string(),
     tracked: z.boolean(),
     generatedLike: z.boolean(),
     summarized: z.boolean(),
