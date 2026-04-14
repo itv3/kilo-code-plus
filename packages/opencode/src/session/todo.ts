@@ -88,4 +88,10 @@ export namespace Todo {
   export async function get(sessionID: SessionID) {
     return runPromise((svc) => svc.get(sessionID))
   }
+
+  // kilocode_change start
+  export async function update(input: { sessionID: SessionID; todos: Info[] }) {
+    return runPromise((svc) => svc.update(input))
+  }
+  // kilocode_change end
 }

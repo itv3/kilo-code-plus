@@ -111,4 +111,10 @@ export namespace SessionRunState {
   export async function assertNotBusy(sessionID: SessionID) {
     return runPromise((svc) => svc.assertNotBusy(sessionID))
   }
+
+  // kilocode_change start
+  export async function cancel(sessionID: SessionID) {
+    return runPromise((svc) => svc.cancel(sessionID))
+  }
+  // kilocode_change end
 }

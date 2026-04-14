@@ -484,7 +484,7 @@ export namespace Session {
           // kilocode_change start
           yield* Effect.promise(() => KiloSession.removeSession(sessionID))
           KiloSession.clearPlatformOverride(sessionID)
-          SessionPrompt.cancel(sessionID)
+          void import("./run-state").then((m) => m.SessionRunState.cancel(sessionID).catch(() => {}))
           // kilocode_change end
           yield* Effect.sync(() => {
             SyncEvent.run(Event.Deleted, { sessionID, info: session })
@@ -760,6 +760,12 @@ export namespace Session {
   export const setArchived = fn(z.object({ sessionID: SessionID.zod, time: z.number().optional() }), (input) =>
     runPromise((svc) => svc.setArchived(input)),
   )
+
+  // kilocode_change start
+  export const setPermission = fn(z.object({ sessionID: SessionID.zod, permission: Info.shape.permission }), (input) =>
+    runPromise((svc) => svc.setPermission({ sessionID: input.sessionID, permission: input.permission ?? [] })),
+  )
+  // kilocode_change end
 
   export const setRevert = fn(
     z.object({ sessionID: SessionID.zod, revert: Info.shape.revert, summary: Info.shape.summary }),

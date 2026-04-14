@@ -413,6 +413,7 @@ describe("tool.task", () => {
           },
           experimental: {
             primary_tools: ["bash", "read"],
+            openTelemetry: true, // kilocode_change
           },
         },
       },
