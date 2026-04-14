@@ -13,7 +13,7 @@ import { InvalidTool } from "./invalid"
 import { SkillDescription, SkillTool } from "./skill"
 import { Tool } from "./tool"
 import { Config } from "../config/config"
-import { type ToolContext as PluginToolContext, type ToolDefinition } from "@opencode-ai/plugin"
+import { type ToolContext as PluginToolContext, type ToolDefinition } from "@kilocode/plugin"
 import z from "zod"
 import { Plugin } from "../plugin"
 import { ProviderID, type ModelID } from "../provider/schema"
@@ -133,7 +133,7 @@ export namespace ToolRegistry {
 
           const cfg = yield* config.get()
           const question =
-            ["app", "cli", "desktop"].includes(Flag.OPENCODE_CLIENT) || Flag.OPENCODE_ENABLE_QUESTION_TOOL
+            ["app", "cli", "desktop"].includes(Flag.KILO_CLIENT) || Flag.KILO_ENABLE_QUESTION_TOOL
 
           return {
             custom,
@@ -154,8 +154,8 @@ export namespace ToolRegistry {
                 SkillTool,
                 ApplyPatchTool,
                 ...(question ? [QuestionTool] : []),
-                ...(Flag.OPENCODE_EXPERIMENTAL_LSP_TOOL ? [LspTool] : []),
-                ...(Flag.OPENCODE_EXPERIMENTAL_PLAN_MODE && Flag.OPENCODE_CLIENT === "cli" ? [PlanExitTool] : []),
+                ...(Flag.KILO_EXPERIMENTAL_LSP_TOOL ? [LspTool] : []),
+                ...(Flag.KILO_EXPERIMENTAL_PLAN_MODE && Flag.KILO_CLIENT === "cli" ? [PlanExitTool] : []),
               ],
               build,
               { concurrency: "unbounded" },
@@ -183,7 +183,7 @@ export namespace ToolRegistry {
       const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
         const filtered = (yield* all()).filter((tool) => {
           if (tool.id === CodeSearchTool.id || tool.id === WebSearchTool.id) {
-            return input.providerID === ProviderID.opencode || Flag.OPENCODE_ENABLE_EXA
+            return input.providerID === ProviderID.opencode || Flag.KILO_ENABLE_EXA
           }
 
           const usePatch =

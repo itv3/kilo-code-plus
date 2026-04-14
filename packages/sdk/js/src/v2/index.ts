@@ -1,19 +1,19 @@
 export * from "./client.js"
 export * from "./server.js"
 
-import { createOpencodeClient } from "./client.js"
-import { createOpencodeServer } from "./server.js"
+import { createKiloClient } from "./client.js"
+import { createKiloServer } from "./server.js"
 import type { ServerOptions } from "./server.js"
 
 export * as data from "./data.js"
 import * as data from "./data.js"
 
-export async function createOpencode(options?: ServerOptions) {
-  const server = await createOpencodeServer({
+export async function createKilo(options?: ServerOptions) {
+  const server = await createKiloServer({
     ...options,
   })
 
-  const client = createOpencodeClient({
+  const client = createKiloClient({
     baseUrl: server.url,
   })
 
