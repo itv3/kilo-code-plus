@@ -1,5 +1,7 @@
 export const dict = {
   "ui.sessionReview.title": "Изменения сессии",
+  "ui.sessionReview.title.git": "Изменения Git",
+  "ui.sessionReview.title.branch": "Изменения ветки",
   "ui.sessionReview.title.lastTurn": "Изменения последнего хода",
   "ui.sessionReview.diffStyle.unified": "Объединённый",
   "ui.sessionReview.diffStyle.split": "Разделённый",
@@ -36,6 +38,10 @@ export const dict = {
   "ui.sessionTurn.steps.hide": "Скрыть шаги",
   "ui.sessionTurn.summary.response": "Ответ",
   "ui.sessionTurn.diff.showMore": "Показать ещё изменений ({{count}})",
+  "ui.sessionTurn.diffs.changed": "Изменено",
+  "ui.sessionTurn.diffs.showAll": "Показать все",
+  "ui.sessionTurn.diffs.showLess": "Показать меньше",
+  "ui.sessionTurn.diffs.more": "Еще +{{count}} файлов",
 
   "ui.sessionTurn.retry.retrying": "повтор",
   "ui.sessionTurn.retry.inSeconds": "через {{seconds}}с",
@@ -61,7 +67,7 @@ export const dict = {
   "ui.sessionTurn.status.consideringNextSteps": "Рассмотрение следующих шагов",
 
   "ui.messagePart.questions.dismissed": "Вопросы отклонены",
-  "ui.messagePart.compaction": "История сжата",
+  "ui.messagePart.compaction": "Сессия сжата",
   "ui.messagePart.context.read.one": "{{count}} чтение",
   "ui.messagePart.context.read.other": "{{count}} чтений",
   "ui.messagePart.context.search.one": "{{count}} поиск",
@@ -127,6 +133,8 @@ export const dict = {
   "ui.message.collapse": "Свернуть сообщение",
   "ui.message.copy": "Копировать",
   "ui.message.copyMessage": "Копировать сообщение",
+  "ui.message.forkMessage": "Ответвить в новую сессию",
+  "ui.message.revertMessage": "Сбросить до этого момента",
   "ui.message.copyResponse": "Копировать ответ",
   "ui.message.copied": "Скопировано!",
   "ui.message.revert": "Revert to here",
@@ -145,4 +153,16 @@ export const dict = {
   "ui.question.multiHint": "Выберите все подходящие",
   "ui.question.singleHint": "Выберите один ответ",
   "ui.question.custom.placeholder": "Введите ваш ответ...",
+
+  "ui.fileSearch.placeholder": "Найти",
+  "ui.fileSearch.previousMatch": "Предыдущее",
+  "ui.fileSearch.nextMatch": "Следующее",
+  "ui.fileSearch.close": "Закрыть поиск",
+  "ui.tool.task": "Задача",
+  "ui.tool.skill": "Навык",
+  "ui.basicTool.called": "Вызван `{{tool}}`",
+  "ui.toolErrorCard.failed": "Ошибка",
+  "ui.toolErrorCard.copyError": "Скопировать ошибку",
+  "ui.message.duration.seconds": "{{count}}с",
+  "ui.message.duration.minutesSeconds": "{{minutes}}м {{seconds}}с",
 }

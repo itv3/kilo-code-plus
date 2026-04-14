@@ -190,13 +190,13 @@ export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
           </Show>
 
           {/* Diff summary — shown after completion */}
-          <Show when={diffs().length > 0}>
+          <Show when={diffs().length > 0 && server.gitInstalled()}>
             <div class="vscode-session-turn-diffs" data-component="session-turn">
               <Collapsible open={open()} onOpenChange={setOpen} variant="ghost">
                 <Collapsible.Trigger>
                   <div data-component="session-turn-diffs-trigger">
                     <div data-slot="session-turn-diffs-title">
-                      <span data-slot="session-turn-diffs-label">{i18n.t("ui.sessionReview.change.modified")}</span>
+                      <span data-slot="session-turn-diffs-label">{i18n.t("ui.sessionReview.change.modified")}</span>{" "}
                       <span data-slot="session-turn-diffs-count">
                         {diffs().length} {i18n.t(diffs().length === 1 ? "ui.common.file.one" : "ui.common.file.other")}
                       </span>

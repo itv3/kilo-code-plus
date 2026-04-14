@@ -1,10 +1,8 @@
-import { spawn as _spawn, type ChildProcessWithoutNullStreams, type SpawnOptions } from "child_process"
+import type { ChildProcessWithoutNullStreams } from "child_process"
 import path from "path"
 import os from "os"
 import { Global } from "../global"
 import { Log } from "../util/log"
-import { BunProc } from "../bun"
-import { $ } from "bun"
 import { text } from "node:stream/consumers"
 import fs from "fs/promises"
 import { Filesystem } from "../util/filesystem"
@@ -14,16 +12,9 @@ import { TsCheck } from "../kilocode/ts-check" // kilocode_change
 import { Archive } from "../util/archive"
 import { Process } from "../util/process"
 import { which } from "../util/which"
-
-// kilocode_change start - prevent CMD window flash on Windows for all LSP server spawns
-function spawn(cmd: string, opts?: SpawnOptions): ChildProcessWithoutNullStreams
-function spawn(cmd: string, args: readonly string[], opts?: SpawnOptions): ChildProcessWithoutNullStreams
-function spawn(cmd: string, ...rest: any[]): ChildProcessWithoutNullStreams {
-  const opts = typeof rest[rest.length - 1] === "object" && !Array.isArray(rest[rest.length - 1]) ? rest.pop() : {}
-  const args = rest[0] as readonly string[] | undefined
-  return args ? _spawn(cmd, args, { ...opts, windowsHide: true }) : _spawn(cmd, { ...opts, windowsHide: true })
-}
-// kilocode_change end
+import { Module } from "@opencode-ai/util/module"
+import { spawn } from "./launch"
+import { Npm } from "@/npm"
 
 export namespace LSPServer {
   const log = Log.create({ service: "lsp.server" })
@@ -32,6 +23,8 @@ export namespace LSPServer {
       .stat(p)
       .then(() => true)
       .catch(() => false)
+  const run = (cmd: string[], opts: Process.RunOptions = {}) => Process.run(cmd, { ...opts, nothrow: true })
+  const output = (cmd: string[], opts: Process.RunOptions = {}) => Process.text(cmd, { ...opts, nothrow: true })
 
   export interface Handle {
     process: ChildProcessWithoutNullStreams
@@ -113,13 +106,17 @@ export namespace LSPServer {
     ),
     extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"],
     async spawn(root) {
-      if (!Flag.KILO_EXPERIMENTAL_LSP_TOOL) return undefined
-      const bin = await TsCheck.native_tsgo(root)
-      if (!bin) {
-        log.info("tsgo native binary not found, falling back to lightweight client")
-        return undefined
-      }
-      log.info("spawning tsgo --lsp", { bin, root })
+      const tsserver = Module.resolve("typescript/lib/tsserver.js", Instance.directory)
+      log.info("typescript server", { tsserver })
+      if (!tsserver) return
+      const bin = await Npm.which("typescript-language-server")
+      if (!bin) return
+      const proc = spawn(bin, ["--stdio"], {
+        cwd: root,
+        env: {
+          ...process.env,
+        },
+      })
       return {
         process: spawn(bin, ["--lsp", "--stdio"], { cwd: root }),
       }
@@ -135,36 +132,16 @@ export namespace LSPServer {
       let binary = which("vue-language-server")
       const args: string[] = []
       if (!binary) {
-        const js = path.join(
-          Global.Path.bin,
-          "node_modules",
-          "@vue",
-          "language-server",
-          "bin",
-          "vue-language-server.js",
-        )
-        if (!(await Filesystem.exists(js))) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "@vue/language-server"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-            stdout: "pipe",
-            stderr: "pipe",
-            stdin: "pipe",
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push("run", js)
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("@vue/language-server")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("--stdio")
       const proc = spawn(binary, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -181,7 +158,7 @@ export namespace LSPServer {
     root: NearestRoot(["package-lock.json", "bun.lockb", "bun.lock", "pnpm-lock.yaml", "yarn.lock"]),
     extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".vue"],
     async spawn(root) {
-      const eslint = await Bun.resolve("eslint", Instance.directory).catch(() => {})
+      const eslint = Module.resolve("eslint", Instance.directory)
       if (!eslint) return
       log.info("spawning eslint server")
       const serverPath = path.join(Global.Path.bin, "vscode-eslint", "server", "out", "eslintServer.js")
@@ -214,17 +191,16 @@ export namespace LSPServer {
         await fs.rename(extractedPath, finalPath)
 
         const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm"
-        await $`${npmCmd} install`.cwd(finalPath).quiet()
-        await $`${npmCmd} run compile`.cwd(finalPath).quiet()
+        await Process.run([npmCmd, "install"], { cwd: finalPath })
+        await Process.run([npmCmd, "run", "compile"], { cwd: finalPath })
 
         log.info("installed VS Code ESLint server", { serverPath })
       }
 
-      const proc = spawn(BunProc.which(), [serverPath, "--stdio"], {
+      const proc = spawn("node", [serverPath, "--stdio"], {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
 
@@ -275,7 +251,7 @@ export namespace LSPServer {
       }
 
       if (lintBin) {
-        const proc = Process.spawn([lintBin, "--help"], { stdout: "pipe" })
+        const proc = spawn(lintBin, ["--help"])
         await proc.exited
         if (proc.stdout) {
           const help = await text(proc.stdout)
@@ -349,17 +325,17 @@ export namespace LSPServer {
       let args = ["lsp-proxy", "--stdio"]
 
       if (!bin) {
-        const resolved = await Bun.resolve("biome", root).catch(() => undefined)
+        const resolved = Module.resolve("biome", root)
         if (!resolved) return
-        bin = BunProc.which()
-        args = ["x", "biome", "lsp-proxy", "--stdio"]
+        bin = await Npm.which("biome")
+        if (!bin) return
+        args = ["lsp-proxy", "--stdio"]
       }
 
       const proc = spawn(bin, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
 
@@ -378,9 +354,7 @@ export namespace LSPServer {
     },
     extensions: [".go"],
     async spawn(root) {
-      let bin = which("gopls", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("gopls")
       if (!bin) {
         if (!which("go")) return
         if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
@@ -415,9 +389,7 @@ export namespace LSPServer {
     root: NearestRoot(["Gemfile"]),
     extensions: [".rb", ".rake", ".gemspec", ".ru"],
     async spawn(root) {
-      let bin = which("rubocop", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("rubocop")
       if (!bin) {
         const ruby = which("ruby")
         const gem = which("gem")
@@ -522,19 +494,10 @@ export namespace LSPServer {
       let binary = which("pyright-langserver")
       const args = []
       if (!binary) {
-        const js = path.join(Global.Path.bin, "node_modules", "pyright", "dist", "pyright-langserver.js")
-        if (!(await Filesystem.exists(js))) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "pyright"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push(...["run", js])
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("pyright")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("--stdio")
 
@@ -558,7 +521,6 @@ export namespace LSPServer {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -611,10 +573,11 @@ export namespace LSPServer {
             recursive: true,
           })
 
-          await $`mix deps.get && mix compile && mix elixir_ls.release2 -o release`
-            .quiet()
-            .cwd(path.join(Global.Path.bin, "elixir-ls-master"))
-            .env({ MIX_ENV: "prod", ...process.env })
+          const cwd = path.join(Global.Path.bin, "elixir-ls-master")
+          const env = { MIX_ENV: "prod", ...process.env }
+          await Process.run(["mix", "deps.get"], { cwd, env })
+          await Process.run(["mix", "compile"], { cwd, env })
+          await Process.run(["mix", "elixir_ls.release2", "-o", "release"], { cwd, env })
 
           log.info(`installed elixir-ls`, {
             path: elixirLsPath,
@@ -635,9 +598,7 @@ export namespace LSPServer {
     extensions: [".zig", ".zon"],
     root: NearestRoot(["build.zig"]),
     async spawn(root) {
-      let bin = which("zls", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("zls")
 
       if (!bin) {
         const zig = which("zig")
@@ -715,7 +676,7 @@ export namespace LSPServer {
             })
           if (!ok) return
         } else {
-          await $`tar -xf ${tempPath}`.cwd(Global.Path.bin).quiet().nothrow()
+          await run(["tar", "-xf", tempPath], { cwd: Global.Path.bin })
         }
 
         await fs.rm(tempPath, { force: true })
@@ -728,7 +689,7 @@ export namespace LSPServer {
         }
 
         if (platform !== "win32") {
-          await $`chmod +x ${bin}`.quiet().nothrow()
+          await fs.chmod(bin, 0o755).catch(() => {})
         }
 
         log.info(`installed zls`, { bin })
@@ -747,9 +708,7 @@ export namespace LSPServer {
     root: NearestRoot([".slnx", ".sln", ".csproj", "global.json"]),
     extensions: [".cs"],
     async spawn(root) {
-      let bin = which("csharp-ls", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("csharp-ls")
       if (!bin) {
         if (!which("dotnet")) {
           log.error(".NET SDK is required to install csharp-ls")
@@ -786,9 +745,7 @@ export namespace LSPServer {
     root: NearestRoot([".slnx", ".sln", ".fsproj", "global.json"]),
     extensions: [".fs", ".fsi", ".fsx", ".fsscript"],
     async spawn(root) {
-      let bin = which("fsautocomplete", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("fsautocomplete")
       if (!bin) {
         if (!which("dotnet")) {
           log.error(".NET SDK is required to install fsautocomplete")
@@ -840,11 +797,11 @@ export namespace LSPServer {
       // This is specific to macOS where sourcekit-lsp is typically installed with Xcode
       if (!which("xcrun")) return
 
-      const lspLoc = await $`xcrun --find sourcekit-lsp`.quiet().nothrow()
+      const lspLoc = await output(["xcrun", "--find", "sourcekit-lsp"])
 
-      if (lspLoc.exitCode !== 0) return
+      if (lspLoc.code !== 0) return
 
-      const bin = lspLoc.text().trim()
+      const bin = lspLoc.text.trim()
 
       return {
         process: spawn(bin, {
@@ -1019,7 +976,7 @@ export namespace LSPServer {
         if (!ok) return
       }
       if (tar) {
-        await $`tar -xf ${archive}`.cwd(Global.Path.bin).quiet().nothrow()
+        await run(["tar", "-xf", archive], { cwd: Global.Path.bin })
       }
       await fs.rm(archive, { force: true })
 
@@ -1030,7 +987,7 @@ export namespace LSPServer {
       }
 
       if (platform !== "win32") {
-        await $`chmod +x ${bin}`.quiet().nothrow()
+        await fs.chmod(bin, 0o755).catch(() => {})
       }
 
       await fs.unlink(path.join(Global.Path.bin, "clangd")).catch(() => {})
@@ -1054,29 +1011,16 @@ export namespace LSPServer {
       let binary = which("svelteserver")
       const args: string[] = []
       if (!binary) {
-        const js = path.join(Global.Path.bin, "node_modules", "svelte-language-server", "bin", "server.js")
-        if (!(await Filesystem.exists(js))) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "svelte-language-server"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-            stdout: "pipe",
-            stderr: "pipe",
-            stdin: "pipe",
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push("run", js)
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("svelte-language-server")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("--stdio")
       const proc = spawn(binary, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -1091,7 +1035,7 @@ export namespace LSPServer {
     extensions: [".astro"],
     root: NearestRoot(["package-lock.json", "bun.lockb", "bun.lock", "pnpm-lock.yaml", "yarn.lock"]),
     async spawn(root) {
-      const tsserver = await Bun.resolve("typescript/lib/tsserver.js", Instance.directory).catch(() => {})
+      const tsserver = Module.resolve("typescript/lib/tsserver.js", Instance.directory)
       if (!tsserver) {
         log.info("typescript not found, required for Astro language server")
         return
@@ -1101,29 +1045,16 @@ export namespace LSPServer {
       let binary = which("astro-ls")
       const args: string[] = []
       if (!binary) {
-        const js = path.join(Global.Path.bin, "node_modules", "@astrojs", "language-server", "bin", "nodeServer.js")
-        if (!(await Filesystem.exists(js))) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "@astrojs/language-server"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-            stdout: "pipe",
-            stderr: "pipe",
-            stdin: "pipe",
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push("run", js)
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("@astrojs/language-server")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("--stdio")
       const proc = spawn(binary, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -1139,7 +1070,30 @@ export namespace LSPServer {
 
   export const JDTLS: Info = {
     id: "jdtls",
-    root: NearestRoot(["pom.xml", "build.gradle", "build.gradle.kts", ".project", ".classpath"]),
+    root: async (file) => {
+      // Without exclusions, NearestRoot defaults to instance directory so we can't
+      // distinguish between a) no project found and b) project found at instance dir.
+      // So we can't choose the root from (potential) monorepo markers first.
+      // Look for potential subproject markers first while excluding potential monorepo markers.
+      const settingsMarkers = ["settings.gradle", "settings.gradle.kts"]
+      const gradleMarkers = ["gradlew", "gradlew.bat"]
+      const exclusionsForMonorepos = gradleMarkers.concat(settingsMarkers)
+
+      const [projectRoot, wrapperRoot, settingsRoot] = await Promise.all([
+        NearestRoot(
+          ["pom.xml", "build.gradle", "build.gradle.kts", ".project", ".classpath"],
+          exclusionsForMonorepos,
+        )(file),
+        NearestRoot(gradleMarkers, settingsMarkers)(file),
+        NearestRoot(settingsMarkers)(file),
+      ])
+
+      // If projectRoot is undefined we know we are in a monorepo or no project at all.
+      // So can safely fall through to the other roots
+      if (projectRoot) return projectRoot
+      if (wrapperRoot) return wrapperRoot
+      if (settingsRoot) return settingsRoot
+    },
     extensions: [".java"],
     async spawn(root) {
       const java = which("java")
@@ -1147,13 +1101,10 @@ export namespace LSPServer {
         log.error("Java 21 or newer is required to run the JDTLS. Please install it first.")
         return
       }
-      const javaMajorVersion = await $`java -version`
-        .quiet()
-        .nothrow()
-        .then(({ stderr }) => {
-          const m = /"(\d+)\.\d+\.\d+"/.exec(stderr.toString())
-          return !m ? undefined : parseInt(m[1])
-        })
+      const javaMajorVersion = await run(["java", "-version"]).then((result) => {
+        const m = /"(\d+)\.\d+\.\d+"/.exec(result.stderr.toString())
+        return !m ? undefined : parseInt(m[1])
+      })
       if (javaMajorVersion == null || javaMajorVersion < 21) {
         log.error("JDTLS requires at least Java 21.")
         return
@@ -1170,27 +1121,27 @@ export namespace LSPServer {
         const archiveName = "release.tar.gz"
 
         log.info("Downloading JDTLS archive", { url: releaseURL, dest: distPath })
-        const curlResult = await $`curl -L -o ${archiveName} '${releaseURL}'`.cwd(distPath).quiet().nothrow()
-        if (curlResult.exitCode !== 0) {
-          log.error("Failed to download JDTLS", { exitCode: curlResult.exitCode, stderr: curlResult.stderr.toString() })
+        const download = await fetch(releaseURL)
+        if (!download.ok || !download.body) {
+          log.error("Failed to download JDTLS", { status: download.status, statusText: download.statusText })
           return
         }
+        await Filesystem.writeStream(path.join(distPath, archiveName), download.body)
 
         log.info("Extracting JDTLS archive")
-        const tarResult = await $`tar -xzf ${archiveName}`.cwd(distPath).quiet().nothrow()
-        if (tarResult.exitCode !== 0) {
-          log.error("Failed to extract JDTLS", { exitCode: tarResult.exitCode, stderr: tarResult.stderr.toString() })
+        const tarResult = await run(["tar", "-xzf", archiveName], { cwd: distPath })
+        if (tarResult.code !== 0) {
+          log.error("Failed to extract JDTLS", { exitCode: tarResult.code, stderr: tarResult.stderr.toString() })
           return
         }
 
         await fs.rm(path.join(distPath, archiveName), { force: true })
         log.info("JDTLS download and extraction completed")
       }
-      const jarFileName = await $`ls org.eclipse.equinox.launcher_*.jar`
-        .cwd(launcherDir)
-        .quiet()
-        .nothrow()
-        .then(({ stdout }) => stdout.toString().trim())
+      const jarFileName =
+        (await fs.readdir(launcherDir).catch(() => []))
+          .find((item) => /^org\.eclipse\.equinox\.launcher_.*\.jar$/.test(item))
+          ?.trim() ?? ""
       const launcherJar = path.join(launcherDir, jarFileName)
       if (!(await pathExists(launcherJar))) {
         log.error(`Failed to locate the JDTLS launcher module in the installed directory: ${distPath}.`)
@@ -1304,7 +1255,15 @@ export namespace LSPServer {
 
         await fs.mkdir(distPath, { recursive: true })
         const archivePath = path.join(distPath, "kotlin-ls.zip")
-        await $`curl -L -o '${archivePath}' '${releaseURL}'`.quiet().nothrow()
+        const download = await fetch(releaseURL)
+        if (!download.ok || !download.body) {
+          log.error("Failed to download Kotlin Language Server", {
+            status: download.status,
+            statusText: download.statusText,
+          })
+          return
+        }
+        await Filesystem.writeStream(archivePath, download.body)
         const ok = await Archive.extractZip(archivePath, distPath)
           .then(() => true)
           .catch((error) => {
@@ -1314,7 +1273,7 @@ export namespace LSPServer {
         if (!ok) return
         await fs.rm(archivePath, { force: true })
         if (process.platform !== "win32") {
-          await $`chmod +x ${launcherScript}`.quiet().nothrow()
+          await fs.chmod(launcherScript, 0o755).catch(() => {})
         }
         log.info("Installed Kotlin Language Server", { path: launcherScript })
       }
@@ -1338,38 +1297,16 @@ export namespace LSPServer {
       let binary = which("yaml-language-server")
       const args: string[] = []
       if (!binary) {
-        const js = path.join(
-          Global.Path.bin,
-          "node_modules",
-          "yaml-language-server",
-          "out",
-          "server",
-          "src",
-          "server.js",
-        )
-        const exists = await Filesystem.exists(js)
-        if (!exists) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "yaml-language-server"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-            stdout: "pipe",
-            stderr: "pipe",
-            stdin: "pipe",
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push("run", js)
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("yaml-language-server")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("--stdio")
       const proc = spawn(binary, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -1391,9 +1328,7 @@ export namespace LSPServer {
     ]),
     extensions: [".lua"],
     async spawn(root) {
-      let bin = which("lua-language-server", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("lua-language-server")
 
       if (!bin) {
         if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
@@ -1478,10 +1413,9 @@ export namespace LSPServer {
             })
           if (!ok) return
         } else {
-          const ok = await $`tar -xzf ${tempPath} -C ${installDir}`
-            .quiet()
-            .then(() => true)
-            .catch((error) => {
+          const ok = await run(["tar", "-xzf", tempPath, "-C", installDir])
+            .then((result) => result.code === 0)
+            .catch((error: unknown) => {
               log.error("Failed to extract lua-language-server archive", { error })
               return false
             })
@@ -1499,11 +1433,15 @@ export namespace LSPServer {
         }
 
         if (platform !== "win32") {
-          const ok = await $`chmod +x ${bin}`.quiet().catch((error) => {
-            log.error("Failed to set executable permission for lua-language-server binary", {
-              error,
+          const ok = await fs
+            .chmod(bin, 0o755)
+            .then(() => true)
+            .catch((error: unknown) => {
+              log.error("Failed to set executable permission for lua-language-server binary", {
+                error,
+              })
+              return false
             })
-          })
           if (!ok) return
         }
 
@@ -1526,29 +1464,16 @@ export namespace LSPServer {
       let binary = which("intelephense")
       const args: string[] = []
       if (!binary) {
-        const js = path.join(Global.Path.bin, "node_modules", "intelephense", "lib", "intelephense.js")
-        if (!(await Filesystem.exists(js))) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "intelephense"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-            stdout: "pipe",
-            stderr: "pipe",
-            stdin: "pipe",
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push("run", js)
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("intelephense")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("--stdio")
       const proc = spawn(binary, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -1623,29 +1548,16 @@ export namespace LSPServer {
       let binary = which("bash-language-server")
       const args: string[] = []
       if (!binary) {
-        const js = path.join(Global.Path.bin, "node_modules", "bash-language-server", "out", "cli.js")
-        if (!(await Filesystem.exists(js))) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "bash-language-server"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-            stdout: "pipe",
-            stderr: "pipe",
-            stdin: "pipe",
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push("run", js)
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("bash-language-server")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("start")
       const proc = spawn(binary, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -1659,9 +1571,7 @@ export namespace LSPServer {
     extensions: [".tf", ".tfvars"],
     root: NearestRoot([".terraform.lock.hcl", "terraform.tfstate", "*.tf"]),
     async spawn(root) {
-      let bin = which("terraform-ls", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("terraform-ls")
 
       if (!bin) {
         if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
@@ -1717,7 +1627,7 @@ export namespace LSPServer {
         }
 
         if (platform !== "win32") {
-          await $`chmod +x ${bin}`.quiet().nothrow()
+          await fs.chmod(bin, 0o755).catch(() => {})
         }
 
         log.info(`installed terraform-ls`, { bin })
@@ -1742,9 +1652,7 @@ export namespace LSPServer {
     extensions: [".tex", ".bib"],
     root: NearestRoot([".latexmkrc", "latexmkrc", ".texlabroot", "texlabroot"]),
     async spawn(root) {
-      let bin = which("texlab", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("texlab")
 
       if (!bin) {
         if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
@@ -1800,7 +1708,7 @@ export namespace LSPServer {
           if (!ok) return
         }
         if (ext === "tar.gz") {
-          await $`tar -xzf ${tempPath}`.cwd(Global.Path.bin).quiet().nothrow()
+          await run(["tar", "-xzf", tempPath], { cwd: Global.Path.bin })
         }
 
         await fs.rm(tempPath, { force: true })
@@ -1813,7 +1721,7 @@ export namespace LSPServer {
         }
 
         if (platform !== "win32") {
-          await $`chmod +x ${bin}`.quiet().nothrow()
+          await fs.chmod(bin, 0o755).catch(() => {})
         }
 
         log.info("installed texlab", { bin })
@@ -1835,29 +1743,16 @@ export namespace LSPServer {
       let binary = which("docker-langserver")
       const args: string[] = []
       if (!binary) {
-        const js = path.join(Global.Path.bin, "node_modules", "dockerfile-language-server-nodejs", "lib", "server.js")
-        if (!(await Filesystem.exists(js))) {
-          if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
-          await Process.spawn([BunProc.which(), "install", "dockerfile-language-server-nodejs"], {
-            cwd: Global.Path.bin,
-            env: {
-              ...process.env,
-              BUN_BE_BUN: "1",
-            },
-            stdout: "pipe",
-            stderr: "pipe",
-            stdin: "pipe",
-          }).exited
-        }
-        binary = BunProc.which()
-        args.push("run", js)
+        if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
+        const resolved = await Npm.which("dockerfile-language-server-nodejs")
+        if (!resolved) return
+        binary = resolved
       }
       args.push("--stdio")
       const proc = spawn(binary, args, {
         cwd: root,
         env: {
           ...process.env,
-          BUN_BE_BUN: "1",
         },
       })
       return {
@@ -1941,9 +1836,7 @@ export namespace LSPServer {
     extensions: [".typ", ".typc"],
     root: NearestRoot(["typst.toml"]),
     async spawn(root) {
-      let bin = which("tinymist", {
-        PATH: process.env["PATH"] + path.delimiter + Global.Path.bin,
-      })
+      let bin = which("tinymist")
 
       if (!bin) {
         if (Flag.KILO_DISABLE_LSP_DOWNLOAD) return
@@ -2005,7 +1898,7 @@ export namespace LSPServer {
             })
           if (!ok) return
         } else {
-          await $`tar -xzf ${tempPath} --strip-components=1`.cwd(Global.Path.bin).quiet().nothrow()
+          await run(["tar", "-xzf", tempPath, "--strip-components=1"], { cwd: Global.Path.bin })
         }
 
         await fs.rm(tempPath, { force: true })
@@ -2018,7 +1911,7 @@ export namespace LSPServer {
         }
 
         if (platform !== "win32") {
-          await $`chmod +x ${bin}`.quiet().nothrow()
+          await fs.chmod(bin, 0o755).catch(() => {})
         }
 
         log.info("installed tinymist", { bin })

@@ -939,10 +939,13 @@ export const dict = {
   "session.messages.welcome":
     "Kilo Code bir yapay zeka kodlama asistanıdır. Özellik geliştirmesini, hata düzeltmesini veya kod tabanınızı açıklamasını isteyin.",
   "session.messages.scrollToBottom": "En alta kaydır",
+  "session.messages.initializing": "Başlatılıyor...",
+  "session.messages.taskStarting": "Başlıyor...",
   "session.status.writingResponse": "Yanıt yazılıyor...",
   "session.status.retry": "Yeniden deneniyor…",
   "session.status.retrying": "Yeniden deneniyor (deneme {{ attempt }})… {{ message }}",
   "session.status.working": "Çalışıyor...",
+  "session.status.offline": "Ağ bağlantısı kesildi — yeniden bağlanılıyor...",
 
   "ui.sessionTurn.cancel": "İptal",
   "ui.sessionTurn.status.thinking": "Düşünüyor...",
@@ -955,6 +958,7 @@ export const dict = {
   "prompt.placeholder.error": "Bağlantı başarısız. Çıktı panelini kontrol edin veya uzantıyı yeniden başlatın.",
 
   "context.usage.sessionCost": "Oturum maliyeti",
+  "context.usage.olderSessions": "{{count}} eski oturum",
   "context.stats.thisSession": "Bu oturum",
 
   "time.justNow": "az önce",

@@ -1,6 +1,6 @@
 import type { Argv } from "yargs"
 import path from "path"
-import { pathToFileURL } from "bun"
+import { pathToFileURL } from "url"
 import { UI } from "../ui"
 import { cmd } from "./cmd"
 import { Flag } from "../../flag/flag"
@@ -12,7 +12,7 @@ import { createKiloClient, type Message, type KiloClient, type ToolPart } from "
 import { Server } from "../../server/server"
 import { Provider } from "../../provider/provider"
 import { Agent } from "../../agent/agent"
-import { PermissionNext } from "../../permission/next"
+import { Permission } from "../../permission"
 import { Tool } from "../../tool/tool"
 import { GlobTool } from "../../tool/glob"
 import { GrepTool } from "../../tool/grep"
@@ -30,13 +30,13 @@ import { TodoWriteTool } from "../../tool/todo"
 import { Locale } from "../../util/locale"
 import { importCloudSession, validateCloudFork } from "@/kilocode/cloud-session" // kilocode_change
 
-type ToolProps<T extends Tool.Info> = {
+type ToolProps<T> = {
   input: Tool.InferParameters<T>
   metadata: Tool.InferMetadata<T>
   part: ToolPart
 }
 
-function props<T extends Tool.Info>(part: ToolPart): ToolProps<T> {
+function props<T>(part: ToolPart): ToolProps<T> {
   const state = part.state
   return {
     input: state.input as Tool.InferParameters<T>,
@@ -224,101 +224,93 @@ export const RunCommand = cmd({
   command: "run [message..]",
   describe: "run kilo with a message", // kilocode_change
   builder: (yargs: Argv) => {
-    return (
-      yargs
-        .positional("message", {
-          describe: "message to send",
-          type: "string",
-          array: true,
-          default: [],
-        })
-        .option("command", {
-          describe: "the command to run, use message for args",
-          type: "string",
-        })
-        .option("continue", {
-          alias: ["c"],
-          describe: "continue the last session",
-          type: "boolean",
-        })
-        .option("session", {
-          alias: ["s"],
-          describe: "session id to continue",
-          type: "string",
-        })
-        .option("fork", {
-          describe: "fork the session before continuing (requires --continue or --session)",
-          type: "boolean",
-        })
-        .option("cloud-fork", {
-          describe: "fetch session from cloud and continue locally (requires --session)",
-          type: "boolean",
-        })
-        .option("share", {
-          type: "boolean",
-          describe: "share the session",
-        })
-        .option("model", {
-          type: "string",
-          alias: ["m"],
-          describe: "model to use in the format of provider/model",
-        })
-        .option("agent", {
-          type: "string",
-          describe: "agent to use",
-        })
-        .option("format", {
-          type: "string",
-          choices: ["default", "json"],
-          default: "default",
-          describe: "format: default (formatted) or json (raw JSON events)",
-        })
-        .option("file", {
-          alias: ["f"],
-          type: "string",
-          array: true,
-          describe: "file(s) to attach to message",
-        })
-        .option("title", {
-          type: "string",
-          describe: "title for the session (uses truncated prompt if no value provided)",
-        })
-        .option("attach", {
-          type: "string",
-          describe: "attach to a running opencode server (e.g., http://localhost:4096)",
-        })
-        // kilocode_change start
-        .option("password", {
-          alias: ["p"],
-          type: "string",
-          describe: "basic auth password (defaults to KILO_SERVER_PASSWORD)",
-        })
-        // kilocode_change end
-        .option("dir", {
-          type: "string",
-          describe: "directory to run in, path on remote server if attaching",
-        })
-        .option("port", {
-          type: "number",
-          describe: "port for the local server (defaults to random port if no value provided)",
-        })
-        .option("variant", {
-          type: "string",
-          describe: "model variant (provider-specific reasoning effort, e.g., high, max, minimal)",
-        })
-        .option("thinking", {
-          type: "boolean",
-          describe: "show thinking blocks",
-          default: false,
-        })
-        // kilocode_change start - auto approve all permissions
-        .option("auto", {
-          type: "boolean",
-          describe: "auto-approve all permissions (for autonomous/pipeline usage)",
-          default: false,
-        })
+    return yargs
+      .positional("message", {
+        describe: "message to send",
+        type: "string",
+        array: true,
+        default: [],
+      })
+      .option("command", {
+        describe: "the command to run, use message for args",
+        type: "string",
+      })
+      .option("continue", {
+        alias: ["c"],
+        describe: "continue the last session",
+        type: "boolean",
+      })
+      .option("session", {
+        alias: ["s"],
+        describe: "session id to continue",
+        type: "string",
+      })
+      .option("fork", {
+        describe: "fork the session before continuing (requires --continue or --session)",
+        type: "boolean",
+      })
+      .option("share", {
+        type: "boolean",
+        describe: "share the session",
+      })
+      .option("model", {
+        type: "string",
+        alias: ["m"],
+        describe: "model to use in the format of provider/model",
+      })
+      .option("agent", {
+        type: "string",
+        describe: "agent to use",
+      })
+      .option("format", {
+        type: "string",
+        choices: ["default", "json"],
+        default: "default",
+        describe: "format: default (formatted) or json (raw JSON events)",
+      })
+      .option("file", {
+        alias: ["f"],
+        type: "string",
+        array: true,
+        describe: "file(s) to attach to message",
+      })
+      .option("title", {
+        type: "string",
+        describe: "title for the session (uses truncated prompt if no value provided)",
+      })
+      .option("attach", {
+        type: "string",
+        describe: "attach to a running opencode server (e.g., http://localhost:4096)",
+      })
+      .option("password", {
+        alias: ["p"],
+        type: "string",
+        describe: "basic auth password (defaults to KILO_SERVER_PASSWORD)",
+      })
+      .option("dir", {
+        type: "string",
+        describe: "directory to run in, path on remote server if attaching",
+      })
+      .option("port", {
+        type: "number",
+        describe: "port for the local server (defaults to random port if no value provided)",
+      })
+      .option("variant", {
+        type: "string",
+        describe: "model variant (provider-specific reasoning effort, e.g., high, max, minimal)",
+      })
+      // kilocode_change start - auto approve all permissions
+      .option("auto", {
+        type: "boolean",
+        describe: "auto-approve all permissions (for autonomous/pipeline usage)",
+        default: false,
+      })
       // kilocode_change end
-    )
+      .option("thinking", {
+        type: "boolean",
+        describe: "show thinking blocks",
+        default: false,
+      })
   },
   handler: async (args) => {
     let message = [...args.message, ...(args["--"] || [])]
@@ -378,7 +370,7 @@ export const RunCommand = cmd({
     }
     // kilocode_change end
 
-    const rules: PermissionNext.Ruleset = [
+    const rules: Permission.Ruleset = [
       {
         permission: "question",
         action: "deny",
@@ -733,11 +725,9 @@ export const RunCommand = cmd({
 
     if (args.attach) {
       const headers = (() => {
-        // kilocode_change start
         const password = args.password ?? process.env.KILO_SERVER_PASSWORD
         if (!password) return undefined
-        const username = process.env.KILO_SERVER_USERNAME ?? "kilo"
-        // kilocode_change end
+        const username = process.env.KILO_SERVER_USERNAME ?? "kilo" // kilocode_change
         const auth = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`
         return { Authorization: auth }
       })()
@@ -748,7 +738,7 @@ export const RunCommand = cmd({
     await bootstrap(process.cwd(), async () => {
       const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
         const request = new Request(input, init)
-        return Server.App().fetch(request)
+        return Server.Default().fetch(request)
       }) as typeof globalThis.fetch
       const sdk = createKiloClient({ baseUrl: "http://kilo.internal", fetch: fetchFn })
       await execute(sdk)
