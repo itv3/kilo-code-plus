@@ -1667,9 +1667,10 @@ test("permission config preserves key order", async () => {
 test("project config can override MCP server enabled status", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      // Simulates a base config (like from remote .well-known) with disabled MCP
+      // kilocode_change start — base config in .json, override in .jsonc (jsonc loads second and wins)
+      // Simulates a base config with disabled MCP
       await Filesystem.write(
-        path.join(dir, "kilo.jsonc"),
+        path.join(dir, "kilo.json"),
         JSON.stringify({
           $schema: "https://app.kilo.ai/config.json",
           mcp: {
@@ -1686,9 +1687,9 @@ test("project config can override MCP server enabled status", async () => {
           },
         }),
       )
-      // Project config enables just jira
+      // Override config enables just jira
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "kilo.jsonc"),
         JSON.stringify({
           $schema: "https://app.kilo.ai/config.json",
           mcp: {
@@ -1700,6 +1701,7 @@ test("project config can override MCP server enabled status", async () => {
           },
         }),
       )
+      // kilocode_change end
     },
   })
   await Instance.provide({
@@ -1725,9 +1727,10 @@ test("project config can override MCP server enabled status", async () => {
 test("MCP config deep merges preserving base config properties", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
+      // kilocode_change start — base config in .json, override in .jsonc (jsonc loads second and wins)
       // Base config with full MCP definition
       await Filesystem.write(
-        path.join(dir, "kilo.jsonc"),
+        path.join(dir, "kilo.json"),
         JSON.stringify({
           $schema: "https://app.kilo.ai/config.json",
           mcp: {
@@ -1743,8 +1746,9 @@ test("MCP config deep merges preserving base config properties", async () => {
         }),
       )
       // Override just enables it, should preserve other properties
+      // kilocode_change end
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "kilo.jsonc"),
         JSON.stringify({
           $schema: "https://app.kilo.ai/config.json",
           mcp: {

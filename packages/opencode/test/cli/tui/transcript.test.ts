@@ -90,7 +90,7 @@ describe("transcript", () => {
 
     test("uses model display name when available", () => {
       const result = formatAssistantHeader(baseMsg, true, providers)
-      expect(result).toBe("## Assistant (Build · Claude Sonnet 4 · 5.4s)\n\n")
+      expect(result).toBe("## Assistant (Code · Claude Sonnet 4 · 5.4s)\n\n") // kilocode_change
     })
 
     test("excludes metadata when disabled", () => {
@@ -294,7 +294,7 @@ describe("transcript", () => {
       }
       const parts: Part[] = [{ id: "p1", sessionID: "ses_123", messageID: "msg_123", type: "text", text: "Hi there" }]
       const result = formatMessage(msg, parts, options)
-      expect(result).toContain("## Assistant (Code · claude-sonnet-4-20250514 · 5.4s)") // kilocode_change
+      expect(result).toContain("## Assistant (Code · Claude Sonnet 4 · 5.4s)") // kilocode_change
       expect(result).toContain("Hi there")
     })
   })
@@ -349,7 +349,7 @@ describe("transcript", () => {
       expect(result).toContain("**Session ID:** ses_abc123")
       expect(result).toContain("## User")
       expect(result).toContain("Hello")
-      expect(result).toContain("## Assistant (Code · claude-sonnet-4-20250514 · 0.5s)") // kilocode_change
+      expect(result).toContain("## Assistant (Code · Claude Sonnet 4 · 0.5s)") // kilocode_change
       expect(result).toContain("Hi!")
       expect(result).toContain("---")
     })

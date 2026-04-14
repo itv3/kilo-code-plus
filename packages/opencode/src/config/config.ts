@@ -1508,8 +1508,8 @@ export namespace Config {
               for (const file of yield* Effect.promise(() =>
                 ConfigPaths.projectFiles(name, ctx.directory, ctx.worktree),
               )) {
-                result = mergeConfigConcatArrays(
-                  result,
+                merge(
+                  file,
                   yield* loadFile(file).pipe(
                     Effect.catchDefect((err: unknown) => {
                       caughtWarning(warnings, file, err)
@@ -1539,8 +1539,8 @@ export namespace Config {
             if (KilocodeConfig.isConfigDir(dir, Flag.KILO_CONFIG_DIR)) {
               for (const file of KilocodeConfig.ALL_CONFIG_FILES) {
                 log.debug(`loading config from ${path.join(dir, file)}`)
-                result = mergeConfigConcatArrays(
-                  result,
+                merge(
+                  path.join(dir, file),
                   yield* loadFile(path.join(dir, file)).pipe(
                     Effect.catchDefect((err: unknown) => {
                       caughtWarning(warnings, path.join(dir, file), err)
@@ -1571,12 +1571,12 @@ export namespace Config {
           }
 
           if (process.env.KILO_CONFIG_CONTENT) {
-            result = mergeConfigConcatArrays(
-              result,
+            // kilocode_change start
+            merge(
+              "KILO_CONFIG_CONTENT",
               yield* loadConfig(process.env.KILO_CONFIG_CONTENT, {
                 dir: ctx.directory,
                 source: "KILO_CONFIG_CONTENT",
-                // kilocode_change start
               }).pipe(
                 Effect.tap(() => Effect.sync(() => log.debug("loaded custom config from KILO_CONFIG_CONTENT"))),
                 Effect.catchDefect((err: unknown) => {

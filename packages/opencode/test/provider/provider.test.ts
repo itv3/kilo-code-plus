@@ -11,9 +11,11 @@ import { ProviderID, ModelID } from "../../src/provider/schema"
 import { Filesystem } from "../../src/util/filesystem"
 import { Env } from "../../src/env"
 
+// kilocode_change start — use kilo provider (opencode's free models are deprecated and get filtered)
 function paid(providers: Awaited<ReturnType<typeof Provider.list>>) {
-  const item = providers[ProviderID.make("opencode")]
+  const item = providers[ProviderID.kilo]
   expect(item).toBeDefined()
+  // kilocode_change end
   return Object.values(item.models).filter((model) => model.cost.input > 0).length
 }
 
@@ -2384,13 +2386,14 @@ test("plugin config enabled and disabled providers are honored", async () => {
   })
 })
 
-test("opencode loader keeps paid models when config apiKey is present", async () => {
+// kilocode_change start — test kilo provider instead of opencode (opencode's free models are deprecated)
+test("kilo loader keeps paid models when config apiKey is present", async () => {
   await using base = await tmpdir({
     init: async (dir) => {
       await Bun.write(
-        path.join(dir, "opencode.json"),
+        path.join(dir, "kilo.json"),
         JSON.stringify({
-          $schema: "https://opencode.ai/config.json",
+          $schema: "https://app.kilo.ai/config.json",
         }),
       )
     },
@@ -2404,11 +2407,11 @@ test("opencode loader keeps paid models when config apiKey is present", async ()
   await using keyed = await tmpdir({
     init: async (dir) => {
       await Bun.write(
-        path.join(dir, "opencode.json"),
+        path.join(dir, "kilo.json"),
         JSON.stringify({
-          $schema: "https://opencode.ai/config.json",
+          $schema: "https://app.kilo.ai/config.json",
           provider: {
-            opencode: {
+            kilo: {
               options: {
                 apiKey: "test-key",
               },
@@ -2427,14 +2430,16 @@ test("opencode loader keeps paid models when config apiKey is present", async ()
   expect(none).toBe(0)
   expect(keyedCount).toBeGreaterThan(0)
 })
+// kilocode_change end
 
-test("opencode loader keeps paid models when auth exists", async () => {
+// kilocode_change start — test kilo provider instead of opencode
+test("kilo loader keeps paid models when auth exists", async () => {
   await using base = await tmpdir({
     init: async (dir) => {
       await Bun.write(
-        path.join(dir, "opencode.json"),
+        path.join(dir, "kilo.json"),
         JSON.stringify({
-          $schema: "https://opencode.ai/config.json",
+          $schema: "https://app.kilo.ai/config.json",
         }),
       )
     },
@@ -2448,9 +2453,9 @@ test("opencode loader keeps paid models when auth exists", async () => {
   await using keyed = await tmpdir({
     init: async (dir) => {
       await Bun.write(
-        path.join(dir, "opencode.json"),
+        path.join(dir, "kilo.json"),
         JSON.stringify({
-          $schema: "https://opencode.ai/config.json",
+          $schema: "https://app.kilo.ai/config.json",
         }),
       )
     },
@@ -2467,7 +2472,7 @@ test("opencode loader keeps paid models when auth exists", async () => {
     await Filesystem.write(
       authPath,
       JSON.stringify({
-        opencode: {
+        kilo: {
           type: "api",
           key: "test-key",
         },
@@ -2492,3 +2497,4 @@ test("opencode loader keeps paid models when auth exists", async () => {
     }
   }
 })
+// kilocode_change end

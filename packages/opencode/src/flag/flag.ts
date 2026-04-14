@@ -82,8 +82,22 @@ export namespace Flag {
     return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
   }
 
-  export const KILO_SESSION_RETRY_LIMIT = number("KILO_SESSION_RETRY_LIMIT")
+  export declare const KILO_SESSION_RETRY_LIMIT: number | undefined // kilocode_change — dynamic getter below
 }
+
+// kilocode_change start — Dynamic getter for KILO_SESSION_RETRY_LIMIT
+// Must be evaluated at access time so tests can set the env var at runtime
+Object.defineProperty(Flag, "KILO_SESSION_RETRY_LIMIT", {
+  get() {
+    const value = process.env["KILO_SESSION_RETRY_LIMIT"]
+    if (!value) return undefined
+    const parsed = Number(value)
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+  },
+  enumerable: true,
+  configurable: false,
+})
+// kilocode_change end
 
 // Dynamic getter for KILO_DISABLE_PROJECT_CONFIG
 // This must be evaluated at access time, not module load time,
