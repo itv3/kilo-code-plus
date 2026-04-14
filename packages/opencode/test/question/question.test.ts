@@ -79,7 +79,7 @@ test("ask - preserves blocking flag", async () => {
     fn: async () => {
       // kilocode_change - review follow-up uses non-blocking question prompts
       const askPromise = Question.ask({
-        sessionID: "ses_test",
+        sessionID: SessionID.make("ses_test"),
         blocking: false,
         questions: [
           {
