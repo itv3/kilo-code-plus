@@ -8,10 +8,8 @@ import { Env } from "../../env"
 import { Effect } from "effect"
 
 export namespace KiloToolRegistry {
-  /** Build Kilo-specific tools (CodebaseSearch, Recall) */
-  export function build(
-    fn: <T extends Tool.Info>(tool: T | Effect.Effect<T, never, any>) => Effect.Effect<T, never, any>,
-  ) {
+  /** Build Kilo-specific tools (CodebaseSearch, Recall) as Tool.Def */
+  export function build(fn: (tool: Tool.Info) => Effect.Effect<Tool.Def, never, any>) {
     return Effect.gen(function* () {
       const codebase = yield* fn(CodebaseSearchTool)
       const recall = yield* fn(RecallTool)
@@ -29,11 +27,11 @@ export namespace KiloToolRegistry {
     return [tool]
   }
 
-  /** Kilo-specific tools to append to the all() list */
+  /** Kilo-specific tools to append to the builtin list */
   export function extra(
-    tools: { codebase: Tool.Info; recall: Tool.Info },
+    tools: { codebase: Tool.Def; recall: Tool.Def },
     cfg: { experimental?: { codebase_search?: boolean } },
-  ): Tool.Info[] {
+  ): Tool.Def[] {
     return [...(cfg.experimental?.codebase_search === true ? [tools.codebase] : []), tools.recall]
   }
 
