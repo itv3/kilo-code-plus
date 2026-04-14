@@ -1,6 +1,6 @@
 import { createEffect, createSignal, onCleanup, type JSX } from "solid-js"
 import { makeEventListener } from "@solid-primitives/event-listener"
-import type { FileDiff } from "@opencode-ai/sdk/v2"
+import type { FileDiff } from "@kilocode/sdk/v2"
 import { SessionReview } from "@opencode-ai/ui/session-review"
 import type {
   SessionReviewCommentActions,
