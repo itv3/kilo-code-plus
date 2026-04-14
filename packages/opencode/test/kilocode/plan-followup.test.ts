@@ -76,8 +76,7 @@ async function seed(input: {
       created: Date.now(),
     },
     agent: "plan",
-    model,
-    variant: input.variant,
+    model: input.variant ? { ...model, variant: input.variant } : model,
   })
   await Session.updatePart({
     id: PartID.ascending(),
