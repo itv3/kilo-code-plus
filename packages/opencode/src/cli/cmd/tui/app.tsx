@@ -202,8 +202,11 @@ export function tui(input: {
     await render(() => {
       return (
         <ErrorBoundary
-          // kilocode_change
-          fallback={(error, reset) => <ErrorComponent error={error} reset={reset} onExit={onExit} mode={mode} />}
+          // kilocode_change start
+          fallback={(error, reset) => (
+            <ErrorComponent error={error} reset={reset} onBeforeExit={onBeforeExit} onExit={onExit} mode={mode} />
+          )}
+          // kilocode_change end
         >
           <ArgsProvider {...input.args}>
             <ExitProvider onBeforeExit={onBeforeExit} onExit={onExit}>
@@ -964,10 +967,12 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       </Show>
       {plugin()}
       <TuiPluginRuntime.Slot name="app" />
+      {/* kilocode_change start */}
       <StartupLoading ready={ready} />
     </box>
   )
-} // kilocode_change
+}
+// kilocode_change end
 
 // kilocode_change start — guard against missing renderer context in ErrorBoundary fallback
 function tryUseRenderer() {
@@ -991,6 +996,7 @@ function tryUseTerminalDimensions() {
 function ErrorComponent(props: {
   error: Error
   reset: () => void
+  onBeforeExit?: () => Promise<void>
   onExit: () => Promise<void>
   mode?: "dark" | "light"
 }) {
@@ -1000,6 +1006,7 @@ function ErrorComponent(props: {
   const height = () => term?.().height ?? process.stdout.rows ?? 24
 
   const handleExit = async () => {
+    await props.onBeforeExit?.()
     renderer?.setTerminalTitle("")
     renderer?.destroy()
     win32FlushInputBuffer()
