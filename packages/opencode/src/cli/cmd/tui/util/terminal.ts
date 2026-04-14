@@ -17,9 +17,9 @@ export function resetTerminalState() {
   ]
   try {
     process.stdout.write(sequences.join(""))
-  } catch {
-    // kilocode_change - stdout may already be closed during exit, ignore
-    // Silent fail is intentional here — process is exiting anyway
+  } catch (err) {
+    // kilocode_change - stdout may already be closed during exit
+    console.error("resetTerminalState failed", err)
   }
 }
 
