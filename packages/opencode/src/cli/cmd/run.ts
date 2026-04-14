@@ -8,7 +8,7 @@ import { bootstrap } from "../bootstrap"
 import { EOL } from "os"
 import { text as streamText } from "node:stream/consumers"
 import { Filesystem } from "../../util/filesystem"
-import { createKiloClient, type Message, type KiloClient, type ToolPart } from "@kilocode/sdk/v2"
+import { createKiloClient, type KiloClient, type ToolPart } from "@kilocode/sdk/v2"
 import { Server } from "../../server/server"
 import { Provider } from "../../provider/provider"
 import { Agent } from "../../agent/agent"
@@ -300,6 +300,11 @@ export const RunCommand = cmd({
           type: "string",
           describe: "model variant (provider-specific reasoning effort, e.g., high, max, minimal)",
         })
+        .option("thinking", {
+          type: "boolean",
+          describe: "show thinking blocks",
+          default: false,
+        })
         // kilocode_change start - auto approve all permissions
         .option("auto", {
           type: "boolean",
@@ -307,11 +312,6 @@ export const RunCommand = cmd({
           default: false,
         })
         // kilocode_change end
-        .option("thinking", {
-          type: "boolean",
-          describe: "show thinking blocks",
-          default: false,
-        })
         .option("dangerously-skip-permissions", {
           type: "boolean",
           describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
@@ -742,7 +742,7 @@ export const RunCommand = cmd({
     await bootstrap(process.cwd(), async () => {
       const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
         const request = new Request(input, init)
-        return Server.Default().fetch(request)
+        return Server.Default().app.fetch(request)
       }) as typeof globalThis.fetch
       const sdk = createKiloClient({ baseUrl: "http://kilo.internal", fetch: fetchFn })
       await execute(sdk)

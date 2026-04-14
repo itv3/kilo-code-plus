@@ -2,6 +2,7 @@ import { Log } from "../util/log"
 import { describeRoute, generateSpecs, validator, resolver, openAPIRouteHandler } from "hono-openapi"
 import { Hono } from "hono"
 import { compress } from "hono/compress"
+import { createNodeWebSocket } from "@hono/node-ws"
 import { cors } from "hono/cors"
 import { basicAuth } from "hono/basic-auth"
 import type { UpgradeWebSocket } from "hono/ws"
@@ -9,8 +10,6 @@ import z from "zod"
 import { Auth } from "../auth"
 import { Flag } from "../flag/flag"
 import { ProviderID } from "../provider/schema"
-import { createAdaptorServer, type ServerType } from "@hono/node-server"
-import { createNodeWebSocket } from "@hono/node-ws"
 import { WorkspaceRouterMiddleware } from "./router"
 import { errors } from "./error"
 import { GlobalRoutes } from "./routes/global"
@@ -20,6 +19,7 @@ import { errorHandler } from "./middleware"
 import { InstanceRoutes } from "./instance"
 import { initProjectors } from "./projectors"
 import * as KiloServer from "../kilocode/server/server" // kilocode_change
+import { createAdaptorServer, type ServerType } from "@hono/node-server"
 
 // @ts-ignore This global is needed to prevent ai-sdk from logging warnings to stdout https://github.com/vercel/ai/blob/2dc67e0ef538307f21368db32d5a12345d98831b/packages/ai/src/logger/log-warnings.ts#L85
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -43,7 +43,7 @@ export namespace Server {
     return false
   }
 
-  export const Default = lazy(() => create({}).app)
+  export const Default = lazy(() => create({}))
 
   export function ControlPlaneRoutes(upgrade: UpgradeWebSocket, app = new Hono(), opts?: { cors?: string[] }): Hono {
     return app
@@ -55,6 +55,9 @@ export namespace Server {
         const password = Flag.KILO_SERVER_PASSWORD
         if (!password) return next()
         const username = Flag.KILO_SERVER_USERNAME ?? "kilo" // kilocode change
+
+        if (c.req.query("auth_token")) c.req.raw.headers.set("authorization", `Basic ${c.req.query("auth_token")}`)
+
         return basicAuth({ username, password })(c, next)
       })
       .use(async (c, next) => {

@@ -391,7 +391,8 @@ export namespace ProviderTransform {
       // id.includes("kimi") || // kilocode_change
       // TODO: Remove this after models.dev data is fixed to use "kimi-k2.5" instead of "k2p5"
       id.includes("k2p5") ||
-      id.includes("qwen")
+      id.includes("qwen") ||
+      id.includes("big-pickle")
     )
       return {}
 

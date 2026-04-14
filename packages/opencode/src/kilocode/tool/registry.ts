@@ -9,11 +9,10 @@ import { Effect } from "effect"
 
 export namespace KiloToolRegistry {
   /** Build Kilo-specific tools (CodebaseSearch, Recall) as Tool.Def */
-  export function build(fn: (tool: Tool.Info) => Effect.Effect<Tool.Def, never, any>) {
-    return Effect.gen(function* () {
-      const codebase = yield* fn(CodebaseSearchTool)
-      const recall = yield* fn(RecallTool)
-      return { codebase, recall }
+  export function build() {
+    return Effect.all({
+      codebase: Tool.init(CodebaseSearchTool),
+      recall: Tool.init(RecallTool),
     })
   }
 
@@ -23,8 +22,8 @@ export namespace KiloToolRegistry {
   }
 
   /** Plan tool is always registered in Kilo (gated by agent permission instead) */
-  export function plan(tool: Tool.Info): Tool.Info[] {
-    return [tool]
+  export function plan(): boolean {
+    return true
   }
 
   /** Kilo-specific tools to append to the builtin list */

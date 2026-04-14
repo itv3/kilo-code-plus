@@ -59,7 +59,6 @@ const keepSandbox = process.env.KILO_E2E_KEEP_SANDBOX === "1"
 
 const serverEnv = {
   ...process.env,
-  KILO_DISABLE_SESSION_INGEST: "true", // kilocode_change
   KILO_DISABLE_SHARE: process.env.KILO_DISABLE_SHARE ?? "true",
   KILO_DISABLE_LSP_DOWNLOAD: "true",
   KILO_DISABLE_DEFAULT_PLUGINS: "true",
@@ -69,10 +68,10 @@ const serverEnv = {
   XDG_CACHE_HOME: path.join(sandbox, "cache"),
   XDG_CONFIG_HOME: path.join(sandbox, "config"),
   XDG_STATE_HOME: path.join(sandbox, "state"),
-  KILO_E2E_PROJECT_DIR: repoDir,
-  KILO_E2E_SESSION_TITLE: "E2E Session",
-  KILO_E2E_MESSAGE: "Seeded for UI e2e",
-  KILO_E2E_MODEL: "kilo/kilo-auto/frontier", // kilocode_change
+  OPENCODE_E2E_PROJECT_DIR: repoDir,
+  OPENCODE_E2E_SESSION_TITLE: "E2E Session",
+  OPENCODE_E2E_MESSAGE: "Seeded for UI e2e",
+  OPENCODE_E2E_MODEL: process.env.OPENCODE_E2E_MODEL ?? "opencode/gpt-5-nano",
   KILO_CLIENT: "app",
   KILO_STRICT_CONFIG_DEPS: "true",
 } satisfies Record<string, string>
@@ -146,7 +145,7 @@ try {
   } else {
     Object.assign(process.env, serverEnv)
     process.env.AGENT = "1"
-    process.env.KILO = "1"
+    process.env.OPENCODE = "1"
     process.env.KILO_PID = String(process.pid)
 
     const log = await import("../../opencode/src/util/log")
