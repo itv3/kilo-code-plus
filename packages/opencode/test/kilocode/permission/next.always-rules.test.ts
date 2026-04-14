@@ -1,12 +1,21 @@
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe, afterAll } from "bun:test"
+import fs from "fs/promises"
+import path from "path"
 import { Permission } from "../../../src/permission"
 import { PermissionID } from "../../../src/permission/schema"
 import { SessionID } from "../../../src/session/schema"
 import { Instance } from "../../../src/project/instance"
-import { Log } from "../../../src/util/log"
+import { Config } from "../../../src/config/config"
+import { Global } from "../../../src/global"
 import { tmpdir } from "../../fixture/fixture"
 
-Log.init({ print: false })
+afterAll(async () => {
+  const dir = Global.Path.config
+  for (const file of ["kilo.jsonc", "kilo.json", "config.json", "opencode.json", "opencode.jsonc"]) {
+    await fs.rm(path.join(dir, file), { force: true }).catch(() => {})
+  }
+  await Config.invalidate(true)
+})
 
 describe("saveAlwaysRules", () => {
   test("approved rules auto-allow future requests", async () => {

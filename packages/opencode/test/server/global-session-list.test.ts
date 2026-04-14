@@ -125,6 +125,7 @@ describe("Session.listGlobal", () => {
         directory: first.path,
         fn: async () => Session.create({ title: "root-session" }),
       })
+      await Bun.file(path.join(first.path, ".git", "kilo")).delete()
       const other = await Instance.provide({
         directory: second.path,
         fn: async () => Session.create({ title: "other-session" }),

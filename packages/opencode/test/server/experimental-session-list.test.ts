@@ -55,6 +55,7 @@ describe("experimental.session.list", () => {
             session: await Session.create({ title: "root-session" }),
           }),
         })
+        await Bun.file(path.join(first.path, ".git", "kilo")).delete()
 
         await Instance.provide({
           directory: second.path,
