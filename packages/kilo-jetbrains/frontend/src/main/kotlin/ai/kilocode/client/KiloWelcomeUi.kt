@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -110,6 +111,7 @@ class KiloWelcomeUi(
     override fun dispose() {
         appJob?.cancel()
         wsJob?.cancel()
+        cs.cancel()
     }
 
     // ------ rendering ------

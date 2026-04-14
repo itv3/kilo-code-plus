@@ -332,6 +332,21 @@ export type EventTodoUpdated = {
   }
 }
 
+export type EventSessionTurnOpen = {
+  type: "session.turn.open"
+  properties: {
+    sessionID: string
+  }
+}
+
+export type EventSessionTurnClose = {
+  type: "session.turn.close"
+  properties: {
+    sessionID: string
+    reason: "completed" | "error" | "interrupted"
+  }
+}
+
 export type SessionStatus =
   | {
       type: "idle"
@@ -395,21 +410,6 @@ export type EventCommandExecuted = {
     sessionID: string
     arguments: string
     messageID: string
-  }
-}
-
-export type EventSessionTurnOpen = {
-  type: "session.turn.open"
-  properties: {
-    sessionID: string
-  }
-}
-
-export type EventSessionTurnClose = {
-  type: "session.turn.close"
-  properties: {
-    sessionID: string
-    reason: "completed" | "error" | "interrupted"
   }
 }
 
@@ -1075,14 +1075,14 @@ export type Event =
   | EventQuestionReplied
   | EventQuestionRejected
   | EventTodoUpdated
+  | EventSessionTurnOpen
+  | EventSessionTurnClose
   | EventSessionStatus
   | EventSessionIdle
   | EventSessionCompacted
   | EventFileEdited
   | EventFileWatcherUpdated
   | EventCommandExecuted
-  | EventSessionTurnOpen
-  | EventSessionTurnClose
   | EventSessionDiff
   | EventSessionError
   | EventVcsBranchUpdated
@@ -1392,7 +1392,7 @@ export type ProviderConfig = {
       isFree?: boolean
       ai_sdk_provider?: "anthropic" | "openai" | "openai-compatible" | "openrouter"
       experimental?: boolean
-      status?: "alpha" | "beta" | "deprecated"
+      status?: "alpha" | "beta" | "deprecated" | "active"
       options?: {
         [key: string]: unknown
       }
@@ -4516,7 +4516,7 @@ export type ProviderListResponses = {
           isFree?: boolean
           ai_sdk_provider?: "anthropic" | "openai" | "openai-compatible" | "openrouter"
           experimental?: boolean
-          status?: "alpha" | "beta" | "deprecated"
+          status?: "alpha" | "beta" | "deprecated" | "active"
           options: {
             [key: string]: unknown
           }

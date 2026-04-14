@@ -93,7 +93,7 @@ export namespace ModelsDev {
     // kilocode_change end
 
     experimental: z.boolean().optional(),
-    status: z.enum(["alpha", "beta", "deprecated"]).optional(),
+    status: z.enum(["alpha", "beta", "deprecated", "active"]).optional(), // kilocode_change
     options: z.record(z.string(), z.any()),
     headers: z.record(z.string(), z.string()).optional(),
     provider: z.object({ npm: z.string().optional(), api: z.string().optional() }).optional(),

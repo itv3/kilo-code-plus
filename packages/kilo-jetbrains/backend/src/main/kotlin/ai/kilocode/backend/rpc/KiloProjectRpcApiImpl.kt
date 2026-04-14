@@ -2,6 +2,7 @@
 
 package ai.kilocode.backend.rpc
 
+import ai.kilocode.backend.app.KiloAppState
 import ai.kilocode.backend.app.KiloBackendAppService
 import ai.kilocode.backend.workspace.AgentData
 import ai.kilocode.backend.workspace.AgentInfo
@@ -25,8 +26,11 @@ import ai.kilocode.rpc.dto.ProviderDto
 import ai.kilocode.rpc.dto.ProvidersDto
 import ai.kilocode.rpc.dto.SkillDto
 import com.intellij.openapi.components.service
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /**
@@ -38,15 +42,32 @@ import kotlinx.coroutines.flow.map
  */
 class KiloProjectRpcApiImpl : KiloProjectRpcApi {
 
-    private val manager: KiloBackendWorkspaceManager
-        get() = service<KiloBackendAppService>().workspaces
+    private val app: KiloBackendAppService get() = service()
 
+    private val manager: KiloBackendWorkspaceManager
+        get() = app.workspaces
+
+    /**
+     * Emits workspace state for [directory]. Waits for the app to
+     * reach [KiloAppState.Ready] before creating the workspace —
+     * until then, emits [KiloWorkspaceStatusDto.PENDING].
+     *
+     * When the app leaves Ready (e.g. during restart/reconnect),
+     * the flow falls back to PENDING again and re-subscribes to
+     * the new workspace once Ready returns.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun state(directory: String): Flow<KiloWorkspaceStateDto> =
-        manager.get(directory).state
-            .map(::dto)
-            .distinctUntilChanged()
+        app.appState.flatMapLatest { state ->
+            if (state is KiloAppState.Ready) {
+                manager.get(directory).state.map(::dto)
+            } else {
+                flowOf(KiloWorkspaceStateDto(KiloWorkspaceStatusDto.PENDING))
+            }
+        }.distinctUntilChanged()
 
     override suspend fun reload(directory: String) {
+        if (app.appState.value !is KiloAppState.Ready) return
         manager.get(directory).reload()
     }
 
