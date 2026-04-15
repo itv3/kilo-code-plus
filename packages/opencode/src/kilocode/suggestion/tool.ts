@@ -16,6 +16,7 @@ const Params = z.object({
 type Meta = {
   accepted?: Suggestion.Action
   dismissed: boolean
+  truncated: boolean
 }
 
 /**
@@ -81,6 +82,7 @@ export const SuggestTool = Tool.define<typeof Params, Meta>("suggest", {
       const metadata: Meta = {
         accepted: undefined,
         dismissed: true,
+        truncated: false,
       }
       return {
         title: "Suggestion dismissed",
@@ -94,6 +96,7 @@ export const SuggestTool = Tool.define<typeof Params, Meta>("suggest", {
     const metadata: Meta = {
       accepted: action,
       dismissed: false,
+      truncated: false,
     }
 
     return {
