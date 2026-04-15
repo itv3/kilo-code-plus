@@ -39,7 +39,7 @@ class ChatPanel(
         private const val MESSAGES = "messages"
     }
 
-    private val model = SessionModel(this, sessions, workspace, app, cs)
+    private val model = SessionModel(this, null, sessions, workspace, app, cs)
     private val welcome = StatusPanel(this, model)
     private val messages = MessageListPanel()
 

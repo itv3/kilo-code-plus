@@ -9,6 +9,7 @@ import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -16,24 +17,29 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Session lifecycle controller that bridges coroutine flows to the EDT.
+ * Session lifecycle controller for a single session.
+ *
+ * Accepts an optional [id] — if non-null, loads that session immediately.
+ * If null, lazily creates a session on the first [prompt] call. This
+ * ensures event subscription happens *before* the prompt is sent,
+ * eliminating race conditions.
  *
  * Owns [ChatModel] and the listener list. All model mutations and
  * listener notifications happen on the EDT — [fire] auto-dispatches
  * via `invokeLater` when called from a background thread.
- *
- * **Thread model**: coroutines collect events from RPC flows on a
- * background thread, then either use `edt {}` for multi-step
- * model-mutation-then-fire sequences, or call `fire()` directly
- * (which auto-dispatches if not on EDT).
  */
 class SessionModel(
     parent: Disposable,
+    id: String?,
     private val sessions: KiloSessionService,
     private val workspace: KiloProjectService,
     private val app: KiloAppService,
     private val cs: CoroutineScope,
 ) : Disposable {
+
+    companion object {
+        private val LOG = Logger.getInstance(SessionModel::class.java)
+    }
 
     init {
         Disposer.register(parent, this)
@@ -42,6 +48,12 @@ class SessionModel(
     val chat = ChatModel()
 
     private val listeners = mutableListOf<SessionModelListener>()
+
+    /** The session ID owned by this model. Null until created or passed in. */
+    private var sessionId: String? = id
+
+    /** Resolved project directory for RPC calls. */
+    private val directory: String get() = sessions.directory
 
     // Status computation state (EDT-only)
     private var partType: String? = null
@@ -63,53 +75,81 @@ class SessionModel(
 
     // --- Actions (called from EDT) ---
 
+    /**
+     * Send a prompt. If no session exists, creates one first,
+     * subscribes to events, then sends the prompt — all in one
+     * coroutine to avoid race conditions.
+     */
     fun prompt(text: String) {
         showMessages()
-        sessions.prompt(text)
+        cs.launch {
+            try {
+                val id = sessionId ?: run {
+                    val session = sessions.create()
+                    sessionId = session.id
+                    subscribeEvents()
+                    session.id
+                }
+                sessions.prompt(id, directory, text)
+            } catch (e: Exception) {
+                LOG.warn("prompt failed", e)
+                edt {
+                    fire(SessionEvent.Error(e.message ?: "Prompt failed"))
+                    fire(SessionEvent.BusyChanged(false))
+                }
+            }
+        }
     }
 
     fun abort() {
-        sessions.abort()
+        val id = sessionId ?: return
+        cs.launch {
+            try {
+                sessions.abort(id, directory)
+            } catch (e: Exception) {
+                LOG.warn("abort failed", e)
+            }
+        }
     }
 
     fun selectAgent(name: String) {
         chat.agent = name
-        sessions.updateConfig(ConfigUpdateDto(agent = name))
+        cs.launch {
+            try {
+                sessions.updateConfig(directory, ConfigUpdateDto(agent = name))
+            } catch (e: Exception) {
+                LOG.warn("selectAgent failed", e)
+            }
+        }
         fire(SessionEvent.WorkspaceReady)
     }
 
     fun selectModel(provider: String, id: String) {
         chat.model = "$provider/$id"
-        sessions.updateConfig(ConfigUpdateDto(model = "$provider/$id"))
+        cs.launch {
+            try {
+                sessions.updateConfig(directory, ConfigUpdateDto(model = "$provider/$id"))
+            } catch (e: Exception) {
+                LOG.warn("selectModel failed", e)
+            }
+        }
         fire(SessionEvent.WorkspaceReady)
     }
 
     // --- Internal: coroutine → EDT bridge ---
 
     init {
-        // Watch active session changes
-        cs.launch {
-            sessions.active.collect { session ->
-                edt {
-                    chat.clear()
-                    partType = null
-                    tool = null
-                    hideMessages()
-                    fire(SessionEvent.Cleared)
-                }
-                eventJob?.cancel()
-                if (session != null) {
-                    loadHistory()
-                    subscribeEvents()
-                }
-            }
+        // If we have a session ID, load it immediately
+        if (sessionId != null) {
+            loadHistory()
+            subscribeEvents()
         }
 
         // Watch session statuses for busy/idle
         cs.launch {
             sessions.statuses.collect { statuses ->
-                val active = sessions.active.value?.id ?: return@collect
-                val st = statuses[active]
+                val id = sessionId ?: return@collect
+                val st = statuses[id]
                 edt { fire(SessionEvent.BusyChanged(st?.type == "busy")) }
             }
         }
@@ -165,19 +205,26 @@ class SessionModel(
     }
 
     private fun loadHistory() {
+        val id = sessionId ?: return
         cs.launch {
-            val history = sessions.messages()
-            edt {
-                chat.load(history)
-                if (!chat.isEmpty()) showMessages()
-                fire(SessionEvent.HistoryLoaded)
+            try {
+                val history = sessions.messages(id, directory)
+                edt {
+                    chat.load(history)
+                    if (!chat.isEmpty()) showMessages()
+                    fire(SessionEvent.HistoryLoaded)
+                }
+            } catch (e: Exception) {
+                LOG.warn("loadHistory failed", e)
             }
         }
     }
 
     private fun subscribeEvents() {
+        val id = sessionId ?: return
+        eventJob?.cancel()
         eventJob = cs.launch {
-            sessions.events().collect { event ->
+            sessions.events(id, directory).collect { event ->
                 edt { handle(event) }
             }
         }

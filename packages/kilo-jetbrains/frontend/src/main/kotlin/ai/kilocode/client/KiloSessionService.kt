@@ -21,18 +21,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Project-level frontend service for session management and chat.
+ * Project-level frontend service for session management.
  *
- * Provides session CRUD, active session tracking, live status
- * updates, and chat operations via [KiloSessionRpcApi]. All
- * operations are scoped to the project's [directory] by default,
- * with support for per-session worktree directory overrides.
+ * Stateless with respect to "active session" — callers pass explicit
+ * session IDs. [SessionModel] owns the active session concept.
+ *
+ * All operations are scoped to the project's [directory] by default.
  */
 @Service(Service.Level.PROJECT)
 class KiloSessionService(
@@ -47,7 +46,7 @@ class KiloSessionService(
      * The real project directory, resolved from [KiloProjectService].
      * Falls back to [Project.getBasePath] if not yet resolved.
      */
-    private val directory: String
+    val directory: String
         get() {
             val resolved = project.service<KiloProjectService>().directory.value
             if (resolved.isNotEmpty()) return resolved
@@ -61,9 +60,6 @@ class KiloSessionService(
     private val _sessions = MutableStateFlow<List<SessionDto>>(emptyList())
     val sessions: StateFlow<List<SessionDto>> = _sessions.asStateFlow()
 
-    private val _active = MutableStateFlow<SessionDto?>(null)
-    val active: StateFlow<SessionDto?> = _active.asStateFlow()
-
     /** Live session status map from SSE events. */
     val statuses: StateFlow<Map<String, SessionStatusDto>> = flow {
         durable {
@@ -72,6 +68,8 @@ class KiloSessionService(
                 .collect { emit(it) }
         }
     }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
+
+    // ------ Session CRUD ------
 
     /** Refresh the session list from the server. */
     fun refresh() {
@@ -85,37 +83,21 @@ class KiloSessionService(
         }
     }
 
-    /** Create a new session and make it active. */
-    fun create() {
-        cs.launch {
-            try {
-                val session = durable { KiloSessionRpcApi.getInstance().create(directory) }
-                _active.value = session
-                refresh()
-            } catch (e: Exception) {
-                LOG.warn("session create failed", e)
-            }
-        }
+    /** Create a new session. Caller awaits the result. */
+    suspend fun create(): SessionDto {
+        val dir = directory
+        LOG.info("create: dir=$dir")
+        val session = durable { KiloSessionRpcApi.getInstance().create(dir) }
+        LOG.info("create: id=${session.id}")
+        refresh()
+        return session
     }
 
-    /** Select an existing session as active. */
-    fun select(id: String) {
-        cs.launch {
-            try {
-                val session = durable { KiloSessionRpcApi.getInstance().get(id, directory) }
-                _active.value = session
-            } catch (e: Exception) {
-                LOG.warn("session select failed", e)
-            }
-        }
-    }
-
-    /** Delete a session. Clears active if it was the deleted one. */
+    /** Delete a session. */
     fun delete(id: String) {
         cs.launch {
             try {
                 durable { KiloSessionRpcApi.getInstance().delete(id, directory) }
-                if (_active.value?.id == id) _active.value = null
                 refresh()
             } catch (e: Exception) {
                 LOG.warn("session delete failed", e)
@@ -134,99 +116,38 @@ class KiloSessionService(
         }
     }
 
-    // ------ chat ------
+    // ------ Chat ops (explicit session ID) ------
 
-    /**
-     * Send a text prompt to the active session. Creates a session if needed.
-     *
-     * @param text The user's message text
-     * @param providerID Optional model override (provider part)
-     * @param modelID Optional model override (model part)
-     * @param agent Optional agent/mode override (e.g. "ask", "code")
-     */
-    fun prompt(text: String, providerID: String? = null, modelID: String? = null, agent: String? = null) {
-        cs.launch {
-            try {
-                LOG.info("prompt: ensuring session exists (active=${_active.value?.id})")
-                val session = ensureSession()
-                LOG.info("prompt: session=${session.id}, dir=$directory, text=${text.take(80)}")
-                val prompt = PromptDto(
-                    parts = listOf(PromptPartDto(type = "text", text = text)),
-                    providerID = providerID,
-                    modelID = modelID,
-                    agent = agent,
-                )
-                LOG.info("prompt: calling RPC prompt...")
-                durable { KiloSessionRpcApi.getInstance().prompt(session.id, directory, prompt) }
-                LOG.info("prompt: RPC returned successfully")
-            } catch (e: Exception) {
-                LOG.warn("prompt failed", e)
-            }
-        }
+    /** Send a text prompt to a session. */
+    suspend fun prompt(id: String, dir: String, text: String) {
+        LOG.info("prompt: session=$id, dir=$dir, text=${text.take(80)}")
+        val prompt = PromptDto(
+            parts = listOf(PromptPartDto(type = "text", text = text)),
+        )
+        durable { KiloSessionRpcApi.getInstance().prompt(id, dir, prompt) }
+        LOG.info("prompt: RPC returned successfully")
     }
 
-    /** Abort ongoing processing for the active session. */
-    fun abort() {
-        cs.launch {
-            val session = _active.value ?: return@launch
-            try {
-                durable { KiloSessionRpcApi.getInstance().abort(session.id, directory) }
-            } catch (e: Exception) {
-                LOG.warn("abort failed", e)
-            }
-        }
+    /** Abort ongoing processing for a session. */
+    suspend fun abort(id: String, dir: String) {
+        durable { KiloSessionRpcApi.getInstance().abort(id, dir) }
     }
 
-    /** Load message history for the active session. */
-    suspend fun messages(): List<MessageWithPartsDto> {
-        val session = _active.value ?: return emptyList()
-        return try {
-            durable { KiloSessionRpcApi.getInstance().messages(session.id, directory) }
-        } catch (e: Exception) {
-            LOG.warn("messages failed", e)
-            emptyList()
-        }
-    }
+    /** Load message history for a session. */
+    suspend fun messages(id: String, dir: String): List<MessageWithPartsDto> =
+        durable { KiloSessionRpcApi.getInstance().messages(id, dir) }
 
-    /**
-     * Subscribe to streaming chat events for the active session.
-     * Returns an empty flow if no session is active.
-     */
-    fun events(): Flow<ChatEventDto> {
-        val session = _active.value ?: return emptyFlow()
-        return flow {
-            durable {
-                KiloSessionRpcApi.getInstance()
-                    .events(session.id, directory)
-                    .collect { emit(it) }
-            }
+    /** Subscribe to streaming chat events for a session. */
+    fun events(id: String, dir: String): Flow<ChatEventDto> = flow {
+        durable {
+            KiloSessionRpcApi.getInstance()
+                .events(id, dir)
+                .collect { emit(it) }
         }
     }
 
     /** Update config (model, agent/mode, temperature). */
-    fun updateConfig(config: ConfigUpdateDto) {
-        cs.launch {
-            try {
-                durable { KiloSessionRpcApi.getInstance().updateConfig(directory, config) }
-            } catch (e: Exception) {
-                LOG.warn("config update failed", e)
-            }
-        }
-    }
-
-    // ------ helpers ------
-
-    /**
-     * Ensure an active session exists. Creates one if needed.
-     */
-    private suspend fun ensureSession(): SessionDto {
-        _active.value?.let { return it }
-        val dir = directory
-        LOG.info("ensureSession: creating new session in dir=$dir")
-        val session = durable { KiloSessionRpcApi.getInstance().create(dir) }
-        LOG.info("ensureSession: created session ${session.id}")
-        _active.value = session
-        refresh()
-        return session
+    suspend fun updateConfig(dir: String, config: ConfigUpdateDto) {
+        durable { KiloSessionRpcApi.getInstance().updateConfig(dir, config) }
     }
 }

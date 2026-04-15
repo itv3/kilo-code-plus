@@ -4,6 +4,7 @@ import ai.kilocode.client.chat.ChatPanel
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -18,7 +19,7 @@ import kotlinx.coroutines.SupervisorJob
  * first prompt is sent, then switches to a scrollable message list.
  * No tabs — the chat panel is the only content.
  */
-class KiloToolWindowFactory : ToolWindowFactory {
+class KiloToolWindowFactory : ToolWindowFactory, DumbAware {
 
     companion object {
         private val LOG = Logger.getInstance(KiloToolWindowFactory::class.java)

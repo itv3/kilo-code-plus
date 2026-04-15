@@ -261,8 +261,10 @@ object KiloCliDataParser {
     }
 
     internal fun parseError(obj: JsonObject): MessageErrorDto {
-        val type = obj.str("type") ?: "unknown"
-        val msg = obj.str("message") ?: obj.str("error")
+        val type = obj.str("type") ?: obj.str("name") ?: "unknown"
+        val msg = obj.str("message")
+            ?: obj["data"]?.jsonObject?.str("message")
+            ?: obj.str("error")
         return MessageErrorDto(type, msg)
     }
 

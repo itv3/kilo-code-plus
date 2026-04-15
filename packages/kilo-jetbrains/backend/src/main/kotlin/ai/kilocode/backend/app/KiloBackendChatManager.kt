@@ -58,7 +58,7 @@ class KiloBackendChatManager(
         watcher = cs.launch {
             sse.collect { event ->
                 if (event.type in CHAT_EVENTS) {
-                    log.info("SSE chat event: type=${event.type}, data=${event.data.take(200)}")
+                    log.info("SSE chat event: type=${event.type}, data=${event.data.take(2000)}")
                     val parsed = KiloCliDataParser.parseChatEvent(event.type, event.data)
                     if (parsed != null) {
                         log.info("SSE parsed → ${parsed::class.simpleName}")
