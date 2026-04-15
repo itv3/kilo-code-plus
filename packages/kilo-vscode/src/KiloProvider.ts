@@ -501,6 +501,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       await Promise.all([
         fetchAndSendPendingPermissions(this.permissionCtx),
         fetchAndSendPendingQuestions(this.questionCtx),
+        fetchAndSendPendingSuggestions(this.questionCtx),
       ])
     }
   }
@@ -554,9 +555,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         }
       }
 
-      // Route suggestion messages (extracted to stay within complexity limit)
       await routeSuggestionWebviewMessage(this.questionCtx, message)
-
       switch (message.type) {
         case "webviewReady":
           console.log("[Kilo New] KiloProvider: ✅ webviewReady received")
@@ -1131,7 +1130,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
             await this.syncWebviewState("sse-connected")
             await this.flushPendingSessionRefresh("sse-connected")
             this.recoverPendingPrompts()
-            await fetchAndSendPendingSuggestions(this.questionCtx)
           } catch (error) {
             console.error("[Kilo New] KiloProvider: ❌ Failed during connected state handling:", error)
             this.postMessage({
@@ -1374,7 +1372,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
       // Recover any prompts missed while the webview was loading or during an SSE reconnection.
       this.recoverPendingPrompts()
-      void fetchAndSendPendingSuggestions(this.questionCtx)
     } catch (error) {
       // Silently ignore aborted requests — the user switched to a different session
       if (abort.signal.aborted) return
@@ -1433,7 +1430,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
       // Recover any prompts emitted by the child before we started tracking it.
       this.recoverPendingPrompts()
-      void fetchAndSendPendingSuggestions(this.questionCtx)
     } catch (err) {
       this.syncedChildSessions.delete(sessionID)
       console.error("[Kilo New] KiloProvider: Failed to sync child session:", err)
