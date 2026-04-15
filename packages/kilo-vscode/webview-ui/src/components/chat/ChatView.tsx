@@ -13,7 +13,6 @@ import { TaskHeader } from "./TaskHeader"
 import { MessageList } from "./MessageList"
 import { PromptInput } from "./PromptInput"
 import { PermissionDock } from "./PermissionDock"
-import { SuggestBar } from "./SuggestBar"
 import { StartupErrorBanner } from "./StartupErrorBanner"
 import { useSession } from "../../context/session"
 import { useVSCode } from "../../context/vscode"
@@ -61,13 +60,13 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   // the message list since they don't have an associated tool part in the conversation.
   // Tool-linked questions render inline at their tool part position via AssistantMessage.
   const standaloneQuestions = createMemo(() => familyQuestions().filter((q) => !q.tool))
-  const suggestionRequest = () => familySuggestions()[0]
+  const standaloneSuggestions = createMemo(() => familySuggestions().filter((s) => !s.tool))
   const permissionRequest = () => familyPermissions().find((p) => p.sessionID === id()) ?? familyPermissions()[0]
   const blocked = () =>
     familyPermissions().length > 0 ||
     familyQuestions().some((q) => q.blocking !== false) ||
     familySuggestions().some((s) => s.blocking !== false)
-  const dock = () => !props.readonly || !!permissionRequest() || !!suggestionRequest()
+  const dock = () => !props.readonly || !!permissionRequest()
 
   // When a bottom-dock permission disappears while the session is busy,
   // the scroll container grows taller. Dispatch a custom event so MessageList can
@@ -135,6 +134,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
             onSelectSession={props.onSelectSession}
             onShowHistory={props.onShowHistory}
             questions={standaloneQuestions}
+            suggestions={standaloneSuggestions}
             readonly={props.readonly}
           />
         </div>
@@ -144,9 +144,6 @@ export const ChatView: Component<ChatViewProps> = (props) => {
         <div class="chat-input">
           <Show when={server.connectionState() === "error" && server.errorMessage()}>
             <StartupErrorBanner errorMessage={server.errorMessage()!} errorDetails={server.errorDetails()!} />
-          </Show>
-          <Show when={suggestionRequest()} keyed>
-            {(req) => <SuggestBar request={req} />}
           </Show>
           <Show when={permissionRequest()} keyed>
             {(perm) => (
