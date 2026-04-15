@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat.model
+package ai.kilocode.client.session.model
 
 class ConfigSelectionTest : SessionModelTestBase() {
 

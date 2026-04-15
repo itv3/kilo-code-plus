@@ -2,7 +2,7 @@ package ai.kilocode.client
 
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
-import ai.kilocode.client.chat.SessionUi
+import ai.kilocode.client.session.SessionUi
 import ai.kilocode.client.app.KiloWorkspaceService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service

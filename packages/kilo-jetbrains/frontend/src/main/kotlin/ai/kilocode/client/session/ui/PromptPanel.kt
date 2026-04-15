@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat.ui
+package ai.kilocode.client.session.ui
 
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project

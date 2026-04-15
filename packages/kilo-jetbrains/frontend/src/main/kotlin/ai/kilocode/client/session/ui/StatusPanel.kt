@@ -1,8 +1,8 @@
-package ai.kilocode.client.chat.ui
+package ai.kilocode.client.session.ui
 
-import ai.kilocode.client.chat.model.SessionEvent
-import ai.kilocode.client.chat.model.SessionModel
-import ai.kilocode.client.chat.model.SessionModelListener
+import ai.kilocode.client.session.model.SessionEvent
+import ai.kilocode.client.session.model.SessionModel
+import ai.kilocode.client.session.model.SessionModelListener
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
@@ -30,7 +30,7 @@ import javax.swing.SwingConstants
  * Welcome panel showing app + workspace initialization progress.
  *
  * Pure view — listens to [SessionModel] events and reads
- * [ChatModel][ai.kilocode.client.chat.model.SessionState] for data.
+ * [ChatModel][ai.kilocode.client.session.model.SessionState] for data.
  * No coroutines, no service references.
  *
  * Uses icon+label rows for each resource being loaded. Icons act as

@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat.ui
+package ai.kilocode.client.session.ui
 
 import ai.kilocode.rpc.dto.MessageDto
 import com.intellij.ui.AnimatedIcon

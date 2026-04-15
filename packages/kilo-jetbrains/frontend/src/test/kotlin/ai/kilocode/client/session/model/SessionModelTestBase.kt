@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat.model
+package ai.kilocode.client.session.model
 
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService

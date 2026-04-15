@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat.ui
+package ai.kilocode.client.session.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.JBPopupFactory
