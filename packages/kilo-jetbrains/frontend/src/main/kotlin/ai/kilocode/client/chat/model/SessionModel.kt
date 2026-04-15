@@ -1,9 +1,11 @@
 package ai.kilocode.client.chat.model
 
+import ai.kilocode.client.KiloAppService
 import ai.kilocode.client.KiloProjectService
 import ai.kilocode.client.KiloSessionService
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
+import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -17,18 +19,25 @@ import kotlinx.coroutines.launch
  * Session lifecycle controller that bridges coroutine flows to the EDT.
  *
  * Owns [ChatModel] and the listener list. All model mutations and
- * listener notifications happen on the EDT — callers (e.g. [SessionUi][ai.kilocode.client.chat.SessionUi])
- * can read [chat] directly without synchronization.
+ * listener notifications happen on the EDT — [fire] auto-dispatches
+ * via `invokeLater` when called from a background thread.
  *
  * **Thread model**: coroutines collect events from RPC flows on a
- * background thread, then `invokeLater` dispatches to EDT where the
- * model is updated and listeners are fired.
+ * background thread, then either use `edt {}` for multi-step
+ * model-mutation-then-fire sequences, or call `fire()` directly
+ * (which auto-dispatches if not on EDT).
  */
 class SessionModel(
+    parent: Disposable,
     private val sessions: KiloSessionService,
     private val workspace: KiloProjectService,
+    private val app: KiloAppService,
     private val cs: CoroutineScope,
 ) : Disposable {
+
+    init {
+        Disposer.register(parent, this)
+    }
 
     val chat = ChatModel()
 
@@ -105,11 +114,27 @@ class SessionModel(
             }
         }
 
-        // Watch workspace state for providers/agents
+        // Watch app lifecycle state
+        app.connect()
+        cs.launch {
+            app.state.collect { state ->
+                if (state.status == KiloAppStatusDto.READY) app.fetchVersionAsync()
+                edt {
+                    chat.app = state
+                    chat.version = app.version
+                    fire(SessionEvent.AppChanged)
+                }
+            }
+        }
+
+        // Watch workspace state for providers/agents and lifecycle
         cs.launch {
             workspace.state.collect { state ->
-                if (state.status == KiloWorkspaceStatusDto.READY) {
-                    edt {
+                edt {
+                    chat.workspace = state
+                    fire(SessionEvent.WorkspaceChanged)
+
+                    if (state.status == KiloWorkspaceStatusDto.READY) {
                         chat.agents = state.agents?.agents?.map {
                             AgentItem(it.name, it.displayName ?: it.name)
                         } ?: emptyList()
@@ -229,7 +254,6 @@ class SessionModel(
 
     /**
      * Compute a human-readable status from the last streaming part.
-     * Mirrors the VS Code extension's `computeStatus()` logic.
      */
     private fun status(): String = when (partType) {
         "reasoning" -> "Thinking..."
@@ -247,8 +271,18 @@ class SessionModel(
         else -> "Considering next steps..."
     }
 
+    /**
+     * Notify all listeners. If called from the EDT, listeners run
+     * immediately. If called from a background thread, the notification
+     * is dispatched via `invokeLater`.
+     */
     private fun fire(event: SessionEvent) {
-        for (l in listeners) l.onEvent(event)
+        val application = ApplicationManager.getApplication()
+        if (application.isDispatchThread) {
+            for (l in listeners) l.onEvent(event)
+        } else {
+            application.invokeLater { for (l in listeners) l.onEvent(event) }
+        }
     }
 
     private fun edt(block: () -> Unit) {

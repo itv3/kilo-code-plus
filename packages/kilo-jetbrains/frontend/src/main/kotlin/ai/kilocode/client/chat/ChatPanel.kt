@@ -7,7 +7,6 @@ import ai.kilocode.client.chat.model.SessionEvent
 import ai.kilocode.client.chat.model.SessionModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -16,16 +15,16 @@ import java.awt.CardLayout
 import javax.swing.JPanel
 
 /**
- * Main chat panel — pure Swing layout that reacts to [SessionModel] events.
+ * Main chat panel — reacts to [SessionModel] events.
  *
  * Uses [CardLayout] in the center to switch between the empty panel
  * (shown before the first prompt) and the scrollable message list.
  *
- * All business logic (workspace watching, session lifecycle, event
- * handling, status computation) lives in [SessionModel]. Message
- * rendering lives in [SessionUi]. This class only wires layout,
- * prompt callbacks, and reacts to model events for card switching,
- * picker population, busy state, and scrolling.
+ * All business logic (app/workspace watching, session lifecycle, event
+ * handling, status computation) lives in [SessionModel]. Welcome
+ * rendering lives in [EmptyChatUi]. This class handles layout, prompt
+ * wiring, message list updates, card switching, picker population,
+ * busy state, and scrolling.
  */
 class ChatPanel(
     project: Project,
@@ -40,15 +39,14 @@ class ChatPanel(
         private const val MESSAGES = "messages"
     }
 
-    private val model = SessionModel(sessions, workspace, cs)
-    private val session = SessionUi(model)
+    private val model = SessionModel(this, sessions, workspace, app, cs)
+    private val welcome = EmptyChatUi(this, model)
+    private val messages = MessageListPanel()
 
     private val cards = CardLayout()
     private val center = JPanel(cards)
 
-    private val welcome = EmptyChatUi(app, workspace, cs)
-
-    private val scroll = JBScrollPane(session.panel).apply {
+    private val scroll = JBScrollPane(messages).apply {
         border = JBUI.Borders.empty()
         verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
         horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
@@ -61,9 +59,6 @@ class ChatPanel(
     )
 
     init {
-        Disposer.register(this, session)
-        Disposer.register(this, model)
-
         // Layout
         center.add(welcome, WELCOME)
         center.add(scroll, MESSAGES)
@@ -86,6 +81,56 @@ class ChatPanel(
         // React to model events — no coroutines, pure EDT
         model.addListener(this) { event ->
             when (event) {
+                is SessionEvent.MessageAdded -> {
+                    val msg = model.chat.message(event.id) ?: return@addListener
+                    messages.addMessage(msg.info)
+                    refreshMessages()
+                }
+
+                is SessionEvent.MessageRemoved -> {
+                    messages.removeMessage(event.id)
+                    refreshMessages()
+                }
+
+                is SessionEvent.PartUpdated -> {
+                    val part = model.chat.part(event.messageId, event.partId) ?: return@addListener
+                    messages.updatePartText(event.messageId, event.partId, part.text.toString())
+                    refreshMessages()
+                }
+
+                is SessionEvent.PartDelta -> {
+                    messages.appendDelta(event.messageId, event.partId, event.delta)
+                    refreshMessages()
+                }
+
+                is SessionEvent.StatusChanged -> {
+                    messages.setStatus(event.text)
+                    refreshMessages()
+                }
+
+                is SessionEvent.Error -> {
+                    messages.addError(event.message)
+                    refreshMessages()
+                }
+
+                is SessionEvent.HistoryLoaded -> {
+                    messages.clear()
+                    for (msg in model.chat.messages()) {
+                        messages.addMessage(msg.info)
+                        for ((partId, part) in msg.parts) {
+                            if (part.dto.type == "text" && part.text.isNotEmpty()) {
+                                messages.updatePartText(msg.info.id, partId, part.text.toString())
+                            }
+                        }
+                    }
+                    refreshMessages()
+                }
+
+                is SessionEvent.Cleared -> {
+                    messages.clear()
+                    refreshMessages()
+                }
+
                 is SessionEvent.WorkspaceReady -> {
                     val c = model.chat
                     prompt.mode.setItems(
@@ -107,15 +152,10 @@ class ChatPanel(
                     prompt.setBusy(event.busy)
                 }
 
-                is SessionEvent.MessageAdded,
-                is SessionEvent.PartUpdated,
-                is SessionEvent.PartDelta,
-                is SessionEvent.Error,
-                is SessionEvent.HistoryLoaded -> {
-                    scrollToBottom()
+                is SessionEvent.AppChanged,
+                is SessionEvent.WorkspaceChanged -> {
+                    // Handled by EmptyChatUi
                 }
-
-                else -> {}
             }
         }
     }
@@ -126,13 +166,18 @@ class ChatPanel(
         prompt.clear()
     }
 
+    private fun refreshMessages() {
+        messages.revalidate()
+        messages.repaint()
+        scrollToBottom()
+    }
+
     private fun scrollToBottom() {
         val bar = scroll.verticalScrollBar
         bar.value = bar.maximum
     }
 
     override fun dispose() {
-        welcome.dispose()
-        // session and model disposed by Disposer (registered as children)
+        // All children (welcome, model) disposed by Disposer
     }
 }

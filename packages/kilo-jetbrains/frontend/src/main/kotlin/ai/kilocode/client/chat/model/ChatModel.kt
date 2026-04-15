@@ -1,5 +1,9 @@
 package ai.kilocode.client.chat.model
 
+import ai.kilocode.rpc.dto.KiloAppStateDto
+import ai.kilocode.rpc.dto.KiloAppStatusDto
+import ai.kilocode.rpc.dto.KiloWorkspaceStateDto
+import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import ai.kilocode.rpc.dto.MessageDto
 import ai.kilocode.rpc.dto.MessageWithPartsDto
 import ai.kilocode.rpc.dto.PartDto
@@ -15,8 +19,14 @@ class ChatModel {
 
     private val messages = LinkedHashMap<String, MessageData>()
 
+    // --- App lifecycle state (set by SessionModel, read by EmptyChatUi) ---
+
+    var app: KiloAppStateDto = KiloAppStateDto(KiloAppStatusDto.DISCONNECTED)
+    var version: String? = null
+
     // --- Workspace state (set by SessionModel, read by UI) ---
 
+    var workspace: KiloWorkspaceStateDto = KiloWorkspaceStateDto(KiloWorkspaceStatusDto.PENDING)
     var agents: List<AgentItem> = emptyList()
     var models: List<ModelItem> = emptyList()
     var agent: String? = null

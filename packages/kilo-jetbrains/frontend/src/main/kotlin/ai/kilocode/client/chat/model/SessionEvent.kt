@@ -27,7 +27,11 @@ sealed class SessionEvent {
     data object HistoryLoaded : SessionEvent()
     data object Cleared : SessionEvent()
 
-    // Workspace state
+    // App + workspace lifecycle (every state transition)
+    data object AppChanged : SessionEvent()
+    data object WorkspaceChanged : SessionEvent()
+
+    // Workspace ready (pickers populated)
     data object WorkspaceReady : SessionEvent()
     data class ViewChanged(val show: Boolean) : SessionEvent()
 }

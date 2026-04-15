@@ -1,7 +1,8 @@
 package ai.kilocode.client.chat
 
-import ai.kilocode.client.KiloAppService
-import ai.kilocode.client.KiloProjectService
+import ai.kilocode.client.chat.model.SessionEvent
+import ai.kilocode.client.chat.model.SessionModel
+import ai.kilocode.client.chat.model.SessionModelListener
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
@@ -10,16 +11,12 @@ import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import ai.kilocode.rpc.dto.ProfileStatusDto
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.Box
@@ -31,15 +28,22 @@ import javax.swing.SwingConstants
 /**
  * Welcome panel showing app + workspace initialization progress.
  *
+ * Pure view — listens to [SessionModel] events and reads
+ * [ChatModel][ai.kilocode.client.chat.model.ChatModel] for data.
+ * No coroutines, no service references.
+ *
  * Uses icon+label rows for each resource being loaded. Icons act as
  * status indicators: animated spinner for loading, green check for
  * success, red circle for error, grey circle for idle.
  */
 class EmptyChatUi(
-    private val app: KiloAppService,
-    private val workspace: KiloProjectService,
-    private val cs: CoroutineScope,
-) : JPanel(GridBagLayout()), Disposable {
+    parent: Disposable,
+    private val model: SessionModel,
+) : JPanel(GridBagLayout()), SessionModelListener, Disposable {
+
+    init {
+        Disposer.register(parent, this)
+    }
 
     // ------ status icons ------
 
@@ -82,13 +86,8 @@ class EmptyChatUi(
     private val appHeader = header("App")
     private val wsHeader = header("Workspace")
 
-    // Section panels group header + rows with left-aligned content.
-    // Each section is center-aligned as a block in the outer layout.
     private val appSection = section(appHeader, configRow, notifRow, profileRow)
     private val wsSection = section(wsHeader, providersRow, agentsRow, commandsRow, skillsRow)
-
-    private var appJob: Job? = null
-    private var wsJob: Job? = null
 
     init {
         isOpaque = false
@@ -107,30 +106,28 @@ class EmptyChatUi(
             add(wsSection)
         }
 
-        // GridBagLayout with default constraints centers the body
-        // both vertically and horizontally in the tool window.
         add(body, GridBagConstraints())
 
-        // Initial state: everything idle
         resetAll()
-
-        appJob = app.watch { state ->
-            edt { renderApp(state) }
-        }
-
-        wsJob = cs.launch {
-            workspace.state.collect { state ->
-                edt { renderWorkspace(state) }
-            }
-        }
-
-        app.connect()
+        model.addListener(this, this)
     }
 
-    override fun dispose() {
-        appJob?.cancel()
-        wsJob?.cancel()
-        cs.cancel()
+    override fun onEvent(event: SessionEvent) {
+        when (event) {
+            is SessionEvent.AppChanged -> {
+                renderApp(model.chat.app)
+                revalidate()
+                repaint()
+            }
+
+            is SessionEvent.WorkspaceChanged -> {
+                renderWorkspace(model.chat.workspace)
+                revalidate()
+                repaint()
+            }
+
+            else -> {}
+        }
     }
 
     // ------ rendering ------
@@ -186,7 +183,7 @@ class EmptyChatUi(
     }
 
     private fun renderWorkspace(state: KiloWorkspaceStateDto) {
-        val appReady = app.state.value.status == KiloAppStatusDto.READY
+        val appReady = model.chat.app.status == KiloAppStatusDto.READY
         val visible = appReady || state.status != KiloWorkspaceStatusDto.PENDING
         wsSection.isVisible = visible
         if (!visible) return
@@ -240,7 +237,7 @@ class EmptyChatUi(
             KiloAppStatusDto.CONNECTING -> KiloBundle.message("toolwindow.status.connecting")
             KiloAppStatusDto.LOADING -> KiloBundle.message("toolwindow.status.loading")
             KiloAppStatusDto.READY -> {
-                val ver = app.version
+                val ver = model.chat.version
                 if (ver != null) "Connected (CLI $ver)" else KiloBundle.message("toolwindow.status.connected")
             }
             KiloAppStatusDto.ERROR -> KiloBundle.message(
@@ -267,10 +264,6 @@ class EmptyChatUi(
         skillsRow.idle("Skills")
     }
 
-    private fun edt(block: () -> Unit) {
-        ApplicationManager.getApplication().invokeLater(block)
-    }
-
     // ------ row factory ------
 
     private fun row(text: String): StatusRow = StatusRow(text, iconIdle)
@@ -282,10 +275,6 @@ class EmptyChatUi(
         border = JBUI.Borders.empty(0, 0, 4, 0)
     }
 
-    /**
-     * Groups a header and rows into a left-aligned block that
-     * is centered as a unit inside the outer BoxLayout.
-     */
     private fun section(hdr: JBLabel, vararg rows: StatusRow): JPanel = JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         isOpaque = false
@@ -294,10 +283,6 @@ class EmptyChatUi(
         for (r in rows) add(r.label)
     }
 
-    /**
-     * A single status row: icon on the left, label on the right.
-     * Mutate via [ok], [loading], [error], [idle].
-     */
     inner class StatusRow(text: String, icon: Icon) {
         val label = JBLabel(text, icon, SwingConstants.LEFT).apply {
             font = JBUI.Fonts.label()
@@ -336,5 +321,9 @@ class EmptyChatUi(
             label.text = msg
             label.foreground = UIUtil.getContextHelpForeground()
         }
+    }
+
+    override fun dispose() {
+        // Listener auto-removed by Disposer (registered in init via addListener)
     }
 }
