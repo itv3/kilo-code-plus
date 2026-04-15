@@ -416,11 +416,13 @@ Bind component values to model properties. Values are applied on `DialogPanel.ap
 | `buttonsGroup {}.bind(model::prop)`          | radio group  |
 
 ```kotlin
+enum class Theme { LIGHT, DARK }
+
 data class Settings(
     var name: String = "",
     var count: Int = 0,
     var enabled: Boolean = false,
-    var color: Color = Color.GREY,
+    var theme: Theme = Theme.LIGHT,
 )
 
 val model = Settings()
@@ -435,10 +437,10 @@ val panel = panel {
     row {
         checkBox("Enabled").bindSelected(model::enabled)
     }
-    buttonsGroup("Color:") {
-        row { radioButton("White", Color.WHITE) }
-        row { radioButton("Grey", Color.GREY) }
-    }.bind(model::color)
+    buttonsGroup("Theme:") {
+        row { radioButton("Light", Theme.LIGHT) }
+        row { radioButton("Dark", Theme.DARK) }
+    }.bind(model::theme)
 }
 
 // Later:
