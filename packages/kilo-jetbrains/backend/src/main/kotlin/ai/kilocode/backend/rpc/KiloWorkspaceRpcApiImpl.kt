@@ -48,7 +48,7 @@ class KiloWorkspaceRpcApiImpl : KiloWorkspaceRpcApi {
     private val manager: KiloBackendWorkspaceManager
         get() = app.workspaces
 
-    override suspend fun directory(hint: String): String {
+    override suspend fun resolveProjectDirectory(hint: String): String {
         // In monolith mode, find the open project whose basePath matches the hint.
         // In split mode, the backend's project.basePath is the real directory.
         val projects = ProjectManager.getInstance().openProjects

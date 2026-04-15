@@ -8,13 +8,13 @@ class StatusComputationTest : SessionModelTestBase() {
         val (_, events) = prompted()
 
         emit(ChatEventDto.TurnOpen("ses_test"))
-        flushEdt()
+        flush()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flushEdt()
+        flush()
 
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "tool", tool = "bash")))
-        flushEdt()
+        flush()
 
         val status = events.filterIsInstance<SessionEvent.StatusChanged>()
             .lastOrNull { it.text != null && it.text != "Considering next steps..." }
@@ -26,16 +26,16 @@ class StatusComputationTest : SessionModelTestBase() {
         val (_, events) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flushEdt()
+        flush()
         emit(ChatEventDto.TurnOpen("ses_test"))
-        flushEdt()
+        flush()
         emit(ChatEventDto.TurnClose("ses_test", "completed"))
-        flushEdt()
+        flush()
 
         val before = events.filterIsInstance<SessionEvent.StatusChanged>().size
 
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "late")))
-        flushEdt()
+        flush()
 
         val after = events.filterIsInstance<SessionEvent.StatusChanged>().size
         assertEquals(before, after)

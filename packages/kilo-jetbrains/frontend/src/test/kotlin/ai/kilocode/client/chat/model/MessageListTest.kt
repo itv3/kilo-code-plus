@@ -8,7 +8,7 @@ class MessageListTest : SessionModelTestBase() {
         val (m, events) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.MessageAdded && it.id == "msg1" })
         assertNotNull(m.chat.message("msg1"))
@@ -18,10 +18,10 @@ class MessageListTest : SessionModelTestBase() {
         val (m, events) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flushEdt()
+        flush()
 
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "hello")))
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.PartUpdated && it.messageId == "msg1" && it.partId == "prt1" })
     }
@@ -30,11 +30,11 @@ class MessageListTest : SessionModelTestBase() {
         val (m, _) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flushEdt()
+        flush()
 
         emit(ChatEventDto.PartDelta("ses_test", "msg1", "prt1", "text", "hello "))
         emit(ChatEventDto.PartDelta("ses_test", "msg1", "prt1", "text", "world"))
-        flushEdt()
+        flush()
 
         val p = m.chat.part("msg1", "prt1")
         assertNotNull(p)
@@ -45,11 +45,11 @@ class MessageListTest : SessionModelTestBase() {
         val (m, _) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "user")))
-        flushEdt()
+        flush()
         assertNotNull(m.chat.message("msg1"))
 
         emit(ChatEventDto.MessageRemoved("ses_test", "msg1"))
-        flushEdt()
+        flush()
         assertNull(m.chat.message("msg1"))
     }
 }

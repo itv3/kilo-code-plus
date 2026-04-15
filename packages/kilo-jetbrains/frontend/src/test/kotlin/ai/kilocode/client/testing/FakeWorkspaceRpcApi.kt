@@ -19,8 +19,8 @@ class FakeWorkspaceRpcApi : KiloWorkspaceRpcApi {
     var directory = "/test"
     val state = MutableStateFlow(KiloWorkspaceStateDto(KiloWorkspaceStatusDto.PENDING))
 
-    override suspend fun directory(hint: String): String {
-        assertNotEdt("directory")
+    override suspend fun resolveProjectDirectory(hint: String): String {
+        assertNotEdt("resolveProjectDirectory")
         return directory
     }
 

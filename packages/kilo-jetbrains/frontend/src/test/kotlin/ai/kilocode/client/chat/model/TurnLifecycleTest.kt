@@ -9,7 +9,7 @@ class TurnLifecycleTest : SessionModelTestBase() {
         val (_, events) = prompted()
 
         emit(ChatEventDto.TurnOpen("ses_test"))
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.BusyChanged && it.busy })
         assertTrue(events.any { it is SessionEvent.StatusChanged && it.text == "Considering next steps..." })
@@ -19,9 +19,9 @@ class TurnLifecycleTest : SessionModelTestBase() {
         val (_, events) = prompted()
 
         emit(ChatEventDto.TurnOpen("ses_test"))
-        flushEdt()
+        flush()
         emit(ChatEventDto.TurnClose("ses_test", "completed"))
-        flushEdt()
+        flush()
 
         val last = events.filterIsInstance<SessionEvent.BusyChanged>().last()
         assertFalse(last.busy)
@@ -33,7 +33,7 @@ class TurnLifecycleTest : SessionModelTestBase() {
         val (_, events) = prompted()
 
         emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "APIError", message = "Bad Request")))
-        flushEdt()
+        flush()
 
         val err = events.filterIsInstance<SessionEvent.Error>().firstOrNull()
         assertNotNull(err)
@@ -44,7 +44,7 @@ class TurnLifecycleTest : SessionModelTestBase() {
         val (_, events) = prompted()
 
         emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "timeout", message = null)))
-        flushEdt()
+        flush()
 
         val err = events.filterIsInstance<SessionEvent.Error>().first()
         assertEquals("timeout", err.message)

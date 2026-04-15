@@ -1,8 +1,8 @@
 package ai.kilocode.client.chat
 
 import ai.kilocode.client.KiloAppService
-import ai.kilocode.client.KiloProjectService
 import ai.kilocode.client.KiloSessionService
+import ai.kilocode.client.workspace.Workspace
 import ai.kilocode.client.chat.model.SessionEvent
 import ai.kilocode.client.chat.model.SessionModel
 import ai.kilocode.client.chat.ui.LabelPicker
@@ -32,19 +32,19 @@ import javax.swing.JPanel
  */
 class SessionUi(
     project: Project,
-    app: KiloAppService,
-    workspace: KiloProjectService,
+    workspace: Workspace,
     sessions: KiloSessionService,
+    app: KiloAppService,
     cs: CoroutineScope,
 ) : JPanel(BorderLayout()), Disposable {
 
     companion object {
-        private const val WELCOME = "welcome"
+        private const val STATUS = "status"
         private const val MESSAGES = "messages"
     }
 
     private val model = SessionModel(this, null, sessions, workspace, app, cs)
-    private val welcome = StatusPanel(this, model)
+    private val status = StatusPanel(this, model)
     private val messages = MessageListPanel()
 
     private val cards = CardLayout()
@@ -64,9 +64,9 @@ class SessionUi(
 
     init {
         // Layout
-        center.add(welcome, WELCOME)
+        center.add(status, STATUS)
         center.add(scroll, MESSAGES)
-        cards.show(center, WELCOME)
+        cards.show(center, STATUS)
 
         add(center, BorderLayout.CENTER)
         add(prompt, BorderLayout.SOUTH)
@@ -152,7 +152,7 @@ class SessionUi(
                 }
 
                 is SessionEvent.ViewChanged -> {
-                    cards.show(center, if (event.show) MESSAGES else WELCOME)
+                    cards.show(center, if (event.show) MESSAGES else STATUS)
                 }
 
                 is SessionEvent.BusyChanged -> {
@@ -161,7 +161,7 @@ class SessionUi(
 
                 is SessionEvent.AppChanged,
                 is SessionEvent.WorkspaceChanged -> {
-                    // Handled by EmptyChatUi
+                    // Handled by StatusPanel
                 }
             }
         }
@@ -185,6 +185,6 @@ class SessionUi(
     }
 
     override fun dispose() {
-        // All children (welcome, model) disposed by Disposer
+        // All children (status, model) disposed by Disposer
     }
 }

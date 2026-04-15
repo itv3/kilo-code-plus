@@ -1,8 +1,8 @@
 package ai.kilocode.client.chat.model
 
 import ai.kilocode.client.KiloAppService
-import ai.kilocode.client.KiloProjectService
 import ai.kilocode.client.KiloSessionService
+import ai.kilocode.client.workspace.Workspace
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
@@ -32,7 +32,7 @@ class SessionModel(
     parent: Disposable,
     id: String?,
     private val sessions: KiloSessionService,
-    private val workspace: KiloProjectService,
+    private val workspace: Workspace,
     private val app: KiloAppService,
     private val cs: CoroutineScope,
 ) : Disposable {
@@ -53,7 +53,7 @@ class SessionModel(
     private var sessionId: String? = id
 
     /** Resolved project directory for RPC calls. */
-    private val directory: String get() = sessions.directory
+    private val directory: String get() = workspace.directory
 
     // Status computation state (EDT-only)
     private var partType: String? = null
@@ -86,7 +86,7 @@ class SessionModel(
         cs.launch {
             try {
                 val id = sessionId ?: run {
-                    val session = sessions.create()
+                    val session = sessions.create(directory)
                     sessionId = session.id
                     subscribeEvents()
                     session.id

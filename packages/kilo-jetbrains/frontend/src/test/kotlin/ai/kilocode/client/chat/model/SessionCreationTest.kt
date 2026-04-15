@@ -7,7 +7,7 @@ class SessionCreationTest : SessionModelTestBase() {
         val events = collect(m)
 
         edt { m.prompt("hello") }
-        flushEdt()
+        flush()
 
         assertEquals(1, rpc.creates)
         assertEquals(1, rpc.prompts.size)
@@ -19,9 +19,9 @@ class SessionCreationTest : SessionModelTestBase() {
         val m = model()
 
         edt { m.prompt("first") }
-        flushEdt()
+        flush()
         edt { m.prompt("second") }
-        flushEdt()
+        flush()
 
         assertEquals(1, rpc.creates)
         assertEquals(2, rpc.prompts.size)
@@ -31,10 +31,10 @@ class SessionCreationTest : SessionModelTestBase() {
     fun `test prompt with existing ID skips creation`() {
         val m = model("existing")
         collect(m)
-        flushEdt()
+        flush()
 
         edt { m.prompt("hello") }
-        flushEdt()
+        flush()
 
         assertEquals(0, rpc.creates)
         assertEquals(1, rpc.prompts.size)

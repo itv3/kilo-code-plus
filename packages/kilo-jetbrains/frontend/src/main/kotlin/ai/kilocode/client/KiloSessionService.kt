@@ -11,7 +11,6 @@ import ai.kilocode.rpc.dto.PromptPartDto
 import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import fleet.rpc.client.durable
@@ -45,21 +44,6 @@ class KiloSessionService internal constructor(
         private val LOG = Logger.getInstance(KiloSessionService::class.java)
     }
 
-    /**
-     * The real project directory, resolved from [KiloProjectService].
-     * Falls back to [Project.getBasePath] if not yet resolved.
-     */
-    val directory: String
-        get() {
-            val resolved = project.service<KiloProjectService>().directory.value
-            if (resolved.isNotEmpty()) return resolved
-            val path = project.basePath ?: ""
-            if (path.isEmpty()) {
-                LOG.warn("project.basePath is null/empty — session operations will likely fail")
-            }
-            return path
-        }
-
     private val _sessions = MutableStateFlow<List<SessionDto>>(emptyList())
     val sessions: StateFlow<List<SessionDto>> = _sessions.asStateFlow()
 
@@ -83,10 +67,10 @@ class KiloSessionService internal constructor(
     // ------ Session CRUD ------
 
     /** Refresh the session list from the server. */
-    fun refresh() {
+    fun refresh(dir: String) {
         cs.launch {
             try {
-                val result = call { list(directory) }
+                val result = call { list(dir) }
                 _sessions.value = result.sessions
             } catch (e: Exception) {
                 LOG.warn("session list failed", e)
@@ -95,21 +79,20 @@ class KiloSessionService internal constructor(
     }
 
     /** Create a new session. Caller awaits the result. */
-    suspend fun create(): SessionDto {
-        val dir = directory
+    suspend fun create(dir: String): SessionDto {
         LOG.info("create: dir=$dir")
         val session = call { create(dir) }
         LOG.info("create: id=${session.id}")
-        refresh()
+        refresh(dir)
         return session
     }
 
     /** Delete a session. */
-    fun delete(id: String) {
+    fun delete(id: String, dir: String) {
         cs.launch {
             try {
-                call { delete(id, directory) }
-                refresh()
+                call { delete(id, dir) }
+                refresh(dir)
             } catch (e: Exception) {
                 LOG.warn("session delete failed", e)
             }

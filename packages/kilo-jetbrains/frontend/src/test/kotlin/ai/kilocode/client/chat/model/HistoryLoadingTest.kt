@@ -11,7 +11,7 @@ class HistoryLoadingTest : SessionModelTestBase() {
 
         val model = model("ses_test")
         val events = collect(model)
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.HistoryLoaded })
         assertNotNull(model.chat.message("msg1"))
@@ -23,7 +23,7 @@ class HistoryLoadingTest : SessionModelTestBase() {
 
         val model = model("ses_test")
         val events = collect(model)
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.ViewChanged && it.show })
         assertTrue(model.chat.showMessages)

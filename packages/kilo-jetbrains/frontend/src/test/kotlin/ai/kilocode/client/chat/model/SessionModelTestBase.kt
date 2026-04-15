@@ -1,11 +1,12 @@
 package ai.kilocode.client.chat.model
 
 import ai.kilocode.client.KiloAppService
-import ai.kilocode.client.KiloProjectService
 import ai.kilocode.client.KiloSessionService
 import ai.kilocode.client.testing.FakeAppRpcApi
 import ai.kilocode.client.testing.FakeWorkspaceRpcApi
 import ai.kilocode.client.testing.FakeSessionRpcApi
+import ai.kilocode.client.workspace.KiloWorkspaceService
+import ai.kilocode.client.workspace.Workspace
 import ai.kilocode.rpc.dto.AgentDto
 import ai.kilocode.rpc.dto.AgentsDto
 import ai.kilocode.rpc.dto.ChatEventDto
@@ -42,7 +43,8 @@ abstract class SessionModelTestBase : BasePlatformTestCase() {
 
     protected lateinit var sessions: KiloSessionService
     protected lateinit var app: KiloAppService
-    protected lateinit var workspace: KiloProjectService
+    protected lateinit var workspaces: KiloWorkspaceService
+    protected lateinit var workspace: Workspace
 
     protected lateinit var scope: CoroutineScope
     protected lateinit var parent: Disposable
@@ -58,7 +60,8 @@ abstract class SessionModelTestBase : BasePlatformTestCase() {
 
         sessions = KiloSessionService(project, scope, rpc)
         app = KiloAppService(scope, appRpc)
-        workspace = KiloProjectService(project, scope, projectRpc)
+        workspaces = KiloWorkspaceService(scope, projectRpc)
+        workspace = workspaces.workspace("/test")
     }
 
     override fun tearDown() {
@@ -92,7 +95,7 @@ abstract class SessionModelTestBase : BasePlatformTestCase() {
     // ------ EDT + coroutine helpers ------
 
     /** Let coroutines settle, then drain all pending EDT events. */
-    protected fun flushEdt() = runBlocking {
+    protected fun flush() = runBlocking {
         repeat(5) {
             delay(100)
             edt { UIUtil.dispatchAllInvocationEvents() }
@@ -113,7 +116,7 @@ abstract class SessionModelTestBase : BasePlatformTestCase() {
         val m = model()
         val events = collect(m)
         edt { m.prompt("go") }
-        flushEdt()
+        flush()
         return m to events
     }
 

@@ -14,13 +14,13 @@ class ListenerLifecycleTest : SessionModelTestBase() {
         m.addListener(disposable) { events.add(it) }
 
         edt { m.prompt("before") }
-        flushEdt()
+        flush()
         val before = events.size
 
         Disposer.dispose(disposable)
 
         edt { m.prompt("after") }
-        flushEdt()
+        flush()
 
         assertEquals(before, events.size)
     }
@@ -38,7 +38,7 @@ class ListenerLifecycleTest : SessionModelTestBase() {
         m.addListener(d2) { events2.add(it) }
 
         edt { m.prompt("go") }
-        flushEdt()
+        flush()
 
         assertTrue(events1.isNotEmpty())
         assertTrue(events2.isNotEmpty())
@@ -50,10 +50,10 @@ class ListenerLifecycleTest : SessionModelTestBase() {
         val events = collect(m)
 
         edt { m.prompt("go") }
-        flushEdt()
+        flush()
 
         rpc.statuses.value = mapOf("ses_test" to SessionStatusDto("busy", null))
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.BusyChanged && it.busy })
     }

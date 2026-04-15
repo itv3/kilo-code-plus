@@ -5,10 +5,10 @@ class ConfigSelectionTest : SessionModelTestBase() {
     fun `test selectModel updates ChatModel and calls updateConfig`() {
         val m = model()
         collect(m)
-        flushEdt()
+        flush()
 
         edt { m.selectModel("kilo", "gpt-5") }
-        flushEdt()
+        flush()
 
         assertEquals("kilo/gpt-5", m.chat.model)
         assertEquals(1, rpc.configs.size)
@@ -18,10 +18,10 @@ class ConfigSelectionTest : SessionModelTestBase() {
     fun `test selectAgent updates ChatModel and calls updateConfig`() {
         val m = model()
         collect(m)
-        flushEdt()
+        flush()
 
         edt { m.selectAgent("plan") }
-        flushEdt()
+        flush()
 
         assertEquals("plan", m.chat.agent)
         assertEquals(1, rpc.configs.size)
@@ -31,10 +31,10 @@ class ConfigSelectionTest : SessionModelTestBase() {
     fun `test selectModel fires WorkspaceReady event`() {
         val m = model()
         val events = collect(m)
-        flushEdt()
+        flush()
 
         edt { m.selectModel("kilo", "gpt-5") }
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.WorkspaceReady })
     }

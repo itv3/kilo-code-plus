@@ -8,10 +8,10 @@ class AppWatchingTest : SessionModelTestBase() {
     fun `test app state change fires AppChanged`() {
         val m = model()
         val events = collect(m)
-        flushEdt()
+        flush()
 
         appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.AppChanged })
         assertEquals(KiloAppStatusDto.READY, m.chat.app.status)

@@ -1,6 +1,7 @@
 package ai.kilocode.client
 
 import ai.kilocode.client.chat.SessionUi
+import ai.kilocode.client.workspace.KiloWorkspaceService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -15,9 +16,9 @@ import kotlinx.coroutines.SupervisorJob
 /**
  * Creates the Kilo Code tool window with a single [SessionUi].
  *
- * The chat panel shows a welcome/status view in the center until the
- * first prompt is sent, then switches to a scrollable message list.
- * No tabs — the chat panel is the only content.
+ * Creates a workspace for the project's base path and passes it to
+ * [SessionUi]. Directory resolution (split-mode) happens lazily
+ * inside the session when the status panel is shown.
  */
 class KiloToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -27,12 +28,13 @@ class KiloToolWindowFactory : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         try {
-            val app = service<KiloAppService>()
-            val workspace = project.service<KiloProjectService>()
+            val workspaces = service<KiloWorkspaceService>()
             val sessions = project.service<KiloSessionService>()
-            val scope = CoroutineScope(SupervisorJob())
+            val app = service<KiloAppService>()
+            val cs = CoroutineScope(SupervisorJob())
 
-            val chat = SessionUi(project, app, workspace, sessions, scope)
+            val workspace = workspaces.workspace(project.basePath ?: "")
+            val chat = SessionUi(project, workspace, sessions, app, cs)
             val content = ContentFactory.getInstance()
                 .createContent(chat, "", false)
             content.setDisposer(chat)

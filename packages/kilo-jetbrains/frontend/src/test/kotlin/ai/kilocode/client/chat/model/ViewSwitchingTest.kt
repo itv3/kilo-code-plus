@@ -7,7 +7,7 @@ class ViewSwitchingTest : SessionModelTestBase() {
         val events = collect(m)
 
         edt { m.prompt("hello") }
-        flushEdt()
+        flush()
 
         assertTrue(events.any { it is SessionEvent.ViewChanged && it.show })
     }
@@ -17,9 +17,9 @@ class ViewSwitchingTest : SessionModelTestBase() {
         val events = collect(m)
 
         edt { m.prompt("first") }
-        flushEdt()
+        flush()
         edt { m.prompt("second") }
-        flushEdt()
+        flush()
 
         assertEquals(1, events.count { it is SessionEvent.ViewChanged && it.show })
     }
