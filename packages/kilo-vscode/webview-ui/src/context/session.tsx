@@ -927,7 +927,9 @@ export const SessionProvider: ParentComponent = (props) => {
     const info: SessionStatusInfo =
       newStatus === "retry"
         ? { type: "retry", attempt: attempt ?? 0, message: message ?? "", next: next ?? 0 }
-        : { type: newStatus }
+        : newStatus === "offline"
+          ? { type: "offline", message: message ?? "" }
+          : { type: newStatus }
     setStatusMap(sessionID, info)
     // Track busy start time
     if (prev.type === "idle" && newStatus !== "idle") {
@@ -1361,6 +1363,7 @@ export const SessionProvider: ParentComponent = (props) => {
         mime: file.mime,
         url: file.url,
         filename: file.filename,
+        source: file.source,
       })
     }
 

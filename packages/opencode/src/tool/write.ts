@@ -7,6 +7,7 @@ import DESCRIPTION from "./write.txt"
 import { Bus } from "../bus"
 import { File } from "../file"
 import { FileWatcher } from "../file/watcher"
+import { Format } from "../format"
 import { FileTime } from "../file/time"
 import { Filesystem } from "../util/filesystem"
 import { Instance } from "../project/instance"
@@ -14,6 +15,7 @@ import { trimDiff, buildFileDiff } from "./edit" // kilocode_change
 import { assertExternalDirectory } from "./external-directory"
 import { filterDiagnostics } from "./diagnostics" // kilocode_change
 import { Encoding } from "../kilocode/encoding" // kilocode_change
+import { ConfigValidation } from "../kilocode/config-validation" // kilocode_change
 
 const MAX_DIAGNOSTICS_PER_FILE = 20
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5
@@ -50,14 +52,13 @@ export const WriteTool = Tool.define("write", {
     })
 
     await Filesystem.writeEncoded(filepath, params.content, enc) // kilocode_change
-    await Bus.publish(File.Event.Edited, {
-      file: filepath,
-    })
+    await Format.file(filepath)
+    Bus.publish(File.Event.Edited, { file: filepath })
     await Bus.publish(FileWatcher.Event.Updated, {
       file: filepath,
       event: exists ? "change" : "add",
     })
-    FileTime.read(ctx.sessionID, filepath)
+    await FileTime.read(ctx.sessionID, filepath)
 
     let output = "Wrote file successfully."
     await LSP.touchFile(filepath, true)
@@ -78,6 +79,7 @@ export const WriteTool = Tool.define("write", {
       projectDiagnosticsCount++
       output += `\n\nLSP errors detected in other files:\n<diagnostics file="${file}">\n${limited.map(LSP.Diagnostic.pretty).join("\n")}${suffix}\n</diagnostics>`
     }
+    output += await ConfigValidation.check(filepath) // kilocode_change
 
     return {
       title: path.relative(Instance.worktree, filepath),

@@ -7,8 +7,10 @@ import { Global } from "@/global"
 import { Identifier } from "@/id/id"
 import { Instance } from "@/project/instance"
 import { Provider } from "@/provider/provider"
+import { ProviderID, ModelID } from "@/provider/schema"
 import { Question } from "@/question"
 import { Session } from "@/session"
+import { SessionID, MessageID, PartID } from "@/session/schema"
 import { LLM } from "@/session/llm"
 import { MessageV2 } from "@/session/message-v2"
 import { Todo } from "@/session/todo"
@@ -68,9 +70,9 @@ export async function generateHandover(input: {
       ? await Provider.getModel(agent.model.providerID, agent.model.modelID)
       : await Provider.getModel(input.model.providerID, input.model.modelID)
 
-    const sessionID = Identifier.ascending("session")
+    const sessionID = SessionID.make(Identifier.ascending("session"))
     const userMsg: MessageV2.User = {
-      id: Identifier.ascending("message"),
+      id: MessageID.ascending(),
       sessionID,
       role: "user",
       time: { created: Date.now() },
@@ -90,7 +92,7 @@ export async function generateHandover(input: {
       model,
       small: true,
       messages: [
-        ...MessageV2.toModelMessages(input.messages, model),
+        ...(await MessageV2.toModelMessages(input.messages, model)),
         {
           role: "user" as const,
           content: HANDOVER_PROMPT,
@@ -124,12 +126,12 @@ export namespace PlanFollowup {
 
   const ModelState = z
     .object({
-      model: z.record(z.string(), z.object({ providerID: z.string(), modelID: z.string() })).optional(),
+      model: z.record(z.string(), z.object({ providerID: ProviderID.zod, modelID: ModelID.zod })).optional(),
       variant: z.record(z.string(), z.string().optional()).optional(),
     })
     .passthrough()
 
-  async function resolveCodeModel(input: Pick<MessageV2.User, "model" | "variant">) {
+  async function resolveCodeModel(input: Pick<MessageV2.User, "model">) {
     const state =
       Flag.KILO_CLIENT === "cli"
         ? await Bun.file(path.join(Global.Path.state, "model.json"))
@@ -144,8 +146,7 @@ export namespace PlanFollowup {
       if (full) {
         const key = `${saved.providerID}/${saved.modelID}`
         return {
-          model: saved,
-          variant: resolveVariant(state?.variant?.[key], full),
+          model: { ...saved, variant: resolveVariant(state?.variant?.[key], full) },
         }
       }
     }
@@ -155,8 +156,7 @@ export namespace PlanFollowup {
       const full = await Provider.getModel(agent.model.providerID, agent.model.modelID).catch(() => undefined)
       if (full) {
         return {
-          model: agent.model,
-          variant: resolveVariant(agent.variant, full),
+          model: { ...agent.model, variant: resolveVariant(agent.variant, full) },
         }
       }
     }
@@ -166,7 +166,7 @@ export namespace PlanFollowup {
   async function resolvePlan(input: {
     assistant?: MessageV2.WithParts
     messages: MessageV2.WithParts[]
-    sessionID: string
+    sessionID: SessionID
   }) {
     // Fast path: check the last assistant message's text first (avoids array scanning)
     if (input.assistant) {
@@ -183,22 +183,21 @@ export namespace PlanFollowup {
     if (text) return text
 
     // Fall back to plan file on disk
-    const session = await Session.get(input.sessionID)
+    const session = await Session.get(SessionID.make(input.sessionID))
     const file = Bun.file(Session.plan(session))
     const plan = await file.text().catch(() => "")
     return plan.trim()
   }
 
   async function inject(input: {
-    sessionID: string
+    sessionID: SessionID
     agent: string
     model: MessageV2.User["model"]
-    variant?: MessageV2.User["variant"]
     text: string
     synthetic?: boolean
   }) {
     const msg: MessageV2.User = {
-      id: Identifier.ascending("message"),
+      id: MessageID.ascending(),
       sessionID: input.sessionID,
       role: "user",
       time: {
@@ -206,11 +205,10 @@ export namespace PlanFollowup {
       },
       agent: input.agent,
       model: input.model,
-      variant: input.variant,
     }
     await Session.updateMessage(msg)
     await Session.updatePart({
-      id: Identifier.ascending("part"),
+      id: PartID.ascending(),
       messageID: msg.id,
       sessionID: input.sessionID,
       type: "text",
@@ -219,7 +217,7 @@ export namespace PlanFollowup {
     } satisfies MessageV2.TextPart)
   }
 
-  function prompt(input: { sessionID: string; abort: AbortSignal }) {
+  function prompt(input: { sessionID: SessionID; abort: AbortSignal }) {
     const promise = Question.ask({
       sessionID: input.sessionID,
       questions: [
@@ -259,16 +257,14 @@ export namespace PlanFollowup {
   }
 
   async function startNew(input: {
-    sessionID: string
+    sessionID: SessionID
     plan: string
     messages: MessageV2.WithParts[]
     model: MessageV2.User["model"]
-    variant?: MessageV2.User["variant"]
     abort?: AbortSignal
   }) {
     const code = await resolveCodeModel({
       model: input.model,
-      variant: input.variant,
     })
     const session = await Session.get(input.sessionID)
     const [handover, todos] = await Promise.all([
@@ -299,7 +295,6 @@ export namespace PlanFollowup {
           sessionID: next.id,
           agent: "code",
           model: code.model,
-          variant: code.variant,
           text: sections.join("\n\n"),
           synthetic: false,
         })
@@ -322,7 +317,7 @@ export namespace PlanFollowup {
   }
 
   export async function ask(input: {
-    sessionID: string
+    sessionID: SessionID
     messages: MessageV2.WithParts[]
     abort: AbortSignal
   }): Promise<"continue" | "break"> {
@@ -357,7 +352,6 @@ export namespace PlanFollowup {
         plan,
         messages: input.messages,
         model: user.model,
-        variant: user.variant,
         abort: input.abort,
       })
       return "break"
@@ -367,13 +361,11 @@ export namespace PlanFollowup {
       Telemetry.trackPlanFollowup(input.sessionID, "continue")
       const code = await resolveCodeModel({
         model: user.model,
-        variant: user.variant,
       })
       await inject({
         sessionID: input.sessionID,
         agent: "code",
         model: code.model,
-        variant: code.variant,
         text: "Implement the plan above.",
       })
       return "continue"
@@ -384,7 +376,6 @@ export namespace PlanFollowup {
       sessionID: input.sessionID,
       agent: "plan",
       model: user.model,
-      variant: user.variant,
       text: answer,
     })
     return "continue"

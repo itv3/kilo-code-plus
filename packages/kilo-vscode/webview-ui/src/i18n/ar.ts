@@ -930,10 +930,13 @@ export const dict = {
   "session.messages.welcome":
     "Kilo Code هو مساعد ترميز بالذكاء الاصطناعي. اطلب منه بناء ميزات أو إصلاح أخطاء أو شرح قاعدة الشيفرة.",
   "session.messages.scrollToBottom": "التمرير إلى الأسفل",
+  "session.messages.initializing": "جاري التهيئة...",
+  "session.messages.taskStarting": "جاري البدء...",
   "session.status.writingResponse": "...جارٍ كتابة الرد",
   "session.status.retry": "جارٍ إعادة المحاولة…",
   "session.status.retrying": "...إعادة المحاولة (المحاولة {{ attempt }})… {{ message }}",
   "session.status.working": "...جارٍ العمل",
+  "session.status.offline": "انقطع الاتصال بالشبكة — جارٍ إعادة الاتصال...",
 
   "ui.sessionTurn.cancel": "إلغاء",
   "ui.sessionTurn.status.thinking": "...جارٍ التفكير",
@@ -946,6 +949,7 @@ export const dict = {
   "prompt.placeholder.default": "اكتب رسالة... (Enter للإرسال، Shift+Enter لسطر جديد)",
 
   "context.usage.sessionCost": "تكلفة الجلسة",
+  "context.usage.olderSessions": "{{count}} جلسات أقدم",
   "context.stats.thisSession": "هذه الجلسة",
 
   "time.justNow": "الآن",

@@ -15,6 +15,8 @@ import DESCRIPTION from "./apply_patch.txt"
 import { File } from "../file"
 import { filterDiagnostics } from "./diagnostics" // kilocode_change
 import { Encoding } from "../kilocode/encoding" // kilocode_change
+import { ConfigValidation } from "../kilocode/config-validation" // kilocode_change
+import { Format } from "../format"
 
 const PatchParams = z.object({
   patchText: z.string().describe("The full patch text that describes all changes to be made"),
@@ -178,9 +180,7 @@ export const ApplyPatchTool = Tool.define("apply_patch", {
       filePath: change.filePath,
       relativePath: path.relative(Instance.worktree, change.movePath ?? change.filePath).replaceAll("\\", "/"),
       type: change.type,
-      diff: change.diff,
-      before: change.oldContent,
-      after: change.newContent,
+      patch: change.diff,
       additions: change.additions,
       deletions: change.deletions,
       movePath: change.movePath,
@@ -237,9 +237,8 @@ export const ApplyPatchTool = Tool.define("apply_patch", {
       // kilocode_change end
 
       if (edited) {
-        await Bus.publish(File.Event.Edited, {
-          file: edited,
-        })
+        await Format.file(edited)
+        Bus.publish(File.Event.Edited, { file: edited })
       }
     }
 
@@ -289,6 +288,10 @@ export const ApplyPatchTool = Tool.define("apply_patch", {
     const changedPaths = fileChanges
       .filter((c) => c.type !== "delete")
       .map((c) => Filesystem.normalizePath(c.movePath ?? c.filePath))
+    for (const changed of fileChanges) {
+      if (changed.type === "delete") continue
+      output += await ConfigValidation.check(changed.movePath ?? changed.filePath)
+    }
     // kilocode_change end
 
     return {

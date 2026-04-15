@@ -923,10 +923,13 @@ export const dict = {
   "session.messages.empty": "在下方输入消息以开始对话。",
   "session.messages.welcome": "Kilo Code 是一个 AI 编程助手。让它帮你构建功能、修复 bug 或解释代码库。",
   "session.messages.scrollToBottom": "滚动到底部",
+  "session.messages.initializing": "初始化中...",
+  "session.messages.taskStarting": "启动中...",
   "session.status.writingResponse": "正在撰写回复…",
   "session.status.retry": "正在重试…",
   "session.status.retrying": "正在重试（第 {{ attempt }} 次）… {{ message }}",
   "session.status.working": "处理中…",
+  "session.status.offline": "网络已断开 — 正在重连...",
 
   "ui.sessionTurn.cancel": "取消",
   "ui.sessionTurn.status.thinking": "思考中...",
@@ -939,6 +942,7 @@ export const dict = {
   "prompt.placeholder.default": "输入消息... (Enter 发送，Shift+Enter 换行)",
 
   "context.usage.sessionCost": "会话费用",
+  "context.usage.olderSessions": "{{count}} 个较早的会话",
   "context.stats.thisSession": "此会话",
 
   "time.justNow": "刚刚",
