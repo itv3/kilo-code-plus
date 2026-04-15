@@ -63,6 +63,7 @@ import { TuiConfigProvider, useTuiConfig } from "./context/tui-config"
 import { TuiConfig } from "@/config/tui"
 import { createTuiApi, TuiPluginRuntime, type RouteMap } from "./plugin"
 import { FormatError, FormatUnknownError } from "@/cli/error"
+import { resetTerminalState } from "@tui/util/terminal" // kilocode_change
 
 async function getTerminalBackgroundColor(): Promise<"dark" | "light"> {
   // can't set raw mode if not a TTY
@@ -197,6 +198,9 @@ export function tui(input: {
       await TuiPluginRuntime.dispose()
     }
 
+    // kilocode_change - safety net: ensure mouse tracking is disabled regardless of exit path
+    process.on("exit", resetTerminalState) // kilocode_change
+
     const renderer = await createCliRenderer(rendererConfig(input.config))
 
     await render(() => {
@@ -293,9 +297,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     theme: themeState,
     toast,
     renderer,
-  })
-  onCleanup(() => {
-    api.dispose()
   })
   const [ready, setReady] = createSignal(false)
   TuiPluginRuntime.init(api)
@@ -616,6 +617,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     {
       title: "Switch model variant",
       value: "variant.list",
+      keybind: "variant_list",
       category: "Agent",
       hidden: local.model.variant.list().length === 0,
       slash: {
@@ -689,7 +691,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       category: "System",
     },
     {
-      title: "Toggle Theme Mode",
+      title: "Toggle theme mode",
       value: "theme.switch_mode",
       onSelect: (dialog) => {
         setMode(mode() === "dark" ? "light" : "dark")
@@ -698,7 +700,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       category: "System",
     },
     {
-      title: locked() ? "Unlock Theme Mode" : "Lock Theme Mode",
+      title: locked() ? "Unlock theme mode" : "Lock theme mode",
       value: "theme.mode.lock",
       onSelect: (dialog) => {
         if (locked()) unlock()
@@ -1010,6 +1012,8 @@ function ErrorComponent(props: {
     renderer?.setTerminalTitle("")
     renderer?.destroy()
     win32FlushInputBuffer()
+    // kilocode_change - reset terminal state to disable mouse tracking on exit
+    resetTerminalState()
     await props.onExit()
   }
 
