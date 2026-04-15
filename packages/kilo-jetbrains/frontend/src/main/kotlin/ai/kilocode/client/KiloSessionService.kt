@@ -11,6 +11,7 @@ import ai.kilocode.rpc.dto.PromptPartDto
 import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import fleet.rpc.client.durable
@@ -42,8 +43,14 @@ class KiloSessionService(
         private val LOG = Logger.getInstance(KiloSessionService::class.java)
     }
 
+    /**
+     * The real project directory, resolved from [KiloProjectService].
+     * Falls back to [Project.getBasePath] if not yet resolved.
+     */
     private val directory: String
         get() {
+            val resolved = project.service<KiloProjectService>().directory.value
+            if (resolved.isNotEmpty()) return resolved
             val path = project.basePath ?: ""
             if (path.isEmpty()) {
                 LOG.warn("project.basePath is null/empty — session operations will likely fail")

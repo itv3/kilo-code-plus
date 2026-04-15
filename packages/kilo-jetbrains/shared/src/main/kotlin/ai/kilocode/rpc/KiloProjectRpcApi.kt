@@ -22,6 +22,15 @@ interface KiloProjectRpcApi : RemoteApi<Unit> {
         }
     }
 
+    /**
+     * Resolve the real project directory as seen by the backend.
+     *
+     * In split mode, the frontend's [Project.getBasePath] returns a
+     * synthetic sandbox path. This method returns the backend's actual
+     * project directory so the frontend can use it for CLI server calls.
+     */
+    suspend fun directory(hint: String): String
+
     /** Observe workspace state loading progress. */
     suspend fun state(directory: String): Flow<KiloWorkspaceStateDto>
 

@@ -26,6 +26,7 @@ import ai.kilocode.rpc.dto.ProviderDto
 import ai.kilocode.rpc.dto.ProvidersDto
 import ai.kilocode.rpc.dto.SkillDto
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.ProjectManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -46,6 +47,14 @@ class KiloProjectRpcApiImpl : KiloProjectRpcApi {
 
     private val manager: KiloBackendWorkspaceManager
         get() = app.workspaces
+
+    override suspend fun directory(hint: String): String {
+        // In monolith mode, find the open project whose basePath matches the hint.
+        // In split mode, the backend's project.basePath is the real directory.
+        val projects = ProjectManager.getInstance().openProjects
+        val match = projects.firstOrNull { !it.isDefault }
+        return match?.basePath ?: hint
+    }
 
     /**
      * Emits workspace state for [directory]. Waits for the app to

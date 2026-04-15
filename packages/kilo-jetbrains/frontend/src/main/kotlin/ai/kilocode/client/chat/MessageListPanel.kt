@@ -1,58 +1,82 @@
 package ai.kilocode.client.chat
 
 import ai.kilocode.rpc.dto.MessageDto
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.FlowLayout
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.JTextArea
-import javax.swing.SwingConstants
+import javax.swing.border.MatteBorder
 
 /**
- * Scrollable panel displaying chat messages.
+ * Scrollable panel displaying chat messages aligned to the top,
+ * with an optional animated status indicator at the bottom.
  *
- * Each message is rendered as a role label + text area block.
- * Supports incremental text updates via part IDs for streaming.
+ * Inner panel uses [BoxLayout.Y_AXIS] for stacking, wrapped in a
+ * [BorderLayout.NORTH] so messages stay top-aligned when the scroll
+ * viewport is taller than the content.
  */
-class MessageListPanel : JPanel() {
+class MessageListPanel : JPanel(BorderLayout()) {
 
-    /** Maps messageID to the panel for that message. */
     private val panels = LinkedHashMap<String, MessageBlock>()
 
-    init {
+    private val inner = JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        isOpaque = false
+        border = JBUI.Borders.empty(4, 8)
+    }
+
+    private val statusLabel = JBLabel().apply {
+        foreground = UIUtil.getContextHelpForeground()
+    }
+
+    private val status = JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(4), 0)).apply {
+        isOpaque = false
+        isVisible = false
+        border = JBUI.Borders.empty(6, 0)
+        alignmentX = Component.LEFT_ALIGNMENT
+        add(JBLabel(AnimatedIcon.Default()))
+        add(statusLabel)
+    }
+
+    init {
         isOpaque = true
         background = UIUtil.getPanelBackground()
-        border = JBUI.Borders.empty(8)
+        inner.add(status)
+        add(inner, BorderLayout.NORTH)
     }
 
     fun addMessage(info: MessageDto) {
         if (panels.containsKey(info.id)) return
-
         val block = MessageBlock(info)
         panels[info.id] = block
-        add(block)
+        // Insert before the status row (which is always last)
+        inner.add(block, inner.componentCount - 1)
         revalidate()
         repaint()
     }
 
     fun updatePartText(messageID: String, partID: String, text: String) {
-        val block = panels[messageID] ?: return
-        block.setText(partID, text)
+        panels[messageID]?.setText(partID, text)
+        revalidate()
+        repaint()
     }
 
     fun appendDelta(messageID: String, partID: String, delta: String) {
-        val block = panels[messageID] ?: return
-        block.appendDelta(partID, delta)
+        panels[messageID]?.appendDelta(partID, delta)
+        revalidate()
+        repaint()
     }
 
     fun removeMessage(messageID: String) {
         val block = panels.remove(messageID) ?: return
-        remove(block)
+        inner.remove(block)
         revalidate()
         repaint()
     }
@@ -61,67 +85,72 @@ class MessageListPanel : JPanel() {
         val label = JBLabel(msg).apply {
             foreground = JBColor.RED
             font = JBUI.Fonts.label()
-            border = JBUI.Borders.empty(4, 8)
+            border = JBUI.Borders.empty(4, 0)
             alignmentX = Component.LEFT_ALIGNMENT
         }
-        add(label)
+        inner.add(label, inner.componentCount - 1)
+        revalidate()
+        repaint()
+    }
+
+    /**
+     * Show or hide the working status indicator at the bottom of the list.
+     * Pass null to hide, a string to show with animated spinner.
+     */
+    fun setStatus(text: String?) {
+        if (text != null) {
+            statusLabel.text = text
+            status.isVisible = true
+        } else {
+            status.isVisible = false
+        }
         revalidate()
         repaint()
     }
 
     fun clear() {
         panels.clear()
-        removeAll()
+        inner.removeAll()
+        // Re-add status row (always last)
+        inner.add(status)
+        status.isVisible = false
         revalidate()
         repaint()
     }
 }
 
 /**
- * A single message block: role header + text content area.
+ * A single message block — text content only, no role header.
+ * User messages get a thin top border as separator.
  */
-private class MessageBlock(info: MessageDto) : JPanel(BorderLayout()) {
+private class MessageBlock(info: MessageDto) : JPanel() {
     private val parts = LinkedHashMap<String, JTextArea>()
-    private val body = JPanel().apply {
-        layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        isOpaque = false
-    }
 
     init {
+        layout = BoxLayout(this, BoxLayout.Y_AXIS)
         isOpaque = false
-        border = JBUI.Borders.empty(6, 0)
         alignmentX = Component.LEFT_ALIGNMENT
 
-        val role = when (info.role) {
-            "user" -> "You"
-            "assistant" -> "Assistant"
-            else -> info.role
+        border = if (info.role == "user") {
+            JBUI.Borders.compound(
+                MatteBorder(1, 0, 0, 0, JBColor.border()),
+                JBUI.Borders.empty(8, 0, 4, 0),
+            )
+        } else {
+            JBUI.Borders.empty(4, 0)
         }
-
-        val header = JBLabel(role).apply {
-            font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().style or java.awt.Font.BOLD)
-            foreground = when (info.role) {
-                "user" -> UIUtil.getLabelForeground()
-                else -> JBColor(0x4A90D9, 0x6CB4EE)
-            }
-            border = JBUI.Borders.empty(0, 0, 4, 0)
-            horizontalAlignment = SwingConstants.LEFT
-        }
-
-        add(header, BorderLayout.NORTH)
-        add(body, BorderLayout.CENTER)
     }
 
     fun setText(partID: String, text: String) {
-        val area = parts.getOrPut(partID) { createArea().also { body.add(it) } }
+        val area = parts.getOrPut(partID) { createArea().also { add(it) } }
         area.text = text
-        body.revalidate()
+        revalidate()
     }
 
     fun appendDelta(partID: String, delta: String) {
-        val area = parts.getOrPut(partID) { createArea().also { body.add(it) } }
+        val area = parts.getOrPut(partID) { createArea().also { add(it) } }
         area.append(delta)
-        body.revalidate()
+        revalidate()
     }
 
     private fun createArea() = JTextArea().apply {
