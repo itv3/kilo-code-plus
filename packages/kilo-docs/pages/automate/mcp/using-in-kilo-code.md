@@ -448,7 +448,7 @@ MCP tool calls use the same permission system as built-in tools. Each MCP tool's
 {% /tab %}
 {% tab label="CLI" %}
 
-Add `alwaysAllow` entries to your server config to auto-approve specific tools:
+Add `permission` entries to your config to auto-approve specific tools. MCP tool keys use the server name, an underscore, then the tool name:
 
 ```json
 {
@@ -456,9 +456,12 @@ Add `alwaysAllow` entries to your server config to auto-approve specific tools:
     "my-server": {
       "type": "local",
       "command": ["npx", "-y", "my-mcp-server"],
-      "enabled": true,
-      "alwaysAllow": ["tool1", "tool2"]
+      "enabled": true
     }
+  },
+  "permission": {
+    "my-server_tool1": "allow",
+    "my-server_tool2": "allow"
   }
 }
 ```
