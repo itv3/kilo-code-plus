@@ -1,176 +1,129 @@
 package ai.kilocode.client.chat
 
+import ai.kilocode.client.KiloAppService
 import ai.kilocode.client.KiloProjectService
 import ai.kilocode.client.KiloSessionService
-import ai.kilocode.rpc.dto.AgentsDto
-import ai.kilocode.rpc.dto.ChatEventDto
-import ai.kilocode.rpc.dto.ConfigUpdateDto
-import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
-import ai.kilocode.rpc.dto.MessageWithPartsDto
-import ai.kilocode.rpc.dto.ModelDto
-import ai.kilocode.rpc.dto.ProviderDto
-import ai.kilocode.rpc.dto.ProvidersDto
-import ai.kilocode.rpc.dto.SessionStatusDto
+import ai.kilocode.client.chat.model.SessionEvent
+import ai.kilocode.client.chat.model.SessionModel
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.CardLayout
 import javax.swing.JPanel
 
 /**
- * Main chat panel composing the toolbar, message list, and input area.
+ * Main chat panel — pure Swing layout that reacts to [SessionModel] events.
  *
- * Wires [KiloSessionService] for chat operations and [KiloProjectService]
- * for provider/agent data. Subscribes to SSE chat events for streaming.
+ * Uses [CardLayout] in the center to switch between the empty panel
+ * (shown before the first prompt) and the scrollable message list.
+ *
+ * All business logic (workspace watching, session lifecycle, event
+ * handling, status computation) lives in [SessionModel]. Message
+ * rendering lives in [SessionUi]. This class only wires layout,
+ * prompt callbacks, and reacts to model events for card switching,
+ * picker population, busy state, and scrolling.
  */
 class ChatPanel(
-    private val sessions: KiloSessionService,
-    private val workspace: KiloProjectService,
-    private val cs: CoroutineScope,
+    project: Project,
+    app: KiloAppService,
+    workspace: KiloProjectService,
+    sessions: KiloSessionService,
+    cs: CoroutineScope,
 ) : JPanel(BorderLayout()), Disposable {
 
-    private val messages = MessageListPanel()
-    private val scroll = JBScrollPane(messages).apply {
+    companion object {
+        private const val WELCOME = "welcome"
+        private const val MESSAGES = "messages"
+    }
+
+    private val model = SessionModel(sessions, workspace, cs)
+    private val session = SessionUi(model)
+
+    private val cards = CardLayout()
+    private val center = JPanel(cards)
+
+    private val welcome = EmptyChatUi(app, workspace, cs)
+
+    private val scroll = JBScrollPane(session.panel).apply {
         border = JBUI.Borders.empty()
         verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
         horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     }
 
-    private val toolbar = ChatToolbar(
-        onModeChanged = { agent -> sessions.updateConfig(ConfigUpdateDto(agent = agent)) },
-        onModelChanged = { provider, model -> sessions.updateConfig(ConfigUpdateDto(model = "$provider/$model")) },
-    )
-
-    private val input = ChatInputPanel(
+    private val prompt = PromptPanel(
+        project = project,
         onSend = { text -> send(text) },
-        onAbort = { sessions.abort() },
+        onAbort = { model.abort() },
     )
-
-    private var eventJob: Job? = null
-    private var statusJob: Job? = null
-    private var wsJob: Job? = null
 
     init {
-        add(toolbar, BorderLayout.NORTH)
-        add(scroll, BorderLayout.CENTER)
-        add(input, BorderLayout.SOUTH)
+        Disposer.register(this, session)
+        Disposer.register(this, model)
 
-        // Watch workspace state for providers/agents
-        wsJob = cs.launch {
-            workspace.state.collect { state ->
-                if (state.status == KiloWorkspaceStatusDto.READY) {
-                    edt {
-                        state.providers?.let { toolbar.setProviders(it) }
-                        state.agents?.let { toolbar.setAgents(it) }
-                    }
-                }
+        // Layout
+        center.add(welcome, WELCOME)
+        center.add(scroll, MESSAGES)
+        cards.show(center, WELCOME)
+
+        add(center, BorderLayout.CENTER)
+        add(prompt, BorderLayout.SOUTH)
+
+        // Wire picker callbacks via typed model methods
+        prompt.mode.onSelect = { item ->
+            model.selectAgent(item.id)
+        }
+        prompt.model.onSelect = { item ->
+            val group = item.group
+            if (group != null) {
+                model.selectModel(group, item.id)
             }
         }
 
-        // Watch session statuses for busy/idle state
-        statusJob = cs.launch {
-            sessions.statuses.collect { statuses ->
-                val active = sessions.active.value?.id ?: return@collect
-                val status = statuses[active]
-                edt { input.setBusy(status?.type == "busy") }
-            }
-        }
+        // React to model events — no coroutines, pure EDT
+        model.addListener(this) { event ->
+            when (event) {
+                is SessionEvent.WorkspaceReady -> {
+                    val c = model.chat
+                    prompt.mode.setItems(
+                        c.agents.map { LabelPicker.Item(it.name, it.display) },
+                        c.agent,
+                    )
+                    prompt.model.setItems(
+                        c.models.map { LabelPicker.Item(it.id, it.display, it.provider) },
+                        c.model,
+                    )
+                    prompt.setReady(c.ready)
+                }
 
-        // Watch active session changes
-        cs.launch {
-            sessions.active.collect { session ->
-                edt {
-                    messages.clear()
-                    input.setBusy(false)
+                is SessionEvent.ViewChanged -> {
+                    cards.show(center, if (event.show) MESSAGES else WELCOME)
                 }
-                eventJob?.cancel()
-                if (session != null) {
-                    loadHistory(session.id)
-                    subscribeEvents()
+
+                is SessionEvent.BusyChanged -> {
+                    prompt.setBusy(event.busy)
                 }
+
+                is SessionEvent.MessageAdded,
+                is SessionEvent.PartUpdated,
+                is SessionEvent.PartDelta,
+                is SessionEvent.Error,
+                is SessionEvent.HistoryLoaded -> {
+                    scrollToBottom()
+                }
+
+                else -> {}
             }
         }
     }
 
     private fun send(text: String) {
         if (text.isBlank()) return
-        sessions.prompt(text)
-        input.clearInput()
-    }
-
-    private fun loadHistory(id: String) {
-        cs.launch {
-            val history = sessions.messages()
-            edt {
-                messages.clear()
-                for (msg in history) {
-                    messages.addMessage(msg.info)
-                    for (part in msg.parts) {
-                        val txt = part.text
-                        if (part.type == "text" && txt != null) {
-                            messages.updatePartText(msg.info.id, part.id, txt)
-                        }
-                    }
-                }
-                scrollToBottom()
-            }
-        }
-    }
-
-    private fun subscribeEvents() {
-        eventJob = cs.launch {
-            sessions.events().collect { event ->
-                edt { handleEvent(event) }
-            }
-        }
-    }
-
-    private fun handleEvent(event: ChatEventDto) {
-        when (event) {
-            is ChatEventDto.MessageUpdated -> {
-                messages.addMessage(event.info)
-                scrollToBottom()
-            }
-
-            is ChatEventDto.PartUpdated -> {
-                val txt = event.part.text
-                if (event.part.type == "text" && txt != null) {
-                    messages.updatePartText(event.part.messageID, event.part.id, txt)
-                    scrollToBottom()
-                }
-            }
-
-            is ChatEventDto.PartDelta -> {
-                if (event.field == "text") {
-                    messages.appendDelta(event.messageID, event.partID, event.delta)
-                    scrollToBottom()
-                }
-            }
-
-            is ChatEventDto.TurnOpen -> {
-                input.setBusy(true)
-            }
-
-            is ChatEventDto.TurnClose -> {
-                input.setBusy(false)
-            }
-
-            is ChatEventDto.Error -> {
-                val msg = event.error?.message ?: event.error?.type ?: "Unknown error"
-                messages.addError(msg)
-                input.setBusy(false)
-                scrollToBottom()
-            }
-
-            is ChatEventDto.MessageRemoved -> {
-                messages.removeMessage(event.messageID)
-            }
-        }
+        model.prompt(text)
+        prompt.clear()
     }
 
     private fun scrollToBottom() {
@@ -178,14 +131,8 @@ class ChatPanel(
         bar.value = bar.maximum
     }
 
-    private fun edt(block: () -> Unit) {
-        ApplicationManager.getApplication().invokeLater(block)
-    }
-
     override fun dispose() {
-        eventJob?.cancel()
-        statusJob?.cancel()
-        wsJob?.cancel()
-        cs.cancel()
+        welcome.dispose()
+        // session and model disposed by Disposer (registered as children)
     }
 }

@@ -1,5 +1,7 @@
-package ai.kilocode.client
+package ai.kilocode.client.chat
 
+import ai.kilocode.client.KiloAppService
+import ai.kilocode.client.KiloProjectService
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
@@ -33,7 +35,7 @@ import javax.swing.SwingConstants
  * status indicators: animated spinner for loading, green check for
  * success, red circle for error, grey circle for idle.
  */
-class KiloWelcomeUi(
+class EmptyChatUi(
     private val app: KiloAppService,
     private val workspace: KiloProjectService,
     private val cs: CoroutineScope,
@@ -50,7 +52,7 @@ class KiloWelcomeUi(
     // ------ header ------
 
     private val logo = JBLabel(
-        IconLoader.getIcon("/icons/kilo-content.svg", KiloWelcomeUi::class.java),
+        IconLoader.getIcon("/icons/kilo-content.svg", EmptyChatUi::class.java),
     ).apply {
         alignmentX = CENTER_ALIGNMENT
     }
