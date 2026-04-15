@@ -1,4 +1,5 @@
 import { errors } from "../../server/error"
+import { NotFoundError } from "../../storage/db"
 import { lazy } from "../../util/lazy"
 import { Hono } from "hono"
 import { describeRoute, resolver, validator } from "hono-openapi"
@@ -57,10 +58,11 @@ export const SuggestionRoutes = lazy(() =>
       async (c) => {
         const params = c.req.valid("param")
         const json = c.req.valid("json")
-        await Suggestion.accept({
+        const ok = await Suggestion.accept({
           requestID: params.requestID,
           index: json.index,
         })
+        if (!ok) throw new NotFoundError({ message: `Suggestion not found: ${params.requestID}` })
         return c.json(true)
       },
     )
