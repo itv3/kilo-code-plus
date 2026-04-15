@@ -65,7 +65,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const permissionRequest = () => familyPermissions().find((p) => p.sessionID === id()) ?? familyPermissions()[0]
   const blocked = () =>
     familyPermissions().length > 0 ||
-    familyQuestions().length > 0 ||
+    familyQuestions().some((q) => q.blocking !== false) ||
     familySuggestions().some((s) => s.blocking !== false)
   const dock = () => !props.readonly || !!permissionRequest() || !!suggestionRequest()
 
