@@ -5,6 +5,10 @@ import ai.kilocode.client.KiloProjectService
 import ai.kilocode.client.KiloSessionService
 import ai.kilocode.client.chat.model.SessionEvent
 import ai.kilocode.client.chat.model.SessionModel
+import ai.kilocode.client.chat.ui.LabelPicker
+import ai.kilocode.client.chat.ui.MessageListPanel
+import ai.kilocode.client.chat.ui.PromptPanel
+import ai.kilocode.client.chat.ui.StatusPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
@@ -22,11 +26,11 @@ import javax.swing.JPanel
  *
  * All business logic (app/workspace watching, session lifecycle, event
  * handling, status computation) lives in [SessionModel]. Welcome
- * rendering lives in [StatusPanel]. This class handles layout, prompt
+ * rendering lives in [ai.kilocode.client.chat.ui.StatusPanel]. This class handles layout, prompt
  * wiring, message list updates, card switching, picker population,
  * busy state, and scrolling.
  */
-class ChatPanel(
+class SessionUi(
     project: Project,
     app: KiloAppService,
     workspace: KiloProjectService,
@@ -53,9 +57,9 @@ class ChatPanel(
     }
 
     private val prompt = PromptPanel(
-        project = project,
-        onSend = { text -> send(text) },
-        onAbort = { model.abort() },
+      project = project,
+      onSend = { text -> send(text) },
+      onAbort = { model.abort() },
     )
 
     init {

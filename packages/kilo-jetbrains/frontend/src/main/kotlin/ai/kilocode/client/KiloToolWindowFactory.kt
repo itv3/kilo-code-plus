@@ -1,6 +1,6 @@
 package ai.kilocode.client
 
-import ai.kilocode.client.chat.ChatPanel
+import ai.kilocode.client.chat.SessionUi
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
 /**
- * Creates the Kilo Code tool window with a single [ChatPanel].
+ * Creates the Kilo Code tool window with a single [SessionUi].
  *
  * The chat panel shows a welcome/status view in the center until the
  * first prompt is sent, then switches to a scrollable message list.
@@ -32,7 +32,7 @@ class KiloToolWindowFactory : ToolWindowFactory, DumbAware {
             val sessions = project.service<KiloSessionService>()
             val scope = CoroutineScope(SupervisorJob())
 
-            val chat = ChatPanel(project, app, workspace, sessions, scope)
+            val chat = SessionUi(project, app, workspace, sessions, scope)
             val content = ContentFactory.getInstance()
                 .createContent(chat, "", false)
             content.setDisposer(chat)

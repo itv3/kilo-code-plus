@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat
+package ai.kilocode.client.chat.ui
 
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
@@ -14,6 +14,7 @@ import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants
 
 /**
  * Prompt input panel with an IntelliJ editor text field and a bottom
@@ -52,7 +53,7 @@ class PromptPanel(
             ed.settings.isUseSoftWraps = true
             ed.settings.isAdditionalPageAtBottom = false
             ed.scrollPane.horizontalScrollBarPolicy =
-                javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
             ed.contentComponent.addKeyListener(object : KeyAdapter() {
                 override fun keyPressed(e: KeyEvent) {
                     if (e.keyCode == KeyEvent.VK_ENTER && !e.isShiftDown) {

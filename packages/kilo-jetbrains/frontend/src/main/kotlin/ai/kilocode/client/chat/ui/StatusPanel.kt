@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat
+package ai.kilocode.client.chat.ui
 
 import ai.kilocode.client.chat.model.SessionEvent
 import ai.kilocode.client.chat.model.SessionModel
@@ -17,6 +17,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.awt.Font
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.Box
@@ -270,7 +271,7 @@ class StatusPanel(
 
     private fun header(text: String): JBLabel = JBLabel(text).apply {
         alignmentX = LEFT_ALIGNMENT
-        font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().style or java.awt.Font.BOLD)
+        font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().style or Font.BOLD)
         foreground = UIUtil.getLabelForeground()
         border = JBUI.Borders.empty(0, 0, 4, 0)
     }

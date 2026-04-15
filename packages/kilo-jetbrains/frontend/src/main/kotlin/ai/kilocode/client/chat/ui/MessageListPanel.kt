@@ -1,4 +1,4 @@
-package ai.kilocode.client.chat
+package ai.kilocode.client.chat.ui
 
 import ai.kilocode.rpc.dto.MessageDto
 import com.intellij.ui.AnimatedIcon
@@ -7,7 +7,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import java.awt.Component
 import java.awt.FlowLayout
 import javax.swing.BoxLayout
 import javax.swing.JPanel
@@ -40,7 +39,7 @@ class MessageListPanel : JPanel(BorderLayout()) {
         isOpaque = false
         isVisible = false
         border = JBUI.Borders.empty(6, 0)
-        alignmentX = Component.LEFT_ALIGNMENT
+        alignmentX = LEFT_ALIGNMENT
         add(JBLabel(AnimatedIcon.Default()))
         add(statusLabel)
     }
@@ -86,7 +85,7 @@ class MessageListPanel : JPanel(BorderLayout()) {
             foreground = JBColor.RED
             font = JBUI.Fonts.label()
             border = JBUI.Borders.empty(4, 0)
-            alignmentX = Component.LEFT_ALIGNMENT
+            alignmentX = LEFT_ALIGNMENT
         }
         inner.add(label, inner.componentCount - 1)
         revalidate()
@@ -129,7 +128,7 @@ private class MessageBlock(info: MessageDto) : JPanel() {
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         isOpaque = false
-        alignmentX = Component.LEFT_ALIGNMENT
+        alignmentX = LEFT_ALIGNMENT
 
         border = if (info.role == "user") {
             JBUI.Borders.compound(
@@ -161,6 +160,6 @@ private class MessageBlock(info: MessageDto) : JPanel() {
         font = JBUI.Fonts.label()
         foreground = UIUtil.getLabelForeground()
         border = JBUI.Borders.empty()
-        alignmentX = Component.LEFT_ALIGNMENT
+        alignmentX = LEFT_ALIGNMENT
     }
 }
