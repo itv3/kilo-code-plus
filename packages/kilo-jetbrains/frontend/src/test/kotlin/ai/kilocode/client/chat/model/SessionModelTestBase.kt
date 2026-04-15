@@ -1,12 +1,12 @@
 package ai.kilocode.client.chat.model
 
-import ai.kilocode.client.KiloAppService
-import ai.kilocode.client.KiloSessionService
+import ai.kilocode.client.app.KiloAppService
+import ai.kilocode.client.app.KiloSessionService
 import ai.kilocode.client.testing.FakeAppRpcApi
 import ai.kilocode.client.testing.FakeWorkspaceRpcApi
 import ai.kilocode.client.testing.FakeSessionRpcApi
-import ai.kilocode.client.workspace.KiloWorkspaceService
-import ai.kilocode.client.workspace.Workspace
+import ai.kilocode.client.app.KiloWorkspaceService
+import ai.kilocode.client.app.Workspace
 import ai.kilocode.rpc.dto.AgentDto
 import ai.kilocode.rpc.dto.AgentsDto
 import ai.kilocode.rpc.dto.ChatEventDto

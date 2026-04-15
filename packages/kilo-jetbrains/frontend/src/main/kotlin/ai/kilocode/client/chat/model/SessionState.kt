@@ -15,7 +15,7 @@ import ai.kilocode.rpc.dto.PartDto
  * **EDT-only access** — no synchronization. [SessionModel] guarantees
  * all reads and writes happen on the EDT.
  */
-class ChatModel {
+class SessionState {
 
     private val messages = LinkedHashMap<String, MessageData>()
 

@@ -1,8 +1,8 @@
 package ai.kilocode.client.chat
 
-import ai.kilocode.client.KiloAppService
-import ai.kilocode.client.KiloSessionService
-import ai.kilocode.client.workspace.Workspace
+import ai.kilocode.client.app.KiloAppService
+import ai.kilocode.client.app.KiloSessionService
+import ai.kilocode.client.app.Workspace
 import ai.kilocode.client.chat.model.SessionEvent
 import ai.kilocode.client.chat.model.SessionModel
 import ai.kilocode.client.chat.ui.LabelPicker

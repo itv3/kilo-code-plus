@@ -1,4 +1,4 @@
-package ai.kilocode.client.workspace
+package ai.kilocode.client.app
 
 import ai.kilocode.rpc.dto.KiloWorkspaceStateDto
 import kotlinx.coroutines.flow.StateFlow

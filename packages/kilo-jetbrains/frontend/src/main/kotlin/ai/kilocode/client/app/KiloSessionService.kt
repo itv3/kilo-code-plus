@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package ai.kilocode.client
+package ai.kilocode.client.app
 
 import ai.kilocode.rpc.KiloSessionRpcApi
 import ai.kilocode.rpc.dto.ChatEventDto

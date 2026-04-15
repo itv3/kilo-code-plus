@@ -1,8 +1,8 @@
 package ai.kilocode.client.chat.model
 
-import ai.kilocode.client.KiloAppService
-import ai.kilocode.client.KiloSessionService
-import ai.kilocode.client.workspace.Workspace
+import ai.kilocode.client.app.KiloAppService
+import ai.kilocode.client.app.KiloSessionService
+import ai.kilocode.client.app.Workspace
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
  * ensures event subscription happens *before* the prompt is sent,
  * eliminating race conditions.
  *
- * Owns [ChatModel] and the listener list. All model mutations and
+ * Owns [SessionState] and the listener list. All model mutations and
  * listener notifications happen on the EDT — [fire] auto-dispatches
  * via `invokeLater` when called from a background thread.
  */
@@ -45,7 +45,7 @@ class SessionModel(
         Disposer.register(parent, this)
     }
 
-    val chat = ChatModel()
+    val chat = SessionState()
 
     private val listeners = mutableListOf<SessionModelListener>()
 

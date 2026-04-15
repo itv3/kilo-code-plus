@@ -4,7 +4,7 @@ package ai.kilocode.client.chat.model
  * Change events fired by [SessionModel] on the EDT.
  *
  * Events carry IDs so the UI knows **which** message/part changed.
- * The UI can read full data from [ChatModel] directly (safe — same
+ * The UI can read full data from [SessionState] directly (safe — same
  * EDT thread). [PartDelta] also carries the delta string so the
  * view can append efficiently without reading the whole text.
  */

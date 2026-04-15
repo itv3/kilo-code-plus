@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package ai.kilocode.client.workspace
+package ai.kilocode.client.app
 
 import ai.kilocode.rpc.KiloWorkspaceRpcApi
 import ai.kilocode.rpc.dto.KiloWorkspaceStateDto

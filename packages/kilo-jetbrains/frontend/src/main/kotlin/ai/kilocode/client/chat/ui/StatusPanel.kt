@@ -30,7 +30,7 @@ import javax.swing.SwingConstants
  * Welcome panel showing app + workspace initialization progress.
  *
  * Pure view — listens to [SessionModel] events and reads
- * [ChatModel][ai.kilocode.client.chat.model.ChatModel] for data.
+ * [ChatModel][ai.kilocode.client.chat.model.SessionState] for data.
  * No coroutines, no service references.
  *
  * Uses icon+label rows for each resource being loaded. Icons act as
