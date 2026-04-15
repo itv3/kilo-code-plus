@@ -19,6 +19,7 @@ import { SessionSummary } from "./summary"
 import type { Provider } from "@/provider/provider"
 import { Question } from "@/question"
 import { KiloSessionProcessor } from "@/kilocode/session/processor" // kilocode_change
+import { Suggestion } from "@/kilocode/suggestion" // kilocode_change
 import { errorMessage } from "@/util/error"
 import { isRecord } from "@/util/record"
 
@@ -207,7 +208,13 @@ export namespace SessionProcessor {
               time: { start: match.part.state.time.start, end: Date.now() },
             },
           })
-          if (error instanceof Permission.RejectedError || error instanceof Question.RejectedError) {
+          // kilocode_change start
+          if (
+            error instanceof Permission.RejectedError ||
+            error instanceof Question.RejectedError ||
+            error instanceof Suggestion.DismissedError
+          ) {
+            // kilocode_change end
             ctx.blocked = ctx.shouldBreak
           }
           yield* settleToolCall(toolCallID)
@@ -355,6 +362,11 @@ export namespace SessionProcessor {
 
             case "tool-result": {
               yield* completeToolCall(value.toolCallId, value.output)
+              // kilocode_change start
+              if (value.output.metadata?.dismissed === true) {
+                ctx.blocked = ctx.shouldBreak
+              }
+              // kilocode_change end
               return
             }
 
