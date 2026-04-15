@@ -1,11 +1,11 @@
 // kilocode_change - new file
 import { describe, expect, test } from "bun:test"
-import { Permission } from "../../src/permission"
-import { PermissionID } from "../../src/permission/schema"
-import { Instance } from "../../src/project/instance"
-import { Server } from "../../src/server/server"
-import { Session } from "../../src/session"
-import { tmpdir } from "../fixture/fixture"
+import { Permission } from "../../../src/permission"
+import { PermissionID } from "../../../src/permission/schema"
+import { Instance } from "../../../src/project/instance"
+import { Server } from "../../../src/server/server"
+import { Session } from "../../../src/session"
+import { tmpdir } from "../../fixture/fixture"
 
 describe("permission.allowEverything endpoint", () => {
   test("disables global allow-all and removes wildcard from config", async () => {
