@@ -1,4 +1,4 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.app
 
 import ai.kilocode.backend.cli.CliServer
 import ai.kilocode.backend.app.ConnectionState

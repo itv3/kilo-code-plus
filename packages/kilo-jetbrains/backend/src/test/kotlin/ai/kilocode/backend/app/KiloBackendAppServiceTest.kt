@@ -1,4 +1,4 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.app
 
 import ai.kilocode.backend.app.KiloAppState
 import ai.kilocode.backend.app.KiloBackendAppService

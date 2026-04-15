@@ -1,4 +1,4 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.cli
 
 import ai.kilocode.backend.cli.KiloCliDataParser
 import ai.kilocode.rpc.dto.ChatEventDto

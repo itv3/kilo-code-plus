@@ -1,4 +1,4 @@
-package ai.kilocode.backend
+package ai.kilocode.backend.cli
 
 import ai.kilocode.jetbrains.api.infrastructure.Serializer
 import ai.kilocode.jetbrains.api.model.Session
