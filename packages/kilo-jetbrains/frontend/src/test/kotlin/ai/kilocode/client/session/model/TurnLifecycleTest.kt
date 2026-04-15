@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.MessageErrorDto
 
@@ -12,7 +13,7 @@ class TurnLifecycleTest : SessionModelTestBase() {
         flush()
 
         assertTrue(events.any { it is SessionEvent.BusyChanged && it.busy })
-        assertTrue(events.any { it is SessionEvent.StatusChanged && it.text == "Considering next steps..." })
+        assertTrue(events.any { it is SessionEvent.StatusChanged && it.text == KiloBundle.message("session.status.considering") })
     }
 
     fun `test TurnClose fires BusyChanged false and clears status`() {

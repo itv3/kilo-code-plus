@@ -3,6 +3,7 @@ package ai.kilocode.client.session.model
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
 import ai.kilocode.client.app.Workspace
+import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
@@ -95,7 +96,7 @@ class SessionModel(
             } catch (e: Exception) {
                 LOG.warn("prompt failed", e)
                 edt {
-                    fire(SessionEvent.Error(e.message ?: "Prompt failed"))
+                    fire(SessionEvent.Error(e.message ?: KiloBundle.message("session.error.prompt")))
                     fire(SessionEvent.BusyChanged(false))
                 }
             }
@@ -262,7 +263,7 @@ class SessionModel(
                 partType = null
                 tool = null
                 busy = true
-                fire(SessionEvent.StatusChanged("Considering next steps..."))
+                fire(SessionEvent.StatusChanged(KiloBundle.message("session.status.considering")))
                 fire(SessionEvent.BusyChanged(true))
             }
 
@@ -275,7 +276,7 @@ class SessionModel(
             }
 
             is ChatEventDto.Error -> {
-                val msg = event.error?.message ?: event.error?.type ?: "Unknown error"
+                val msg = event.error?.message ?: event.error?.type ?: KiloBundle.message("session.error.unknown")
                 busy = false
                 fire(SessionEvent.Error(msg))
                 fire(SessionEvent.StatusChanged(null))
@@ -309,19 +310,19 @@ class SessionModel(
      * Compute a human-readable status from the last streaming part.
      */
     private fun status(): String = when (partType) {
-        "reasoning" -> "Thinking..."
-        "text" -> "Writing response..."
+        "reasoning" -> KiloBundle.message("session.status.thinking")
+        "text" -> KiloBundle.message("session.status.writing")
         "tool" -> when (tool) {
-            "task" -> "Delegating work..."
-            "todowrite", "todoread" -> "Planning..."
-            "read" -> "Gathering context..."
-            "glob", "grep", "list" -> "Searching codebase..."
-            "webfetch", "websearch", "codesearch" -> "Searching web..."
-            "edit", "write" -> "Making edits..."
-            "bash" -> "Running commands..."
-            else -> "Considering next steps..."
+            "task" -> KiloBundle.message("session.status.delegating")
+            "todowrite", "todoread" -> KiloBundle.message("session.status.planning")
+            "read" -> KiloBundle.message("session.status.gathering")
+            "glob", "grep", "list" -> KiloBundle.message("session.status.searching.codebase")
+            "webfetch", "websearch", "codesearch" -> KiloBundle.message("session.status.searching.web")
+            "edit", "write" -> KiloBundle.message("session.status.editing")
+            "bash" -> KiloBundle.message("session.status.commands")
+            else -> KiloBundle.message("session.status.considering")
         }
-        else -> "Considering next steps..."
+        else -> KiloBundle.message("session.status.considering")
     }
 
     /**

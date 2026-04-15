@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.ui
 
+import ai.kilocode.client.plugin.KiloBundle
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
@@ -46,7 +47,7 @@ class PromptPanel(
     val model = LabelPicker()
 
     private val editor = EditorTextField(project, PlainTextFileType.INSTANCE).apply {
-        setPlaceholder("Type a message...")
+        setPlaceholder(KiloBundle.message("prompt.placeholder"))
         setShowPlaceholderWhenFocused(true)
         setOneLineMode(false)
         addSettingsProvider { ed ->
@@ -69,7 +70,7 @@ class PromptPanel(
         isBorderPainted = false
         isContentAreaFilled = false
         isFocusPainted = false
-        toolTipText = "Send"
+        toolTipText = KiloBundle.message("prompt.button.send")
         isEnabled = false
         maximumSize = Dimension(JBUI.scale(28), Short.MAX_VALUE.toInt())
         preferredSize = Dimension(JBUI.scale(28), JBUI.scale(24))
@@ -108,7 +109,7 @@ class PromptPanel(
     fun setBusy(value: Boolean) {
         busy = value
         button.icon = if (value) STOP_ICON else SEND_ICON
-        button.toolTipText = if (value) "Stop" else "Send"
+        button.toolTipText = if (value) KiloBundle.message("prompt.button.stop") else KiloBundle.message("prompt.button.send")
     }
 
     fun text(): String = editor.text.trim()

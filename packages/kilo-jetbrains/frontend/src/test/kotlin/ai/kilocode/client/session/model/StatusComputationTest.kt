@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.ChatEventDto
 
 class StatusComputationTest : SessionModelTestBase() {
@@ -17,9 +18,9 @@ class StatusComputationTest : SessionModelTestBase() {
         flush()
 
         val status = events.filterIsInstance<SessionEvent.StatusChanged>()
-            .lastOrNull { it.text != null && it.text != "Considering next steps..." }
+            .lastOrNull { it.text != null && it.text != KiloBundle.message("session.status.considering") }
         assertNotNull(status)
-        assertEquals("Running commands...", status!!.text)
+        assertEquals(KiloBundle.message("session.status.commands"), status!!.text)
     }
 
     fun `test PartUpdated after TurnClose does not fire StatusChanged`() {

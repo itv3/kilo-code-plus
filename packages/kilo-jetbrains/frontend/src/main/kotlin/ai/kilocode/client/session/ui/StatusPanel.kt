@@ -30,7 +30,7 @@ import javax.swing.SwingConstants
  * Welcome panel showing app + workspace initialization progress.
  *
  * Pure view — listens to [SessionModel] events and reads
- * [ChatModel][ai.kilocode.client.session.model.SessionState] for data.
+ * [SessionState][ai.kilocode.client.session.model.SessionState] for data.
  * No coroutines, no service references.
  *
  * Uses icon+label rows for each resource being loaded. Icons act as
@@ -71,21 +71,21 @@ class StatusPanel(
 
     // ------ app rows ------
 
-    private val configRow = row("Config")
-    private val notifRow = row("Notifications")
-    private val profileRow = row("Profile")
+    private val configRow = row(KiloBundle.message("toolwindow.row.config"))
+    private val notifRow = row(KiloBundle.message("toolwindow.row.notifications"))
+    private val profileRow = row(KiloBundle.message("toolwindow.row.profile"))
 
     // ------ workspace rows ------
 
-    private val providersRow = row("Providers")
-    private val agentsRow = row("Agents")
-    private val commandsRow = row("Commands")
-    private val skillsRow = row("Skills")
+    private val providersRow = row(KiloBundle.message("toolwindow.row.providers"))
+    private val agentsRow = row(KiloBundle.message("toolwindow.row.agents"))
+    private val commandsRow = row(KiloBundle.message("toolwindow.row.commands"))
+    private val skillsRow = row(KiloBundle.message("toolwindow.row.skills"))
 
     // ------ section headers ------
 
-    private val appHeader = header("App")
-    private val wsHeader = header("Workspace")
+    private val appHeader = header(KiloBundle.message("toolwindow.section.app"))
+    private val wsHeader = header(KiloBundle.message("toolwindow.section.workspace"))
 
     private val appSection = section(appHeader, configRow, notifRow, profileRow)
     private val wsSection = section(wsHeader, providersRow, agentsRow, commandsRow, skillsRow)
@@ -148,36 +148,39 @@ class StatusPanel(
             KiloAppStatusDto.LOADING -> {
                 val p = state.progress
                 if (p != null) {
-                    if (p.config) configRow.ok("Config") else configRow.loading()
-                    if (p.notifications) notifRow.ok("Notifications") else notifRow.loading()
+                    if (p.config) configRow.ok(KiloBundle.message("toolwindow.row.config")) else configRow.loading()
+                    if (p.notifications) notifRow.ok(KiloBundle.message("toolwindow.row.notifications")) else notifRow.loading()
                     renderProfile(p.profile)
                 }
             }
             KiloAppStatusDto.READY -> {
                 val p = state.progress
                 if (p != null) {
-                    configRow.ok("Config")
-                    notifRow.ok("Notifications")
+                    configRow.ok(KiloBundle.message("toolwindow.row.config"))
+                    notifRow.ok(KiloBundle.message("toolwindow.row.notifications"))
                     renderProfile(p.profile)
                 } else {
-                    configRow.ok("Config")
-                    notifRow.ok("Notifications")
-                    profileRow.ok("Logged in")
+                    configRow.ok(KiloBundle.message("toolwindow.row.config"))
+                    notifRow.ok(KiloBundle.message("toolwindow.row.notifications"))
+                    profileRow.ok(KiloBundle.message("toolwindow.profile.loggedin"))
                 }
             }
             KiloAppStatusDto.ERROR -> {
                 val errors = state.errors.associate { it.resource to it }
                 configRow.apply {
-                    if ("config" in errors) error("Config: ${errors["config"]?.detail ?: "failed"}")
-                    else ok("Config")
+                    val detail = errors["config"]?.detail ?: KiloBundle.message("toolwindow.error.failed")
+                    if ("config" in errors) error(KiloBundle.message("toolwindow.error.config", detail))
+                    else ok(KiloBundle.message("toolwindow.row.config"))
                 }
                 notifRow.apply {
-                    if ("notifications" in errors) error("Notifications: ${errors["notifications"]?.detail ?: "failed"}")
-                    else ok("Notifications")
+                    val detail = errors["notifications"]?.detail ?: KiloBundle.message("toolwindow.error.failed")
+                    if ("notifications" in errors) error(KiloBundle.message("toolwindow.error.notifications", detail))
+                    else ok(KiloBundle.message("toolwindow.row.notifications"))
                 }
                 profileRow.apply {
-                    if ("profile" in errors) error("Profile: ${errors["profile"]?.detail ?: "failed"}")
-                    else ok("Logged in")
+                    val detail = errors["profile"]?.detail ?: KiloBundle.message("toolwindow.error.failed")
+                    if ("profile" in errors) error(KiloBundle.message("toolwindow.error.profile", detail))
+                    else ok(KiloBundle.message("toolwindow.profile.loggedin"))
                 }
             }
         }
@@ -191,18 +194,18 @@ class StatusPanel(
 
         when (state.status) {
             KiloWorkspaceStatusDto.PENDING -> {
-                providersRow.idle("Providers")
-                agentsRow.idle("Agents")
-                commandsRow.idle("Commands")
-                skillsRow.idle("Skills")
+                providersRow.idle(KiloBundle.message("toolwindow.row.providers"))
+                agentsRow.idle(KiloBundle.message("toolwindow.row.agents"))
+                commandsRow.idle(KiloBundle.message("toolwindow.row.commands"))
+                skillsRow.idle(KiloBundle.message("toolwindow.row.skills"))
             }
             KiloWorkspaceStatusDto.LOADING -> {
                 val p = state.progress
                 if (p != null) {
-                    if (p.providers) providersRow.ok("Providers") else providersRow.loading()
-                    if (p.agents) agentsRow.ok("Agents") else agentsRow.loading()
-                    if (p.commands) commandsRow.ok("Commands") else commandsRow.loading()
-                    if (p.skills) skillsRow.ok("Skills") else skillsRow.loading()
+                    if (p.providers) providersRow.ok(KiloBundle.message("toolwindow.row.providers")) else providersRow.loading()
+                    if (p.agents) agentsRow.ok(KiloBundle.message("toolwindow.row.agents")) else agentsRow.loading()
+                    if (p.commands) commandsRow.ok(KiloBundle.message("toolwindow.row.commands")) else commandsRow.loading()
+                    if (p.skills) skillsRow.ok(KiloBundle.message("toolwindow.row.skills")) else skillsRow.loading()
                 } else {
                     providersRow.loading()
                     agentsRow.loading()
@@ -215,17 +218,17 @@ class StatusPanel(
                 val ag = state.agents?.all?.size ?: 0
                 val cmd = state.commands.size
                 val sk = state.skills.size
-                providersRow.ok("Providers ($prov)")
-                agentsRow.ok("Agents ($ag)")
-                commandsRow.ok("Commands ($cmd)")
-                skillsRow.ok("Skills ($sk)")
+                providersRow.ok(KiloBundle.message("toolwindow.row.providers.count", prov))
+                agentsRow.ok(KiloBundle.message("toolwindow.row.agents.count", ag))
+                commandsRow.ok(KiloBundle.message("toolwindow.row.commands.count", cmd))
+                skillsRow.ok(KiloBundle.message("toolwindow.row.skills.count", sk))
             }
             KiloWorkspaceStatusDto.ERROR -> {
-                val msg = state.error ?: "Unknown error"
+                val msg = state.error ?: KiloBundle.message("toolwindow.error.unknown")
                 providersRow.error(msg)
-                agentsRow.idle("Agents")
-                commandsRow.idle("Commands")
-                skillsRow.idle("Skills")
+                agentsRow.idle(KiloBundle.message("toolwindow.row.agents"))
+                commandsRow.idle(KiloBundle.message("toolwindow.row.commands"))
+                skillsRow.idle(KiloBundle.message("toolwindow.row.skills"))
             }
         }
     }
@@ -239,7 +242,8 @@ class StatusPanel(
             KiloAppStatusDto.LOADING -> KiloBundle.message("toolwindow.status.loading")
             KiloAppStatusDto.READY -> {
                 val ver = model.chat.version
-                if (ver != null) "Connected (CLI $ver)" else KiloBundle.message("toolwindow.status.connected")
+                if (ver != null) KiloBundle.message("toolwindow.status.connected.version", ver)
+                else KiloBundle.message("toolwindow.status.connected")
             }
             KiloAppStatusDto.ERROR -> KiloBundle.message(
                 "toolwindow.status.error",
@@ -249,20 +253,20 @@ class StatusPanel(
 
     private fun renderProfile(profile: ProfileStatusDto) {
         when (profile) {
-            ProfileStatusDto.LOADED -> profileRow.ok("Logged in")
-            ProfileStatusDto.NOT_LOGGED_IN -> profileRow.warn("Not logged in")
-            ProfileStatusDto.PENDING -> profileRow.loading("Profile")
+            ProfileStatusDto.LOADED -> profileRow.ok(KiloBundle.message("toolwindow.profile.loggedin"))
+            ProfileStatusDto.NOT_LOGGED_IN -> profileRow.warn(KiloBundle.message("toolwindow.profile.notloggedin"))
+            ProfileStatusDto.PENDING -> profileRow.loading(KiloBundle.message("toolwindow.row.profile"))
         }
     }
 
     private fun resetAll() {
-        configRow.idle("Config")
-        notifRow.idle("Notifications")
-        profileRow.idle("Profile")
-        providersRow.idle("Providers")
-        agentsRow.idle("Agents")
-        commandsRow.idle("Commands")
-        skillsRow.idle("Skills")
+        configRow.idle(KiloBundle.message("toolwindow.row.config"))
+        notifRow.idle(KiloBundle.message("toolwindow.row.notifications"))
+        profileRow.idle(KiloBundle.message("toolwindow.row.profile"))
+        providersRow.idle(KiloBundle.message("toolwindow.row.providers"))
+        agentsRow.idle(KiloBundle.message("toolwindow.row.agents"))
+        commandsRow.idle(KiloBundle.message("toolwindow.row.commands"))
+        skillsRow.idle(KiloBundle.message("toolwindow.row.skills"))
     }
 
     // ------ row factory ------
