@@ -1841,12 +1841,14 @@ export interface QuestionRejectRequest {
 export interface SuggestionAcceptRequest {
   type: "suggestionAccept"
   requestID: string
+  sessionID: string
   index: number
 }
 
 export interface SuggestionDismissRequest {
   type: "suggestionDismiss"
   requestID: string
+  sessionID: string
 }
 
 export interface DeleteSessionRequest {

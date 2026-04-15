@@ -33,19 +33,24 @@ export function recoverableSuggestions(items: RecoverableSuggestion[], tracked: 
  */
 export async function routeSuggestionWebviewMessage(
   ctx: SuggestionContext,
-  message: { type: string; requestID?: string; index?: number },
+  message: { type: string; requestID?: string; sessionID?: string; index?: number },
 ): Promise<void> {
   switch (message.type) {
     case "suggestionAccept":
-      await handleSuggestionAccept(ctx, message.requestID!, message.index!)
+      await handleSuggestionAccept(ctx, message.requestID!, message.index!, message.sessionID)
       break
     case "suggestionDismiss":
-      await handleSuggestionDismiss(ctx, message.requestID!)
+      await handleSuggestionDismiss(ctx, message.requestID!, message.sessionID)
       break
   }
 }
 
-export async function handleSuggestionAccept(ctx: SuggestionContext, requestID: string, index: number): Promise<void> {
+export async function handleSuggestionAccept(
+  ctx: SuggestionContext,
+  requestID: string,
+  index: number,
+  sessionID?: string,
+): Promise<void> {
   if (!ctx.client) {
     ctx.postMessage({ type: "suggestionError", requestID })
     return
@@ -53,7 +58,7 @@ export async function handleSuggestionAccept(ctx: SuggestionContext, requestID: 
 
   try {
     await ctx.client.suggestion.accept(
-      { requestID, index, directory: ctx.getWorkspaceDirectory(ctx.currentSessionId) },
+      { requestID, index, directory: ctx.getWorkspaceDirectory(sessionID ?? ctx.currentSessionId) },
       { throwOnError: true },
     )
   } catch (error) {
@@ -62,7 +67,11 @@ export async function handleSuggestionAccept(ctx: SuggestionContext, requestID: 
   }
 }
 
-export async function handleSuggestionDismiss(ctx: SuggestionContext, requestID: string): Promise<void> {
+export async function handleSuggestionDismiss(
+  ctx: SuggestionContext,
+  requestID: string,
+  sessionID?: string,
+): Promise<void> {
   if (!ctx.client) {
     ctx.postMessage({ type: "suggestionError", requestID })
     return
@@ -70,7 +79,7 @@ export async function handleSuggestionDismiss(ctx: SuggestionContext, requestID:
 
   try {
     await ctx.client.suggestion.dismiss(
-      { requestID, directory: ctx.getWorkspaceDirectory(ctx.currentSessionId) },
+      { requestID, directory: ctx.getWorkspaceDirectory(sessionID ?? ctx.currentSessionId) },
       { throwOnError: true },
     )
   } catch (error) {

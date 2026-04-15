@@ -1677,9 +1677,11 @@ export const SessionProvider: ParentComponent = (props) => {
   function acceptSuggestion(requestID: string, index: number) {
     clearSuggestionError(requestID)
     setRespondingSuggestions((prev) => new Set(prev).add(requestID))
+    const sid = suggestions().find((s) => s.id === requestID)?.sessionID ?? currentSessionID() ?? ""
     vscode.postMessage({
       type: "suggestionAccept",
       requestID,
+      sessionID: sid,
       index,
     })
   }
@@ -1687,9 +1689,11 @@ export const SessionProvider: ParentComponent = (props) => {
   function dismissSuggestion(requestID: string) {
     clearSuggestionError(requestID)
     setRespondingSuggestions((prev) => new Set(prev).add(requestID))
+    const sid = suggestions().find((s) => s.id === requestID)?.sessionID ?? currentSessionID() ?? ""
     vscode.postMessage({
       type: "suggestionDismiss",
       requestID,
+      sessionID: sid,
     })
   }
 
