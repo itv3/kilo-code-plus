@@ -54,7 +54,7 @@ export const PermissionKilocodeRoutes = lazy(() =>
           return c.json(true)
         }
 
-        await Config.updateGlobal({ permission: { "*": null } }, { dispose: false })
+        await Config.updateGlobal({ permission: { "*": { "*": null } } }, { dispose: false })
         await Permission.allowEverything({ enable: false })
         await Bus.publish(Event.ConfigUpdated, {})
         return c.json(true)
