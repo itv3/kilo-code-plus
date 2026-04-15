@@ -599,6 +599,7 @@ export interface MessageCreatedMessage {
 export interface SessionsLoadedMessage {
   type: "sessionsLoaded"
   sessions: SessionInfo[]
+  preserveSessionIds?: string[]
 }
 
 export interface CloudSessionsLoadedMessage {
