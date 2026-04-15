@@ -195,10 +195,12 @@ export async function loadSessions(ctx: SessionRefreshContext): Promise<string |
   const sessions = await list(ctx.workspaceDirectory)
   const projectID = sessions[0]?.projectID
   const worktreeDirs = new Set(ctx.sessionDirectories.values())
+  const failed = new Set<string>()
   const extra = await Promise.all(
     [...worktreeDirs].map((dir) =>
       list(dir).catch((err: unknown) => {
         console.error(`[Kilo] Failed to list sessions for ${dir}:`, err)
+        failed.add(dir)
         return [] as Session[]
       }),
     ),
@@ -212,9 +214,19 @@ export async function loadSessions(ctx: SessionRefreshContext): Promise<string |
     }
   }
 
+  // Sessions whose worktree directories failed to list — the webview must
+  // not delete these during reconciliation since the absence is transient.
+  const preserve: string[] = []
+  if (failed.size) {
+    for (const [sid, dir] of ctx.sessionDirectories) {
+      if (failed.has(dir)) preserve.push(sid)
+    }
+  }
+
   ctx.postMessage({
     type: "sessionsLoaded",
     sessions: sessions.map((s) => sessionToWebview(s)),
+    ...(preserve.length ? { preserveSessionIds: preserve } : {}),
   })
 
   return projectID
@@ -295,8 +307,24 @@ export type WebviewMessage =
       }
     }
   | { type: "todoUpdated"; sessionID: string; items: unknown[] }
-  | { type: "questionRequest"; question: { id: string; sessionID: string; questions: unknown[]; tool?: unknown } }
+  | {
+      type: "questionRequest"
+      question: { id: string; sessionID: string; questions: unknown[]; blocking?: boolean; tool?: unknown }
+    }
   | { type: "questionResolved"; requestID: string }
+  | {
+      type: "suggestionRequest"
+      suggestion: {
+        id: string
+        sessionID: string
+        text: string
+        actions: unknown[]
+        blocking?: boolean
+        tool?: unknown
+      }
+    }
+  | { type: "suggestionResolved"; requestID: string }
+  | { type: "suggestionError"; requestID: string }
   | { type: "permissionResolved"; permissionID: string }
   | { type: "permissionError"; permissionID: string }
   | { type: "sessionCreated"; session: ReturnType<typeof sessionToWebview>; draftID?: string }
@@ -400,6 +428,7 @@ export function mapSSEEventToWebviewMessage(event: Event, sessionID: string | un
           id: event.properties.id,
           sessionID: event.properties.sessionID,
           questions: event.properties.questions,
+          blocking: event.properties.blocking,
           tool: event.properties.tool,
         },
       }
@@ -407,6 +436,24 @@ export function mapSSEEventToWebviewMessage(event: Event, sessionID: string | un
     case "question.rejected":
       return {
         type: "questionResolved",
+        requestID: event.properties.requestID,
+      }
+    case "suggestion.shown":
+      return {
+        type: "suggestionRequest",
+        suggestion: {
+          id: event.properties.id,
+          sessionID: event.properties.sessionID,
+          text: event.properties.text,
+          actions: event.properties.actions,
+          blocking: event.properties.blocking,
+          tool: event.properties.tool,
+        },
+      }
+    case "suggestion.accepted":
+    case "suggestion.dismissed":
+      return {
+        type: "suggestionResolved",
         requestID: event.properties.requestID,
       }
     case "session.error": {
