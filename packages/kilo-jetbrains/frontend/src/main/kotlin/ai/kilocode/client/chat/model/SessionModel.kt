@@ -58,6 +58,7 @@ class SessionModel(
     // Status computation state (EDT-only)
     private var partType: String? = null
     private var tool: String? = null
+    private var busy: Boolean = false
 
     // Coroutine job for the current event subscription
     private var eventJob: Job? = null
@@ -242,7 +243,9 @@ class SessionModel(
                 partType = event.part.type
                 tool = event.part.tool
                 chat.updatePart(event.part.messageID, event.part)
-                fire(SessionEvent.StatusChanged(status()))
+                if (busy) {
+                    fire(SessionEvent.StatusChanged(status()))
+                }
                 if (event.part.type == "text" && event.part.text != null) {
                     fire(SessionEvent.PartUpdated(event.part.messageID, event.part.id))
                 }
@@ -258,6 +261,7 @@ class SessionModel(
             is ChatEventDto.TurnOpen -> {
                 partType = null
                 tool = null
+                busy = true
                 fire(SessionEvent.StatusChanged("Considering next steps..."))
                 fire(SessionEvent.BusyChanged(true))
             }
@@ -265,12 +269,14 @@ class SessionModel(
             is ChatEventDto.TurnClose -> {
                 partType = null
                 tool = null
+                busy = false
                 fire(SessionEvent.StatusChanged(null))
                 fire(SessionEvent.BusyChanged(false))
             }
 
             is ChatEventDto.Error -> {
                 val msg = event.error?.message ?: event.error?.type ?: "Unknown error"
+                busy = false
                 fire(SessionEvent.Error(msg))
                 fire(SessionEvent.StatusChanged(null))
                 fire(SessionEvent.BusyChanged(false))

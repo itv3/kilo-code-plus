@@ -137,10 +137,13 @@ class ChatPanel(
                         c.agents.map { LabelPicker.Item(it.name, it.display) },
                         c.agent,
                     )
-                    prompt.model.setItems(
-                        c.models.map { LabelPicker.Item(it.id, it.display, it.provider) },
-                        c.model,
-                    )
+                    val items = c.models.map { LabelPicker.Item(it.id, it.display, it.provider) }
+                    // chat.model is "provider/modelId", picker items use modelId only.
+                    // Find the matching item and pass its id for selection.
+                    val selected = c.model?.let { full ->
+                        items.firstOrNull { "${it.group}/${it.id}" == full }?.id
+                    }
+                    prompt.model.setItems(items, selected)
                     prompt.setReady(c.ready)
                 }
 
