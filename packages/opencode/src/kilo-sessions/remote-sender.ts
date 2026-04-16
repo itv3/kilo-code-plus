@@ -1,7 +1,10 @@
 import { RemoteProtocol } from "@/kilo-sessions/remote-protocol"
 import type { RemoteWS } from "@/kilo-sessions/remote-ws"
 import { GlobalBus } from "@/bus/global"
-import { AppRuntime } from "@/effect/app-runtime"
+// kilocode_change - AppRuntime is imported lazily inside dispatch() below to break a
+// module init cycle: Worktree → project/bootstrap → kilo-sessions → remote-sender →
+// app-runtime → Worktree. Static import here caused Worktree.defaultLayer to be
+// undefined when app-runtime evaluated during tests that import Worktree.
 import { Instance } from "@/project/instance"
 import { Session } from "@/session"
 import { SessionPrompt } from "@/session/prompt"
@@ -301,13 +304,14 @@ export namespace RemoteSender {
           return
         }
         const dir = msg.sessionId ? directoryFor(msg.sessionId) : Promise.resolve(options.directory)
-        dispatchQuick(msg, dir, () =>
-          AppRuntime.runPromise(
+        dispatchQuick(msg, dir, async () => {
+          const { AppRuntime } = await import("@/effect/app-runtime")
+          await AppRuntime.runPromise(
             Permission.Service.use((svc) =>
               svc.reply({ ...parsed.data, requestID: PermissionID.make(parsed.data.requestID) }),
             ),
-          ),
-        )
+          )
+        })
         return
       }
       options.conn.send({
