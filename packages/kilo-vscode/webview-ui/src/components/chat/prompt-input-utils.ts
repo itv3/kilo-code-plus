@@ -52,10 +52,11 @@ export function atEnd(start: number, end: number, len: number): boolean {
 
 /**
  * Whether the input prompt should be blocked.
- * Only permissions block — questions and suggestions do NOT.
+ * Permissions always block. Questions block unless they set `blocking: false`.
+ * Non-blocking questions and suggestions never block.
  */
-export function isPromptBlocked(permissions: number): boolean {
-  return permissions > 0
+export function isPromptBlocked(permissions: number, blocking: number = 0): boolean {
+  return permissions > 0 || blocking > 0
 }
 
 /**

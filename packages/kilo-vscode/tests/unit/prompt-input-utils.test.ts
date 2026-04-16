@@ -151,8 +151,9 @@ describe("atEnd", () => {
 })
 
 describe("isPromptBlocked", () => {
-  it("returns false when zero permissions", () => {
+  it("returns false when zero permissions and no blocking questions", () => {
     expect(isPromptBlocked(0)).toBe(false)
+    expect(isPromptBlocked(0, 0)).toBe(false)
   })
 
   it("returns true when permissions exist", () => {
@@ -160,9 +161,13 @@ describe("isPromptBlocked", () => {
     expect(isPromptBlocked(3)).toBe(true)
   })
 
-  it("takes only permission count — no question/suggestion leakage", () => {
-    // The function signature accepts a single number; verify that zero means unblocked
-    expect(isPromptBlocked(0)).toBe(false)
+  it("returns true when blocking questions exist", () => {
+    expect(isPromptBlocked(0, 1)).toBe(true)
+    expect(isPromptBlocked(0, 2)).toBe(true)
+  })
+
+  it("returns true when both permissions and blocking questions exist", () => {
+    expect(isPromptBlocked(1, 1)).toBe(true)
   })
 })
 
