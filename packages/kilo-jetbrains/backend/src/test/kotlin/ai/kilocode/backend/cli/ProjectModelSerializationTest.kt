@@ -36,18 +36,30 @@ class ProjectModelSerializationTest {
             "all": [{
                 "id": "anthropic",
                 "name": "Anthropic",
+                "source": "api",
                 "env": ["ANTHROPIC_API_KEY"],
+                "options": {},
                 "models": {
                     "claude-4": {
                         "id": "claude-4",
+                        "providerID": "anthropic",
                         "name": "Claude 4",
-                        "release_date": "2025-05-01",
-                        "attachment": true,
-                        "reasoning": true,
-                        "temperature": true,
-                        "tool_call": true,
+                        "api": {"id": "anthropic", "url": "", "npm": ""},
+                        "capabilities": {
+                            "temperature": true,
+                            "reasoning": true,
+                            "attachment": true,
+                            "toolcall": true,
+                            "input": {"text": true, "audio": false, "image": false, "video": false, "pdf": false},
+                            "output": {"text": true, "audio": false, "image": false, "video": false, "pdf": false},
+                            "interleaved": false
+                        },
+                        "cost": {"input": 0, "output": 0, "cache": {"read": 0, "write": 0}},
                         "limit": {"context": 200000, "output": 16000},
-                        "options": {}
+                        "status": "active",
+                        "options": {},
+                        "headers": {},
+                        "release_date": "2025-05-01"
                     }
                 }
             }],
@@ -61,9 +73,9 @@ class ProjectModelSerializationTest {
         val model = obj.all[0].models["claude-4"]
         assertNotNull(model)
         assertEquals("Claude 4", model.name)
-        assertTrue(model.attachment)
-        assertTrue(model.reasoning)
-        assertTrue(model.toolCall)
+        assertTrue(model.capabilities.attachment)
+        assertTrue(model.capabilities.reasoning)
+        assertTrue(model.capabilities.toolcall)
         assertEquals("anthropic/claude-4", obj.default["code"])
         assertEquals(listOf("anthropic"), obj.connected)
     }
@@ -74,20 +86,31 @@ class ProjectModelSerializationTest {
             "all": [{
                 "id": "free-provider",
                 "name": "Free",
+                "source": "api",
                 "env": [],
+                "options": {},
                 "models": {
                     "free-model": {
                         "id": "free-model",
+                        "providerID": "free-provider",
                         "name": "Free Model",
-                        "release_date": "2025-01-01",
-                        "attachment": false,
-                        "reasoning": false,
-                        "temperature": false,
-                        "tool_call": false,
-                        "isFree": true,
-                        "status": "beta",
+                        "api": {"id": "free-provider", "url": "", "npm": ""},
+                        "capabilities": {
+                            "temperature": false,
+                            "reasoning": false,
+                            "attachment": false,
+                            "toolcall": false,
+                            "input": {"text": true, "audio": false, "image": false, "video": false, "pdf": false},
+                            "output": {"text": true, "audio": false, "image": false, "video": false, "pdf": false},
+                            "interleaved": false
+                        },
+                        "cost": {"input": 0, "output": 0, "cache": {"read": 0, "write": 0}},
                         "limit": {"context": 8000, "output": 4000},
-                        "options": {}
+                        "status": "beta",
+                        "options": {},
+                        "headers": {},
+                        "release_date": "2025-01-01",
+                        "isFree": true
                     }
                 }
             }],
@@ -98,7 +121,7 @@ class ProjectModelSerializationTest {
         val model = obj.all[0].models["free-model"]!!
         assertEquals(true, model.isFree)
         assertEquals(
-            ai.kilocode.jetbrains.api.model.ProviderList200ResponseAllInnerModelsValue.Status.BETA,
+            ai.kilocode.jetbrains.api.model.Model.Status.BETA,
             model.status,
         )
     }

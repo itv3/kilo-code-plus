@@ -432,7 +432,9 @@ class KiloBackendWorkspaceTest {
             "all": [{
                 "id": "openai",
                 "name": "OpenAI",
+                "source": "api",
                 "env": [],
+                "options": {},
                 "models": {}
             }],
             "default": {},
@@ -472,18 +474,30 @@ class KiloBackendWorkspaceTest {
             "all": [{
                 "id": "anthropic",
                 "name": "Anthropic",
+                "source": "api",
                 "env": ["ANTHROPIC_API_KEY"],
+                "options": {},
                 "models": {
                     "claude-4": {
                         "id": "claude-4",
+                        "providerID": "anthropic",
                         "name": "Claude 4",
-                        "release_date": "2025-05-01",
-                        "attachment": true,
-                        "reasoning": true,
-                        "temperature": true,
-                        "tool_call": true,
+                        "api": {"id": "anthropic", "url": "", "npm": ""},
+                        "capabilities": {
+                            "temperature": true,
+                            "reasoning": true,
+                            "attachment": true,
+                            "toolcall": true,
+                            "input": {"text": true, "audio": false, "image": false, "video": false, "pdf": false},
+                            "output": {"text": true, "audio": false, "image": false, "video": false, "pdf": false},
+                            "interleaved": false
+                        },
+                        "cost": {"input": 0, "output": 0, "cache": {"read": 0, "write": 0}},
                         "limit": {"context": 200000, "output": 16000},
-                        "options": {}
+                        "status": "active",
+                        "options": {},
+                        "headers": {},
+                        "release_date": "2025-05-01"
                     }
                 }
             }],

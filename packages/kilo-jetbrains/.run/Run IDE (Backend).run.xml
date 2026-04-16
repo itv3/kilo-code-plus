@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run JetBrains Plugin" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Run IDE (Backend)" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/packages/kilo-jetbrains" />
@@ -10,10 +10,10 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="runIde" />
+          <option value=":runIdeBackend" />
         </list>
       </option>
-      <option name="vmOptions" />
+      <option name="vmOptions" value="" />
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
