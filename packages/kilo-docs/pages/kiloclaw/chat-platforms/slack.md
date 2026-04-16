@@ -53,7 +53,7 @@ You need two tokens from Slack:
 
 1. In Slack, DM the app and send any message — this triggers the pairing flow
 2. The app will return a pairing code
-3. Return to [app.kilocode.ai/claw](https://app.kilocode.ai/claw) and confirm the pairing code and approve
+3. Return to [app.kilo.ai/claw](https://app.kilo.ai/claw) and confirm the pairing code and approve
 4. You should now be able to DM the bot from Slack. You will need to add the bot to any individual channels and tell it to update its config for any channels you want it to participate in.
 
 ## Changing Response Behavior
