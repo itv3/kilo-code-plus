@@ -347,7 +347,25 @@ The extension also supports the `{env:VARIABLE_NAME}` syntax in config files to 
 | `kilo mcp logout` | Log out from an MCP server      |
 | `kilo mcp debug`  | Debug an MCP server connection  |
 
+### Enabling or Disabling a Server
+
 Inside the interactive TUI, use the `/mcps` slash command to toggle MCP servers on or off.
+
+You can also edit your config directly. Set `enabled` to `false` to disable a server without deleting it, or `true` to enable it again:
+
+```json
+{
+  "mcp": {
+    "my-server": {
+      "type": "local",
+      "command": ["npx", "-y", "my-mcp-command"],
+      "enabled": false
+    }
+  }
+}
+```
+
+Run `kilo mcp list` to verify the server status.
 
 ### Environment Variables
 
@@ -482,19 +500,41 @@ When enabled, Kilo Code will automatically approve this specific tool without pr
 {% /tab %}
 {% /tabs %}
 
-## Platform-Specific MCP Configuration Examples
+## Platform-Specific Local Server Commands
+
+Local MCP server instructions are often written as shell commands, such as `npx -y @modelcontextprotocol/server-puppeteer`. Use the right command format for your operating system.
 
 {% tabs %}
 {% tab label="VSCode" %}
 
-In the VS Code extension, use **Settings → MCP → Add Server** to add any of the examples below through the UI. You can also edit the config files directly — see the **CLI** tab for the JSON format.
+In the VS Code extension, open **Settings → MCP**, click **Add Server**, and choose **Local (stdio)**.
+
+### Windows
+
+Use `cmd` as the command and pass the package command as arguments:
+
+| Field         | Value                                                       |
+| ------------- | ----------------------------------------------------------- |
+| **Name**      | `puppeteer`                                                 |
+| **Command**   | `cmd`                                                       |
+| **Arguments** | `/c`, `npx`, `-y`, `@modelcontextprotocol/server-puppeteer` |
+
+### macOS and Linux
+
+Use the executable directly:
+
+| Field         | Value                                          |
+| ------------- | ---------------------------------------------- |
+| **Name**      | `puppeteer`                                    |
+| **Command**   | `npx`                                          |
+| **Arguments** | `-y`, `@modelcontextprotocol/server-puppeteer` |
 
 {% /tab %}
 {% tab label="CLI" %}
 
 ### Windows
 
-When setting up local MCP servers on Windows, use the full `cmd` invocation in the `command` array:
+Use the full `cmd` invocation in the `command` array:
 
 ```json
 {
@@ -508,7 +548,61 @@ When setting up local MCP servers on Windows, use the full `cmd` invocation in t
 }
 ```
 
-The same approach can be used for other MCP servers on Windows, adjusting the package name as needed for different server types.
+### macOS and Linux
+
+Use `npx` directly:
+
+```json
+{
+  "mcp": {
+    "puppeteer": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-puppeteer"],
+      "enabled": true
+    }
+  }
+}
+```
+
+{% /tab %}
+{% tab label="VSCode (Legacy)" %}
+
+### Windows
+
+Use `cmd` as the command and put the rest of the invocation in `args`:
+
+```json
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-puppeteer"]
+    }
+  }
+}
+```
+
+### macOS and Linux
+
+Use `npx` directly:
+
+```json
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    }
+  }
+}
+```
+
+{% /tab %}
+{% /tabs %}
+
+## MCP Server Examples
+
+These examples use the current `mcp` config format. In VS Code, use **Settings → MCP → Add Server** and enter the same type, URL, or command values through the UI.
 
 ### Figma Desktop
 
@@ -554,51 +648,6 @@ Add the test MCP server for development:
   }
 }
 ```
-
-{% /tab %}
-{% tab label="VSCode (Legacy)" %}
-
-### Windows Configuration Example
-
-When setting up MCP servers on Windows, you'll need to use the Windows Command Prompt (`cmd`) to execute commands. Here's an example of configuring a Puppeteer MCP server on Windows:
-
-```json
-{
-  "mcpServers": {
-    "puppeteer": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-puppeteer"]
-    }
-  }
-}
-```
-
-This Windows-specific configuration:
-
-- Uses the `cmd` command to access the Windows Command Prompt
-- Uses `/c` to tell cmd to execute the command and then terminate
-- Uses `npx` to run the package without installing it permanently
-- The `-y` flag automatically answers "yes" to any prompts during installation
-- Runs the `@modelcontextprotocol/server-puppeteer` package which provides browser automation capabilities
-
-{% callout type="note" %}
-For macOS or Linux, you would use a different configuration:
-
-```json
-{
-  "mcpServers": {
-    "puppeteer": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
-    }
-  }
-}
-```
-
-{% /callout %}
-
-{% /tab %}
-{% /tabs %}
 
 ## Finding and Installing MCP Servers
 
