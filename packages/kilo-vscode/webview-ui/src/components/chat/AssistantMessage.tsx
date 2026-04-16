@@ -54,7 +54,6 @@ function matchToolRequest<T extends { tool?: { callID: string; messageID: string
   if (part.type !== "tool") return undefined
   const tp = part as unknown as ToolPart
   if (tp.tool !== name) return undefined
-  if (tp.state?.status !== "pending" && tp.state?.status !== "running") return undefined
   return requests.find((r) => r.tool?.callID === tp.callID && r.tool?.messageID === tp.messageID)
 }
 
