@@ -278,6 +278,16 @@ export namespace LSP {
             if (!root) continue
             if (s.broken.has(root + server.id)) continue
 
+            // kilocode_change start - use lightweight tsgo-based client when persistent LSP is not enabled
+            if (server.id === "typescript" && !Flag.KILO_EXPERIMENTAL_LSP_TOOL) {
+              const client = TsClient.create({ root })
+              s.clients.push(client)
+              result.push(client)
+              Bus.publish(Event.Updated, {})
+              continue
+            }
+            // kilocode_change end
+
             const match = s.clients.find((x) => x.root === root && x.serverID === server.id)
             if (match) {
               result.push(match)
@@ -302,6 +312,16 @@ export namespace LSP {
             })
 
             const client = await task
+            // kilocode_change start - fallback to lightweight client when tsgo LSP spawn fails
+            if (!client && server.id === "typescript") {
+              s.broken.delete(root + server.id)
+              const fallback = TsClient.create({ root })
+              s.clients.push(fallback)
+              result.push(fallback)
+              Bus.publish(Event.Updated, {})
+              continue
+            }
+            // kilocode_change end
             if (!client) continue
 
             result.push(client)
