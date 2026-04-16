@@ -5,7 +5,7 @@ description: "Use KiloClaw with Telegram: setup, DM access control, and group ch
 
 # Telegram
 
-This page covers everything you need to use KiloClaw with Telegram: connecting your bot, controlling who can DM it, and adding it to group chats.
+This page covers everything you need to use KiloClaw with Telegram: connecting your bot and adding it to group chats.
 
 ## Connecting KiloClaw to Telegram
 
