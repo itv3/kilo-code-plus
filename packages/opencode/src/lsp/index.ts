@@ -280,6 +280,11 @@ export namespace LSP {
 
             // kilocode_change start - use lightweight tsgo-based client when persistent LSP is not enabled
             if (server.id === "typescript" && !Flag.KILO_EXPERIMENTAL_LSP_TOOL) {
+              const existing = s.clients.find((x) => x.root === root && x.serverID === server.id)
+              if (existing) {
+                result.push(existing)
+                continue
+              }
               const client = TsClient.create({ root })
               s.clients.push(client)
               result.push(client)
