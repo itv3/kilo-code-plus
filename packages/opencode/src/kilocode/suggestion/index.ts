@@ -149,12 +149,12 @@ export namespace Suggestion {
     return true
   }
 
-  export async function dismiss(requestID: string): Promise<void> {
+  export async function dismiss(requestID: string): Promise<boolean> {
     const s = await state()
     const existing = s.pending[requestID]
     if (!existing) {
       log.warn("dismiss for unknown request", { requestID })
-      return
+      return false
     }
     delete s.pending[requestID]
 
@@ -166,6 +166,7 @@ export namespace Suggestion {
     })
 
     existing.reject(new DismissedError())
+    return true
   }
 
   export class DismissedError extends Error {

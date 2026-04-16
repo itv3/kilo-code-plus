@@ -92,7 +92,8 @@ export const SuggestionRoutes = lazy(() =>
       ),
       async (c) => {
         const params = c.req.valid("param")
-        await Suggestion.dismiss(params.requestID)
+        const ok = await Suggestion.dismiss(params.requestID)
+        if (!ok) throw new NotFoundError({ message: `Suggestion not found: ${params.requestID}` })
         return c.json(true)
       },
     ),
