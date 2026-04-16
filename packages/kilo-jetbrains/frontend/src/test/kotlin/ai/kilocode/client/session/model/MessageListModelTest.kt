@@ -147,12 +147,30 @@ class MessageListModelTest : UsefulTestCase() {
         assertEquals("something broke", event.message)
     }
 
-    fun `test addError accumulates errors`() {
+    fun `test addError accumulates distinct errors`() {
         model.addError("first")
         model.addError("second")
 
         assertEquals(listOf("first", "second"), model.errors)
         assertEquals(2, events.size)
+    }
+
+    fun `test addError deduplicates consecutive identical errors`() {
+        model.addError("same")
+        model.addError("same")
+        model.addError("same")
+
+        assertEquals(listOf("same"), model.errors)
+        assertEquals(1, events.size)
+    }
+
+    fun `test addError allows same error after different one`() {
+        model.addError("a")
+        model.addError("b")
+        model.addError("a")
+
+        assertEquals(listOf("a", "b", "a"), model.errors)
+        assertEquals(3, events.size)
     }
 
     // --- setStatus ---

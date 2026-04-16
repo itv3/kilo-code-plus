@@ -71,6 +71,7 @@ class MessageListModel {
     }
 
     fun addError(message: String) {
+        if (_errors.lastOrNull() == message) return
         _errors.add(message)
         fire(MessageModelEvent.Error(message))
     }
