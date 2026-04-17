@@ -667,13 +667,16 @@ export const SessionProvider: ParentComponent = (props) => {
 
   onCleanup(unsubVariants)
 
-  // Load persisted per-mode model selections from model.json via extension host
+  // Load persisted per-mode model selections from model.json via extension host.
+  // Uses replace semantics so a reset (empty payload) clears old entries.
   const unsubSelections = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type !== "modelSelectionsLoaded") return
-    for (const [name, selection] of Object.entries(message.selections)) {
-      setStore("modelSelections", name, selection)
-      setUserSetAgents((prev) => ({ ...prev, [name]: true }))
+    setStore("modelSelections", reconcile(message.selections))
+    const flags: Record<string, boolean> = {}
+    for (const name of Object.keys(message.selections)) {
+      flags[name] = true
     }
+    setUserSetAgents(flags)
   })
   vscode.postMessage({ type: "requestModelSelections" })
   onCleanup(unsubSelections)

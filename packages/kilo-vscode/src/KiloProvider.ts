@@ -221,6 +221,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private cachedGitRepo = false
   /** Lazily resolved path to model.json for per-mode model persistence */
   private modelJsonPath: string | undefined
+  /** Serializes model.json writes to prevent concurrent read-modify-write races. */
+  private modelJsonQueue: Promise<void> = Promise.resolve()
 
   /** Optional interceptor called before the standard message handler.
    *  Return null to consume the message, or return a (possibly transformed) message. */
@@ -323,13 +325,18 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     }
   }
 
-  /** Write a single top-level field in model.json (read-modify-write, preserves other fields). */
-  private async writeModelJsonField(key: string, value: unknown): Promise<void> {
-    const p = await this.getModelJsonPath()
-    if (!p) return
-    const existing = await this.readModelJson()
-    existing[key] = value
-    await fs.promises.writeFile(p, JSON.stringify(existing, null, 2))
+  /** Write a single top-level field in model.json (read-modify-write, preserves other fields).
+   *  Serialized through modelJsonQueue to prevent concurrent writes from losing data. */
+  private writeModelJsonField(key: string, value: unknown): Promise<void> {
+    const op = this.modelJsonQueue.then(async () => {
+      const p = await this.getModelJsonPath()
+      if (!p) return
+      const existing = await this.readModelJson()
+      existing[key] = value
+      await fs.promises.writeFile(p, JSON.stringify(existing, null, 2))
+    })
+    this.modelJsonQueue = op.catch(() => {})
+    return op
   }
 
   // Strip edit-tool metadata.filediff.before/after (multi-MB for edit-heavy
