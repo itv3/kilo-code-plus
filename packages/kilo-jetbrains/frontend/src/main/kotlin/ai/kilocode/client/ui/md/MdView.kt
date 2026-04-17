@@ -140,6 +140,8 @@ abstract class MdView private constructor() {
 
         private val renderer: HtmlRenderer = HtmlRenderer.builder()
             .extensions(extensions)
+            .escapeHtml(true)
+            .sanitizeUrls(true)
             .build()
 
         private val pane: JEditorPane = JEditorPane().apply {
@@ -152,7 +154,7 @@ abstract class MdView private constructor() {
             addHyperlinkListener { e ->
                 if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
                     val href = e.description ?: return@addHyperlinkListener
-                    val pt = e.inputEvent?.let { Point(it.component.x, it.component.y) }
+                    val pt = (e.inputEvent as? java.awt.event.MouseEvent)?.point
                     val event = LinkEvent(href, pt)
                     for (l in listeners) {
                         l.onLink(event)
