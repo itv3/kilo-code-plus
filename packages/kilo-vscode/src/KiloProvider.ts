@@ -1,3 +1,4 @@
+import * as fs from "fs"
 import * as path from "path"
 import * as vscode from "vscode"
 import { buildPreviewPath, getPreviewCommand, getPreviewDir, parseImage, trimEntries } from "./image-preview"
@@ -99,6 +100,7 @@ import {
   fetchProviderData,
   validateRecents,
   validateFavorites,
+  validateModelSelections,
   connectProvider as connectProviderAction,
   authorizeProviderOAuth as authorizeOAuthAction,
   completeProviderOAuth as completeOAuthAction,
@@ -217,6 +219,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private statsGitOps: GitOps | null = null
   private cachedStats: unknown = null
   private cachedGitRepo = false
+  /** Lazily resolved path to model.json for per-mode model persistence */
+  private modelJsonPath: string | undefined
 
   /** Optional interceptor called before the standard message handler.
    *  Return null to consume the message, or return a (possibly transformed) message. */
@@ -289,6 +293,43 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     } catch {
       return null
     }
+  }
+
+  /** Resolve the path to model.json, lazily cached via sdk.path.get(). */
+  private async getModelJsonPath(): Promise<string | undefined> {
+    if (this.modelJsonPath) return this.modelJsonPath
+    try {
+      const resp = await this.client?.path.get()
+      if (!resp?.data?.state) return undefined
+      this.modelJsonPath = path.join(resp.data.state, "model.json")
+      return this.modelJsonPath
+    } catch {
+      return undefined
+    }
+  }
+
+  /** Read model.json as a plain object, returning {} on any error. */
+  private async readModelJson(): Promise<Record<string, unknown>> {
+    const p = await this.getModelJsonPath()
+    if (!p) return {}
+    try {
+      const raw = await fs.promises.readFile(p, "utf-8")
+      const parsed = JSON.parse(raw)
+      return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : {}
+    } catch {
+      return {}
+    }
+  }
+
+  /** Write a single top-level field in model.json (read-modify-write, preserves other fields). */
+  private async writeModelJsonField(key: string, value: unknown): Promise<void> {
+    const p = await this.getModelJsonPath()
+    if (!p) return
+    const existing = await this.readModelJson()
+    existing[key] = value
+    await fs.promises.writeFile(p, JSON.stringify(existing, null, 2))
   }
 
   // Strip edit-tool metadata.filediff.before/after (multi-MB for edit-heavy
@@ -957,6 +998,26 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "requestFavorites": {
           const favorites = validateFavorites(this.extensionContext?.globalState.get("favoriteModels"))
           this.postMessage({ type: "favoritesLoaded", favorites })
+          break
+        }
+        case "persistModelSelection": {
+          const data = await this.readModelJson()
+          const model = validateModelSelections(data.model)
+          model[message.agent] = { providerID: message.providerID, modelID: message.modelID }
+          await this.writeModelJsonField("model", model)
+          break
+        }
+        case "clearModelSelection": {
+          const data = await this.readModelJson()
+          const model = validateModelSelections(data.model)
+          delete model[message.agent]
+          await this.writeModelJsonField("model", model)
+          break
+        }
+        case "requestModelSelections": {
+          const data = await this.readModelJson()
+          const selections = validateModelSelections(data.model)
+          this.postMessage({ type: "modelSelectionsLoaded", selections })
           break
         }
         // legacy-migration start
@@ -2840,9 +2901,13 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.sendNotificationSettings()
     this.sendTimelineSetting()
 
+    // Clear per-mode model selections from model.json
+    await this.writeModelJsonField("model", {})
+
     // Re-send globalState items to the webview
     this.postMessage({ type: "variantsLoaded", variants: {} })
     this.postMessage({ type: "recentsLoaded", recents: [] })
+    this.postMessage({ type: "modelSelectionsLoaded", selections: {} })
 
     // Re-fetch notifications to reflect cleared dismissed IDs
     await this.fetchAndSendNotifications()

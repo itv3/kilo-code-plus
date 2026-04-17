@@ -449,16 +449,20 @@ export const SessionProvider: ParentComponent = (props) => {
 
   function applyModel(agentName: string, selection: ModelSelection) {
     pushRecent(selection)
+    // Always remember the per-mode model choice so switching modes restores
+    // the last-used model (mirrors CLI TUI's model.json behavior).
+    setUserSetAgents((prev) => ({ ...prev, [agentName]: true }))
+    setStore("modelSelections", agentName, selection)
+    // Persist to model.json via the extension host
+    vscode.postMessage({
+      type: "persistModelSelection",
+      agent: agentName,
+      providerID: selection.providerID,
+      modelID: selection.modelID,
+    })
     const sid = currentSessionID()
     if (sid) {
-      // Per-session only — do NOT mutate the global modelSelections map.
-      // Writing globally here would cause every other session (that hasn't
-      // set its own override) to inherit this session's model.
       setStore("sessionOverrides", sid, selection)
-    } else {
-      // No active session (sidebar) — write globally
-      setUserSetAgents((prev) => ({ ...prev, [agentName]: true }))
-      setStore("modelSelections", agentName, selection)
     }
   }
 
@@ -498,6 +502,8 @@ export const SessionProvider: ParentComponent = (props) => {
         delete selections[agentName]
       }),
     )
+    // Clear from model.json via extension host
+    vscode.postMessage({ type: "clearModelSelection", agent: agentName })
     // Also clear per-session override so the session falls back to config default
     const sid = currentSessionID()
     if (sid) {
@@ -660,6 +666,17 @@ export const SessionProvider: ParentComponent = (props) => {
   vscode.postMessage({ type: "requestVariants" })
 
   onCleanup(unsubVariants)
+
+  // Load persisted per-mode model selections from model.json via extension host
+  const unsubSelections = vscode.onMessage((message: ExtensionMessage) => {
+    if (message.type !== "modelSelectionsLoaded") return
+    for (const [name, selection] of Object.entries(message.selections)) {
+      setStore("modelSelections", name, selection)
+      setUserSetAgents((prev) => ({ ...prev, [name]: true }))
+    }
+  })
+  vscode.postMessage({ type: "requestModelSelections" })
+  onCleanup(unsubSelections)
 
   // Load persisted recent models from extension globalState
   const unsubRecents = vscode.onMessage((message: ExtensionMessage) => {
