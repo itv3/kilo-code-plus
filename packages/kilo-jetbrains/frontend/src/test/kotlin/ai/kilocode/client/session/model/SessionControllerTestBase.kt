@@ -122,8 +122,9 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
     }
 
     /** Emit a chat event into the fake RPC flow. */
-    protected fun emit(event: ChatEventDto) = runBlocking {
-        rpc.events.emit(event)
+    protected fun emit(event: ChatEventDto, flush: Boolean = false) {
+        runBlocking { rpc.events.emit(event) }
+        if (flush) flush()
     }
 
     /** Create a model, attach both listeners, send initial prompt, and flush. */

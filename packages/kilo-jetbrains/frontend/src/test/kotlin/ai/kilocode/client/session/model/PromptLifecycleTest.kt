@@ -12,8 +12,7 @@ class PromptLifecycleTest : SessionControllerTestBase() {
     fun `test PermissionAsked moves state to AwaitingPermission`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.PermissionAsked("ses_test", permission("perm1")))
-        flush()
+        emit(ChatEventDto.PermissionAsked("ses_test", permission("perm1")), flush = true)
 
         assertController(
             """
@@ -35,10 +34,8 @@ class PromptLifecycleTest : SessionControllerTestBase() {
     fun `test PermissionReplied resumes Busy state`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.PermissionAsked("ses_test", permission("perm1")))
-        flush()
-        emit(ChatEventDto.PermissionReplied("ses_test", "perm1"))
-        flush()
+        emit(ChatEventDto.PermissionAsked("ses_test", permission("perm1")), flush = true)
+        emit(ChatEventDto.PermissionReplied("ses_test", "perm1"), flush = true)
 
         assertController(
             """
@@ -51,8 +48,7 @@ class PromptLifecycleTest : SessionControllerTestBase() {
     fun `test QuestionAsked moves state to AwaitingQuestion`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")))
-        flush()
+        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")), flush = true)
 
         assertController(
             """
@@ -73,10 +69,8 @@ class PromptLifecycleTest : SessionControllerTestBase() {
     fun `test QuestionReplied resumes Busy state`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")))
-        flush()
-        emit(ChatEventDto.QuestionReplied("ses_test", "q1"))
-        flush()
+        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")), flush = true)
+        emit(ChatEventDto.QuestionReplied("ses_test", "q1"), flush = true)
 
         assertController(
             """
@@ -89,10 +83,8 @@ class PromptLifecycleTest : SessionControllerTestBase() {
     fun `test QuestionRejected moves state to Idle`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")))
-        flush()
-        emit(ChatEventDto.QuestionRejected("ses_test", "q1"))
-        flush()
+        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")), flush = true)
+        emit(ChatEventDto.QuestionRejected("ses_test", "q1"), flush = true)
 
         assertController(
             """

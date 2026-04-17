@@ -8,8 +8,7 @@ class TurnLifecycleTest : SessionControllerTestBase() {
     fun `test TurnOpen fires StateChanged to Busy`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.TurnOpen("ses_test"))
-        flush()
+        emit(ChatEventDto.TurnOpen("ses_test"), flush = true)
 
         assertController(
             """
@@ -22,10 +21,8 @@ class TurnLifecycleTest : SessionControllerTestBase() {
     fun `test TurnClose fires StateChanged to Idle`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.TurnOpen("ses_test"))
-        flush()
-        emit(ChatEventDto.TurnClose("ses_test", "completed"))
-        flush()
+        emit(ChatEventDto.TurnOpen("ses_test"), flush = true)
+        emit(ChatEventDto.TurnClose("ses_test", "completed"), flush = true)
 
         assertController(
             """
@@ -38,8 +35,7 @@ class TurnLifecycleTest : SessionControllerTestBase() {
     fun `test Error fires StateChanged to Error`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "APIError", message = "Bad Request")))
-        flush()
+        emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "APIError", message = "Bad Request")), flush = true)
 
         assertController(
             """
@@ -52,8 +48,7 @@ class TurnLifecycleTest : SessionControllerTestBase() {
     fun `test Error with null message falls back to type`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "timeout", message = null)))
-        flush()
+        emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "timeout", message = null)), flush = true)
 
         assertController(
             """

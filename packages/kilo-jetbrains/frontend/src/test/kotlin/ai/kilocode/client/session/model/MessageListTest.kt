@@ -7,8 +7,7 @@ class MessageListTest : SessionControllerTestBase() {
     fun `test MessageUpdated adds message to ChatModel`() {
         val (m, _, model) = prompted()
 
-        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flush()
+        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")), flush = true)
 
         assertTrue(model.any { it is SessionModelEvent.MessageAdded })
         assertNotNull(m.model.message("msg1"))
@@ -17,15 +16,11 @@ class MessageListTest : SessionControllerTestBase() {
     fun `test PartUpdated text updates ChatModel`() {
         val (m, _, model) = prompted()
 
-        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flush()
+        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")), flush = true)
 
-        emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "hello")))
-        flush()
+        emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "hello")), flush = true)
 
         assertTrue(model.any { it is SessionModelEvent.ContentAdded && it.messageId == "msg1" })
-        val p = m.model.content("msg1", "prt1")
-        assertTrue(p is Text)
         assertModel(
             """
             assistant#msg1
@@ -39,17 +34,11 @@ class MessageListTest : SessionControllerTestBase() {
     fun `test PartDelta appends text to ChatModel`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
-        flush()
+        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")), flush = true)
 
         emit(ChatEventDto.PartDelta("ses_test", "msg1", "prt1", "text", "hello "))
-        emit(ChatEventDto.PartDelta("ses_test", "msg1", "prt1", "text", "world"))
-        flush()
+        emit(ChatEventDto.PartDelta("ses_test", "msg1", "prt1", "text", "world"), flush = true)
 
-        val p = m.model.content("msg1", "prt1")
-        assertNotNull(p)
-        assertTrue(p is Text)
-        assertEquals("hello world", (p as Text).content.toString())
         assertModel(
             """
             assistant#msg1
@@ -63,12 +52,10 @@ class MessageListTest : SessionControllerTestBase() {
     fun `test MessageRemoved removes from ChatModel`() {
         val (m, _, _) = prompted()
 
-        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "user")))
-        flush()
+        emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "user")), flush = true)
         assertNotNull(m.model.message("msg1"))
 
-        emit(ChatEventDto.MessageRemoved("ses_test", "msg1"))
-        flush()
+        emit(ChatEventDto.MessageRemoved("ses_test", "msg1"), flush = true)
         assertNull(m.model.message("msg1"))
     }
 }

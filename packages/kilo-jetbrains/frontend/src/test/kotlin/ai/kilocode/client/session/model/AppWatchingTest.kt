@@ -15,7 +15,6 @@ class AppWatchingTest : SessionControllerTestBase() {
         flush()
 
         assertTrue(events.any { it is SessionControllerEvent.AppChanged })
-        assertEquals(KiloAppStatusDto.READY, m.model.app.status)
         assertController(
             """
             [app: READY] [workspace: PENDING]

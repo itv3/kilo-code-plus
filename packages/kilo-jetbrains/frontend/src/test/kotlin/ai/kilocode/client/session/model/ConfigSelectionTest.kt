@@ -12,7 +12,6 @@ class ConfigSelectionTest : SessionControllerTestBase() {
         edt { m.selectModel("kilo", "gpt-5") }
         flush()
 
-        assertEquals("kilo/gpt-5", m.model.model)
         assertEquals(1, rpc.configs.size)
         assertEquals("kilo/gpt-5", rpc.configs[0].second.model)
         assertController(
@@ -32,7 +31,6 @@ class ConfigSelectionTest : SessionControllerTestBase() {
         edt { m.selectAgent("plan") }
         flush()
 
-        assertEquals("plan", m.model.agent)
         assertEquals(1, rpc.configs.size)
         assertEquals("plan", rpc.configs[0].second.agent)
         assertController(
