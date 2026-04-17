@@ -15,6 +15,6 @@ class AppWatchingTest : SessionManagerTestBase() {
         flush()
 
         assertTrue(events.any { it is SessionControllerEvent.AppChanged })
-        assertEquals(KiloAppStatusDto.READY, m.chat.app.status)
+        assertEquals(KiloAppStatusDto.READY, m.model.app.status)
     }
 }

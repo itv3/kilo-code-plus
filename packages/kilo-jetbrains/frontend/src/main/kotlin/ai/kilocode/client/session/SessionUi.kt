@@ -32,9 +32,9 @@ class SessionUi(
         private const val MESSAGES = "messages"
     }
 
-    private val model = SessionController(this, null, sessions, workspace, app, cs)
-    private val status = StatusPanel(this, model)
-    private val messages = MessageListUi(this, model.chat)
+    private val controller = SessionController(this, null, sessions, workspace, app, cs)
+    private val status = StatusPanel(this, controller)
+    private val messages = MessageListUi(this, controller.model)
 
     private val cards = CardLayout()
     private val center = JPanel(cards)
@@ -48,7 +48,7 @@ class SessionUi(
     private val prompt = PromptPanel(
         project = project,
         onSend = { text -> send(text) },
-        onAbort = { model.abort() },
+        onAbort = { controller.abort() },
     )
 
     init {
@@ -59,18 +59,18 @@ class SessionUi(
         add(center, BorderLayout.CENTER)
         add(prompt, BorderLayout.SOUTH)
 
-        prompt.mode.onSelect = { item -> model.selectAgent(item.id) }
+        prompt.mode.onSelect = { item -> controller.selectAgent(item.id) }
         prompt.model.onSelect = picker@{ item ->
             val group = item.group
             if (group == null) return@picker
-            model.selectModel(group, item.id)
+            controller.selectModel(group, item.id)
         }
 
         // Lifecycle events from the manager (app/workspace state, view switching)
-        model.addListener(this) { event ->
+        controller.addListener(this) { event ->
             when (event) {
                 is SessionControllerEvent.WorkspaceReady -> {
-                    val c = model.chat
+                    val c = controller.model
                     prompt.mode.setItems(c.agents.map { LabelPicker.Item(it.name, it.display) }, c.agent)
                     val items = c.models.map { LabelPicker.Item(it.id, it.display, it.provider) }
                     val selected = c.model?.let { full -> items.firstOrNull { "${it.group}/${it.id}" == full }?.id }
@@ -86,7 +86,7 @@ class SessionUi(
         }
 
         // Model events — state drives the prompt busy state
-        model.chat.addListener(this) { event ->
+        controller.model.addListener(this) { event ->
             when (event) {
                 is SessionModelEvent.StateChanged -> {
                     val busy = event.state.isBusy()
@@ -105,7 +105,7 @@ class SessionUi(
 
     private fun send(text: String) {
         if (text.isBlank()) return
-        model.prompt(text)
+        controller.prompt(text)
         prompt.clear()
     }
 

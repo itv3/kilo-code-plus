@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
  * event subscription happens before the prompt is sent, eliminating races.
  *
  * Owns [SessionModel] — the single source of truth for chat content and
- * state. UIs observe model changes via [SessionModelEvent] on [chat].
+ * state. UIs observe model changes via [SessionModelEvent] on [model].
  * Lifecycle events (app/workspace state, view switching) are published
  * via [SessionControllerEvent] to registered listeners.
  */
@@ -59,7 +59,7 @@ class SessionController(
         Disposer.register(parent, this)
     }
 
-    val chat = SessionModel()
+    val model = SessionModel()
 
     private val listeners = mutableListOf<SessionControllerListener>()
     private var sessionId: String? = id
@@ -89,7 +89,7 @@ class SessionController(
                 LOG.warn("prompt failed", e)
                 edt {
                     val msg = e.message ?: KiloBundle.message("session.error.prompt")
-                    chat.setState(SessionState.Error(msg))
+                    model.setState(SessionState.Error(msg))
                 }
             }
         }
@@ -107,7 +107,7 @@ class SessionController(
     }
 
     fun selectAgent(name: String) {
-        chat.agent = name
+        model.agent = name
         cs.launch {
             try {
                 sessions.updateConfig(directory, ConfigUpdateDto(agent = name))
@@ -119,7 +119,7 @@ class SessionController(
     }
 
     fun selectModel(provider: String, id: String) {
-        chat.model = "$provider/$id"
+        model.model = "$provider/$id"
         cs.launch {
             try {
                 sessions.updateConfig(directory, ConfigUpdateDto(model = "$provider/$id"))
@@ -141,8 +141,8 @@ class SessionController(
             app.state.collect { state ->
                 if (state.status == KiloAppStatusDto.READY) app.fetchVersionAsync()
                 edt {
-                    chat.app = state
-                    chat.version = app.version
+                    model.app = state
+                    model.version = app.version
                     fire(SessionControllerEvent.AppChanged)
                 }
             }
@@ -151,15 +151,15 @@ class SessionController(
         cs.launch {
             workspace.state.collect { state ->
                 edt {
-                    chat.workspace = state
+                    model.workspace = state
                     fire(SessionControllerEvent.WorkspaceChanged)
 
                     if (state.status == KiloWorkspaceStatusDto.READY) {
-                        chat.agents = state.agents?.agents?.map {
+                        model.agents = state.agents?.agents?.map {
                             AgentItem(it.name, it.displayName ?: it.name)
                         } ?: emptyList()
 
-                        chat.models = state.providers?.let { providers ->
+                        model.models = state.providers?.let { providers ->
                             providers.providers
                                 .filter { it.id in providers.connected }
                                 .flatMap { provider ->
@@ -169,10 +169,10 @@ class SessionController(
                                 }
                         } ?: emptyList()
 
-                        if (chat.agent == null) chat.agent = state.agents?.default
-                        if (chat.model == null) chat.model = state.providers?.defaults?.entries?.firstOrNull()?.value
+                        if (this@SessionController.model.agent == null) this@SessionController.model.agent = state.agents?.default
+                        if (this@SessionController.model.model == null) this@SessionController.model.model = state.providers?.defaults?.entries?.firstOrNull()?.value
 
-                        chat.ready = true
+                        this@SessionController.model.ready = true
                         fire(SessionControllerEvent.WorkspaceReady)
                     }
                 }
@@ -186,8 +186,8 @@ class SessionController(
             try {
                 val history = sessions.messages(id, directory)
                 edt {
-                    chat.loadHistory(history)
-                    if (!chat.isEmpty()) showMessages()
+                    this@SessionController.model.loadHistory(history)
+                    if (!model.isEmpty()) showMessages()
                 }
             } catch (e: Exception) {
                 LOG.warn("loadHistory failed", e)
@@ -208,71 +208,71 @@ class SessionController(
     private fun handle(event: ChatEventDto) {
         when (event) {
             is ChatEventDto.MessageUpdated -> {
-                chat.addMessage(event.info) ?: return
+                model.addMessage(event.info) ?: return
                 showMessages()
             }
 
             is ChatEventDto.PartUpdated -> {
                 partType = event.part.type
                 tool = event.part.tool
-                chat.updateContent(event.part.messageID, event.part)
-                if (chat.state is SessionState.Busy) {
-                    chat.setState(SessionState.Busy(status()))
+                model.updateContent(event.part.messageID, event.part)
+                if (model.state is SessionState.Busy) {
+                    model.setState(SessionState.Busy(status()))
                 }
             }
 
             is ChatEventDto.PartDelta -> {
                 if (event.field == "text") {
-                    chat.appendDelta(event.messageID, event.partID, event.delta)
+                    model.appendDelta(event.messageID, event.partID, event.delta)
                 }
             }
 
             is ChatEventDto.TurnOpen -> {
                 partType = null
                 tool = null
-                chat.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
+                model.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
             }
 
             is ChatEventDto.TurnClose -> {
                 partType = null
                 tool = null
-                chat.setState(SessionState.Idle)
+                model.setState(SessionState.Idle)
             }
 
             is ChatEventDto.Error -> {
                 partType = null
                 tool = null
                 val msg = event.error?.message ?: event.error?.type ?: KiloBundle.message("session.error.unknown")
-                chat.setState(SessionState.Error(msg, event.error?.type))
+                model.setState(SessionState.Error(msg, event.error?.type))
             }
 
             is ChatEventDto.MessageRemoved -> {
-                chat.removeMessage(event.messageID)
+                model.removeMessage(event.messageID)
             }
 
             is ChatEventDto.PermissionAsked -> {
-                chat.setState(SessionState.AwaitingPermission(toPermission(event.request)))
+                model.setState(SessionState.AwaitingPermission(toPermission(event.request)))
             }
 
             is ChatEventDto.PermissionReplied -> {
-                if (chat.state is SessionState.AwaitingPermission) {
-                    chat.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
+                if (model.state is SessionState.AwaitingPermission) {
+                    model.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
                 }
             }
 
             is ChatEventDto.QuestionAsked -> {
-                chat.setState(SessionState.AwaitingQuestion(toQuestion(event.request)))
+                model.setState(SessionState.AwaitingQuestion(toQuestion(event.request)))
             }
 
             is ChatEventDto.QuestionReplied -> {
-                if (chat.state is SessionState.AwaitingQuestion) {
-                    chat.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
+                if (model.state is SessionState.AwaitingQuestion) {
+                    model.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
                 }
             }
 
             is ChatEventDto.QuestionRejected -> {
-                if (chat.state is SessionState.AwaitingQuestion) {
-                    chat.setState(SessionState.Idle)
+                if (model.state is SessionState.AwaitingQuestion) {
+                    model.setState(SessionState.Idle)
                 }
             }
 
@@ -280,7 +280,7 @@ class SessionController(
                 val state = when (event.status.type) {
                     "idle" -> SessionState.Idle
                     "busy" -> {
-                        val current = chat.state
+                        val current = model.state
                         if (current is SessionState.Idle || current is SessionState.Error)
                             SessionState.Busy(KiloBundle.message("session.status.considering"))
                         else return // already in a more specific phase
@@ -289,14 +289,14 @@ class SessionController(
                     "offline" -> SessionState.Offline(event.status.message ?: "", "")
                     else -> return
                 }
-                chat.setState(state)
+                model.setState(state)
             }
         }
     }
 
     private fun showMessages() {
-        if (!chat.showMessages) {
-            chat.showMessages = true
+        if (!model.showMessages) {
+            model.showMessages = true
             fire(SessionControllerEvent.ViewChanged(true))
         }
     }

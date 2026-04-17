@@ -15,8 +15,8 @@ class HistoryLoadingTest : SessionManagerTestBase() {
         flush()
 
         assertTrue(events.any { it is SessionModelEvent.HistoryLoaded })
-        assertNotNull(model.chat.message("msg1"))
-        val content = model.chat.content("msg1", "prt1")
+        assertNotNull(model.model.message("msg1"))
+        val content = model.model.content("msg1", "prt1")
         assertTrue(content is Text)
         assertEquals("hello", (content as Text).content.toString())
     }
@@ -29,6 +29,6 @@ class HistoryLoadingTest : SessionManagerTestBase() {
         flush()
 
         assertTrue(events.any { it is SessionControllerEvent.ViewChanged && it.show })
-        assertTrue(model.chat.showMessages)
+        assertTrue(model.model.showMessages)
     }
 }

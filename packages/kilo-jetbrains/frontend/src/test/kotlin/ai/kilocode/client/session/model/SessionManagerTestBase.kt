@@ -99,7 +99,7 @@ abstract class SessionManagerTestBase : BasePlatformTestCase() {
         val events = mutableListOf<SessionModelEvent>()
         val disposable = Disposer.newDisposable("model-listener")
         Disposer.register(parent, disposable)
-        m.chat.addListener(disposable) { event ->
+        m.model.addListener(disposable) { event ->
             events.add(event)
         }
         return events
