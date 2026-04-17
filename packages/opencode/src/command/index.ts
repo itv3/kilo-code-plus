@@ -9,6 +9,7 @@ import { Config } from "../config/config"
 import { MCP } from "../mcp"
 import { Skill } from "../skill"
 import { localReviewCommand, localReviewUncommittedCommand } from "@/kilocode/review/command" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // kilocode_change
 import { Log } from "../util/log"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
@@ -198,4 +199,12 @@ export namespace Command {
     Layer.provide(MCP.defaultLayer),
     Layer.provide(Skill.defaultLayer),
   )
+
+  // kilocode_change start
+  const { runPromise } = makeRuntime(Service, defaultLayer)
+
+  export async function get(name: string) {
+    return runPromise((svc) => svc.get(name))
+  }
+  // kilocode_change end
 }

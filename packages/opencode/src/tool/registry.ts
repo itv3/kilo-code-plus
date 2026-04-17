@@ -1,6 +1,7 @@
 import { PlanExitTool } from "./plan"
 import { Session } from "../session"
 import { QuestionTool } from "./question"
+import { SuggestTool } from "../kilocode/suggestion/tool" // kilocode_change
 import { BashTool } from "./bash"
 import { EditTool } from "./edit"
 import { GlobTool } from "./glob"
@@ -75,29 +76,7 @@ export namespace ToolRegistry {
 
   export class Service extends Context.Service<Service, Interface>()("@opencode/ToolRegistry") {}
 
-  export const layer: Layer.Layer<
-    Service,
-    never,
-    | Config.Service
-    | Env.Service
-    | Plugin.Service
-    | Question.Service
-    | Todo.Service
-    | Agent.Service
-    | Skill.Service
-    | Session.Service
-    | Provider.Service
-    | LSP.Service
-    | FileTime.Service
-    | Instruction.Service
-    | AppFileSystem.Service
-    | Bus.Service
-    | HttpClient.HttpClient
-    | ChildProcessSpawner
-    | Ripgrep.Service
-    | Format.Service
-    | Truncate.Service
-  > = Layer.effect(
+  export const layer = Layer.effect(
     Service,
     Effect.gen(function* () {
       const config = yield* Config.Service
@@ -124,6 +103,7 @@ export namespace ToolRegistry {
       const greptool = yield* GrepTool
       const patchtool = yield* ApplyPatchTool
       const skilltool = yield* SkillTool
+      const suggesttool = yield* SuggestTool // kilocode_change
       const agent = yield* Agent.Service
       const kiloToolInfos = yield* KiloToolRegistry.infos() // kilocode_change
 
@@ -202,6 +182,7 @@ export namespace ToolRegistry {
             question: Tool.init(question),
             lsp: Tool.init(lsptool),
             plan: Tool.init(plan),
+            suggest: Tool.init(suggesttool), // kilocode_change
           })
 
           const kilo = yield* KiloToolRegistry.build(kiloToolInfos) // kilocode_change
@@ -226,6 +207,7 @@ export namespace ToolRegistry {
               tool.patch,
               ...(Flag.KILO_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []), // kilocode_change
               ...(KiloToolRegistry.plan() ? [tool.plan] : []), // kilocode_change
+              ...KiloToolRegistry.suggest(tool.suggest), // kilocode_change
               ...KiloToolRegistry.extra(kilo, cfg), // kilocode_change
             ],
             task: tool.task,

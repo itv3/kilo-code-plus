@@ -103,6 +103,7 @@ export namespace Agent {
               "*": "ask",
               ...Object.fromEntries(whitelistedDirs.map((dir) => [dir, "allow"])),
             },
+            suggest: "deny", // kilocode_change
             question: "deny",
             plan_enter: "deny",
             plan_exit: "deny",
@@ -131,6 +132,7 @@ export namespace Agent {
                 defaults,
                 Permission.fromConfig({
                   question: "allow",
+                  suggest: "allow", // kilocode_change
                   plan_enter: "allow",
                 }),
                 user,

@@ -66,6 +66,9 @@ export namespace Question {
     questions: Schema.Array(Info).annotate({
       description: "Questions to ask",
     }),
+    blocking: Schema.optional(Schema.Boolean).annotate({ // kilocode_change
+      description: "Whether this question blocks prompt input (default: true)",
+    }),
     tool: Schema.optional(Tool),
   }) {
     static readonly zod = zod(this)
@@ -122,6 +125,7 @@ export namespace Question {
     readonly ask: (input: {
       sessionID: SessionID
       questions: ReadonlyArray<Info>
+      blocking?: boolean // kilocode_change
       tool?: Tool
     }) => Effect.Effect<ReadonlyArray<Answer>, RejectedError>
     readonly reply: (input: { requestID: QuestionID; answers: ReadonlyArray<Answer> }) => Effect.Effect<void>
@@ -157,6 +161,7 @@ export namespace Question {
       const ask = Effect.fn("Question.ask")(function* (input: {
         sessionID: SessionID
         questions: ReadonlyArray<Info>
+        blocking?: boolean // kilocode_change
         tool?: Tool
       }) {
         const pending = (yield* InstanceState.get(state)).pending
@@ -168,6 +173,7 @@ export namespace Question {
           id,
           sessionID: input.sessionID,
           questions: input.questions,
+          blocking: input.blocking, // kilocode_change
           tool: input.tool,
         })
         pending.set(id, { info, deferred })
