@@ -44,10 +44,11 @@ class ConfigSelectionTest : SessionControllerTestBase() {
         val m = controller()
         val events = collect(m)
         flush()
+        events.clear()
 
         edt { m.selectModel("kilo", "gpt-5") }
         flush()
 
-        assertTrue(events.any { it is SessionControllerEvent.WorkspaceReady })
+        assertControllerEvents("WorkspaceReady", events)
     }
 }

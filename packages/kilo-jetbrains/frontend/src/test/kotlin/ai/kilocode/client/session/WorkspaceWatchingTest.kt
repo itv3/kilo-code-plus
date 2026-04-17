@@ -6,6 +6,7 @@ class WorkspaceWatchingTest : SessionControllerTestBase() {
         val m = controller()
         val events = collect(m)
         flush()
+        events.clear()
 
         projectRpc.state.value = workspaceReady()
         flush()
@@ -15,7 +16,10 @@ class WorkspaceWatchingTest : SessionControllerTestBase() {
         assertEquals(1, m.model.models.size)
         assertEquals("gpt-5", m.model.models[0].id)
         assertFalse(m.model.isReady())
-        assertTrue(events.any { it is SessionControllerEvent.WorkspaceReady })
+        assertControllerEvents("""
+            WorkspaceChanged
+            WorkspaceReady
+        """, events)
         assertSession(
             """
             [code] [kilo/gpt-5] [app: DISCONNECTED] [workspace: READY]

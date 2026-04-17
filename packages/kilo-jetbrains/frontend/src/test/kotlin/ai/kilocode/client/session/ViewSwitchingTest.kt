@@ -5,11 +5,13 @@ class ViewSwitchingTest : SessionControllerTestBase() {
     fun `test first prompt shows messages view`() {
         val m = controller()
         val events = collect(m)
+        flush()
+        events.clear()
 
         edt { m.prompt("hello") }
         flush()
 
-        assertTrue(events.any { it is SessionControllerEvent.ViewChanged && it.show })
+        assertControllerEvents("ViewChanged show", events)
         assertSession(
             """
             [app: DISCONNECTED] [workspace: PENDING]
@@ -21,12 +23,14 @@ class ViewSwitchingTest : SessionControllerTestBase() {
     fun `test ViewChanged not fired twice`() {
         val m = controller()
         val events = collect(m)
+        flush()
+        events.clear()
 
         edt { m.prompt("first") }
         flush()
         edt { m.prompt("second") }
         flush()
 
-        assertEquals(1, events.count { it is SessionControllerEvent.ViewChanged && it.show })
+        assertControllerEvents("ViewChanged show", events)
     }
 }

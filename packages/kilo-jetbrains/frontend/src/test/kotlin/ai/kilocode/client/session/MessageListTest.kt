@@ -10,7 +10,7 @@ class MessageListTest : SessionControllerTestBase() {
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
 
-        assertTrue(modelEvents.any { it is SessionModelEvent.MessageAdded })
+        assertModelEvents("MessageAdded msg1", modelEvents)
         assertNotNull(m.model.message("msg1"))
     }
 
@@ -21,7 +21,10 @@ class MessageListTest : SessionControllerTestBase() {
 
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "hello")))
 
-        assertTrue(modelEvents.any { it is SessionModelEvent.ContentAdded && it.messageId == "msg1" })
+        assertModelEvents("""
+            MessageAdded msg1
+            ContentAdded msg1/prt1
+        """, modelEvents)
         assertModel(
             """
             assistant#msg1

@@ -9,11 +9,12 @@ class AppWatchingTest : SessionControllerTestBase() {
         val m = controller()
         val events = collect(m)
         flush()
+        events.clear()
 
         appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
         flush()
 
-        assertTrue(events.any { it is SessionControllerEvent.AppChanged })
+        assertControllerEvents("AppChanged", events)
         assertSession(
             """
             [app: READY] [workspace: PENDING]

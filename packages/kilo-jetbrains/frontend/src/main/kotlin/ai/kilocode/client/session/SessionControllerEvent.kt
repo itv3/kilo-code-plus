@@ -18,7 +18,9 @@ sealed class SessionControllerEvent {
 
     // Workspace ready (pickers populated)
     data object WorkspaceReady : SessionControllerEvent()
-    data class ViewChanged(val show: Boolean) : SessionControllerEvent()
+    data class ViewChanged(val show: Boolean) : SessionControllerEvent() {
+        override fun toString() = if (show) "ViewChanged show" else "ViewChanged hide"
+    }
 }
 
 /**

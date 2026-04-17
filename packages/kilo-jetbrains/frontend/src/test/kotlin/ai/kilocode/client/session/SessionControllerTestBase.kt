@@ -153,6 +153,14 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
         assertEquals(show, c.model.showMessages)
     }
 
+    protected fun assertControllerEvents(expected: String, events: List<SessionControllerEvent>) {
+        assertEquals(expected.trimIndent().trim(), events.joinToString("\n"))
+    }
+
+    protected fun assertModelEvents(expected: String, events: List<SessionModelEvent>) {
+        assertEquals(expected.trimIndent().trim(), events.joinToString("\n"))
+    }
+
     // ------ DTO factories ------
 
     protected fun msg(id: String, sid: String, role: String) = MessageDto(

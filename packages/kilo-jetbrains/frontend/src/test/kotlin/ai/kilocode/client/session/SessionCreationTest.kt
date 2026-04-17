@@ -5,6 +5,8 @@ class SessionCreationTest : SessionControllerTestBase() {
     fun `test prompt creates session on first call`() {
         val m = controller()
         val events = collect(m)
+        flush()
+        events.clear()
 
         edt { m.prompt("hello") }
         flush()
@@ -12,7 +14,7 @@ class SessionCreationTest : SessionControllerTestBase() {
         assertEquals(1, rpc.creates)
         assertEquals(1, rpc.prompts.size)
         assertEquals("ses_test", rpc.prompts[0].first)
-        assertTrue(events.any { it is SessionControllerEvent.ViewChanged && it.show })
+        assertControllerEvents("ViewChanged show", events)
         assertSession(
             """
             [app: DISCONNECTED] [workspace: PENDING]

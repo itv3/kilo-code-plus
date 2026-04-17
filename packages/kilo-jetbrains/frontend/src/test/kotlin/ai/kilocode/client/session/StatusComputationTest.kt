@@ -31,12 +31,13 @@ class StatusComputationTest : SessionControllerTestBase() {
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
         emit(ChatEventDto.TurnOpen("ses_test"))
         emit(ChatEventDto.TurnClose("ses_test", "completed"))
-
-        val before = modelEvents.filterIsInstance<SessionModelEvent.StateChanged>().size
-
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "late")))
 
-        val after = modelEvents.filterIsInstance<SessionModelEvent.StateChanged>().size
-        assertEquals(before, after)
+        assertModelEvents("""
+            MessageAdded msg1
+            StateChanged Busy
+            StateChanged Idle
+            ContentAdded msg1/prt1
+        """, modelEvents)
     }
 }

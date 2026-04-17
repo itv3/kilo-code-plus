@@ -1,7 +1,6 @@
 package ai.kilocode.client.session
 
 import ai.kilocode.client.session.model.SessionModelEvent
-import ai.kilocode.client.session.model.SessionState
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import com.intellij.openapi.util.Disposer
@@ -18,14 +17,17 @@ class ListenerLifecycleTest : SessionControllerTestBase() {
 
         edt { m.prompt("before") }
         flush()
-        val before = events.size
 
         Disposer.dispose(disposable)
 
         edt { m.prompt("after") }
         flush()
 
-        assertEquals(before, events.size)
+        assertControllerEvents("""
+            ViewChanged show
+            AppChanged
+            WorkspaceChanged
+        """, events)
     }
 
     fun `test all listeners notified`() {
@@ -43,9 +45,16 @@ class ListenerLifecycleTest : SessionControllerTestBase() {
         edt { m.prompt("go") }
         flush()
 
-        assertTrue(events1.isNotEmpty())
-        assertTrue(events2.isNotEmpty())
-        assertEquals(events1.map { it::class }, events2.map { it::class })
+        assertControllerEvents("""
+            ViewChanged show
+            AppChanged
+            WorkspaceChanged
+        """, events1)
+        assertControllerEvents("""
+            ViewChanged show
+            AppChanged
+            WorkspaceChanged
+        """, events2)
     }
 
     fun `test session status busy fires StateChanged to Busy`() {
@@ -53,6 +62,6 @@ class ListenerLifecycleTest : SessionControllerTestBase() {
 
         emit(ChatEventDto.SessionStatusChanged("ses_test", SessionStatusDto("busy", null)))
 
-        assertTrue(modelEvents.any { it is SessionModelEvent.StateChanged && (it.state is SessionState.Busy) })
+        assertModelEvents("StateChanged Busy", modelEvents)
     }
 }
