@@ -9059,6 +9059,57 @@
         ]
       }
     },
+    "/kilocode/heap/snapshot": {
+      "post": {
+        "operationId": "kilocode.heap.snapshot",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Write heap snapshot",
+        "description": "Write a heap snapshot for the CLI process to the log directory.",
+        "responses": {
+          "200": {
+            "description": "Heap snapshot file path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.heap.snapshot({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/kilocode/skill/remove": {
       "post": {
         "operationId": "kilocode.removeSkill",
@@ -10332,6 +10383,40 @@
           "properties": {
             "type": "object",
             "properties": {}
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.session.warning": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.warning"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "sessionID": {
+                "type": "string",
+                "pattern": "^ses.*"
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["diff_skipped", "summary_truncated", "summary_failed"]
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            },
+            "required": ["kind", "message"]
           }
         },
         "required": ["type", "properties"]
@@ -13082,6 +13167,9 @@
           },
           {
             "$ref": "#/components/schemas/Event.lsp.updated"
+          },
+          {
+            "$ref": "#/components/schemas/Event.session.warning"
           },
           {
             "$ref": "#/components/schemas/Event.tui.prompt.append"

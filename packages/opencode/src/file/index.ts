@@ -5,6 +5,7 @@ import { AppFileSystem } from "@/filesystem"
 import { Git } from "@/git"
 import { Effect, Layer, ServiceMap } from "effect"
 import { formatPatch, structuredPatch } from "diff"
+import { DiffEngine } from "@/kilocode/snapshot/diff-engine" // kilocode_change
 import fuzzysort from "fuzzysort"
 import ignore from "ignore"
 import path from "path"
@@ -571,6 +572,13 @@ export namespace File {
             }
             if (diff.trim()) {
               const original = (await Git.run(["show", `HEAD:${file}`], { cwd: Instance.directory })).text()
+              // kilocode_change start — skip structured patch for oversized inputs.
+              // `context: Infinity, ignoreWhitespace: true` here is even more
+              // pathological than the snapshot path; a cap + skip is cheap.
+              if (DiffEngine.shouldSkip(original, content)) {
+                return { type: "text", content }
+              }
+              // kilocode_change end
               const patch = structuredPatch(file, file, original, content, "old", "new", {
                 context: Infinity,
                 ignoreWhitespace: true,

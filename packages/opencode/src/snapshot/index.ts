@@ -1,6 +1,5 @@
 import { Cause, Duration, Effect, Layer, Schedule, Semaphore, ServiceMap, Stream } from "effect"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
-import { formatPatch, structuredPatch } from "diff"
 import path from "path"
 import z from "zod"
 import * as CrossSpawnSpawner from "@/effect/cross-spawn-spawner"
@@ -12,6 +11,11 @@ import { Config } from "../config/config"
 import { Global } from "../global"
 import { Log } from "../util/log"
 import * as KiloSnapshot from "../kilocode/snapshot" // kilocode_change
+// kilocode_change start
+import { DiffEngine } from "../kilocode/snapshot/diff-engine"
+import { Bus } from "../bus"
+import { SessionWarningEvent } from "../kilocode/session/warning"
+// kilocode_change end
 
 export namespace Snapshot {
   export const Patch = z.object({
@@ -68,13 +72,14 @@ export namespace Snapshot {
   export const layer: Layer.Layer<
     Service,
     never,
-    AppFileSystem.Service | ChildProcessSpawner.ChildProcessSpawner | Config.Service
+    AppFileSystem.Service | ChildProcessSpawner.ChildProcessSpawner | Config.Service | Bus.Service // kilocode_change
   > = Layer.effect(
     Service,
     Effect.gen(function* () {
       const fs = yield* AppFileSystem.Service
       const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
       const config = yield* Config.Service
+      const bus = yield* Bus.Service // kilocode_change
       const locks = new Map<string, Semaphore.Semaphore>()
 
       const lock = (key: string) => {
@@ -630,8 +635,10 @@ export namespace Snapshot {
                     ]
                   })
                 const step = 100
-                const patch = (file: string, before: string, after: string) =>
-                  formatPatch(structuredPatch(file, file, before, after, "", "", { context: Number.MAX_SAFE_INTEGER }))
+                // kilocode_change start — offload structuredPatch to a worker + skip oversized inputs.
+                // Keeps the main event loop (and therefore the abort/heartbeat endpoints) responsive.
+                const timer = log.time("diffFull", { from, to, rows: rows.length })
+                const skipped: { file: string; reason: DiffEngine.SkipReason }[] = []
 
                 for (let i = 0; i < rows.length; i += step) {
                   const run = rows.slice(i, i + step)
@@ -640,16 +647,47 @@ export namespace Snapshot {
                   for (const row of run) {
                     const hit = text?.get(row.file) ?? { before: "", after: "" }
                     const [before, after] = row.binary ? ["", ""] : text ? [hit.before, hit.after] : yield* show(row)
+                    const out = row.binary
+                      ? { patch: "" as string, skipped: undefined as DiffEngine.SkipReason | undefined }
+                      : yield* Effect.promise(() => DiffEngine.patchAsync(row.file, before, after))
+                    if (out.skipped) {
+                      skipped.push({ file: row.file, reason: out.skipped })
+                      log.warn("diffFull.skipped", {
+                        file: row.file,
+                        reason: out.skipped,
+                        bytesBefore: before.length,
+                        bytesAfter: after.length,
+                      })
+                    }
                     result.push({
                       file: row.file,
-                      patch: row.binary ? "" : patch(row.file, before, after),
+                      patch: out.patch,
                       additions: row.additions,
                       deletions: row.deletions,
                       status: row.status,
                     })
+                    // Let the runtime scheduler yield between files so the event
+                    // loop can service the abort endpoint and SSE heartbeat.
+                    yield* Effect.yieldNow
                   }
                 }
 
+                if (skipped.length > 0) {
+                  yield* bus
+                    .publish(SessionWarningEvent, {
+                      sessionID: undefined,
+                      kind: "diff_skipped",
+                      message:
+                        skipped.length === 1
+                          ? `Skipped diff for ${skipped[0]!.file} (${skipped[0]!.reason})`
+                          : `Skipped diffs for ${skipped.length} files`,
+                      details: { files: skipped },
+                    })
+                    .pipe(Effect.ignore)
+                }
+
+                timer.stop()
+                // kilocode_change end
                 return result
               }),
             )
@@ -702,6 +740,7 @@ export namespace Snapshot {
     Layer.provide(CrossSpawnSpawner.defaultLayer),
     Layer.provide(AppFileSystem.defaultLayer),
     Layer.provide(Config.defaultLayer),
+    Layer.provide(Bus.layer), // kilocode_change
   )
 
   const { runPromise } = makeRuntime(Service, defaultLayer)
