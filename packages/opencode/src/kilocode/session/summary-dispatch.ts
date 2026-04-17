@@ -37,14 +37,19 @@ export namespace SummaryDispatch {
   export type RunPromise<S> = <A, Err>(fn: (svc: S) => Effect.Effect<A, Err, any>) => Promise<A>
   export type Summarize<S> = (svc: S, input: Input) => Effect.Effect<void>
 
+  type Tagged = AbortController & { reason?: "superseded" | "cancel" }
+
   export function create<S>(opts: { runPromise: RunPromise<S>; summarize: Summarize<S> }) {
-    const inflight = new Map<SessionID, AbortController>()
+    const inflight = new Map<SessionID, Tagged>()
 
     const summarize = (input: Input) => {
       const prev = inflight.get(input.sessionID)
-      if (prev) prev.abort()
+      if (prev) {
+        prev.reason = "superseded"
+        prev.abort()
+      }
 
-      const ac = new AbortController()
+      const ac: Tagged = new AbortController()
       inflight.set(input.sessionID, ac)
       const started = Date.now()
 
@@ -72,6 +77,13 @@ export namespace SummaryDispatch {
             Effect.onInterrupt(() =>
               Effect.sync(() => {
                 const elapsed = Date.now() - started
+                // Skip the user-facing warning when a newer summarize call
+                // replaced this one — that is a normal pipeline event, not
+                // a timeout or user cancel.
+                if (ac.reason === "superseded") {
+                  log.info("summary superseded", { sessionID: input.sessionID, elapsed })
+                  return
+                }
                 log.warn("summary interrupted", { sessionID: input.sessionID, elapsed })
                 Bus.publish(Session.Event.Warning, {
                   sessionID: input.sessionID,
@@ -109,6 +121,7 @@ export namespace SummaryDispatch {
     async function cancel(sessionID: SessionID) {
       const ac = inflight.get(sessionID)
       if (!ac) return
+      ac.reason = "cancel"
       ac.abort()
       inflight.delete(sessionID)
       log.info("summary cancelled", { sessionID })
