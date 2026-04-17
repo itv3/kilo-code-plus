@@ -40,7 +40,7 @@ When the tool only provides an API (no CLI), follow these steps:
 3. **Prompt the agent to use the API.** Ask the agent to perform a task using the tool's API. It will read the documentation and credentials from the information you provided.
 
 {% callout type="note" %}
-If you have not configured your KiloClaw with the 1Password CLI, you can add the username in `TOOLS.md` and the key in the [KiloClaw Dashboard](app.kilo.ai/claw/settings) under **Additional Secrets** with the config path `skills.entries.<TOOL_NAME>.apiKey` and environment variable name `<TOOL_NAME>_API_KEY`. 
+If you have not configured your KiloClaw with the 1Password CLI, you can add the username in `TOOLS.md` and the key in the [KiloClaw Dashboard](https://app.kilo.ai/claw/settings) under **Additional Secrets** with the config path `skills.entries.<TOOL_NAME>.apiKey` and environment variable name `<TOOL_NAME>_API_KEY`.
 
 Change the TOOLS.md instruction to reference the correct Environment Variable.
 {% /callout %}
