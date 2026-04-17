@@ -1,6 +1,6 @@
 package ai.kilocode.client.session.model
 
-import ai.kilocode.client.session.model.content.Text
+import ai.kilocode.client.session.SessionControllerEvent
 import ai.kilocode.rpc.dto.MessageWithPartsDto
 
 class HistoryLoadingTest : SessionManagerTestBase() {
@@ -28,7 +28,7 @@ class HistoryLoadingTest : SessionManagerTestBase() {
         val events = collect(model)
         flush()
 
-        assertTrue(events.any { it is SessionManagerEvent.ViewChanged && it.show })
+        assertTrue(events.any { it is SessionControllerEvent.ViewChanged && it.show })
         assertTrue(model.chat.showMessages)
     }
 }

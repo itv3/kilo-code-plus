@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.model.content
+package ai.kilocode.client.session.model
 
 import ai.kilocode.rpc.dto.MessageDto
 

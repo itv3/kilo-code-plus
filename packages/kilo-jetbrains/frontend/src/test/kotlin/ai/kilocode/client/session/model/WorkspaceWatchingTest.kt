@@ -1,5 +1,7 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.session.SessionControllerEvent
+
 class WorkspaceWatchingTest : SessionManagerTestBase() {
 
     fun `test workspace ready populates agents and models`() {
@@ -15,7 +17,7 @@ class WorkspaceWatchingTest : SessionManagerTestBase() {
         assertEquals(1, m.chat.models.size)
         assertEquals("gpt-5", m.chat.models[0].id)
         assertTrue(m.chat.ready)
-        assertTrue(events.any { it is SessionManagerEvent.WorkspaceReady })
+        assertTrue(events.any { it is SessionControllerEvent.WorkspaceReady })
     }
 
     fun `test workspace ready sets default agent and model`() {

@@ -1,18 +1,5 @@
 package ai.kilocode.client.session.model
 
-import ai.kilocode.client.session.model.content.Compaction
-import ai.kilocode.client.session.model.content.Reasoning
-import ai.kilocode.client.session.model.content.Text
-import ai.kilocode.client.session.model.content.Tool
-import ai.kilocode.client.session.model.content.ToolExecState
-import ai.kilocode.client.session.model.content.Permission
-import ai.kilocode.client.session.model.content.PermissionFileDiff
-import ai.kilocode.client.session.model.content.PermissionMeta
-import ai.kilocode.client.session.model.content.PermissionRequestState
-import ai.kilocode.client.session.model.content.Question
-import ai.kilocode.client.session.model.content.QuestionItem
-import ai.kilocode.client.session.model.content.QuestionOption
-import ai.kilocode.client.session.model.content.ToolCallRef
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStateDto

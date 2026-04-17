@@ -1,15 +1,20 @@
-package ai.kilocode.client.session.model
+package ai.kilocode.client.session
 
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
 import ai.kilocode.client.app.Workspace
 import ai.kilocode.client.plugin.KiloBundle
-import ai.kilocode.client.session.model.content.Permission
-import ai.kilocode.client.session.model.content.PermissionMeta
-import ai.kilocode.client.session.model.content.Question
-import ai.kilocode.client.session.model.content.QuestionItem
-import ai.kilocode.client.session.model.content.QuestionOption
-import ai.kilocode.client.session.model.content.ToolCallRef
+import ai.kilocode.client.session.model.AgentItem
+import ai.kilocode.client.session.model.ModelItem
+import ai.kilocode.client.session.model.SessionModel
+import ai.kilocode.client.session.model.SessionModelEvent
+import ai.kilocode.client.session.model.SessionState
+import ai.kilocode.client.session.model.Permission
+import ai.kilocode.client.session.model.PermissionMeta
+import ai.kilocode.client.session.model.Question
+import ai.kilocode.client.session.model.QuestionItem
+import ai.kilocode.client.session.model.QuestionOption
+import ai.kilocode.client.session.model.ToolCallRef
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
@@ -35,9 +40,9 @@ import kotlinx.coroutines.launch
  * Owns [SessionModel] — the single source of truth for chat content and
  * state. UIs observe model changes via [SessionModelEvent] on [chat].
  * Lifecycle events (app/workspace state, view switching) are published
- * via [SessionManagerEvent] to registered listeners.
+ * via [SessionControllerEvent] to registered listeners.
  */
-class SessionManager(
+class SessionController(
     parent: Disposable,
     id: String?,
     private val sessions: KiloSessionService,
@@ -47,7 +52,7 @@ class SessionManager(
 ) : Disposable {
 
     companion object {
-        private val LOG = Logger.getInstance(SessionManager::class.java)
+        private val LOG = Logger.getInstance(SessionController::class.java)
     }
 
     init {
@@ -56,7 +61,7 @@ class SessionManager(
 
     val chat = SessionModel()
 
-    private val listeners = mutableListOf<SessionManagerListener>()
+    private val listeners = mutableListOf<SessionControllerListener>()
     private var sessionId: String? = id
     private val directory: String get() = workspace.directory
 
@@ -64,7 +69,7 @@ class SessionManager(
     private var tool: String? = null
     private var eventJob: Job? = null
 
-    fun addListener(parent: Disposable, listener: SessionManagerListener) {
+    fun addListener(parent: Disposable, listener: SessionControllerListener) {
         listeners.add(listener)
         Disposer.register(parent) { listeners.remove(listener) }
     }
@@ -110,7 +115,7 @@ class SessionManager(
                 LOG.warn("selectAgent failed", e)
             }
         }
-        fire(SessionManagerEvent.WorkspaceReady)
+        fire(SessionControllerEvent.WorkspaceReady)
     }
 
     fun selectModel(provider: String, id: String) {
@@ -122,7 +127,7 @@ class SessionManager(
                 LOG.warn("selectModel failed", e)
             }
         }
-        fire(SessionManagerEvent.WorkspaceReady)
+        fire(SessionControllerEvent.WorkspaceReady)
     }
 
     init {
@@ -138,7 +143,7 @@ class SessionManager(
                 edt {
                     chat.app = state
                     chat.version = app.version
-                    fire(SessionManagerEvent.AppChanged)
+                    fire(SessionControllerEvent.AppChanged)
                 }
             }
         }
@@ -147,7 +152,7 @@ class SessionManager(
             workspace.state.collect { state ->
                 edt {
                     chat.workspace = state
-                    fire(SessionManagerEvent.WorkspaceChanged)
+                    fire(SessionControllerEvent.WorkspaceChanged)
 
                     if (state.status == KiloWorkspaceStatusDto.READY) {
                         chat.agents = state.agents?.agents?.map {
@@ -168,7 +173,7 @@ class SessionManager(
                         if (chat.model == null) chat.model = state.providers?.defaults?.entries?.firstOrNull()?.value
 
                         chat.ready = true
-                        fire(SessionManagerEvent.WorkspaceReady)
+                        fire(SessionControllerEvent.WorkspaceReady)
                     }
                 }
             }
@@ -292,7 +297,7 @@ class SessionManager(
     private fun showMessages() {
         if (!chat.showMessages) {
             chat.showMessages = true
-            fire(SessionManagerEvent.ViewChanged(true))
+            fire(SessionControllerEvent.ViewChanged(true))
         }
     }
 
@@ -312,7 +317,7 @@ class SessionManager(
         else -> KiloBundle.message("session.status.considering")
     }
 
-    private fun fire(event: SessionManagerEvent) {
+    private fun fire(event: SessionControllerEvent) {
         val application = ApplicationManager.getApplication()
         if (application.isDispatchThread) {
             for (l in listeners) l.onEvent(event)

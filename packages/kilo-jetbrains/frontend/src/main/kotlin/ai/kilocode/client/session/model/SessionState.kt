@@ -1,8 +1,5 @@
 package ai.kilocode.client.session.model
 
-import ai.kilocode.client.session.model.content.Permission
-import ai.kilocode.client.session.model.content.Question
-
 /** Single source of truth for what a session is doing right now. */
 sealed class SessionState {
     data object Idle : SessionState()

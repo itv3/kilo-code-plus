@@ -1,6 +1,5 @@
 package ai.kilocode.client.session.model
 
-import ai.kilocode.client.session.model.content.Text
 import ai.kilocode.rpc.dto.ChatEventDto
 
 class MessageListTest : SessionManagerTestBase() {

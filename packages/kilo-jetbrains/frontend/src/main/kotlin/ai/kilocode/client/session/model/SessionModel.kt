@@ -1,12 +1,5 @@
 package ai.kilocode.client.session.model
 
-import ai.kilocode.client.session.model.content.Compaction
-import ai.kilocode.client.session.model.content.Content
-import ai.kilocode.client.session.model.content.Message
-import ai.kilocode.client.session.model.content.Reasoning
-import ai.kilocode.client.session.model.content.Text
-import ai.kilocode.client.session.model.content.Tool
-import ai.kilocode.client.session.model.content.ToolExecState
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStateDto
@@ -20,7 +13,7 @@ import com.intellij.openapi.util.Disposer
 /**
  * Pure session model — single source of truth for chat content and runtime state.
  *
- * **EDT-only access** — no synchronization. [SessionManager] guarantees all
+ * **EDT-only access** — no synchronization. [ai.kilocode.client.session.SessionController] guarantees all
  * reads and writes happen on the EDT.
  */
 class SessionModel {

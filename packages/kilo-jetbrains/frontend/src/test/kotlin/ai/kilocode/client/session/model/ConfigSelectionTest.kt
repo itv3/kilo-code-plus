@@ -1,5 +1,7 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.session.SessionControllerEvent
+
 class ConfigSelectionTest : SessionManagerTestBase() {
 
     fun `test selectModel updates ChatModel and calls updateConfig`() {
@@ -36,6 +38,6 @@ class ConfigSelectionTest : SessionManagerTestBase() {
         edt { m.selectModel("kilo", "gpt-5") }
         flush()
 
-        assertTrue(events.any { it is SessionManagerEvent.WorkspaceReady })
+        assertTrue(events.any { it is SessionControllerEvent.WorkspaceReady })
     }
 }

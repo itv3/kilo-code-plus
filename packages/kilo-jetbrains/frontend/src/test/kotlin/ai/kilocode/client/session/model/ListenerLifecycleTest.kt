@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.session.SessionControllerEvent
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import com.intellij.openapi.util.Disposer
@@ -11,7 +12,7 @@ class ListenerLifecycleTest : SessionManagerTestBase() {
         val disposable = Disposer.newDisposable("listener-parent")
         Disposer.register(parent, disposable)
 
-        val events = mutableListOf<SessionManagerEvent>()
+        val events = mutableListOf<SessionControllerEvent>()
         m.addListener(disposable) { events.add(it) }
 
         edt { m.prompt("before") }
@@ -28,8 +29,8 @@ class ListenerLifecycleTest : SessionManagerTestBase() {
 
     fun `test all listeners notified`() {
         val m = model()
-        val events1 = mutableListOf<SessionManagerEvent>()
-        val events2 = mutableListOf<SessionManagerEvent>()
+        val events1 = mutableListOf<SessionControllerEvent>()
+        val events2 = mutableListOf<SessionControllerEvent>()
         val d1 = Disposer.newDisposable("l1")
         val d2 = Disposer.newDisposable("l2")
         Disposer.register(parent, d1)

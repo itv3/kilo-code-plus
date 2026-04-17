@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.session.SessionControllerEvent
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 
@@ -13,7 +14,7 @@ class AppWatchingTest : SessionManagerTestBase() {
         appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
         flush()
 
-        assertTrue(events.any { it is SessionManagerEvent.AppChanged })
+        assertTrue(events.any { it is SessionControllerEvent.AppChanged })
         assertEquals(KiloAppStatusDto.READY, m.chat.app.status)
     }
 }

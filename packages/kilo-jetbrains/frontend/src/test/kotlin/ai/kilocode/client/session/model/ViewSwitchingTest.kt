@@ -1,5 +1,7 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.session.SessionControllerEvent
+
 class ViewSwitchingTest : SessionManagerTestBase() {
 
     fun `test first prompt shows messages view`() {
@@ -9,7 +11,7 @@ class ViewSwitchingTest : SessionManagerTestBase() {
         edt { m.prompt("hello") }
         flush()
 
-        assertTrue(events.any { it is SessionManagerEvent.ViewChanged && it.show })
+        assertTrue(events.any { it is SessionControllerEvent.ViewChanged && it.show })
     }
 
     fun `test ViewChanged not fired twice`() {
@@ -21,6 +23,6 @@ class ViewSwitchingTest : SessionManagerTestBase() {
         edt { m.prompt("second") }
         flush()
 
-        assertEquals(1, events.count { it is SessionManagerEvent.ViewChanged && it.show })
+        assertEquals(1, events.count { it is SessionControllerEvent.ViewChanged && it.show })
     }
 }

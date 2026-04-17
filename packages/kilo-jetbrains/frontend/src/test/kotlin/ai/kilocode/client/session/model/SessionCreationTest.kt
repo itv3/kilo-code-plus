@@ -1,5 +1,7 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.client.session.SessionControllerEvent
+
 class SessionCreationTest : SessionManagerTestBase() {
 
     fun `test prompt creates session on first call`() {
@@ -12,7 +14,7 @@ class SessionCreationTest : SessionManagerTestBase() {
         assertEquals(1, rpc.creates)
         assertEquals(1, rpc.prompts.size)
         assertEquals("ses_test", rpc.prompts[0].first)
-        assertTrue(events.any { it is SessionManagerEvent.ViewChanged && it.show })
+        assertTrue(events.any { it is SessionControllerEvent.ViewChanged && it.show })
     }
 
     fun `test prompt reuses existing session`() {

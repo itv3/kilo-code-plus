@@ -3,8 +3,6 @@ package ai.kilocode.client.session
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
 import ai.kilocode.client.app.Workspace
-import ai.kilocode.client.session.model.SessionManager
-import ai.kilocode.client.session.model.SessionManagerEvent
 import ai.kilocode.client.session.model.SessionModelEvent
 import ai.kilocode.client.session.model.SessionState
 import ai.kilocode.client.session.ui.LabelPicker
@@ -20,7 +18,7 @@ import java.awt.BorderLayout
 import java.awt.CardLayout
 import javax.swing.JPanel
 
-/** Main chat panel — reacts to [SessionManager] events. */
+/** Main chat panel — reacts to [SessionController] events. */
 class SessionUi(
     project: Project,
     workspace: Workspace,
@@ -34,7 +32,7 @@ class SessionUi(
         private const val MESSAGES = "messages"
     }
 
-    private val model = SessionManager(this, null, sessions, workspace, app, cs)
+    private val model = SessionController(this, null, sessions, workspace, app, cs)
     private val status = StatusPanel(this, model)
     private val messages = MessageListUi(this, model.chat)
 
@@ -71,7 +69,7 @@ class SessionUi(
         // Lifecycle events from the manager (app/workspace state, view switching)
         model.addListener(this) { event ->
             when (event) {
-                is SessionManagerEvent.WorkspaceReady -> {
+                is SessionControllerEvent.WorkspaceReady -> {
                     val c = model.chat
                     prompt.mode.setItems(c.agents.map { LabelPicker.Item(it.name, it.display) }, c.agent)
                     val items = c.models.map { LabelPicker.Item(it.id, it.display, it.provider) }
@@ -80,10 +78,10 @@ class SessionUi(
                     prompt.setReady(c.ready)
                 }
 
-                is SessionManagerEvent.ViewChanged -> cards.show(center, if (event.show) MESSAGES else STATUS)
+                is SessionControllerEvent.ViewChanged -> cards.show(center, if (event.show) MESSAGES else STATUS)
 
-                is SessionManagerEvent.AppChanged,
-                is SessionManagerEvent.WorkspaceChanged -> {}
+                is SessionControllerEvent.AppChanged,
+                is SessionControllerEvent.WorkspaceChanged -> {}
             }
         }
 

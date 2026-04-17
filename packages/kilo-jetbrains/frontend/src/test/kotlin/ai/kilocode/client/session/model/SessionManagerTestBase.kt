@@ -2,6 +2,8 @@ package ai.kilocode.client.session.model
 
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
+import ai.kilocode.client.session.SessionController
+import ai.kilocode.client.session.SessionControllerEvent
 import ai.kilocode.client.testing.FakeAppRpcApi
 import ai.kilocode.client.testing.FakeWorkspaceRpcApi
 import ai.kilocode.client.testing.FakeSessionRpcApi
@@ -30,7 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 /**
- * Base class for [SessionManager] tests.
+ * Base class for [SessionController] tests.
  *
  * Provides real IntelliJ Application/EDT/Disposer via [BasePlatformTestCase],
  * real frontend services wired to fake RPC backends, and shared helpers.
@@ -76,13 +78,13 @@ abstract class SessionManagerTestBase : BasePlatformTestCase() {
     // ------ Model creation ------
 
     protected fun model(id: String? = null) =
-        SessionManager(parent, id, sessions, workspace, app, scope)
+        SessionController(parent, id, sessions, workspace, app, scope)
 
     // ------ Event collection ------
 
     /** Attach a listener that collects lifecycle events and asserts EDT. */
-    protected fun collect(m: SessionManager): MutableList<SessionManagerEvent> {
-        val events = mutableListOf<SessionManagerEvent>()
+    protected fun collect(m: SessionController): MutableList<SessionControllerEvent> {
+        val events = mutableListOf<SessionControllerEvent>()
         val disposable = Disposer.newDisposable("listener")
         Disposer.register(parent, disposable)
         m.addListener(disposable) { event ->
@@ -93,7 +95,7 @@ abstract class SessionManagerTestBase : BasePlatformTestCase() {
     }
 
     /** Attach a listener that collects model events (messages, parts, phase). */
-    protected fun collectModel(m: SessionManager): MutableList<SessionModelEvent> {
+    protected fun collectModel(m: SessionController): MutableList<SessionModelEvent> {
         val events = mutableListOf<SessionModelEvent>()
         val disposable = Disposer.newDisposable("model-listener")
         Disposer.register(parent, disposable)
@@ -123,7 +125,7 @@ abstract class SessionManagerTestBase : BasePlatformTestCase() {
     }
 
     /** Create a model, attach both listeners, send initial prompt, and flush. */
-    protected fun prompted(): Triple<SessionManager, MutableList<SessionManagerEvent>, MutableList<SessionModelEvent>> {
+    protected fun prompted(): Triple<SessionController, MutableList<SessionControllerEvent>, MutableList<SessionModelEvent>> {
         val m = model()
         val events = collect(m)
         val model = collectModel(m)

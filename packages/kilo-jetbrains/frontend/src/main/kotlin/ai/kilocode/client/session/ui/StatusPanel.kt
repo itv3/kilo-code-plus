@@ -1,9 +1,9 @@
 package ai.kilocode.client.session.ui
 
-import ai.kilocode.client.session.model.SessionManager
-import ai.kilocode.client.session.model.SessionManagerEvent
-import ai.kilocode.client.session.model.SessionManagerListener
 import ai.kilocode.client.plugin.KiloBundle
+import ai.kilocode.client.session.SessionController
+import ai.kilocode.client.session.SessionControllerEvent
+import ai.kilocode.client.session.SessionControllerListener
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStateDto
@@ -29,7 +29,7 @@ import javax.swing.SwingConstants
 /**
  * Welcome panel showing app + workspace initialization progress.
  *
- * Pure view — listens to [SessionManager] events and reads
+ * Pure view — listens to [SessionController] events and reads
  * [SessionModel][ai.kilocode.client.session.model.SessionModel] for data.
  * No coroutines, no service references.
  *
@@ -39,8 +39,8 @@ import javax.swing.SwingConstants
  */
 class StatusPanel(
     parent: Disposable,
-    private val model: SessionManager,
-) : JPanel(GridBagLayout()), SessionManagerListener, Disposable {
+    private val model: SessionController,
+) : JPanel(GridBagLayout()), SessionControllerListener, Disposable {
 
     init {
         Disposer.register(parent, this)
@@ -113,15 +113,15 @@ class StatusPanel(
         model.addListener(this, this)
     }
 
-    override fun onEvent(event: SessionManagerEvent) {
+    override fun onEvent(event: SessionControllerEvent) {
         when (event) {
-            is SessionManagerEvent.AppChanged -> {
+            is SessionControllerEvent.AppChanged -> {
                 renderApp(model.chat.app)
                 revalidate()
                 repaint()
             }
 
-            is SessionManagerEvent.WorkspaceChanged -> {
+            is SessionControllerEvent.WorkspaceChanged -> {
                 renderWorkspace(model.chat.workspace)
                 revalidate()
                 repaint()
