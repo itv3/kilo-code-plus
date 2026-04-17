@@ -16,6 +16,9 @@ export const dict = {
   "kiloClaw.message.you": "You",
   "kiloClaw.message.thinking": "Thinking...",
 
+  // Error
+  "kiloClaw.error.retry": "Retry",
+
   // Setup
   "kiloClaw.setup.title": "KiloClaw",
   "kiloClaw.setup.subtitle": "Personal AI for everyday life",

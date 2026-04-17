@@ -42,6 +42,7 @@ export type KiloClawState =
   | { phase: "loading"; locale: string }
   | { phase: "noInstance"; locale: string }
   | { phase: "needsUpgrade"; locale: string }
+  | { phase: "error"; locale: string; error: string }
   | {
       phase: "ready"
       locale: string

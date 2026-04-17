@@ -19,7 +19,7 @@ const vscode = acquireVsCodeApi()
 
 const MAX_MESSAGES = 500
 
-type Phase = "loading" | "noInstance" | "needsUpgrade" | "ready"
+type Phase = "loading" | "noInstance" | "needsUpgrade" | "error" | "ready"
 
 type ClawCtx = {
   phase: () => Phase
@@ -28,8 +28,10 @@ type ClawCtx = {
   messages: () => ChatMessage[]
   online: () => boolean
   connected: () => boolean
+  error: () => string | null
   send: (text: string) => void
   openExternal: (url: string) => void
+  retry: () => void
 }
 
 const ClawContext = createContext<ClawCtx>()
@@ -41,6 +43,7 @@ export function ClawProvider(props: { children: JSX.Element }) {
   const [messages, setMessages] = createSignal<ChatMessage[]>([])
   const [online, setOnline] = createSignal(false)
   const [connected, setConnected] = createSignal(false)
+  const [error, setError] = createSignal<string | null>(null)
 
   const handler = (event: MessageEvent) => {
     const msg = event.data as KiloClawOutMessage
@@ -56,11 +59,17 @@ export function ClawProvider(props: { children: JSX.Element }) {
           setConnected(s.connected)
           setOnline(s.online)
           setMessages(s.messages)
+          setError(null)
+        } else if (s.phase === "error") {
+          setError(s.error)
         }
         break
       }
       case "kiloclaw.message":
         setMessages((prev) => {
+          // Dedupe: if a message with this id already exists, update it
+          const idx = prev.findIndex((m) => m.id === msg.message.id)
+          if (idx !== -1) return prev.map((m, i) => (i === idx ? msg.message : m))
           const next = [...prev, msg.message]
           return next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next
         })
@@ -106,8 +115,10 @@ export function ClawProvider(props: { children: JSX.Element }) {
     messages,
     online,
     connected,
+    error,
     send: (text: string) => vscode.postMessage({ type: "kiloclaw.send", text }),
     openExternal: (url: string) => vscode.postMessage({ type: "kiloclaw.openExternal", url }),
+    retry: () => vscode.postMessage({ type: "kiloclaw.ready" }),
   }
 
   return <ClawContext.Provider value={ctx}>{props.children}</ClawContext.Provider>

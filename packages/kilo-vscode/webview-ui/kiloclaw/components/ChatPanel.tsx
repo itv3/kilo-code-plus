@@ -78,7 +78,7 @@ export function ChatPanel() {
       </div>
 
       {/* Messages */}
-      <div class="kiloclaw-messages" ref={list}>
+      <div class="kiloclaw-messages" ref={list} role="log" aria-live="polite">
         <Show when={claw.messages().length === 0 && claw.connected()}>
           <div class="kiloclaw-empty">{t("kiloClaw.chat.empty")}</div>
         </Show>
@@ -96,6 +96,7 @@ export function ChatPanel() {
           onInput={onInput}
           onKeyDown={onKeyDown}
           rows={1}
+          aria-label={t("kiloClaw.chat.placeholder")}
         />
         <Button variant="primary" disabled={disabled() || !text().trim()} onClick={submit}>
           {t("kiloClaw.chat.send")}

@@ -4,8 +4,8 @@
 // VSCodeProvider/ServerProvider — locale comes from the extension host
 // via the claw context, falling back to navigator.language then "en".
 
-import { createContext, createMemo, useContext, type JSX } from "solid-js"
-import { normalizeLocale, resolveTemplate } from "../../src/context/language-utils"
+import { createContext, createEffect, createMemo, useContext, type JSX } from "solid-js"
+import { normalizeLocale, RTL_LOCALES, localeToBcp47, resolveTemplate } from "../../src/context/language-utils"
 import type { Locale } from "../../src/context/language-utils"
 import { dict as en } from "../i18n/en"
 import { dict as ar } from "../i18n/ar"
@@ -64,6 +64,13 @@ export function KiloClawLanguageProvider(props: { locale: () => string | undefin
   })
 
   const dict = createMemo(() => dicts[resolved()] ?? dicts.en)
+
+  // Update <html lang> and <html dir> when locale changes
+  createEffect(() => {
+    const loc = resolved()
+    document.documentElement.lang = localeToBcp47(loc)
+    document.documentElement.dir = RTL_LOCALES.has(loc) ? "rtl" : "ltr"
+  })
 
   const t = (key: string, params?: Record<string, string | number | boolean | undefined>) => {
     const text = dict()[key] ?? key

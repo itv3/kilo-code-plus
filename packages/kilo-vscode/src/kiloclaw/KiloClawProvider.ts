@@ -8,6 +8,7 @@
 import * as vscode from "vscode"
 import { homedir } from "os"
 import type { KiloConnectionService } from "../services/cli-backend"
+import type { KiloClient } from "@kilocode/sdk/v2/client"
 import { buildWebviewHtml } from "../utils"
 import { connect, history, presence, type ClawChatClient } from "./chat-client"
 import type {
@@ -29,12 +30,14 @@ export class KiloClawProvider implements vscode.Disposable {
   private chat: ClawChatClient | null = null
   private timer: ReturnType<typeof setInterval> | null = null
   private subs: Array<() => void> = []
+  private chatSubs: Array<() => void> = []
   private messages: ChatMessage[] = []
   private status: ClawStatus | null = null
   private online = false
   private connected = false
   private disposed = false
   private initializing = false
+  private generation = 0
 
   constructor(
     private readonly uri: vscode.Uri,
@@ -143,9 +146,14 @@ export class KiloClawProvider implements vscode.Disposable {
     return override || vscode.env.language
   }
 
+  private stale(gen: number): boolean {
+    return gen !== this.generation || this.disposed
+  }
+
   private async init(): Promise<void> {
     if (this.initializing || this.disposed) return
     this.initializing = true
+    const gen = this.generation
 
     // Track whether we deferred to waitForConnection — if so, keep
     // `initializing` true so duplicate kiloclaw.ready messages are
@@ -156,40 +164,21 @@ export class KiloClawProvider implements vscode.Disposable {
       this.post({ type: "kiloclaw.state", state: { phase: "loading", locale: this.locale } })
 
       const client = await this.resolveClient()
+      if (this.stale(gen)) return
       if (!client) {
         deferred = true
         this.waitForConnection()
         return
       }
 
-      // Fetch instance status
-      const res = await client.kilo.claw.status().catch(() => null)
-      if (!res?.data || (res.data as Record<string, unknown>).error) {
-        this.post({ type: "kiloclaw.state", state: { phase: "noInstance", locale: this.locale } })
-        return
-      }
-
-      const data = res.data as ClawStatus & { userId?: string }
-      if (!data.userId) {
-        this.post({ type: "kiloclaw.state", state: { phase: "noInstance", locale: this.locale } })
-        return
-      }
-
-      this.status = data
-
-      // Fetch chat credentials
-      const creds = await client.kilo.claw.chatCredentials().catch(() => null)
-      if (!creds?.data) {
-        this.post({ type: "kiloclaw.state", state: { phase: "needsUpgrade", locale: this.locale } })
-        return
-      }
-
-      const credentials = creds.data as ChatCredentials
+      const credentials = await this.fetchCreds(client, gen)
+      if (!credentials) return
 
       // Connect to Stream Chat
       try {
         await this.connectChat(credentials)
       } catch (err: unknown) {
+        if (this.stale(gen)) return
         const msg = err instanceof Error ? err.message : String(err)
         console.error("[Kilo New] KiloClaw chat connect failed:", msg)
         this.post({
@@ -208,6 +197,8 @@ export class KiloClawProvider implements vscode.Disposable {
         return
       }
 
+      if (this.stale(gen)) return
+
       // Push ready state
       const state: KiloClawState = {
         phase: "ready",
@@ -222,6 +213,56 @@ export class KiloClawProvider implements vscode.Disposable {
     } finally {
       if (!deferred) this.initializing = false
     }
+  }
+
+  /**
+   * Fetch and validate instance status + chat credentials.
+   * Returns credentials on success, null when stale or after posting an error/state.
+   */
+  private async fetchCreds(client: KiloClient, gen: number): Promise<ChatCredentials | null> {
+    const res = await client.kilo.claw.status().catch(() => null)
+    if (this.stale(gen)) return null
+
+    // Distinguish SDK/network errors from business states
+    if (!res || (res as Record<string, unknown>).error) {
+      this.post({
+        type: "kiloclaw.state",
+        state: { phase: "error", locale: this.locale, error: "Failed to connect to Kilo service" },
+      })
+      return null
+    }
+
+    if (!res.data || (res.data as Record<string, unknown>).error) {
+      this.post({ type: "kiloclaw.state", state: { phase: "noInstance", locale: this.locale } })
+      return null
+    }
+
+    const data = res.data as ClawStatus & { userId?: string }
+    if (!data.userId) {
+      this.post({ type: "kiloclaw.state", state: { phase: "noInstance", locale: this.locale } })
+      return null
+    }
+
+    this.status = data
+
+    const creds = await client.kilo.claw.chatCredentials().catch(() => null)
+    if (this.stale(gen)) return null
+
+    // Distinguish SDK/network errors from business states
+    if (!creds || (creds as Record<string, unknown>).error) {
+      this.post({
+        type: "kiloclaw.state",
+        state: { phase: "error", locale: this.locale, error: "Failed to fetch chat credentials" },
+      })
+      return null
+    }
+
+    if (!creds.data) {
+      this.post({ type: "kiloclaw.state", state: { phase: "needsUpgrade", locale: this.locale } })
+      return null
+    }
+
+    return creds.data as ChatCredentials
   }
 
   /**
@@ -247,6 +288,9 @@ export class KiloClawProvider implements vscode.Disposable {
   }
 
   private async connectChat(creds: ChatCredentials): Promise<void> {
+    // Disconnect previous client to avoid duplicate websockets/listeners
+    this.disconnectChat()
+
     this.chat = await connect(creds)
 
     // Load history
@@ -257,13 +301,20 @@ export class KiloClawProvider implements vscode.Disposable {
 
     // Subscribe to events and relay to webview
     const unsub = this.chat.onMessage((msg) => {
+      // Dedupe: if a message with this id already exists, treat as update
+      const idx = this.messages.findIndex((m) => m.id === msg.id)
+      if (idx !== -1) {
+        this.messages = this.messages.map((m, i) => (i === idx ? msg : m))
+        this.post({ type: "kiloclaw.messageUpdated", message: msg })
+        return
+      }
       this.messages = [...this.messages, msg]
       if (this.messages.length > MAX_MESSAGES) {
         this.messages = this.messages.slice(-MAX_MESSAGES)
       }
       this.post({ type: "kiloclaw.message", message: msg })
     })
-    this.subs.push(unsub)
+    this.chatSubs.push(unsub)
 
     const unsubUpdated = this.chat.onMessageUpdated((msg) => {
       const idx = this.messages.findIndex((m) => m.id === msg.id)
@@ -277,13 +328,28 @@ export class KiloClawProvider implements vscode.Disposable {
       }
       this.post({ type: "kiloclaw.messageUpdated", message: msg })
     })
-    this.subs.push(unsubUpdated)
+    this.chatSubs.push(unsubUpdated)
 
     const unsubPresence = this.chat.onPresence((val) => {
       this.online = val
       this.post({ type: "kiloclaw.presence", online: val })
     })
-    this.subs.push(unsubPresence)
+    this.chatSubs.push(unsubPresence)
+  }
+
+  private disconnectChat(): void {
+    for (const unsub of this.chatSubs) unsub()
+    this.chatSubs = []
+
+    if (this.chat) {
+      this.chat.disconnect().catch((err) => {
+        console.error("[Kilo New] KiloClaw disconnect failed:", err?.message ?? err)
+      })
+      this.chat = null
+    }
+
+    this.connected = false
+    this.online = false
   }
 
   private async sendChat(text: string): Promise<void> {
@@ -336,6 +402,8 @@ export class KiloClawProvider implements vscode.Disposable {
   }
 
   private cleanup(): void {
+    this.generation++
+
     for (const unsub of this.subs) unsub()
     this.subs = []
 
@@ -344,16 +412,9 @@ export class KiloClawProvider implements vscode.Disposable {
       this.timer = null
     }
 
-    if (this.chat) {
-      this.chat.disconnect().catch((err) => {
-        console.error("[Kilo New] KiloClaw disconnect failed:", err?.message ?? err)
-      })
-      this.chat = null
-    }
+    this.disconnectChat()
 
     this.messages = []
-    this.connected = false
-    this.online = false
     this.initializing = false
     this.status = null
   }

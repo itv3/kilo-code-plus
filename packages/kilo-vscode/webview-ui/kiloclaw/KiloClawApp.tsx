@@ -3,6 +3,7 @@
 import { Switch, Match } from "solid-js"
 import { ThemeProvider } from "@kilocode/kilo-ui/theme"
 import { MarkedProvider } from "@kilocode/kilo-ui/context/marked"
+import { Button } from "@kilocode/kilo-ui/button"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
 import { Toast } from "@kilocode/kilo-ui/toast"
 import { ClawProvider, useClaw } from "./context/claw"
@@ -33,6 +34,16 @@ function Content() {
         <Match when={claw.phase() === "needsUpgrade"}>
           <UpgradeView />
         </Match>
+        <Match when={claw.phase() === "error"}>
+          <div class="kiloclaw-center">
+            <div class="kiloclaw-error-view">
+              <span class="kiloclaw-error-text">{claw.error()}</span>
+              <Button variant="primary" onClick={() => claw.retry()}>
+                {t("kiloClaw.error.retry")}
+              </Button>
+            </div>
+          </div>
+        </Match>
         <Match when={claw.phase() === "ready"}>
           <div class="kiloclaw-layout">
             <ChatPanel />
@@ -47,7 +58,7 @@ function Content() {
 
 export function KiloClawApp() {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="kilo-vscode">
       <ClawProvider>
         <LanguageBridge>
           <MarkedProvider>

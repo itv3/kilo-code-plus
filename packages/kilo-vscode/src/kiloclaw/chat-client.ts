@@ -43,7 +43,13 @@ export async function connect(creds: ChatCredentials): Promise<ClawChatClient> {
   await client.connectUser({ id: creds.userId }, creds.userToken)
 
   const channel = client.channel("messaging", creds.channelId)
-  await channel.watch({ presence: true })
+  try {
+    await channel.watch({ presence: true })
+  } catch (err) {
+    // Disconnect the user to avoid leaking a partial connection
+    await client.disconnectUser().catch(() => {})
+    throw err
+  }
 
   const bot = botId(creds)
 
