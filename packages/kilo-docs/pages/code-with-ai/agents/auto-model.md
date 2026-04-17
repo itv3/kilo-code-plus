@@ -26,8 +26,8 @@ You can see which underlying models are used, as well as the cost, in the expand
 ## Tiers
 
 - **Frontier** — Routes to the latest and most capable paid models. Uses different models for reasoning-heavy tasks (planning, architecture, debugging) versus implementation tasks (coding, building, exploring), pairing the right capability to each type of work.
-- **Balanced** — Follows the same mode-based routing structure as Frontier but uses a more cost-effective model across all modes. A good default for most developers who want strong AI assistance without paying frontier prices.
-- **Free** — Routes to the best available free model on OpenRouter. Because free model availability shifts over time as providers change promotional periods, the mapping is updated server-side — you always get the best free option without having to track what's currently available. Quality will be lower than paid tiers, and the model may change over time.
+- **Balanced** — Uses a single cost-effective model across all modes. A good default for most developers who want strong AI assistance without paying frontier prices.
+- **Free** — Routes to the best available free models on OpenRouter, splitting traffic across them. Because free model availability shifts over time as providers change promotional periods, the mapping is updated server-side — you always get the best free option without having to track what's currently available. Quality will be lower than paid tiers, and the models may change over time.
 
 ## Benefits
 
