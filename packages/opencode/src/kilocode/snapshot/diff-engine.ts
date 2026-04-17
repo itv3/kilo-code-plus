@@ -201,6 +201,21 @@ export namespace DiffEngine {
     }
   }
 
+  // Scoped terminate: only tears down the pool that owns the failing request.
+  // If a newer pool has already replaced it, we leave the current one alone so
+  // a stale timer or abort cannot spawn a fresh worker (and kill unrelated
+  // in-flight work).
+  function terminatePool(p: Pool) {
+    if (pool === p) pool = null
+    try {
+      p.worker.terminate()
+    } catch (err) {
+      log.debug("diff worker terminate failed", {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
   /**
    * Offloaded patch generation. Applies the input caps first (fast-path skip),
    * then dispatches to the singleton worker with a bounded timeout. If the
@@ -233,7 +248,7 @@ export namespace DiffEngine {
           p.pending.delete(id)
           if (entry.signal && entry.onAbort) entry.signal.removeEventListener("abort", entry.onAbort)
           log.warn("diff worker timed out, terminating", { file, timeout })
-          terminate()
+          terminatePool(p)
           resolve({ patch: "", skipped: "timeout" })
         }, timeout),
       }
@@ -244,7 +259,7 @@ export namespace DiffEngine {
           p.pending.delete(id)
           clearTimeout(entry.timer)
           // Interruption means the caller no longer cares — don't bother finishing.
-          terminate()
+          terminatePool(p)
           resolve({ patch: "", skipped: "timeout" })
         }
         if (opts.signal.aborted) {
