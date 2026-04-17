@@ -1,8 +1,8 @@
 import { Flag } from "@/flag/flag"
 import { Hono } from "hono"
-import { proxy } from "hono/proxy"
+// import { proxy } from "hono/proxy" // kilocode_change - proxy import removed
 import { getMimeType } from "hono/utils/mime"
-import { createHash } from "node:crypto"
+// import { createHash } from "node:crypto" // kilocode_change
 import fs from "node:fs/promises"
 
 const embeddedUIPromise = Flag.KILO_DISABLE_EMBEDDED_WEB_UI
@@ -13,8 +13,10 @@ const embeddedUIPromise = Flag.KILO_DISABLE_EMBEDDED_WEB_UI
 const DEFAULT_CSP =
   "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:"
 
-const csp = (hash = "") =>
-  `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'${hash ? ` 'sha256-${hash}'` : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:`
+// kilocode_change start - csp function removed, used by proxy fallback to app.opencode.ai
+// const csp = (hash = "") =>
+//   `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'${hash ? ` 'sha256-${hash}'` : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:`
+// kilocode_change end
 
 export const UIRoutes = (): Hono =>
   new Hono().all("/*", async (c) => {
@@ -36,20 +38,8 @@ export const UIRoutes = (): Hono =>
         return c.json({ error: "Not Found" }, 404)
       }
     } else {
-      const response = await proxy(`https://app.opencode.ai${path}`, {
-        ...c.req,
-        headers: {
-          ...c.req.raw.headers,
-          host: "app.opencode.ai",
-        },
-      })
-      const match = response.headers.get("content-type")?.includes("text/html")
-        ? (await response.clone().text()).match(
-            /<script\b(?![^>]*\bsrc\s*=)[^>]*\bid=(['"])oc-theme-preload-script\1[^>]*>([\s\S]*?)<\/script>/i,
-          )
-        : undefined
-      const hash = match ? createHash("sha256").update(match[2]).digest("base64") : ""
-      response.headers.set("Content-Security-Policy", csp(hash))
-      return response
+      // kilocode_change start - return 404 instead of proxying to app.opencode.ai
+      return c.json({ error: "Not Found" }, 404)
+      // kilocode_change end
     }
   })
