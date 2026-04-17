@@ -220,7 +220,8 @@ const parse = Effect.fn("BashTool.parse")(function* (command: string, ps: boolea
   return tree.rootNode
 })
 
-const ask = Effect.fn("BashTool.ask")(function* (ctx: Tool.Context, scan: Scan, command: string) { // kilocode_change
+const ask = Effect.fn("BashTool.ask")(function* (ctx: Tool.Context, scan: Scan, command: string) {
+  // kilocode_change
   if (scan.dirs.size > 0) {
     const globs = Array.from(scan.dirs).map((dir) => {
       if (process.platform === "win32") return AppFileSystem.normalizePathPattern(path.join(dir, "*"))

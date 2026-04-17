@@ -511,11 +511,11 @@ export const ProvidersLogoutCommand = cmd({
         }
         const database = await ModelsDev.get()
         const selected = await prompts.select({
-            message: "Select provider",
-            options: credentials.map(([key, value]) => ({
-              label: (database[key]?.name || key) + UI.Style.TEXT_DIM + " (" + value.type + ")",
-              value: key,
-            })),
+          message: "Select provider",
+          options: credentials.map(([key, value]) => ({
+            label: (database[key]?.name || key) + UI.Style.TEXT_DIM + " (" + value.type + ")",
+            value: key,
+          })),
         })
         if (prompts.isCancel(selected)) throw new UI.CancelledError()
         const providerID = selected as string

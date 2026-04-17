@@ -174,7 +174,6 @@ export namespace SessionSummary {
 
   // kilocode_change start - legacy promise helpers for Kilo callsites
   const { runPromise } = makeRuntime(Service, defaultLayer)
-  export const diff = (input: { sessionID: SessionID; messageID?: MessageID }) =>
-    runPromise((svc) => svc.diff(input))
+  export const diff = (input: { sessionID: SessionID; messageID?: MessageID }) => runPromise((svc) => svc.diff(input))
   // kilocode_change end
 }

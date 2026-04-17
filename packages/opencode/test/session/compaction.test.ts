@@ -1051,7 +1051,8 @@ describe("session.compaction.process", () => {
 
           await Promise.race([
             ready.promise,
-            wait(5000).then(() => { // kilocode_change
+            wait(5000).then(() => {
+              // kilocode_change
               throw new Error("timed out waiting for retry status")
             }),
           ])

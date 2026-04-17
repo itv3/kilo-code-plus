@@ -593,95 +593,91 @@ describe("saveAlwaysRules", () => {
     ),
   )
 
-  it.live(
-    "multi-pattern: auto-resolves when new rule covers blocking pattern and ruleset covers the rest",
-    () =>
-      withDir({ git: true }, () =>
-        Effect.gen(function* () {
-          // Subagent B has "git status && npm install" — two patterns.
-          // Its ruleset already allows "npm install" but "git status" is "ask".
-          const fiberB = yield* ask({
-            id: PermissionID.make("permission_multi_b"),
-            sessionID: SessionID.make("session_b"),
-            permission: "bash",
-            patterns: ["git status", "npm install"],
-            metadata: {},
-            always: [],
-            ruleset: [
-              { permission: "bash", pattern: "*", action: "ask" },
-              { permission: "bash", pattern: "npm install", action: "allow" },
-            ],
-          }).pipe(Effect.forkScoped)
+  it.live("multi-pattern: auto-resolves when new rule covers blocking pattern and ruleset covers the rest", () =>
+    withDir({ git: true }, () =>
+      Effect.gen(function* () {
+        // Subagent B has "git status && npm install" — two patterns.
+        // Its ruleset already allows "npm install" but "git status" is "ask".
+        const fiberB = yield* ask({
+          id: PermissionID.make("permission_multi_b"),
+          sessionID: SessionID.make("session_b"),
+          permission: "bash",
+          patterns: ["git status", "npm install"],
+          metadata: {},
+          always: [],
+          ruleset: [
+            { permission: "bash", pattern: "*", action: "ask" },
+            { permission: "bash", pattern: "npm install", action: "allow" },
+          ],
+        }).pipe(Effect.forkScoped)
 
-          // Subagent A gets "git status" approved
-          const fiberA = yield* ask({
-            id: PermissionID.make("permission_multi_a"),
-            sessionID: SessionID.make("session_a"),
-            permission: "bash",
-            patterns: ["git status"],
-            metadata: { rules: ["git *"] },
-            always: ["git *"],
-            ruleset: [{ permission: "bash", pattern: "*", action: "ask" }],
-          }).pipe(Effect.forkScoped)
+        // Subagent A gets "git status" approved
+        const fiberA = yield* ask({
+          id: PermissionID.make("permission_multi_a"),
+          sessionID: SessionID.make("session_a"),
+          permission: "bash",
+          patterns: ["git status"],
+          metadata: { rules: ["git *"] },
+          always: ["git *"],
+          ruleset: [{ permission: "bash", pattern: "*", action: "ask" }],
+        }).pipe(Effect.forkScoped)
 
-          yield* waitForPending(2)
-          // User approves "git *" on subagent A
-          yield* saveAlwaysRules({
-            requestID: PermissionID.make("permission_multi_a"),
-            approvedAlways: ["git *"],
-          })
-          yield* reply({ requestID: PermissionID.make("permission_multi_a"), reply: "once" })
+        yield* waitForPending(2)
+        // User approves "git *" on subagent A
+        yield* saveAlwaysRules({
+          requestID: PermissionID.make("permission_multi_a"),
+          approvedAlways: ["git *"],
+        })
+        yield* reply({ requestID: PermissionID.make("permission_multi_a"), reply: "once" })
 
-          // B should auto-resolve: "git status" covered by new rule, "npm install" covered by original ruleset
-          yield* Fiber.join(fiberA)
-          yield* Fiber.join(fiberB)
-        }),
-      ),
+        // B should auto-resolve: "git status" covered by new rule, "npm install" covered by original ruleset
+        yield* Fiber.join(fiberA)
+        yield* Fiber.join(fiberB)
+      }),
+    ),
   )
 
-  it.live(
-    "multi-pattern: stays pending when new rule covers one pattern but ruleset doesn't cover the other",
-    () =>
-      withDir({ git: true }, () =>
-        Effect.gen(function* () {
-          // Subagent B has "git status && curl http://evil.com" — two patterns.
-          // Neither is allowed by the ruleset.
-          const fiberB = yield* ask({
-            id: PermissionID.make("permission_multi_b2"),
-            sessionID: SessionID.make("session_b"),
-            permission: "bash",
-            patterns: ["git status", "curl http://evil.com"],
-            metadata: {},
-            always: [],
-            ruleset: [{ permission: "bash", pattern: "*", action: "ask" }],
-          }).pipe(Effect.forkScoped)
+  it.live("multi-pattern: stays pending when new rule covers one pattern but ruleset doesn't cover the other", () =>
+    withDir({ git: true }, () =>
+      Effect.gen(function* () {
+        // Subagent B has "git status && curl http://evil.com" — two patterns.
+        // Neither is allowed by the ruleset.
+        const fiberB = yield* ask({
+          id: PermissionID.make("permission_multi_b2"),
+          sessionID: SessionID.make("session_b"),
+          permission: "bash",
+          patterns: ["git status", "curl http://evil.com"],
+          metadata: {},
+          always: [],
+          ruleset: [{ permission: "bash", pattern: "*", action: "ask" }],
+        }).pipe(Effect.forkScoped)
 
-          const fiberA = yield* ask({
-            id: PermissionID.make("permission_multi_a2"),
-            sessionID: SessionID.make("session_a"),
-            permission: "bash",
-            patterns: ["git status"],
-            metadata: { rules: ["git *"] },
-            always: ["git *"],
-            ruleset: [{ permission: "bash", pattern: "*", action: "ask" }],
-          }).pipe(Effect.forkScoped)
+        const fiberA = yield* ask({
+          id: PermissionID.make("permission_multi_a2"),
+          sessionID: SessionID.make("session_a"),
+          permission: "bash",
+          patterns: ["git status"],
+          metadata: { rules: ["git *"] },
+          always: ["git *"],
+          ruleset: [{ permission: "bash", pattern: "*", action: "ask" }],
+        }).pipe(Effect.forkScoped)
 
-          yield* waitForPending(2)
-          // User approves "git *" — covers "git status" but NOT "curl"
-          yield* saveAlwaysRules({
-            requestID: PermissionID.make("permission_multi_a2"),
-            approvedAlways: ["git *"],
-          })
-          yield* reply({ requestID: PermissionID.make("permission_multi_a2"), reply: "once" })
-          yield* Fiber.join(fiberA)
+        yield* waitForPending(2)
+        // User approves "git *" — covers "git status" but NOT "curl"
+        yield* saveAlwaysRules({
+          requestID: PermissionID.make("permission_multi_a2"),
+          approvedAlways: ["git *"],
+        })
+        yield* reply({ requestID: PermissionID.make("permission_multi_a2"), reply: "once" })
+        yield* Fiber.join(fiberA)
 
-          // B should still be pending (curl not covered)
-          const pending = yield* list()
-          expect(pending.some((p) => String(p.id) === "permission_multi_b2")).toBe(true)
+        // B should still be pending (curl not covered)
+        const pending = yield* list()
+        expect(pending.some((p) => String(p.id) === "permission_multi_b2")).toBe(true)
 
-          yield* reply({ requestID: PermissionID.make("permission_multi_b2"), reply: "reject" })
-          expectFailure(yield* Fiber.await(fiberB), Permission.RejectedError)
-        }),
-      ),
+        yield* reply({ requestID: PermissionID.make("permission_multi_b2"), reply: "reject" })
+        expectFailure(yield* Fiber.await(fiberB), Permission.RejectedError)
+      }),
+    ),
   )
 })

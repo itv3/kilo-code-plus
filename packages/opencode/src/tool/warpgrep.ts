@@ -1,7 +1,7 @@
 import z from "zod"
 import { Effect } from "effect"
 import { Tool } from "./tool"
-import { WarpGrepClient } from "@morphllm/morphsdk"
+import { WarpGrepClient } from "@morphllm/morphsdk/tools/warp-grep/client" // kilocode_change
 import { Instance } from "../project/instance"
 import { Bus } from "../bus"
 import { TuiEvent } from "../cli/cmd/tui/event"

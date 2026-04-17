@@ -66,7 +66,8 @@ export namespace Question {
     questions: Schema.Array(Info).annotate({
       description: "Questions to ask",
     }),
-    blocking: Schema.optional(Schema.Boolean).annotate({ // kilocode_change
+    blocking: Schema.optional(Schema.Boolean).annotate({
+      // kilocode_change
       description: "Whether this question blocks prompt input (default: true)",
     }),
     tool: Schema.optional(Tool),

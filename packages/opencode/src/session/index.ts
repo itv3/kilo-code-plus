@@ -475,7 +475,13 @@ export namespace Session {
         const ctx = yield* Effect.try({ try: () => Instance.current, catch: () => undefined }).pipe(Effect.option)
         const conditions = [eq(SessionTable.parent_id, parentID)]
         if (Option.isSome(ctx)) conditions.push(eq(SessionTable.project_id, ctx.value.project.id))
-        const rows = yield* db((d) => d.select().from(SessionTable).where(and(...conditions)).all())
+        const rows = yield* db((d) =>
+          d
+            .select()
+            .from(SessionTable)
+            .where(and(...conditions))
+            .all(),
+        )
         return rows.map(fromRow)
       })
       // kilocode_change end
@@ -502,7 +508,9 @@ export namespace Session {
           KiloSession.clearPlatformOverride(sessionID)
           if (hasInstance) {
             void Promise.all([import("@/effect/app-runtime"), import("./run-state")]).then(([app, run]) =>
-              app.AppRuntime.runPromise(run.SessionRunState.Service.use((svc) => svc.cancel(sessionID))).catch(() => {}),
+              app.AppRuntime.runPromise(run.SessionRunState.Service.use((svc) => svc.cancel(sessionID))).catch(
+                () => {},
+              ),
             )
           }
           // kilocode_change end
@@ -760,7 +768,6 @@ export namespace Session {
 
   export const defaultLayer = layer.pipe(Layer.provide(Bus.layer), Layer.provide(Storage.defaultLayer))
 
-
   export function* list(input?: {
     directory?: string
     workspaceID?: WorkspaceID
@@ -827,9 +834,7 @@ export namespace Session {
   export const setArchived = fn(SetArchivedInput, (input) => runPromise((svc) => svc.setArchived(input)))
   export const setPermission = fn(SetPermissionInput, (input) => runPromise((svc) => svc.setPermission(input)))
   export const setRevert = fn(SetRevertInput, (input) =>
-    runPromise((svc) =>
-      svc.setRevert({ sessionID: input.sessionID, revert: input.revert, summary: input.summary }),
-    ),
+    runPromise((svc) => svc.setRevert({ sessionID: input.sessionID, revert: input.revert, summary: input.summary })),
   )
   export const messages = fn(MessagesInput, (input) => runPromise((svc) => svc.messages(input)))
   export const children = fn(ChildrenInput, (id) => runPromise((svc) => svc.children(id)))

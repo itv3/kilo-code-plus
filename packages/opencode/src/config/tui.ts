@@ -114,10 +114,7 @@ export namespace TuiConfig {
     // kilocode_change - also load tui.json from .kilo/.kilocode
     const dirs = unique(directories).filter(
       (dir) =>
-        dir.endsWith(".kilo") ||
-        dir.endsWith(".kilocode") ||
-        dir.endsWith(".opencode") ||
-        dir === Flag.KILO_CONFIG_DIR,
+        dir.endsWith(".kilo") || dir.endsWith(".kilocode") || dir.endsWith(".opencode") || dir === Flag.KILO_CONFIG_DIR,
     )
 
     for (const dir of dirs) {
