@@ -78,40 +78,39 @@ Kilo Auto virtual models automatically select the best underlying model based on
 
 ### `kilo-auto/frontier`
 
-Highest performance and capability for any task.
+Highest performance and capability for any task. Frontier requests are sent with medium reasoning effort and medium verbosity.
 
 | Mode                                                           | Resolved Model                |
 | -------------------------------------------------------------- | ----------------------------- |
-| `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `anthropic/claude-opus-4.6`   |
+| `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `anthropic/claude-opus-4.7`   |
 | `build`, `explore`, `code`                                     | `anthropic/claude-sonnet-4.6` |
-| Default (no mode specified)                                    | `anthropic/claude-sonnet-4.6` |
+| Default (no / unknown mode)                                    | `anthropic/claude-sonnet-4.6` |
 
 ### `kilo-auto/balanced`
 
-Great balance of price and capability.
-
-| Mode                                                           | Resolved Model         |
-| -------------------------------------------------------------- | ---------------------- |
-| `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `openai/gpt-5.3-codex` |
-| `build`, `explore`, `code`                                     | `openai/gpt-5.3-codex` |
-| Default (no mode specified)                                    | `openai/gpt-5.3-codex` |
-
-### `kilo-auto/free`
-
-Free with limited capability. No credits required.
+Great balance of price and capability. Balanced routes to the same model regardless of mode, with low reasoning effort. The legacy `kilo/auto` alias resolves to the same behavior.
 
 | Mode      | Resolved Model         |
 | --------- | ---------------------- |
-| All modes | `minimax/minimax-m2.5` |
+| All modes | `openai/gpt-5.3-codex` |
+
+### `kilo-auto/free`
+
+Free with limited capability. No credits required. Requests are split across the available free models; the mapping updates server-side as free model availability shifts.
+
+| Routing | Resolved Model                |
+| ------- | ----------------------------- |
+| 80%     | `minimax/minimax-m2.5:free`   |
+| 20%     | `stepfun/step-3.5-flash:free` |
 
 ### `kilo-auto/small`
 
-Automatically routes to a small, fast model.
+Automatically routes to a small, fast model for lightweight background tasks (session titles, commit messages, summaries).
 
-| Mode          | Resolved Model       |
-| ------------- | -------------------- |
-| Default       | `openai/gpt-5-nano`  |
-| Free fallback | `openai/gpt-oss-20b` |
+| Condition                 | Resolved Model                   |
+| ------------------------- | -------------------------------- |
+| Account has paid balance  | `google/gemma-4-31b-it`          |
+| No balance / free account | `google/gemma-4-26b-a4b-it:free` |
 
 ### Example usage
 
