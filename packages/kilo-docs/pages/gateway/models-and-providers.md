@@ -41,7 +41,7 @@ This returns model information including pricing, context window, and supported 
 
 | Model ID                        | Provider  | Description                                     |
 | ------------------------------- | --------- | ----------------------------------------------- |
-| `anthropic/claude-opus-4.6`     | Anthropic | Most capable Claude model for complex reasoning |
+| `anthropic/claude-opus-4.7`     | Anthropic | Most capable Claude model for complex reasoning |
 | `anthropic/claude-sonnet-4.6`   | Anthropic | Balanced performance and cost                   |
 | `anthropic/claude-haiku-4.5`    | Anthropic | Fast and cost-effective                         |
 | `openai/gpt-5.4`                | OpenAI    | Latest GPT model                                |

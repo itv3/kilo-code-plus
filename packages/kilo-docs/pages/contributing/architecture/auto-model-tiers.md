@@ -115,8 +115,8 @@ The Kilo API at `api.kilo.ai` defines which underlying models each `kilo-auto/*`
 {
   "opencode": {
     "variants": {
-      "architect": { "model": "anthropic/claude-opus-4-6", ... },
-      "code": { "model": "anthropic/claude-sonnet-4-6", ... }
+      "architect": { "model": "anthropic/claude-opus-4.7", ... },
+      "code": { "model": "anthropic/claude-sonnet-4.6", ... }
     }
   }
 }
