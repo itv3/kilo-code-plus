@@ -17,108 +17,54 @@ import javax.swing.text.html.HTMLEditorKit
 
 /**
  * Markdown rendering component that hides the concrete rendering strategy
- * (HTML, StyledDocument, etc.) behind a uniform API.
+ * behind a uniform API. Create instances via [MdView.html].
  *
- * Callers interact only with markdown source text and semantic events —
- * never with underlying widget types.
- *
- * Create instances via [MdView.html].
  * All public methods must be called on the EDT.
  */
 abstract class MdView private constructor() {
 
-    /** The Swing component to embed in layouts. */
     abstract val component: JComponent
-
-    /** Replace the entire content with new markdown source. */
     abstract fun set(text: String)
-
-    /** Append a streaming delta to the current content. */
     abstract fun append(delta: String)
-
-    /** Reset to empty. */
     abstract fun clear()
-
     abstract fun addLinkListener(listener: LinkListener)
-
     abstract fun removeLinkListener(listener: LinkListener)
 
-    // -- styling ----------------------------------------------------------
-
-    /** Body text font family and size. */
     abstract var font: Font
-
-    /** Body text foreground color. */
     abstract var foreground: Color
-
-    /** Overall background color. */
     abstract var background: Color
-
-    /** Link foreground color. */
     abstract var linkColor: Color
-
-    /** Inline code background color. */
     abstract var codeBg: Color
-
-    /** Code block (pre) background color. */
     abstract var preBg: Color
-
-    /** Code block (pre) foreground color. */
     abstract var preFg: Color
-
-    /** Code / pre font family. */
     abstract var codeFont: String
-
-    /** Blockquote left-border and text color. */
     abstract var quoteBorder: Color
     abstract var quoteFg: Color
-
-    /** Table / th / td border color. */
     abstract var tableBorder: Color
 
     /**
-     * Whether the component paints its own background.
-     * When `false`, the body background CSS is omitted and the underlying
-     * Swing component is set to non-opaque so the parent's background
-     * shows through.
+     * When `false`, body background CSS is omitted and the Swing component
+     * is set to non-opaque so the parent's background shows through.
      */
     abstract var opaque: Boolean
 
-    /**
-     * Semantic event fired when a user clicks a link inside rendered markdown.
-     */
     data class LinkEvent(
         val href: String,
         val point: Point? = null,
     )
 
-    /**
-     * Callback for link activations inside a [MdView].
-     */
     fun interface LinkListener {
         fun onLink(event: LinkEvent)
     }
 
-    // -- test helpers (package-visible) ------------------------------------
-
-    /** Returns the current raw markdown source. */
     internal abstract fun markdown(): String
-
-    /** Returns the rendered HTML body (not Swing-rewritten). */
     internal abstract fun html(): String
-
-    /** Returns the full wrapped HTML including CSS. */
     internal abstract fun styledHtml(): String
-
-    /** Fire a synthetic link activation for testing. */
     internal abstract fun simulateLink(href: String)
 
     companion object {
-        /** Create a [MdView] backed by commonmark-java → HTML → JEditorPane. */
         fun html(): MdView = HtmlImpl()
     }
-
-    // -- private HTML implementation ---------------------------------------
 
     private class HtmlImpl : MdView() {
 
@@ -162,8 +108,6 @@ abstract class MdView private constructor() {
                 }
             }
         }
-
-        // -- style fields with defaults -----------------------------------
 
         override var font: Font = JBUI.Fonts.label()
             set(value) { field = value; markDirty() }
@@ -240,9 +184,7 @@ abstract class MdView private constructor() {
         }
 
         override fun markdown(): String = source.toString()
-
         override fun html(): String = rendered
-
         override fun styledHtml(): String = wrapped
 
         override fun simulateLink(href: String) {
