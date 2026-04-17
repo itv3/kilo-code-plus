@@ -25,6 +25,9 @@ async function git(
     stderr: "pipe",
     windowsHide: true,
   })
+  // Kick off stderr drain immediately so a full stderr pipe can't block the child.
+  // Both stdout and stderr must be drained concurrently to avoid deadlock.
+  const stderrPromise = new Response(proc.stderr).text()
   const chunks: Buffer[] = []
   let size = 0
   let truncated = false
@@ -40,9 +43,8 @@ async function git(
     }
     chunks.push(Buffer.from(value))
   }
+  const stderr = await stderrPromise
   const code = await proc.exited
-  // Consume stderr to prevent blocking the child process pipe
-  const stderr = await new Response(proc.stderr).text()
   return {
     ok: code === 0 && !truncated,
     stdout: Buffer.concat(chunks).toString(),
