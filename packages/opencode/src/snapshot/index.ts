@@ -634,8 +634,9 @@ export namespace Snapshot {
                     ]
                   })
                 const step = 100
-                // kilocode_change - delegate to kilo helper (caps + worker + warnings)
+                // kilocode_change start - delegate to kilo helper (caps + worker + warnings)
                 result.push(...(yield* DiffFull.run({ rows, step, from, to, bus, load, show })))
+                // kilocode_change end
                 return result
               }),
             )
