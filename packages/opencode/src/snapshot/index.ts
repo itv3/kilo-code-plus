@@ -12,9 +12,8 @@ import { Global } from "../global"
 import { Log } from "../util/log"
 import * as KiloSnapshot from "../kilocode/snapshot" // kilocode_change
 // kilocode_change start
-import { DiffEngine } from "../kilocode/snapshot/diff-engine"
+import { DiffFull } from "../kilocode/snapshot/diff-full"
 import { Bus } from "../bus"
-import { SessionWarningEvent } from "../kilocode/session/warning"
 // kilocode_change end
 
 export namespace Snapshot {
@@ -635,59 +634,8 @@ export namespace Snapshot {
                     ]
                   })
                 const step = 100
-                // kilocode_change start — offload structuredPatch to a worker + skip oversized inputs.
-                // Keeps the main event loop (and therefore the abort/heartbeat endpoints) responsive.
-                const timer = log.time("diffFull", { from, to, rows: rows.length })
-                const skipped: { file: string; reason: DiffEngine.SkipReason }[] = []
-
-                for (let i = 0; i < rows.length; i += step) {
-                  const run = rows.slice(i, i + step)
-                  const text = yield* load(run)
-
-                  for (const row of run) {
-                    const hit = text?.get(row.file) ?? { before: "", after: "" }
-                    const [before, after] = row.binary ? ["", ""] : text ? [hit.before, hit.after] : yield* show(row)
-                    const out = row.binary
-                      ? { patch: "" as string, skipped: undefined as DiffEngine.SkipReason | undefined }
-                      : yield* Effect.promise(() => DiffEngine.patchAsync(row.file, before, after))
-                    if (out.skipped) {
-                      skipped.push({ file: row.file, reason: out.skipped })
-                      log.warn("diffFull.skipped", {
-                        file: row.file,
-                        reason: out.skipped,
-                        bytesBefore: before.length,
-                        bytesAfter: after.length,
-                      })
-                    }
-                    result.push({
-                      file: row.file,
-                      patch: out.patch,
-                      additions: row.additions,
-                      deletions: row.deletions,
-                      status: row.status,
-                    })
-                    // Let the runtime scheduler yield between files so the event
-                    // loop can service the abort endpoint and SSE heartbeat.
-                    yield* Effect.yieldNow
-                  }
-                }
-
-                if (skipped.length > 0) {
-                  yield* bus
-                    .publish(SessionWarningEvent, {
-                      sessionID: undefined,
-                      kind: "diff_skipped",
-                      message:
-                        skipped.length === 1
-                          ? `Skipped diff for ${skipped[0]!.file} (${skipped[0]!.reason})`
-                          : `Skipped diffs for ${skipped.length} files`,
-                      details: { files: skipped },
-                    })
-                    .pipe(Effect.ignore)
-                }
-
-                timer.stop()
-                // kilocode_change end
+                // kilocode_change - delegate to kilo helper (caps + worker + warnings)
+                result.push(...(yield* DiffFull.run({ rows, step, from, to, bus, load, show })))
                 return result
               }),
             )
