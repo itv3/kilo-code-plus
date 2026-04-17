@@ -16,6 +16,7 @@ const team = new Set([
   "chrarnoldus",
   "codingelves",
   "darkogj",
+  "dependabot[bot]",
   "dosire",
   "DScdng",
   "emilieschario",

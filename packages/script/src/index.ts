@@ -118,6 +118,7 @@ const team = [
   "chrarnoldus",
   "codingelves",
   "darkogj",
+  "dependabot[bot]",
   "dosire",
   "DScdng",
   "emilieschario",
