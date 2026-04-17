@@ -10,8 +10,8 @@ class HistoryLoadingTest : SessionControllerTestBase() {
         val part = part("prt1", "ses_test", "msg1", "text", text = "hello")
         rpc.history.add(MessageWithPartsDto(m, listOf(part)))
 
-        val c = model("ses_test")
-        val events = collectModel(c)
+        val c = controller("ses_test")
+        val events = collectModelEvents(c)
         flush()
 
         assertTrue(events.any { it is SessionModelEvent.HistoryLoaded })
@@ -28,7 +28,7 @@ class HistoryLoadingTest : SessionControllerTestBase() {
     fun `test non-empty history shows messages view`() {
         rpc.history.add(MessageWithPartsDto(msg("msg1", "ses_test", "user"), emptyList()))
 
-        val c = model("ses_test")
+        val c = controller("ses_test")
         val events = collect(c)
         flush()
 

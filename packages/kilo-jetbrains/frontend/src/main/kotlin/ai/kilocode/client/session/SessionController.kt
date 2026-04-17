@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
  * If null, lazily creates a session on the first [prompt] call. This ensures
  * event subscription happens before the prompt is sent, eliminating races.
  *
- * Owns [SessionModel] — the single source of truth for chat content and
+ * Owns [SessionModel] — the single source of truth for session content and
  * state. UIs observe model changes via [SessionModelEvent] on [model].
  * Lifecycle events (app/workspace state, view switching) are published
  * via [SessionControllerEvent] to registered listeners.

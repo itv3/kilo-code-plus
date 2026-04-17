@@ -39,7 +39,7 @@ import javax.swing.SwingConstants
  */
 class StatusPanel(
     parent: Disposable,
-    private val model: SessionController,
+    private val controller: SessionController,
 ) : JPanel(GridBagLayout()), SessionControllerListener, Disposable {
 
     init {
@@ -110,19 +110,19 @@ class StatusPanel(
         add(body, GridBagConstraints())
 
         resetAll()
-        model.addListener(this, this)
+        controller.addListener(this, this)
     }
 
     override fun onEvent(event: SessionControllerEvent) {
         when (event) {
             is SessionControllerEvent.AppChanged -> {
-                renderApp(model.model.app)
+                renderApp(controller.model.app)
                 revalidate()
                 repaint()
             }
 
             is SessionControllerEvent.WorkspaceChanged -> {
-                renderWorkspace(model.model.workspace)
+                renderWorkspace(controller.model.workspace)
                 revalidate()
                 repaint()
             }
@@ -187,7 +187,7 @@ class StatusPanel(
     }
 
     private fun renderWorkspace(state: KiloWorkspaceStateDto) {
-        val appReady = model.model.app.status == KiloAppStatusDto.READY
+        val appReady = controller.model.app.status == KiloAppStatusDto.READY
         val visible = appReady || state.status != KiloWorkspaceStatusDto.PENDING
         wsSection.isVisible = visible
         if (!visible) return
@@ -241,7 +241,7 @@ class StatusPanel(
             KiloAppStatusDto.CONNECTING -> KiloBundle.message("toolwindow.status.connecting")
             KiloAppStatusDto.LOADING -> KiloBundle.message("toolwindow.status.loading")
             KiloAppStatusDto.READY -> {
-                val ver = model.model.version
+                val ver = controller.model.version
                 if (ver != null) KiloBundle.message("toolwindow.status.connected.version", ver)
                 else KiloBundle.message("toolwindow.status.connected")
             }

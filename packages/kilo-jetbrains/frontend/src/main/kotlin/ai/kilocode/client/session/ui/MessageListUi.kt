@@ -24,7 +24,7 @@ import javax.swing.JTextArea
 import javax.swing.border.MatteBorder
 
 /**
- * Scrollable panel displaying chat messages aligned to the top,
+ * Scrollable panel displaying session messages aligned to the top,
  * with an optional animated status indicator at the bottom.
  *
  * Passive view — all rendering is driven by [SessionModelEvent]s

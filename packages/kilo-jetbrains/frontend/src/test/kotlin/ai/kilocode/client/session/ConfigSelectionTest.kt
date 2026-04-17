@@ -2,8 +2,8 @@ package ai.kilocode.client.session
 
 class ConfigSelectionTest : SessionControllerTestBase() {
 
-    fun `test selectModel updates ChatModel and calls updateConfig`() {
-        val m = model()
+    fun `test selectModel updates SessionModel and calls updateConfig`() {
+        val m = controller()
         collect(m)
         flush()
 
@@ -21,8 +21,8 @@ class ConfigSelectionTest : SessionControllerTestBase() {
         )
     }
 
-    fun `test selectAgent updates ChatModel and calls updateConfig`() {
-        val m = model()
+    fun `test selectAgent updates SessionModel and calls updateConfig`() {
+        val m = controller()
         collect(m)
         flush()
 
@@ -41,7 +41,7 @@ class ConfigSelectionTest : SessionControllerTestBase() {
     }
 
     fun `test selectModel fires WorkspaceReady event`() {
-        val m = model()
+        val m = controller()
         val events = collect(m)
         flush()
 

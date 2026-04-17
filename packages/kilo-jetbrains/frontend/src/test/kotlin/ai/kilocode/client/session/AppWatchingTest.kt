@@ -6,7 +6,7 @@ import ai.kilocode.rpc.dto.KiloAppStatusDto
 class AppWatchingTest : SessionControllerTestBase() {
 
     fun `test app state change fires AppChanged`() {
-        val m = model()
+        val m = controller()
         val events = collect(m)
         flush()
 

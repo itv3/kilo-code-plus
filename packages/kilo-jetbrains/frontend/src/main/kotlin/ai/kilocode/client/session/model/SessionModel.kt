@@ -11,7 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 
 /**
- * Pure session model — single source of truth for chat content and runtime state.
+ * Pure session model — single source of truth for session content and runtime state.
  *
  * **EDT-only access** — no synchronization. [ai.kilocode.client.session.SessionController] guarantees all
  * reads and writes happen on the EDT.

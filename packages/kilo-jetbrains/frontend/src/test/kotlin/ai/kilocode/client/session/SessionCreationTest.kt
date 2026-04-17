@@ -3,7 +3,7 @@ package ai.kilocode.client.session
 class SessionCreationTest : SessionControllerTestBase() {
 
     fun `test prompt creates session on first call`() {
-        val m = model()
+        val m = controller()
         val events = collect(m)
 
         edt { m.prompt("hello") }
@@ -22,7 +22,7 @@ class SessionCreationTest : SessionControllerTestBase() {
     }
 
     fun `test prompt reuses existing session`() {
-        val m = model()
+        val m = controller()
 
         edt { m.prompt("first") }
         flush()
@@ -35,7 +35,7 @@ class SessionCreationTest : SessionControllerTestBase() {
     }
 
     fun `test prompt with existing ID skips creation`() {
-        val m = model("existing")
+        val m = controller("existing")
         collect(m)
         flush()
 

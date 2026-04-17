@@ -26,17 +26,17 @@ class StatusComputationTest : SessionControllerTestBase() {
     }
 
     fun `test PartUpdated after TurnClose does not fire StateChanged`() {
-        val (_, _, model) = prompted()
+        val (_, _, modelEvents) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
         emit(ChatEventDto.TurnOpen("ses_test"))
         emit(ChatEventDto.TurnClose("ses_test", "completed"))
 
-        val before = model.filterIsInstance<SessionModelEvent.StateChanged>().size
+        val before = modelEvents.filterIsInstance<SessionModelEvent.StateChanged>().size
 
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "late")))
 
-        val after = model.filterIsInstance<SessionModelEvent.StateChanged>().size
+        val after = modelEvents.filterIsInstance<SessionModelEvent.StateChanged>().size
         assertEquals(before, after)
     }
 }

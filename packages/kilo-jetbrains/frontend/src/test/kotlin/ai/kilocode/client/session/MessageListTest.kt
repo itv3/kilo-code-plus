@@ -5,23 +5,23 @@ import ai.kilocode.rpc.dto.ChatEventDto
 
 class MessageListTest : SessionControllerTestBase() {
 
-    fun `test MessageUpdated adds message to ChatModel`() {
-        val (m, _, model) = prompted()
+    fun `test MessageUpdated adds message to SessionModel`() {
+        val (m, _, modelEvents) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
 
-        assertTrue(model.any { it is SessionModelEvent.MessageAdded })
+        assertTrue(modelEvents.any { it is SessionModelEvent.MessageAdded })
         assertNotNull(m.model.message("msg1"))
     }
 
-    fun `test PartUpdated text updates ChatModel`() {
-        val (m, _, model) = prompted()
+    fun `test PartUpdated text updates SessionModel`() {
+        val (m, _, modelEvents) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
 
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "hello")))
 
-        assertTrue(model.any { it is SessionModelEvent.ContentAdded && it.messageId == "msg1" })
+        assertTrue(modelEvents.any { it is SessionModelEvent.ContentAdded && it.messageId == "msg1" })
         assertModel(
             """
             assistant#msg1
@@ -32,7 +32,7 @@ class MessageListTest : SessionControllerTestBase() {
         )
     }
 
-    fun `test PartDelta appends text to ChatModel`() {
+    fun `test PartDelta appends text to SessionModel`() {
         val (m, _, _) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
@@ -50,7 +50,7 @@ class MessageListTest : SessionControllerTestBase() {
         )
     }
 
-    fun `test MessageRemoved removes from ChatModel`() {
+    fun `test MessageRemoved removes from SessionModel`() {
         val (m, _, _) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "user")))

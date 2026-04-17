@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer
 class ListenerLifecycleTest : SessionControllerTestBase() {
 
     fun `test listener removed on parent dispose`() {
-        val m = model()
+        val m = controller()
         val disposable = Disposer.newDisposable("listener-parent")
         Disposer.register(parent, disposable)
 
@@ -29,7 +29,7 @@ class ListenerLifecycleTest : SessionControllerTestBase() {
     }
 
     fun `test all listeners notified`() {
-        val m = model()
+        val m = controller()
         val events1 = mutableListOf<SessionControllerEvent>()
         val events2 = mutableListOf<SessionControllerEvent>()
         val d1 = Disposer.newDisposable("l1")
@@ -49,10 +49,10 @@ class ListenerLifecycleTest : SessionControllerTestBase() {
     }
 
     fun `test session status busy fires StateChanged to Busy`() {
-        val (_, _, model) = prompted()
+        val (_, _, modelEvents) = prompted()
 
         emit(ChatEventDto.SessionStatusChanged("ses_test", SessionStatusDto("busy", null)))
 
-        assertTrue(model.any { it is SessionModelEvent.StateChanged && (it.state is SessionState.Busy) })
+        assertTrue(modelEvents.any { it is SessionModelEvent.StateChanged && (it.state is SessionState.Busy) })
     }
 }

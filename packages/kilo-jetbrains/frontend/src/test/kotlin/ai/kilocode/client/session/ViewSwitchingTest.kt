@@ -3,7 +3,7 @@ package ai.kilocode.client.session
 class ViewSwitchingTest : SessionControllerTestBase() {
 
     fun `test first prompt shows messages view`() {
-        val m = model()
+        val m = controller()
         val events = collect(m)
 
         edt { m.prompt("hello") }
@@ -19,7 +19,7 @@ class ViewSwitchingTest : SessionControllerTestBase() {
     }
 
     fun `test ViewChanged not fired twice`() {
-        val m = model()
+        val m = controller()
         val events = collect(m)
 
         edt { m.prompt("first") }

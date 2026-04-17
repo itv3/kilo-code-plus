@@ -3,7 +3,7 @@ package ai.kilocode.client.session
 class WorkspaceWatchingTest : SessionControllerTestBase() {
 
     fun `test workspace ready populates agents and models`() {
-        val m = model()
+        val m = controller()
         val events = collect(m)
         flush()
 
@@ -26,7 +26,7 @@ class WorkspaceWatchingTest : SessionControllerTestBase() {
     }
 
     fun `test workspace ready sets default agent and model`() {
-        val m = model()
+        val m = controller()
         collect(m)
         flush()
 

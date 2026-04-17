@@ -18,7 +18,7 @@ import java.awt.BorderLayout
 import java.awt.CardLayout
 import javax.swing.JPanel
 
-/** Main chat panel — reacts to [SessionController] events. */
+/** Main session panel — reacts to [SessionController] events. */
 class SessionUi(
     project: Project,
     workspace: Workspace,

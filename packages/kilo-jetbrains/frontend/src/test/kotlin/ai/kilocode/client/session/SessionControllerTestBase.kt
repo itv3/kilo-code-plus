@@ -77,9 +77,9 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
         }
     }
 
-    // ------ Model creation ------
+    // ------ Controller creation ------
 
-    protected fun model(id: String? = null) =
+    protected fun controller(id: String? = null) =
         SessionController(parent, id, sessions, workspace, app, scope)
 
     // ------ Event collection ------
@@ -97,7 +97,7 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
     }
 
     /** Attach a listener that collects model events (messages, parts, phase). */
-    protected fun collectModel(m: SessionController): MutableList<SessionModelEvent> {
+    protected fun collectModelEvents(m: SessionController): MutableList<SessionModelEvent> {
         val events = mutableListOf<SessionModelEvent>()
         val disposable = Disposer.newDisposable("model-listener")
         Disposer.register(parent, disposable)
@@ -127,17 +127,17 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
         if (flush) flush()
     }
 
-    /** Create a model, attach both listeners, send initial prompt, and flush. */
+    /** Create a controller, attach both listeners, send initial prompt, and flush. */
     protected fun prompted(): Triple<SessionController, MutableList<SessionControllerEvent>, MutableList<SessionModelEvent>> {
         appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
         projectRpc.state.value = workspaceReady()
-        val m = model()
+        val m = controller()
         val events = collect(m)
-        val model = collectModel(m)
+        val modelEvents = collectModelEvents(m)
         flush()
         edt { m.prompt("go") }
         flush()
-        return Triple(m, events, model)
+        return Triple(m, events, modelEvents)
     }
 
     protected fun assertModel(expected: String, model: SessionModel) {
