@@ -1,7 +1,7 @@
 package ai.kilocode.client.session.ui
 
-import ai.kilocode.client.session.model.SessionEvent
 import ai.kilocode.client.session.model.SessionManager
+import ai.kilocode.client.session.model.SessionManagerEvent
 import ai.kilocode.client.session.model.SessionManagerListener
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.KiloAppStateDto
@@ -30,7 +30,7 @@ import javax.swing.SwingConstants
  * Welcome panel showing app + workspace initialization progress.
  *
  * Pure view — listens to [SessionManager] events and reads
- * [SessionState][ai.kilocode.client.session.model.SessionState] for data.
+ * [SessionModel][ai.kilocode.client.session.model.SessionModel] for data.
  * No coroutines, no service references.
  *
  * Uses icon+label rows for each resource being loaded. Icons act as
@@ -113,15 +113,15 @@ class StatusPanel(
         model.addListener(this, this)
     }
 
-    override fun onEvent(event: SessionEvent) {
+    override fun onEvent(event: SessionManagerEvent) {
         when (event) {
-            is SessionEvent.AppChanged -> {
+            is SessionManagerEvent.AppChanged -> {
                 renderApp(model.chat.app)
                 revalidate()
                 repaint()
             }
 
-            is SessionEvent.WorkspaceChanged -> {
+            is SessionManagerEvent.WorkspaceChanged -> {
                 renderWorkspace(model.chat.workspace)
                 revalidate()
                 repaint()

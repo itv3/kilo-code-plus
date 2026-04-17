@@ -92,6 +92,12 @@ class KiloSessionRpcApiImpl : KiloSessionRpcApi {
                 is ChatEventDto.TurnClose -> event.sessionID
                 is ChatEventDto.Error -> event.sessionID
                 is ChatEventDto.MessageRemoved -> event.sessionID
+                is ChatEventDto.PermissionAsked -> event.sessionID
+                is ChatEventDto.PermissionReplied -> event.sessionID
+                is ChatEventDto.QuestionAsked -> event.sessionID
+                is ChatEventDto.QuestionReplied -> event.sessionID
+                is ChatEventDto.QuestionRejected -> event.sessionID
+                is ChatEventDto.SessionStatusChanged -> event.sessionID
             }
             sid == id
         }

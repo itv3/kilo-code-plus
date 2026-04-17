@@ -80,13 +80,24 @@ abstract class SessionManagerTestBase : BasePlatformTestCase() {
 
     // ------ Event collection ------
 
-    /** Attach a listener that collects events and asserts EDT. */
-    protected fun collect(m: SessionManager): MutableList<SessionEvent> {
-        val events = mutableListOf<SessionEvent>()
+    /** Attach a listener that collects lifecycle events and asserts EDT. */
+    protected fun collect(m: SessionManager): MutableList<SessionManagerEvent> {
+        val events = mutableListOf<SessionManagerEvent>()
         val disposable = Disposer.newDisposable("listener")
         Disposer.register(parent, disposable)
         m.addListener(disposable) { event ->
             assertTrue("Listener must be called on EDT", ApplicationManager.getApplication().isDispatchThread)
+            events.add(event)
+        }
+        return events
+    }
+
+    /** Attach a listener that collects model events (messages, parts, phase). */
+    protected fun collectModel(m: SessionManager): MutableList<SessionModelEvent> {
+        val events = mutableListOf<SessionModelEvent>()
+        val disposable = Disposer.newDisposable("model-listener")
+        Disposer.register(parent, disposable)
+        m.chat.addListener(disposable) { event ->
             events.add(event)
         }
         return events
@@ -111,13 +122,14 @@ abstract class SessionManagerTestBase : BasePlatformTestCase() {
         rpc.events.emit(event)
     }
 
-    /** Create a model, attach listener, send initial prompt, and flush. */
-    protected fun prompted(): Pair<SessionManager, MutableList<SessionEvent>> {
+    /** Create a model, attach both listeners, send initial prompt, and flush. */
+    protected fun prompted(): Triple<SessionManager, MutableList<SessionManagerEvent>, MutableList<SessionModelEvent>> {
         val m = model()
         val events = collect(m)
+        val model = collectModel(m)
         edt { m.prompt("go") }
         flush()
-        return m to events
+        return Triple(m, events, model)
     }
 
     // ------ DTO factories ------

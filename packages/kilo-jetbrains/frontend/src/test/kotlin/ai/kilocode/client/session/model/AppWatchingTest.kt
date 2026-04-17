@@ -13,7 +13,7 @@ class AppWatchingTest : SessionManagerTestBase() {
         appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
         flush()
 
-        assertTrue(events.any { it is SessionEvent.AppChanged })
+        assertTrue(events.any { it is SessionManagerEvent.AppChanged })
         assertEquals(KiloAppStatusDto.READY, m.chat.app.status)
     }
 }

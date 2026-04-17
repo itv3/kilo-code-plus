@@ -6,7 +6,7 @@ import ai.kilocode.rpc.dto.ChatEventDto
 class StatusComputationTest : SessionManagerTestBase() {
 
     fun `test status shows tool-specific text`() {
-        val (_, events) = prompted()
+        val (_, _, model) = prompted()
 
         emit(ChatEventDto.TurnOpen("ses_test"))
         flush()
@@ -17,14 +17,17 @@ class StatusComputationTest : SessionManagerTestBase() {
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "tool", tool = "bash")))
         flush()
 
-        val status = events.filterIsInstance<SessionEvent.StatusChanged>()
-            .lastOrNull { it.text != null && it.text != KiloBundle.message("session.status.considering") }
-        assertNotNull(status)
-        assertEquals(KiloBundle.message("session.status.commands"), status!!.text)
+        val phase = model.filterIsInstance<SessionModelEvent.PhaseChanged>()
+            .mapNotNull { it.phase as? SessionPhase.Working }
+            .lastOrNull { it.status is StatusState.Working }
+
+        assertNotNull(phase)
+        val text = (phase!!.status as StatusState.Working).text
+        assertEquals(KiloBundle.message("session.status.commands"), text)
     }
 
-    fun `test PartUpdated after TurnClose does not fire StatusChanged`() {
-        val (_, events) = prompted()
+    fun `test PartUpdated after TurnClose does not fire PhaseChanged`() {
+        val (_, _, model) = prompted()
 
         emit(ChatEventDto.MessageUpdated("ses_test", msg("msg1", "ses_test", "assistant")))
         flush()
@@ -33,12 +36,12 @@ class StatusComputationTest : SessionManagerTestBase() {
         emit(ChatEventDto.TurnClose("ses_test", "completed"))
         flush()
 
-        val before = events.filterIsInstance<SessionEvent.StatusChanged>().size
+        val before = model.filterIsInstance<SessionModelEvent.PhaseChanged>().size
 
         emit(ChatEventDto.PartUpdated("ses_test", part("prt1", "ses_test", "msg1", "text", text = "late")))
         flush()
 
-        val after = events.filterIsInstance<SessionEvent.StatusChanged>().size
+        val after = model.filterIsInstance<SessionModelEvent.PhaseChanged>().size
         assertEquals(before, after)
     }
 }

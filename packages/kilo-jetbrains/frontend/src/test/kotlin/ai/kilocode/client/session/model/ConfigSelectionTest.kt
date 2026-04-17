@@ -36,6 +36,6 @@ class ConfigSelectionTest : SessionManagerTestBase() {
         edt { m.selectModel("kilo", "gpt-5") }
         flush()
 
-        assertTrue(events.any { it is SessionEvent.WorkspaceReady })
+        assertTrue(events.any { it is SessionManagerEvent.WorkspaceReady })
     }
 }

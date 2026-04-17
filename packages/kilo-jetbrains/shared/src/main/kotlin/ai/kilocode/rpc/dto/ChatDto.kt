@@ -132,7 +132,93 @@ sealed class ChatEventDto {
         val sessionID: String,
         val messageID: String,
     ) : ChatEventDto()
+
+    @Serializable
+    @SerialName("permission.asked")
+    data class PermissionAsked(
+        val sessionID: String,
+        val request: PermissionRequestDto,
+    ) : ChatEventDto()
+
+    @Serializable
+    @SerialName("permission.replied")
+    data class PermissionReplied(
+        val sessionID: String,
+        val requestID: String,
+    ) : ChatEventDto()
+
+    @Serializable
+    @SerialName("question.asked")
+    data class QuestionAsked(
+        val sessionID: String,
+        val request: QuestionRequestDto,
+    ) : ChatEventDto()
+
+    @Serializable
+    @SerialName("question.replied")
+    data class QuestionReplied(
+        val sessionID: String,
+        val requestID: String,
+    ) : ChatEventDto()
+
+    @Serializable
+    @SerialName("question.rejected")
+    data class QuestionRejected(
+        val sessionID: String,
+        val requestID: String,
+    ) : ChatEventDto()
+
+    @Serializable
+    @SerialName("session.status")
+    data class SessionStatusChanged(
+        val sessionID: String,
+        val status: SessionStatusDto,
+    ) : ChatEventDto()
 }
+
+// --- Permission DTOs ---
+
+@Serializable
+data class PermissionRequestDto(
+    val id: String,
+    val sessionID: String,
+    val permission: String,
+    val patterns: List<String>,
+    val metadata: Map<String, String> = emptyMap(),
+    val always: List<String> = emptyList(),
+    val tool: ToolRefDto? = null,
+)
+
+@Serializable
+data class ToolRefDto(
+    val messageID: String,
+    val callID: String,
+)
+
+// --- Question DTOs ---
+
+@Serializable
+data class QuestionRequestDto(
+    val id: String,
+    val sessionID: String,
+    val questions: List<QuestionInfoDto>,
+    val tool: ToolRefDto? = null,
+)
+
+@Serializable
+data class QuestionInfoDto(
+    val question: String,
+    val header: String,
+    val options: List<QuestionOptionDto> = emptyList(),
+    val multiple: Boolean = false,
+    val custom: Boolean = true,
+)
+
+@Serializable
+data class QuestionOptionDto(
+    val label: String,
+    val description: String,
+)
 
 // --- Config Update ---
 

@@ -4,10 +4,17 @@ import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
 import ai.kilocode.client.app.Workspace
 import ai.kilocode.client.plugin.KiloBundle
+import ai.kilocode.client.session.model.permission.Permission
+import ai.kilocode.client.session.model.permission.PermissionMeta
+import ai.kilocode.client.session.model.question.Question
+import ai.kilocode.client.session.model.question.QuestionItem
+import ai.kilocode.client.session.model.question.QuestionOption
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
+import ai.kilocode.rpc.dto.PermissionRequestDto
+import ai.kilocode.rpc.dto.QuestionRequestDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -18,16 +25,16 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Session lifecycle controller for a single session.
+ * Session lifecycle orchestrator for a single session.
  *
  * Accepts an optional [id] — if non-null, loads that session immediately.
- * If null, lazily creates a session on the first [prompt] call. This
- * ensures event subscription happens *before* the prompt is sent,
- * eliminating race conditions.
+ * If null, lazily creates a session on the first [prompt] call. This ensures
+ * event subscription happens before the prompt is sent, eliminating races.
  *
- * Owns [SessionState] and the listener list. All state mutations and
- * listener notifications happen on the EDT — [fire] auto-dispatches
- * via `invokeLater` when called from a background thread.
+ * Owns [SessionModel] — the single source of truth for chat content and
+ * phase. UIs observe model changes via [SessionModelEvent] on [chat].
+ * Lifecycle events (app/workspace state, view switching) are published
+ * via [SessionManagerEvent] to registered listeners.
  */
 class SessionManager(
     parent: Disposable,
@@ -46,42 +53,21 @@ class SessionManager(
         Disposer.register(parent, this)
     }
 
-    val chat = SessionState()
+    val chat = SessionModel()
 
     private val listeners = mutableListOf<SessionManagerListener>()
-
-    /** The session ID owned by this model. Null until created or passed in. */
     private var sessionId: String? = id
-
-    /** Resolved project directory for RPC calls. */
     private val directory: String get() = workspace.directory
 
-    // Status computation state (EDT-only)
     private var partType: String? = null
     private var tool: String? = null
-    private var busy: Boolean = false
-
-    // Coroutine job for the current event subscription
     private var eventJob: Job? = null
 
-    // --- Listener management (EDT) ---
-
-    /**
-     * Register a listener whose lifetime is tied to [parent].
-     * When [parent] is disposed the listener is auto-removed.
-     */
     fun addListener(parent: Disposable, listener: SessionManagerListener) {
         listeners.add(listener)
         Disposer.register(parent) { listeners.remove(listener) }
     }
 
-    // --- Actions (called from EDT) ---
-
-    /**
-     * Send a prompt. If no session exists, creates one first,
-     * subscribes to events, then sends the prompt — all in one
-     * coroutine to avoid race conditions.
-     */
     fun prompt(text: String) {
         showMessages()
         cs.launch {
@@ -96,8 +82,8 @@ class SessionManager(
             } catch (e: Exception) {
                 LOG.warn("prompt failed", e)
                 edt {
-                    fire(SessionEvent.Error(e.message ?: KiloBundle.message("session.error.prompt")))
-                    fire(SessionEvent.BusyChanged(false))
+                    val msg = e.message ?: KiloBundle.message("session.error.prompt")
+                    chat.setPhase(SessionPhase.Error(msg))
                 }
             }
         }
@@ -123,7 +109,7 @@ class SessionManager(
                 LOG.warn("selectAgent failed", e)
             }
         }
-        fire(SessionEvent.WorkspaceReady)
+        fire(SessionManagerEvent.WorkspaceReady)
     }
 
     fun selectModel(provider: String, id: String) {
@@ -135,28 +121,15 @@ class SessionManager(
                 LOG.warn("selectModel failed", e)
             }
         }
-        fire(SessionEvent.WorkspaceReady)
+        fire(SessionManagerEvent.WorkspaceReady)
     }
 
-    // --- Internal: coroutine → EDT bridge ---
-
     init {
-        // If we have a session ID, load it immediately
         if (sessionId != null) {
             loadHistory()
             subscribeEvents()
         }
 
-        // Watch session statuses for busy/idle
-        cs.launch {
-            sessions.statuses.collect { statuses ->
-                val id = sessionId ?: return@collect
-                val st = statuses[id]
-                edt { fire(SessionEvent.BusyChanged(st?.type == "busy")) }
-            }
-        }
-
-        // Watch app lifecycle state
         app.connect()
         cs.launch {
             app.state.collect { state ->
@@ -164,17 +137,16 @@ class SessionManager(
                 edt {
                     chat.app = state
                     chat.version = app.version
-                    fire(SessionEvent.AppChanged)
+                    fire(SessionManagerEvent.AppChanged)
                 }
             }
         }
 
-        // Watch workspace state for providers/agents and lifecycle
         cs.launch {
             workspace.state.collect { state ->
                 edt {
                     chat.workspace = state
-                    fire(SessionEvent.WorkspaceChanged)
+                    fire(SessionManagerEvent.WorkspaceChanged)
 
                     if (state.status == KiloWorkspaceStatusDto.READY) {
                         chat.agents = state.agents?.agents?.map {
@@ -191,15 +163,11 @@ class SessionManager(
                                 }
                         } ?: emptyList()
 
-                        if (chat.agent == null) {
-                            chat.agent = state.agents?.default
-                        }
-                        if (chat.model == null) {
-                            chat.model = state.providers?.defaults?.entries?.firstOrNull()?.value
-                        }
+                        if (chat.agent == null) chat.agent = state.agents?.default
+                        if (chat.model == null) chat.model = state.providers?.defaults?.entries?.firstOrNull()?.value
 
                         chat.ready = true
-                        fire(SessionEvent.WorkspaceReady)
+                        fire(SessionManagerEvent.WorkspaceReady)
                     }
                 }
             }
@@ -212,9 +180,8 @@ class SessionManager(
             try {
                 val history = sessions.messages(id, directory)
                 edt {
-                    chat.load(history)
+                    chat.loadHistory(history)
                     if (!chat.isEmpty()) showMessages()
-                    fire(SessionEvent.HistoryLoaded)
                 }
             } catch (e: Exception) {
                 LOG.warn("loadHistory failed", e)
@@ -235,84 +202,103 @@ class SessionManager(
     private fun handle(event: ChatEventDto) {
         when (event) {
             is ChatEventDto.MessageUpdated -> {
-                chat.addMessage(event.info)
+                chat.addMessage(event.info) ?: return
                 showMessages()
-                fire(SessionEvent.MessageAdded(event.info.id))
             }
 
             is ChatEventDto.PartUpdated -> {
                 partType = event.part.type
                 tool = event.part.tool
-                chat.updatePart(event.part.messageID, event.part)
-                if (busy) {
-                    fire(SessionEvent.StatusChanged(status()))
-                }
-                if (event.part.type == "text" && event.part.text != null) {
-                    fire(SessionEvent.PartUpdated(event.part.messageID, event.part.id))
+                chat.updateContent(event.part.messageID, event.part)
+                if (chat.phase is SessionPhase.Working) {
+                    chat.setPhase(SessionPhase.Working(status()))
                 }
             }
 
             is ChatEventDto.PartDelta -> {
                 if (event.field == "text") {
                     chat.appendDelta(event.messageID, event.partID, event.delta)
-                    fire(SessionEvent.PartDelta(event.messageID, event.partID, event.delta))
                 }
             }
 
             is ChatEventDto.TurnOpen -> {
                 partType = null
                 tool = null
-                busy = true
-                fire(SessionEvent.StatusChanged(KiloBundle.message("session.status.considering")))
-                fire(SessionEvent.BusyChanged(true))
+                chat.setPhase(SessionPhase.Working(StatusState.Thinking(KiloBundle.message("session.status.considering"))))
             }
 
             is ChatEventDto.TurnClose -> {
                 partType = null
                 tool = null
-                busy = false
-                fire(SessionEvent.StatusChanged(null))
-                fire(SessionEvent.BusyChanged(false))
+                chat.setPhase(SessionPhase.Idle)
             }
 
             is ChatEventDto.Error -> {
+                partType = null
+                tool = null
                 val msg = event.error?.message ?: event.error?.type ?: KiloBundle.message("session.error.unknown")
-                busy = false
-                fire(SessionEvent.Error(msg))
-                fire(SessionEvent.StatusChanged(null))
-                fire(SessionEvent.BusyChanged(false))
+                chat.setPhase(SessionPhase.Error(msg, event.error?.type))
             }
 
             is ChatEventDto.MessageRemoved -> {
                 chat.removeMessage(event.messageID)
-                fire(SessionEvent.MessageRemoved(event.messageID))
+            }
+
+            is ChatEventDto.PermissionAsked -> {
+                chat.setPhase(SessionPhase.Prompting(toPermissionPrompt(event.request)))
+            }
+
+            is ChatEventDto.PermissionReplied -> {
+                if (chat.phase is SessionPhase.Prompting) {
+                    chat.setPhase(SessionPhase.Working(StatusState.Thinking(KiloBundle.message("session.status.considering"))))
+                }
+            }
+
+            is ChatEventDto.QuestionAsked -> {
+                chat.setPhase(SessionPhase.Prompting(toQuestionPrompt(event.request)))
+            }
+
+            is ChatEventDto.QuestionReplied -> {
+                if (chat.phase is SessionPhase.Prompting) {
+                    chat.setPhase(SessionPhase.Working(StatusState.Thinking(KiloBundle.message("session.status.considering"))))
+                }
+            }
+
+            is ChatEventDto.QuestionRejected -> {
+                if (chat.phase is SessionPhase.Prompting) {
+                    chat.setPhase(SessionPhase.Idle)
+                }
+            }
+
+            is ChatEventDto.SessionStatusChanged -> {
+                val phase = when (event.status.type) {
+                    "idle" -> SessionPhase.Idle
+                    "busy" -> {
+                        val current = chat.phase
+                        if (current is SessionPhase.Idle || current is SessionPhase.Error)
+                            SessionPhase.Working(StatusState.Thinking(KiloBundle.message("session.status.considering")))
+                        else return // already in a more specific phase
+                    }
+                    "retry" -> SessionPhase.Retry(0, event.status.message ?: "", 0)
+                    "offline" -> SessionPhase.Offline("", event.status.message ?: "")
+                    else -> return
+                }
+                chat.setPhase(phase)
             }
         }
     }
 
-    // --- View switching (EDT) ---
-
     private fun showMessages() {
         if (!chat.showMessages) {
             chat.showMessages = true
-            fire(SessionEvent.ViewChanged(true))
+            fire(SessionManagerEvent.ViewChanged(true))
         }
     }
 
-    private fun hideMessages() {
-        if (chat.showMessages) {
-            chat.showMessages = false
-            fire(SessionEvent.ViewChanged(false))
-        }
-    }
-
-    /**
-     * Compute a human-readable status from the last streaming part.
-     */
-    private fun status(): String = when (partType) {
-        "reasoning" -> KiloBundle.message("session.status.thinking")
-        "text" -> KiloBundle.message("session.status.writing")
-        "tool" -> when (tool) {
+    private fun status(): StatusState = when (partType) {
+        "reasoning" -> StatusState.Thinking(KiloBundle.message("session.status.thinking"))
+        "text" -> StatusState.Working(KiloBundle.message("session.status.writing"))
+        "tool" -> StatusState.Working(when (tool) {
             "task" -> KiloBundle.message("session.status.delegating")
             "todowrite", "todoread" -> KiloBundle.message("session.status.planning")
             "read" -> KiloBundle.message("session.status.gathering")
@@ -321,22 +307,17 @@ class SessionManager(
             "edit", "write" -> KiloBundle.message("session.status.editing")
             "bash" -> KiloBundle.message("session.status.commands")
             else -> KiloBundle.message("session.status.considering")
-        }
-        else -> KiloBundle.message("session.status.considering")
+        })
+        else -> StatusState.Thinking(KiloBundle.message("session.status.considering"))
     }
 
-    /**
-     * Notify all listeners. If called from the EDT, listeners run
-     * immediately. If called from a background thread, the notification
-     * is dispatched via `invokeLater`.
-     */
-    private fun fire(event: SessionEvent) {
+    private fun fire(event: SessionManagerEvent) {
         val application = ApplicationManager.getApplication()
         if (application.isDispatchThread) {
             for (l in listeners) l.onEvent(event)
-        } else {
-            application.invokeLater { for (l in listeners) l.onEvent(event) }
+            return
         }
+        application.invokeLater { for (l in listeners) l.onEvent(event) }
     }
 
     private fun edt(block: () -> Unit) {
@@ -347,4 +328,33 @@ class SessionManager(
         eventJob?.cancel()
         cs.cancel()
     }
+}
+
+private fun toPermissionPrompt(dto: PermissionRequestDto): PromptState.Permitting {
+    val ref = dto.tool?.let { ToolCallRef(it.messageID, it.callID) }
+    val perm = Permission(
+        id = dto.id,
+        sessionId = dto.sessionID,
+        name = dto.permission,
+        patterns = dto.patterns,
+        always = dto.always,
+        meta = PermissionMeta(raw = dto.metadata),
+        tool = ref,
+    )
+    return PromptState.Permitting(dto.id, perm)
+}
+
+private fun toQuestionPrompt(dto: QuestionRequestDto): PromptState.Asking {
+    val ref = dto.tool?.let { ToolCallRef(it.messageID, it.callID) }
+    val items = dto.questions.map {
+        QuestionItem(
+            question = it.question,
+            header = it.header,
+            options = it.options.map { opt -> QuestionOption(opt.label, opt.description) },
+            multiple = it.multiple,
+            custom = it.custom,
+        )
+    }
+    val q = Question(id = dto.id, items = items, tool = ref)
+    return PromptState.Asking(dto.id, q)
 }

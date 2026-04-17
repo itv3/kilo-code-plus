@@ -15,7 +15,7 @@ class WorkspaceWatchingTest : SessionManagerTestBase() {
         assertEquals(1, m.chat.models.size)
         assertEquals("gpt-5", m.chat.models[0].id)
         assertTrue(m.chat.ready)
-        assertTrue(events.any { it is SessionEvent.WorkspaceReady })
+        assertTrue(events.any { it is SessionManagerEvent.WorkspaceReady })
     }
 
     fun `test workspace ready sets default agent and model`() {

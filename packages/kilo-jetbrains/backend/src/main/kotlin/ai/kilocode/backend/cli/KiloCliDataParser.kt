@@ -7,12 +7,17 @@ import ai.kilocode.rpc.dto.MessageErrorDto
 import ai.kilocode.rpc.dto.MessageTimeDto
 import ai.kilocode.rpc.dto.MessageWithPartsDto
 import ai.kilocode.rpc.dto.PartDto
+import ai.kilocode.rpc.dto.PermissionRequestDto
 import ai.kilocode.rpc.dto.PromptDto
+import ai.kilocode.rpc.dto.QuestionInfoDto
+import ai.kilocode.rpc.dto.QuestionOptionDto
+import ai.kilocode.rpc.dto.QuestionRequestDto
 import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import ai.kilocode.rpc.dto.SessionSummaryDto
 import ai.kilocode.rpc.dto.SessionTimeDto
 import ai.kilocode.rpc.dto.TokensDto
+import ai.kilocode.rpc.dto.ToolRefDto
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -110,6 +115,43 @@ object KiloCliDataParser {
                 val sid = props.str("sessionID")
                 val err = props["error"]?.jsonObject?.let { parseError(it) }
                 ChatEventDto.Error(sid, err)
+            }
+
+            "permission.asked" -> {
+                val sid = props.str("sessionID") ?: return null
+                val request = parsePermissionRequest(props) ?: return null
+                ChatEventDto.PermissionAsked(sid, request)
+            }
+
+            "permission.replied" -> {
+                val sid = props.str("sessionID") ?: return null
+                val rid = props.str("requestID") ?: return null
+                ChatEventDto.PermissionReplied(sid, rid)
+            }
+
+            "question.asked" -> {
+                val sid = props.str("sessionID") ?: return null
+                val request = parseQuestionRequest(props) ?: return null
+                ChatEventDto.QuestionAsked(sid, request)
+            }
+
+            "question.replied" -> {
+                val sid = props.str("sessionID") ?: return null
+                val rid = props.str("requestID") ?: return null
+                ChatEventDto.QuestionReplied(sid, rid)
+            }
+
+            "question.rejected" -> {
+                val sid = props.str("sessionID") ?: return null
+                val rid = props.str("requestID") ?: return null
+                ChatEventDto.QuestionRejected(sid, rid)
+            }
+
+            "session.status" -> {
+                val sid = props.str("sessionID") ?: return null
+                val st = props["status"]?.jsonObject ?: return null
+                val dto = SessionStatusDto(st.str("type") ?: "idle", st.str("message"))
+                ChatEventDto.SessionStatusChanged(sid, dto)
             }
 
             else -> null
@@ -266,6 +308,48 @@ object KiloCliDataParser {
             ?: obj["data"]?.jsonObject?.str("message")
             ?: obj.str("error")
         return MessageErrorDto(type, msg)
+    }
+
+    internal fun parsePermissionRequest(obj: JsonObject): PermissionRequestDto? {
+        val id = obj.str("id") ?: return null
+        val sid = obj.str("sessionID") ?: return null
+        val permission = obj.str("permission") ?: return null
+        val patterns = obj["patterns"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+        val always = obj["always"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: emptyList()
+        val meta = obj["metadata"]?.jsonObject?.let { m ->
+            m.entries.associate { (k, v) -> k to (v.jsonPrimitive.contentOrNull ?: "") }
+        } ?: emptyMap()
+        val ref = obj["tool"]?.jsonObject?.let { t ->
+            val mid = t.str("messageID") ?: return@let null
+            val cid = t.str("callID") ?: return@let null
+            ToolRefDto(mid, cid)
+        }
+        return PermissionRequestDto(id, sid, permission, patterns, meta, always, ref)
+    }
+
+    internal fun parseQuestionRequest(obj: JsonObject): QuestionRequestDto? {
+        val id = obj.str("id") ?: return null
+        val sid = obj.str("sessionID") ?: return null
+        val questions = obj["questions"]?.jsonArray?.map { q ->
+            val qo = q.jsonObject
+            val options = qo["options"]?.jsonArray?.map { o ->
+                val oo = o.jsonObject
+                QuestionOptionDto(oo.str("label") ?: "", oo.str("description") ?: "")
+            } ?: emptyList()
+            QuestionInfoDto(
+                question = qo.str("question") ?: "",
+                header = qo.str("header") ?: "",
+                options = options,
+                multiple = qo.str("multiple") == "true",
+                custom = qo.str("custom") != "false",
+            )
+        } ?: emptyList()
+        val ref = obj["tool"]?.jsonObject?.let { t ->
+            val mid = t.str("messageID") ?: return@let null
+            val cid = t.str("callID") ?: return@let null
+            ToolRefDto(mid, cid)
+        }
+        return QuestionRequestDto(id, sid, questions, ref)
     }
 
     private fun parseSessionObject(obj: JsonObject): SessionDto {

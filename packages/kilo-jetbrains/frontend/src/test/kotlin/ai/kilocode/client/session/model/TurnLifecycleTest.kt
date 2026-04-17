@@ -1,53 +1,50 @@
 package ai.kilocode.client.session.model
 
-import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.MessageErrorDto
 
 class TurnLifecycleTest : SessionManagerTestBase() {
 
-    fun `test TurnOpen fires BusyChanged true`() {
-        val (_, events) = prompted()
+    fun `test TurnOpen fires PhaseChanged to Working`() {
+        val (_, _, model) = prompted()
 
         emit(ChatEventDto.TurnOpen("ses_test"))
         flush()
 
-        assertTrue(events.any { it is SessionEvent.BusyChanged && it.busy })
-        assertTrue(events.any { it is SessionEvent.StatusChanged && it.text == KiloBundle.message("session.status.considering") })
+        val phase = model.filterIsInstance<SessionModelEvent.PhaseChanged>().lastOrNull()?.phase
+        assertTrue(phase is SessionPhase.Working)
     }
 
-    fun `test TurnClose fires BusyChanged false and clears status`() {
-        val (_, events) = prompted()
+    fun `test TurnClose fires PhaseChanged to Idle`() {
+        val (_, _, model) = prompted()
 
         emit(ChatEventDto.TurnOpen("ses_test"))
         flush()
         emit(ChatEventDto.TurnClose("ses_test", "completed"))
         flush()
 
-        val last = events.filterIsInstance<SessionEvent.BusyChanged>().last()
-        assertFalse(last.busy)
-        val status = events.filterIsInstance<SessionEvent.StatusChanged>().last()
-        assertNull(status.text)
+        val phase = model.filterIsInstance<SessionModelEvent.PhaseChanged>().last().phase
+        assertEquals(SessionPhase.Idle, phase)
     }
 
-    fun `test Error fires Error event with message`() {
-        val (_, events) = prompted()
+    fun `test Error fires PhaseChanged to Error`() {
+        val (_, _, model) = prompted()
 
         emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "APIError", message = "Bad Request")))
         flush()
 
-        val err = events.filterIsInstance<SessionEvent.Error>().firstOrNull()
-        assertNotNull(err)
-        assertEquals("Bad Request", err!!.message)
+        val phase = model.filterIsInstance<SessionModelEvent.PhaseChanged>().last().phase
+        assertTrue(phase is SessionPhase.Error)
+        assertEquals("Bad Request", (phase as SessionPhase.Error).message)
     }
 
     fun `test Error with null message falls back to type`() {
-        val (_, events) = prompted()
+        val (_, _, model) = prompted()
 
         emit(ChatEventDto.Error("ses_test", MessageErrorDto(type = "timeout", message = null)))
         flush()
 
-        val err = events.filterIsInstance<SessionEvent.Error>().first()
-        assertEquals("timeout", err.message)
+        val phase = model.filterIsInstance<SessionModelEvent.PhaseChanged>().last().phase as SessionPhase.Error
+        assertEquals("timeout", phase.message)
     }
 }

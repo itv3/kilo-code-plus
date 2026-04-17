@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.model
 
+import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import com.intellij.openapi.util.Disposer
 
@@ -10,7 +11,7 @@ class ListenerLifecycleTest : SessionManagerTestBase() {
         val disposable = Disposer.newDisposable("listener-parent")
         Disposer.register(parent, disposable)
 
-        val events = mutableListOf<SessionEvent>()
+        val events = mutableListOf<SessionManagerEvent>()
         m.addListener(disposable) { events.add(it) }
 
         edt { m.prompt("before") }
@@ -27,8 +28,8 @@ class ListenerLifecycleTest : SessionManagerTestBase() {
 
     fun `test all listeners notified`() {
         val m = model()
-        val events1 = mutableListOf<SessionEvent>()
-        val events2 = mutableListOf<SessionEvent>()
+        val events1 = mutableListOf<SessionManagerEvent>()
+        val events2 = mutableListOf<SessionManagerEvent>()
         val d1 = Disposer.newDisposable("l1")
         val d2 = Disposer.newDisposable("l2")
         Disposer.register(parent, d1)
@@ -45,16 +46,12 @@ class ListenerLifecycleTest : SessionManagerTestBase() {
         assertEquals(events1.map { it::class }, events2.map { it::class })
     }
 
-    fun `test session status busy fires BusyChanged`() {
-        val m = model()
-        val events = collect(m)
+    fun `test session status busy fires PhaseChanged to Working`() {
+        val (_, _, model) = prompted()
 
-        edt { m.prompt("go") }
+        emit(ChatEventDto.SessionStatusChanged("ses_test", SessionStatusDto("busy", null)))
         flush()
 
-        rpc.statuses.value = mapOf("ses_test" to SessionStatusDto("busy", null))
-        flush()
-
-        assertTrue(events.any { it is SessionEvent.BusyChanged && it.busy })
+        assertTrue(model.any { it is SessionModelEvent.PhaseChanged && (it.phase is SessionPhase.Working) })
     }
 }

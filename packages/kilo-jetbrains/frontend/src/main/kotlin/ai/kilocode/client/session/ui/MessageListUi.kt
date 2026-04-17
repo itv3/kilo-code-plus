@@ -1,8 +1,16 @@
 package ai.kilocode.client.session.ui
 
-import ai.kilocode.client.session.model.MessageListModel
-import ai.kilocode.client.session.model.MessageModelEvent
-import ai.kilocode.rpc.dto.MessageDto
+import ai.kilocode.client.session.model.SessionModel
+import ai.kilocode.client.session.model.SessionModelEvent
+import ai.kilocode.client.session.model.SessionPhase
+import ai.kilocode.client.session.model.StatusState
+import ai.kilocode.client.session.model.message.Compaction
+import ai.kilocode.client.session.model.message.Content
+import ai.kilocode.client.session.model.message.Message
+import ai.kilocode.client.session.model.message.Reasoning
+import ai.kilocode.client.session.model.message.Text
+import ai.kilocode.client.session.model.message.Tool
+import ai.kilocode.client.session.model.message.ToolExecState
 import com.intellij.openapi.Disposable
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.JBColor
@@ -20,16 +28,12 @@ import javax.swing.border.MatteBorder
  * Scrollable panel displaying chat messages aligned to the top,
  * with an optional animated status indicator at the bottom.
  *
- * Passive view — all rendering is driven by [MessageModelEvent]s
- * from the [MessageListModel]. No public mutation methods.
- *
- * Inner panel uses [BoxLayout.Y_AXIS] for stacking, wrapped in a
- * [BorderLayout.NORTH] so messages stay top-aligned when the scroll
- * viewport is taller than the content.
+ * Passive view — all rendering is driven by [SessionModelEvent]s
+ * from the [SessionModel]. No public mutation methods.
  */
 class MessageListUi(
     parent: Disposable,
-    private val model: MessageListModel,
+    private val model: SessionModel,
 ) : JPanel(BorderLayout()) {
 
     private val blocks = LinkedHashMap<String, MessageBlock>()
@@ -61,22 +65,22 @@ class MessageListUi(
 
         model.addListener(parent) { event ->
             when (event) {
-                is MessageModelEvent.MessageAdded -> onAdded(event.info)
-                is MessageModelEvent.MessageRemoved -> onRemoved(event.id)
-                is MessageModelEvent.PartText -> onPartText(event.messageId, event.partId, event.text)
-                is MessageModelEvent.PartDelta -> onPartDelta(event.messageId, event.partId, event.delta)
-                is MessageModelEvent.Error -> onError(event.message)
-                is MessageModelEvent.StatusChanged -> onStatus(event.text)
-                is MessageModelEvent.HistoryLoaded -> onHistory()
-                is MessageModelEvent.Cleared -> onCleared()
+                is SessionModelEvent.MessageAdded -> onAdded(event.info)
+                is SessionModelEvent.MessageRemoved -> onRemoved(event.id)
+                is SessionModelEvent.ContentAdded -> onContentAdded(event.messageId, event.content)
+                is SessionModelEvent.ContentUpdated -> onContentUpdated(event.messageId, event.content)
+                is SessionModelEvent.ContentDelta -> onContentDelta(event.messageId, event.contentId, event.delta)
+                is SessionModelEvent.PhaseChanged -> onPhase(event.phase)
+                is SessionModelEvent.HistoryLoaded -> onHistory()
+                is SessionModelEvent.Cleared -> onCleared()
             }
         }
     }
 
-    private fun onAdded(info: MessageDto) {
-        if (blocks.containsKey(info.id)) return
+    private fun onAdded(info: Message) {
+        if (blocks.containsKey(info.info.id)) return
         val block = MessageBlock(info)
-        blocks[info.id] = block
+        blocks[info.info.id] = block
         inner.add(block, inner.componentCount - 1)
         refresh()
     }
@@ -87,48 +91,54 @@ class MessageListUi(
         refresh()
     }
 
-    private fun onPartText(messageId: String, partId: String, text: String) {
-        blocks[messageId]?.setText(partId, text)
+    private fun onContentAdded(messageId: String, content: Content) {
+        blocks[messageId]?.addContent(content)
         refresh()
     }
 
-    private fun onPartDelta(messageId: String, partId: String, delta: String) {
-        blocks[messageId]?.appendDelta(partId, delta)
+    private fun onContentUpdated(messageId: String, content: Content) {
+        blocks[messageId]?.updateContent(content)
         refresh()
     }
 
-    private fun onError(msg: String) {
-        val err = JBLabel(msg).apply {
-            foreground = JBColor.RED
-            font = JBUI.Fonts.label()
-            border = JBUI.Borders.empty(4, 0)
-            alignmentX = LEFT_ALIGNMENT
-        }
-        inner.add(err, inner.componentCount - 1)
+    private fun onContentDelta(messageId: String, contentId: String, delta: String) {
+        blocks[messageId]?.appendDelta(contentId, delta)
         refresh()
     }
 
-    private fun onStatus(text: String?) {
-        if (text != null) {
-            label.text = text
-            spinner.isVisible = true
-        } else {
-            spinner.isVisible = false
+    private fun onPhase(phase: SessionPhase) {
+        when (phase) {
+            is SessionPhase.Working -> {
+                label.text = when (val s = phase.status) {
+                    is StatusState.Thinking -> s.text
+                    is StatusState.Working -> s.text
+                }
+                spinner.isVisible = true
+            }
+            is SessionPhase.Error -> {
+                spinner.isVisible = false
+                val err = JBLabel(phase.message).apply {
+                    foreground = JBColor.RED
+                    font = JBUI.Fonts.label()
+                    border = JBUI.Borders.empty(4, 0)
+                    alignmentX = LEFT_ALIGNMENT
+                }
+                inner.add(err, inner.componentCount - 1)
+            }
+            else -> {
+                spinner.isVisible = false
+            }
         }
         refresh()
     }
 
     private fun onHistory() {
         clear()
-        for (entry in model.entries()) {
-            val block = MessageBlock(entry.info)
+        for (entry in model.messages()) {
+            val block = MessageBlock(entry)
             blocks[entry.info.id] = block
             inner.add(block, inner.componentCount - 1)
-            for ((partId, text) in entry.parts) {
-                if (text.isNotEmpty()) {
-                    block.setText(partId, text.toString())
-                }
-            }
+            for ((_, content) in entry.parts) block.addContent(content)
         }
         refresh()
     }
@@ -151,19 +161,16 @@ class MessageListUi(
     }
 }
 
-/**
- * A single message block — text content only, no role header.
- * User messages get a thin top border as separator.
- */
-private class MessageBlock(info: MessageDto) : JPanel() {
-    private val parts = LinkedHashMap<String, JTextArea>()
+private class MessageBlock(info: Message) : JPanel() {
+    private val areas = LinkedHashMap<String, JTextArea>()
+    private val labels = LinkedHashMap<String, JBLabel>()
 
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         isOpaque = false
         alignmentX = LEFT_ALIGNMENT
 
-        border = if (info.role == "user") {
+        border = if (info.info.role == "user") {
             JBUI.Borders.compound(
                 MatteBorder(1, 0, 0, 0, JBColor.border()),
                 JBUI.Borders.empty(8, 0, 4, 0),
@@ -173,15 +180,53 @@ private class MessageBlock(info: MessageDto) : JPanel() {
         }
     }
 
-    fun setText(partID: String, text: String) {
-        val area = parts.getOrPut(partID) { createArea().also { add(it) } }
-        area.text = text
+    fun addContent(content: Content) {
+        when (content) {
+            is Text -> {
+                val area = createArea()
+                if (content.content.isNotEmpty()) area.text = content.content.toString()
+                areas[content.id] = area
+                add(area)
+            }
+            is Reasoning -> {
+                val area = createArea().apply {
+                    foreground = UIUtil.getContextHelpForeground()
+                }
+                if (content.content.isNotEmpty()) area.text = content.content.toString()
+                areas[content.id] = area
+                add(area)
+            }
+            is Tool -> {
+                val lbl = createToolLabel(content)
+                labels[content.id] = lbl
+                add(lbl)
+            }
+            is Compaction -> {
+                val lbl = JBLabel("Context compacted").apply {
+                    foreground = UIUtil.getContextHelpForeground()
+                    font = JBUI.Fonts.smallFont()
+                    border = JBUI.Borders.empty(4, 0)
+                    alignmentX = LEFT_ALIGNMENT
+                }
+                labels[content.id] = lbl
+                add(lbl)
+            }
+        }
         revalidate()
     }
 
-    fun appendDelta(partID: String, delta: String) {
-        val area = parts.getOrPut(partID) { createArea().also { add(it) } }
-        area.append(delta)
+    fun updateContent(content: Content) {
+        when (content) {
+            is Text -> areas[content.id]?.text = content.content.toString()
+            is Reasoning -> areas[content.id]?.text = content.content.toString()
+            is Tool -> labels[content.id]?.text = toolText(content)
+            is Compaction -> {}
+        }
+        revalidate()
+    }
+
+    fun appendDelta(contentId: String, delta: String) {
+        areas[contentId]?.append(delta)
         revalidate()
     }
 
@@ -194,5 +239,22 @@ private class MessageBlock(info: MessageDto) : JPanel() {
         foreground = UIUtil.getLabelForeground()
         border = JBUI.Borders.empty()
         alignmentX = LEFT_ALIGNMENT
+    }
+
+    private fun createToolLabel(content: Tool) = JBLabel(toolText(content)).apply {
+        foreground = UIUtil.getContextHelpForeground()
+        font = JBUI.Fonts.smallFont()
+        border = JBUI.Borders.empty(2, 0)
+        alignmentX = LEFT_ALIGNMENT
+    }
+
+    private fun toolText(content: Tool): String {
+        val icon = when (content.state) {
+            ToolExecState.PENDING -> "\u23F3"
+            ToolExecState.RUNNING -> "\u25B6"
+            ToolExecState.COMPLETED -> "\u2713"
+            ToolExecState.ERROR -> "\u2717"
+        }
+        return "$icon ${content.title ?: content.name}"
     }
 }
