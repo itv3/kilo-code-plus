@@ -69,8 +69,7 @@ export class ServerManager {
       const claudeCompat = vscode.workspace.getConfiguration("kilo-code.new").get<boolean>("claudeCodeCompat", false)
       // kilocode_change - pin cwd to a workspace folder (or $HOME) so the CLI doesn't inherit
       // the extension host's cwd, which is "/" under F5 debug and stalls cwd-dependent init.
-      const spawnCwd =
-        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.env.HOME ?? require("os").homedir()
+      const spawnCwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.env.HOME ?? require("os").homedir()
       const serverProcess = spawn(cliPath, ["serve", "--port", "0"], {
         cwd: spawnCwd, // kilocode_change
         env: {
