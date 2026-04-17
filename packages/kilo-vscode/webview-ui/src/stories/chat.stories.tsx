@@ -8,14 +8,14 @@
  */
 
 import type { Meta, StoryObj } from "storybook-solidjs-vite"
-import { StoryProviders, mockSessionValue } from "./StoryProviders"
+import { StoryProviders, defaultMockData, mockSessionValue } from "./StoryProviders"
 import { ChatView } from "../components/chat/ChatView"
 import { TaskHeader } from "../components/chat/TaskHeader"
 import { QuestionDock } from "../components/chat/QuestionDock"
-import { SuggestBar } from "../components/chat/SuggestBar"
+import { MessageList } from "../components/chat/MessageList"
 import { SessionContext } from "../context/session"
 import { ServerContext } from "../context/server"
-import type { QuestionRequest, SuggestionRequest, TodoItem } from "../types/messages"
+import type { QuestionRequest, TodoItem } from "../types/messages"
 
 const SESSION_ID = "story-session-chat-001"
 
@@ -65,14 +65,6 @@ const multiQuestion: QuestionRequest = {
     },
   ],
   tool: { messageID: "asst-msg-001", callID: "call-question-002" },
-}
-
-const reviewSuggestion: SuggestionRequest = {
-  id: "s-review-001",
-  sessionID: SESSION_ID,
-  text: "Start a code review of uncommitted changes?",
-  actions: [{ label: "Start review", description: "Run a local review now", prompt: "/local-review-uncommitted" }],
-  tool: { messageID: "asst-msg-002", callID: "call-suggest-001" },
 }
 
 // ---------------------------------------------------------------------------
@@ -181,15 +173,98 @@ export const QuestionDockManyOptions: Story = {
   ),
 }
 
-export const SuggestBarReview: Story = {
-  name: "SuggestBar — review suggestion",
-  render: () => (
-    <StoryProviders sessionID={SESSION_ID} suggestions={[reviewSuggestion]}>
-      <div style={{ width: "100%" }}>
-        <SuggestBar request={reviewSuggestion} />
-      </div>
-    </StoryProviders>
-  ),
+const toolUserID = "user-msg-spacing-001"
+const toolAssistantID = "asst-msg-spacing-001"
+const queuedUserID = "user-msg-spacing-002"
+const toolNow = 1_700_000_000_000
+const spacingMessages = [
+  {
+    id: toolUserID,
+    sessionID: SESSION_ID,
+    role: "user",
+    time: { created: toolNow - 9000 },
+  },
+  {
+    id: toolAssistantID,
+    sessionID: SESSION_ID,
+    role: "assistant",
+    parentID: toolUserID,
+    time: { created: toolNow - 8000 },
+    modelID: "claude-sonnet-4-20250514",
+    providerID: "anthropic",
+    mode: "default",
+    agent: "default",
+    path: { cwd: "/project", root: "/project" },
+  },
+  {
+    id: queuedUserID,
+    sessionID: SESSION_ID,
+    role: "user",
+    time: { created: toolNow - 1000 },
+  },
+]
+const spacingParts = {
+  [toolUserID]: [
+    {
+      id: "part-user-spacing-001",
+      sessionID: SESSION_ID,
+      messageID: toolUserID,
+      type: "text",
+      text: "Run a shell command and stop so I can test the spacing.",
+    },
+  ],
+  [toolAssistantID]: [
+    {
+      id: "part-bash-spacing-001",
+      sessionID: SESSION_ID,
+      messageID: toolAssistantID,
+      type: "tool",
+      callID: "call-bash-spacing-001",
+      tool: "bash",
+      state: {
+        status: "completed",
+        input: { command: "pwd", description: "Print current directory" },
+        output: "/Users/marius/Documents/git/kilocode/.kilo/worktrees/zest-kettledrum",
+        title: "pwd",
+        metadata: {},
+        time: { start: toolNow - 7000, end: toolNow - 6500 },
+      },
+    },
+  ],
+  [queuedUserID]: [
+    {
+      id: "part-user-spacing-002",
+      sessionID: SESSION_ID,
+      messageID: queuedUserID,
+      type: "text",
+      text: "ok",
+    },
+  ],
+}
+const spacingData = {
+  ...defaultMockData,
+  message: { [SESSION_ID]: spacingMessages },
+  part: spacingParts,
+}
+
+export const MessageListToolToQueuedUserSpacing: Story = {
+  name: "MessageList — tool to queued user spacing",
+  render: () => {
+    const session = {
+      ...mockSessionValue({ id: SESSION_ID, status: "idle" }),
+      messages: () => spacingMessages,
+      userMessages: () => spacingMessages.filter((msg) => msg.role === "user"),
+    }
+    return (
+      <StoryProviders data={spacingData} sessionID={SESSION_ID} status="idle" noPadding>
+        <SessionContext.Provider value={session as any}>
+          <div style={{ height: "420px", display: "flex", "flex-direction": "column" }}>
+            <MessageList />
+          </div>
+        </SessionContext.Provider>
+      </StoryProviders>
+    )
+  },
 }
 
 // ---------------------------------------------------------------------------
