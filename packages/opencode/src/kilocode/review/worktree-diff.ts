@@ -14,6 +14,10 @@ import { Log } from "@/util/log"
 const MAX_STDOUT = 10 * 1024 * 1024 // 10 MB general cap
 const MAX_FILE_STDOUT = 1 * 1024 * 1024 // 1 MB per-file cap (readBefore)
 
+// Shared decoder — one instance per module avoids re-allocating the ICU state
+// on every git call and keeps the native allocator footprint small.
+const decoder = new TextDecoder()
+
 async function git(
   args: string[],
   cwd: string,
@@ -28,7 +32,12 @@ async function git(
   // Kick off stderr drain immediately so a full stderr pipe can't block the child.
   // Both stdout and stderr must be drained concurrently to avoid deadlock.
   const stderrPromise = new Response(proc.stderr).text()
-  const chunks: Buffer[] = []
+
+  // Collect chunks by reference (the stream hands us freshly-allocated
+  // Uint8Arrays — no Buffer.from copy needed). A single join at the end
+  // keeps the allocator high-water to exactly one final buffer per call,
+  // which is what mimalloc actually retains in its arenas.
+  const chunks: Uint8Array[] = []
   let size = 0
   let truncated = false
   const reader = proc.stdout.getReader()
@@ -36,21 +45,39 @@ async function git(
     const { done, value } = await reader.read()
     if (done) break
     if (truncated) continue // drain pipe but don't store
-    size += value.length
-    if (size > limit) {
+    const space = limit - size
+    if (value.length >= space) {
+      if (space > 0) chunks.push(value.subarray(0, space))
+      size = limit
       truncated = true
       continue
     }
-    chunks.push(Buffer.from(value))
+    chunks.push(value)
+    size += value.length
   }
   const stderr = await stderrPromise
   const code = await proc.exited
   return {
     ok: code === 0 && !truncated,
-    stdout: Buffer.concat(chunks).toString(),
+    stdout: join(chunks, size),
     stderr,
     truncated,
   }
+}
+
+// Single-allocation decode: fast path for the common case of one chunk,
+// otherwise one Uint8Array the exact size of the final output plus the
+// decoded string. Avoids the extra copy of chunk-array concatenation.
+function join(chunks: Uint8Array[], size: number): string {
+  if (size === 0) return ""
+  if (chunks.length === 1) return decoder.decode(chunks[0])
+  const buf = new Uint8Array(size)
+  let pos = 0
+  for (const c of chunks) {
+    buf.set(c, pos)
+    pos += c.length
+  }
+  return decoder.decode(buf)
 }
 
 // ---------------------------------------------------------------------------

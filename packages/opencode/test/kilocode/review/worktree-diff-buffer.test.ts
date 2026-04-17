@@ -49,14 +49,14 @@ describe("worktree-diff buffer caps", () => {
 
   test("git() helper drains pipe after truncation", () => {
     const fnStart = src.indexOf("async function git(")
-    const fnBody = src.slice(fnStart, fnStart + 800)
+    const fnBody = src.slice(fnStart, fnStart + 1600)
     // After setting truncated=true, the loop must continue reading (drain)
     expect(fnBody).toContain("if (truncated) continue")
   })
 
   test("git() helper consumes stderr to prevent pipe blocking", () => {
     const fnStart = src.indexOf("async function git(")
-    const fnBody = src.slice(fnStart, fnStart + 1000)
+    const fnBody = src.slice(fnStart, fnStart + 1600)
     expect(fnBody).toContain("proc.stderr")
   })
 
