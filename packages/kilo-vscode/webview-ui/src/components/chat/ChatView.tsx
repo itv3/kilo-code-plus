@@ -62,9 +62,10 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   // Tool-linked questions render inline at their tool part position via AssistantMessage.
   const standaloneQuestions = createMemo(() => familyQuestions().filter((q) => !q.tool))
   const standaloneSuggestions = createMemo(() => familySuggestions().filter((s) => !s.tool))
-  const blockingQuestions = createMemo(() => familyQuestions().filter((q) => q.blocking !== false))
   const permissionRequest = () => familyPermissions().find((p) => p.sessionID === id()) ?? familyPermissions()[0]
-  const blocked = () => isPromptBlocked(familyPermissions().length, blockingQuestions().length)
+  // Prompt input is decoupled from questions/suggestions — only permissions block.
+  // Pending questions and suggestions are auto-dismissed in sendMessage/sendCommand.
+  const blocked = () => isPromptBlocked(familyPermissions().length)
   // Session is busy only because a suggestion tool call is pending — prompt should behave as idle
   const suggesting = () => isSuggesting(blocked(), familySuggestions().length)
   // Session is busy only because a question tool call is pending — prompt should behave as idle

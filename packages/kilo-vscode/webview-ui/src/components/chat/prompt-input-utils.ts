@@ -52,11 +52,17 @@ export function atEnd(start: number, end: number, len: number): boolean {
 
 /**
  * Whether the input prompt should be blocked.
- * Permissions always block. Questions block unless they set `blocking: false`.
- * Non-blocking questions and suggestions never block.
+ *
+ * Only permission requests block the prompt in the VS Code webview. Questions
+ * and suggestions never block — they are dismissed automatically when a new
+ * message is sent (see session.tsx sendMessage/sendCommand).
+ *
+ * The single-parameter signature is intentional: taking question-count would
+ * structurally allow a future regression to re-couple the prompt to pending
+ * questions. Keep this function at one argument.
  */
-export function isPromptBlocked(permissions: number, blocking: number = 0): boolean {
-  return permissions > 0 || blocking > 0
+export function isPromptBlocked(permissions: number): boolean {
+  return permissions > 0
 }
 
 /**
@@ -70,7 +76,9 @@ export function isPromptBusy(status: string, suggesting: boolean, questioning: b
 
 /**
  * Whether the session is busy only because a suggestion is pending.
- * True when no blocking requests exist and at least one suggestion is active.
+ * True when no permission request is blocking the prompt and at least one
+ * suggestion is active. The `!blocked` gate keeps the Stop button available
+ * when permissions block input — it does NOT mean suggestions block.
  */
 export function isSuggesting(blocked: boolean, suggestions: number): boolean {
   return !blocked && suggestions > 0
@@ -78,7 +86,9 @@ export function isSuggesting(blocked: boolean, suggestions: number): boolean {
 
 /**
  * Whether the session is busy only because a question is pending.
- * True when no blocking requests exist and at least one question is active.
+ * True when no permission request is blocking the prompt and at least one
+ * question is active. The `!blocked` gate keeps the Stop button available
+ * when permissions block input — it does NOT mean questions block.
  */
 export function isQuestioning(blocked: boolean, questions: number): boolean {
   return !blocked && questions > 0

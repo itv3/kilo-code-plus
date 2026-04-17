@@ -151,9 +151,8 @@ describe("atEnd", () => {
 })
 
 describe("isPromptBlocked", () => {
-  it("returns false when zero permissions and no blocking questions", () => {
+  it("returns false when zero permissions", () => {
     expect(isPromptBlocked(0)).toBe(false)
-    expect(isPromptBlocked(0, 0)).toBe(false)
   })
 
   it("returns true when permissions exist", () => {
@@ -161,13 +160,10 @@ describe("isPromptBlocked", () => {
     expect(isPromptBlocked(3)).toBe(true)
   })
 
-  it("returns true when blocking questions exist", () => {
-    expect(isPromptBlocked(0, 1)).toBe(true)
-    expect(isPromptBlocked(0, 2)).toBe(true)
-  })
-
-  it("returns true when both permissions and blocking questions exist", () => {
-    expect(isPromptBlocked(1, 1)).toBe(true)
+  it("accepts exactly one argument (locks the API against regression)", () => {
+    // Prevents a future change from reintroducing the question/blocking coupling.
+    // See prompt-send-contract.test.ts for the source-level complement.
+    expect(isPromptBlocked.length).toBe(1)
   })
 })
 
