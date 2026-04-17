@@ -52,7 +52,7 @@ For the current mode-to-model mappings, see the [Auto Model user docs](/docs/cod
 
 **Who it's for**: Cost-conscious developers who want better results than free models at a fraction of frontier cost.
 
-**What it does**: Uses GPT 5.3 Codex — a cost-effective model with strong reasoning and coding capabilities — for every mode. Unlike Frontier, Balanced does not vary its underlying model by mode. The legacy `kilo/auto` model ID also resolves to Balanced.
+**What it does**: Uses GPT 5.3 Codex — a cost-effective model with strong reasoning and coding capabilities — for every mode. Unlike Frontier, Balanced does not vary its underlying model by mode.
 
 **Pricing**: Paid, but significantly cheaper than Frontier.
 

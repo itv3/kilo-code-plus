@@ -88,7 +88,7 @@ Highest performance and capability for any task. Frontier requests are sent with
 
 ### `kilo-auto/balanced`
 
-Great balance of price and capability. Balanced routes to the same model regardless of mode, with low reasoning effort. The legacy `kilo/auto` alias resolves to the same behavior.
+Great balance of price and capability. Balanced routes to the same model regardless of mode, with low reasoning effort.
 
 | Mode      | Resolved Model         |
 | --------- | ---------------------- |
