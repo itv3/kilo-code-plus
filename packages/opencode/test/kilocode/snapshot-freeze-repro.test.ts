@@ -11,8 +11,6 @@
 //      workload runs concurrently.
 //   3. A concurrent setInterval keeps ticking — i.e. the event loop keeps
 //      breathing and ESC would be delivered.
-//
-// Opt-out via SKIP_SLOW_TESTS because this spins up a full Hono request.
 
 import { test, expect, afterAll, afterEach, mock } from "bun:test"
 import { $ } from "bun"
@@ -38,9 +36,7 @@ afterAll(async () => {
   await DiffEngine.shutdown()
 })
 
-const skip = process.env["SKIP_SLOW_TESTS"] === "1" || process.env["SKIP_SLOW_TESTS"] === "true"
-
-test.skipIf(skip)("pathological diffFull workload finishes quickly and does not block abort", async () => {
+test("pathological diffFull workload finishes quickly and does not block abort", async () => {
   // 3000-line file that churns every line between snapshots. Before the fix
   // this ran through structuredPatch at context=MAX_SAFE_INTEGER synchronously
   // and could take minutes.
