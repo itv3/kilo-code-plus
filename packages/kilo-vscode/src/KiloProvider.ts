@@ -24,6 +24,7 @@ import {
   buildSettingPath,
   mapSSEEventToWebviewMessage,
   getErrorMessage,
+  getConfigErrorDetails,
   isEventFromForeignProject,
   MessageConfirmation,
   runWithMessageConfirmation,
@@ -32,6 +33,7 @@ import {
   resolveContextDirectory,
   resolveWorkspaceDirectory,
   mergeFileSearchResults,
+  SessionStreamScheduler,
   type SessionRefreshContext,
 } from "./kilo-provider-utils"
 import { GitOps } from "./agent-manager/GitOps"
@@ -173,6 +175,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   /** Set when refreshSessions() is called before the client is ready.
    *  Cleared and retried once the connection transitions to "connected". */
   private pendingSessionRefresh = false
+  private readonly streams = new SessionStreamScheduler((msg) => this.postMessage(msg))
   private readonly confirmations = new MessageConfirmation()
   private unsubscribeEvent: (() => void) | null = null
   private unsubscribeState: (() => void) | null = null
@@ -242,6 +245,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     if (s) this.postMessage({ type: "remoteStatus", enabled: s.enabled, connected: s.connected })
   }
   private focusSession(id?: string): void {
+    this.streams.focus(id)
     if (id) this.connectionService.registerFocused(this.instanceId, id)
     else this.connectionService.unregisterFocused(this.instanceId)
   }
@@ -1367,12 +1371,12 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         this.connectionService.recordMessageSessionId(message.id, message.sessionID)
       }
 
-      this.postMessage({
-        type: "messagesLoaded",
-        sessionID,
-        messages,
-      })
-
+      // Snapshot must reflect every SSE event up to its taken-time; any
+      // delta still queued here is either already applied in the snapshot
+      // (re-emitting would duplicate streamed text) or trails the snapshot
+      // and is silently lost via drop().
+      this.streams.drop(sessionID)
+      this.postMessage({ type: "messagesLoaded", sessionID, messages })
       // Recover any prompts missed while the webview was loading or during an SSE reconnection.
       this.recoverPendingPrompts()
     } catch (error) {
@@ -1425,12 +1429,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         this.connectionService.recordMessageSessionId(message.id, message.sessionID)
       }
 
-      this.postMessage({
-        type: "messagesLoaded",
-        sessionID,
-        messages,
-      })
-
+      // Snapshot supersedes any queued deltas (see handleLoadMessages for the
+      // snapshot-freshness assumption that governs drop() here).
+      this.streams.drop(sessionID)
+      this.postMessage({ type: "messagesLoaded", sessionID, messages })
       // Recover any prompts emitted by the child before we started tracking it.
       this.recoverPendingPrompts()
     } catch (err) {
@@ -1523,11 +1525,13 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       const workspaceDir = this.getWorkspaceDirectory(sessionID)
       await this.client.session.delete({ sessionID, directory: workspaceDir }, { throwOnError: true })
       this.trackedSessionIds.delete(sessionID)
+      this.streams.drop(sessionID)
       this.syncedChildSessions.delete(sessionID)
       this.sessionDirectories.delete(sessionID)
       this.connectionService.pruneSession(sessionID)
       if (this.currentSession?.id === sessionID) {
         this.currentSession = null
+        this.focusSession(undefined)
       }
       this.postMessage({ type: "sessionDeleted", sessionID })
     } catch (error) {
@@ -2250,7 +2254,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    */
   private async handleUpdateConfig(partial: Partial<Config>): Promise<void> {
     if (!this.client || this.connectionState !== "connected") {
-      this.postMessage({ type: "error", message: "Not connected to CLI backend" })
+      this.postMessage({ type: "configUpdateFailed", message: "Not connected to CLI backend" })
       return
     }
 
@@ -2259,42 +2263,39 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       partial.disabled_providers !== undefined ||
       partial.enabled_providers !== undefined
 
-    // Belt-and-suspenders guard: prevent fetchAndSendConfig from sending a
-    // stale configLoaded while this write is in flight (the SSE-triggered reload
-    // races with the async config.update() write on the CLI backend).
+    // Guard against fetchAndSendConfig pushing stale data while the write is in flight.
     this.pending++
+
+    // Phase 1: write. Errors here = real save failures the user can fix + retry.
     try {
-      // Reject all pending permissions and questions across every provider
-      // so their CLI-side Promises resolve before disposeAll() wipes
-      // Instance state.  Throws on failure to abort the config save.
       await this.connectionService.drainPendingPrompts()
-
       await this.client.global.config.update({ config: partial }, { throwOnError: true })
-
-      // Re-fetch the full merged config (global + project + all layers) so the
-      // webview receives the complete resolved config, not just global-only data.
-      // Config.state is reset by updateGlobal (via Instance.resetStateEntry) so
-      // config.get() returns fresh data without a full dispose cycle.
-      const dir = this.getWorkspaceDirectory()
-      const { data: merged } = await retry(() => this.client!.config.get({ directory: dir }, { throwOnError: true }))
-
-      this.cachedConfigMessage = { type: "configLoaded", config: merged }
-      this.postMessage({ type: "configUpdated", config: merged })
-
-      if (refreshProviders) {
-        await this.fetchAndSendProviders()
-      }
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Failed to update config:", error)
       this.postMessage({
-        type: "error",
+        type: "configUpdateFailed",
         message: getErrorMessage(error) || "Failed to update config",
+        details: getConfigErrorDetails(error),
       })
-      // Send configUpdated with the last known good config so the webview
-      // clears its saving flag and reverts optimistic state.
-      if (this.cachedConfigMessage) {
-        this.postMessage({ type: "configUpdated", config: (this.cachedConfigMessage as { config: unknown }).config })
-      }
+      this.pending--
+      return
+    }
+
+    // Phase 2: refresh. Config is already on disk — post-write errors are
+    // transient, so send an optimistic configUpdated to clear the webview's
+    // saving/draft state. SSE global.config.updated pushes the real data next.
+    try {
+      const dir = this.getWorkspaceDirectory()
+      const { data: merged } = await retry(() => this.client!.config.get({ directory: dir }, { throwOnError: true }))
+      this.cachedConfigMessage = { type: "configLoaded", config: merged }
+      this.postMessage({ type: "configUpdated", config: merged })
+      if (refreshProviders) await this.fetchAndSendProviders()
+    } catch (error) {
+      console.error("[Kilo New] KiloProvider: Config write succeeded but post-write refresh failed:", error)
+      const cached = (this.cachedConfigMessage as { config?: unknown } | null)?.config
+      const optimistic =
+        cached && typeof cached === "object" ? { ...(cached as Record<string, unknown>), ...partial } : partial
+      this.postMessage({ type: "configUpdated", config: optimistic })
     } finally {
       this.pending--
     }
@@ -2915,7 +2916,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       const sid = event.properties.sessionID
       this.sessionStatusMap.set(sid, event.properties.status.type)
       const msg = mapSSEEventToWebviewMessage(event, sid)
-      if (msg) this.postMessage(msg)
+      if (msg) {
+        this.streams.flush(sid)
+        this.postMessage(msg)
+      }
       return
     }
 
@@ -2991,16 +2995,13 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     handleNetworkEvent(event.type as string, event.properties as any, this.client, (s) => this.getWorkspaceDirectory(s))
 
     const msg = mapSSEEventToWebviewMessage(event, sessionID)
-    if (msg) {
-      if (msg.type === "partUpdated") {
-        this.postMessage({
-          ...msg,
-          part: this.slimPart(msg.part),
-        })
-        return
-      }
-      this.postMessage(msg)
+    if (!msg) return
+    if (msg.type === "partUpdated") {
+      this.streams.push({ ...msg, part: this.slimPart(msg.part) })
+      return
     }
+    this.streams.flush(sessionID)
+    this.postMessage(msg)
   }
 
   /**
@@ -3334,6 +3335,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.viewStateDisposable?.dispose()
     this.visibilityDisposable?.dispose()
     this.webviewMessageDisposable?.dispose()
+    this.streams.dispose()
     this.isWebviewReady = false
     this.promptRecoveryQueued = false
     clearNetworkWaits(this.trackedSessionIds)

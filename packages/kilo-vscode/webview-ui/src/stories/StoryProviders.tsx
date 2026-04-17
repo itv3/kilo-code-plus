@@ -243,6 +243,8 @@ const ConfigWrapper: ParentComponent<{ config?: Config }> = (props) => {
       config: () => props.config!,
       loading: () => false,
       isDirty: () => false,
+      saving: () => false,
+      saveError: () => null,
       updateConfig: noop,
       saveConfig: noop,
       discardConfig: noop,
