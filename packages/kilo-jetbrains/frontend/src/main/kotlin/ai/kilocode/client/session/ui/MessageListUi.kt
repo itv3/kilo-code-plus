@@ -5,6 +5,7 @@ import ai.kilocode.client.session.model.SessionModelEvent
 import ai.kilocode.client.session.model.SessionState
 import ai.kilocode.client.session.model.Compaction
 import ai.kilocode.client.session.model.Content
+import ai.kilocode.client.session.model.Generic
 import ai.kilocode.client.session.model.Message
 import ai.kilocode.client.session.model.Reasoning
 import ai.kilocode.client.session.model.Text
@@ -65,9 +66,11 @@ class MessageListUi(
         model.addListener(parent) { event ->
             when (event) {
                 is SessionModelEvent.MessageAdded -> onAdded(event.info)
+                is SessionModelEvent.MessageUpdated -> onAdded(event.info) // refresh/upsert
                 is SessionModelEvent.MessageRemoved -> onRemoved(event.id)
                 is SessionModelEvent.ContentAdded -> onContentAdded(event.messageId, event.content)
                 is SessionModelEvent.ContentUpdated -> onContentUpdated(event.messageId, event.content)
+                is SessionModelEvent.ContentRemoved -> onContentRemoved(event.messageId, event.contentId)
                 is SessionModelEvent.ContentDelta -> onContentDelta(event.messageId, event.contentId, event.delta)
                 is SessionModelEvent.StateChanged -> onState(event.state)
                 is SessionModelEvent.HistoryLoaded -> onHistory()
@@ -97,6 +100,11 @@ class MessageListUi(
 
     private fun onContentUpdated(messageId: String, content: Content) {
         blocks[messageId]?.updateContent(content)
+        refresh()
+    }
+
+    private fun onContentRemoved(messageId: String, contentId: String) {
+        blocks[messageId]?.removeContent(contentId)
         refresh()
     }
 
@@ -207,7 +215,14 @@ private class MessageBlock(info: Message) : JPanel() {
                 labels[content.id] = lbl
                 add(lbl)
             }
+            is Generic -> {} // unknown part type — not rendered in this pass
         }
+        revalidate()
+    }
+
+    fun removeContent(contentId: String) {
+        areas.remove(contentId)?.let { remove(it) }
+        labels.remove(contentId)?.let { remove(it) }
         revalidate()
     }
 
@@ -217,6 +232,7 @@ private class MessageBlock(info: Message) : JPanel() {
             is Reasoning -> areas[content.id]?.text = content.content.toString()
             is Tool -> labels[content.id]?.text = toolText(content)
             is Compaction -> {}
+            is Generic -> {}
         }
         revalidate()
     }

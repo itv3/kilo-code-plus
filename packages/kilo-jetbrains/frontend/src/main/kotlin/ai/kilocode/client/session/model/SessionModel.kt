@@ -50,6 +50,25 @@ class SessionModel {
 
     fun isReady(): Boolean = app.status == KiloAppStatusDto.READY && workspace.status == KiloWorkspaceStatusDto.READY
 
+    /**
+     * Add a message if it doesn't exist, or update its [MessageDto] info if it does.
+     * Returns true when the message was newly added (caller can decide to show messages).
+     */
+    fun upsertMessage(dto: MessageDto): Boolean {
+        val existing = entries[dto.id]
+        if (existing != null) {
+            val updated = Message(dto).also { it.parts.putAll(existing.parts) }
+            entries[dto.id] = updated
+            fire(SessionModelEvent.MessageUpdated(updated))
+            return false
+        }
+        val msg = Message(dto)
+        entries[dto.id] = msg
+        fire(SessionModelEvent.MessageAdded(msg))
+        return true
+    }
+
+    /** @deprecated Use [upsertMessage] instead. Kept for incremental migration. */
     fun addMessage(dto: MessageDto): Message? {
         if (entries.containsKey(dto.id)) return null
         val msg = Message(dto)
@@ -63,6 +82,12 @@ class SessionModel {
         fire(SessionModelEvent.MessageRemoved(id))
     }
 
+    fun removeContent(messageId: String, contentId: String) {
+        val msg = entries[messageId] ?: return
+        if (msg.parts.remove(contentId) == null) return
+        fire(SessionModelEvent.ContentRemoved(messageId, contentId))
+    }
+
     fun updateContent(messageId: String, dto: PartDto) {
         val msg = entries[messageId] ?: return
         val existing = msg.parts[dto.id]
@@ -70,7 +95,7 @@ class SessionModel {
             updateExisting(messageId, existing, dto)
             return
         }
-        val content = fromDto(dto) ?: return
+        val content = fromDto(dto)
         msg.parts[dto.id] = content
         fire(SessionModelEvent.ContentAdded(messageId, content))
     }
@@ -106,7 +131,7 @@ class SessionModel {
             val item = Message(msg.info)
             for (part in msg.parts) {
                 val content = fromDto(part, part.text)
-                if (content != null) item.parts[content.id] = content
+                item.parts[content.id] = content
             }
             entries[msg.info.id] = item
         }
@@ -136,11 +161,12 @@ class SessionModel {
                 existing.title = dto.title
             }
             is Compaction -> return
+            is Generic -> return
         }
         fire(SessionModelEvent.ContentUpdated(messageId, existing))
     }
 
-    private fun fromDto(dto: PartDto, text: CharSequence? = null): Content? {
+    private fun fromDto(dto: PartDto, text: CharSequence? = null): Content {
         val content = text ?: dto.text
         return when (dto.type) {
             "text" -> Text(dto.id).apply {
@@ -154,7 +180,7 @@ class SessionModel {
                 title = dto.title
             }
             "compaction" -> Compaction(dto.id)
-            else -> null
+            else -> Generic(dto.id, dto.type)
         }
     }
 
@@ -213,6 +239,7 @@ private fun renderMessage(msg: Message): List<String> {
             }
             is Tool -> out.add(renderTool(part))
             is Compaction -> out.add("compaction#${part.id}")
+            is Generic -> out.add("${part.type}#${part.id}")
         }
     }
     return out

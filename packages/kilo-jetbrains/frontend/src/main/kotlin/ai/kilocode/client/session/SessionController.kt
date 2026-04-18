@@ -20,7 +20,10 @@ import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
+import ai.kilocode.rpc.dto.PermissionAlwaysRulesDto
+import ai.kilocode.rpc.dto.PermissionReplyDto
 import ai.kilocode.rpc.dto.PermissionRequestDto
+import ai.kilocode.rpc.dto.QuestionReplyDto
 import ai.kilocode.rpc.dto.QuestionRequestDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -133,6 +136,39 @@ class SessionController(
         fire(SessionControllerEvent.WorkspaceReady)
     }
 
+    // ------ permission / question resolution ------
+
+    fun replyPermission(requestId: String, reply: PermissionReplyDto, rules: PermissionAlwaysRulesDto? = null) {
+        cs.launch {
+            try {
+                if (rules != null) sessions.savePermissionRules(requestId, directory, rules)
+                sessions.replyPermission(requestId, directory, reply)
+            } catch (e: Exception) {
+                LOG.warn("replyPermission failed", e)
+            }
+        }
+    }
+
+    fun replyQuestion(requestId: String, answers: QuestionReplyDto) {
+        cs.launch {
+            try {
+                sessions.replyQuestion(requestId, directory, answers)
+            } catch (e: Exception) {
+                LOG.warn("replyQuestion failed", e)
+            }
+        }
+    }
+
+    fun rejectQuestion(requestId: String) {
+        cs.launch {
+            try {
+                sessions.rejectQuestion(requestId, directory)
+            } catch (e: Exception) {
+                LOG.warn("rejectQuestion failed", e)
+            }
+        }
+    }
+
     init {
         if (sessionId != null) {
             loadHistory()
@@ -193,6 +229,7 @@ class SessionController(
                     this@SessionController.model.loadHistory(history)
                     if (!model.isEmpty()) showMessages()
                 }
+                recoverPending(id)
             } catch (e: Exception) {
                 LOG.warn("loadHistory failed", e)
             }
@@ -204,16 +241,35 @@ class SessionController(
         eventJob?.cancel()
         eventJob = cs.launch {
             sessions.events(id, directory).collect { event ->
+                // Defensive session ID guard: skip events for other sessions
+                if (!matchesSession(event, id)) return@collect
                 edt { handle(event) }
             }
+        }
+    }
+
+    /** Rehydrate pending permissions/questions after history load or reconnect. */
+    private suspend fun recoverPending(id: String) {
+        try {
+            val permissions = sessions.pendingPermissions(directory).filter { it.sessionID == id }
+            val questions = sessions.pendingQuestions(directory).filter { it.sessionID == id }
+            edt {
+                if (permissions.isNotEmpty()) {
+                    model.setState(SessionState.AwaitingPermission(toPermission(permissions.last())))
+                } else if (questions.isNotEmpty()) {
+                    model.setState(SessionState.AwaitingQuestion(toQuestion(questions.last())))
+                }
+            }
+        } catch (e: Exception) {
+            LOG.warn("recoverPending failed", e)
         }
     }
 
     private fun handle(event: ChatEventDto) {
         when (event) {
             is ChatEventDto.MessageUpdated -> {
-                model.addMessage(event.info) ?: return
-                showMessages()
+                val added = model.upsertMessage(event.info)
+                if (added) showMessages()
             }
 
             is ChatEventDto.PartUpdated -> {
@@ -231,6 +287,10 @@ class SessionController(
                 }
             }
 
+            is ChatEventDto.PartRemoved -> {
+                model.removeContent(event.messageID, event.partID)
+            }
+
             is ChatEventDto.TurnOpen -> {
                 partType = null
                 tool = null
@@ -240,7 +300,15 @@ class SessionController(
             is ChatEventDto.TurnClose -> {
                 partType = null
                 tool = null
-                model.setState(SessionState.Idle)
+                // "completed" always transitions to idle.
+                // Other reasons: don't clobber a more specific terminal state (Error,
+                // AwaitingPermission, AwaitingQuestion) that arrived just before close.
+                val current = model.state
+                val clobberOk = event.reason == "completed"
+                    || current is SessionState.Busy
+                    || current is SessionState.Retry
+                    || current is SessionState.Offline
+                if (clobberOk) model.setState(SessionState.Idle)
             }
 
             is ChatEventDto.Error -> {
@@ -259,7 +327,8 @@ class SessionController(
             }
 
             is ChatEventDto.PermissionReplied -> {
-                if (model.state is SessionState.AwaitingPermission) {
+                val current = model.state
+                if (current is SessionState.AwaitingPermission && current.permission.id == event.requestID) {
                     model.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
                 }
             }
@@ -269,13 +338,15 @@ class SessionController(
             }
 
             is ChatEventDto.QuestionReplied -> {
-                if (model.state is SessionState.AwaitingQuestion) {
+                val current = model.state
+                if (current is SessionState.AwaitingQuestion && current.question.id == event.requestID) {
                     model.setState(SessionState.Busy(KiloBundle.message("session.status.considering")))
                 }
             }
 
             is ChatEventDto.QuestionRejected -> {
-                if (model.state is SessionState.AwaitingQuestion) {
+                val current = model.state
+                if (current is SessionState.AwaitingQuestion && current.question.id == event.requestID) {
                     model.setState(SessionState.Idle)
                 }
             }
@@ -289,12 +360,36 @@ class SessionController(
                             SessionState.Busy(KiloBundle.message("session.status.considering"))
                         else return // already in a more specific phase
                     }
-                    "retry" -> SessionState.Retry(event.status.message ?: "", 0, 0)
-                    "offline" -> SessionState.Offline(event.status.message ?: "", "")
+                    "retry" -> SessionState.Retry(
+                        message = event.status.message ?: "",
+                        attempt = event.status.attempt ?: 0,
+                        next = event.status.next ?: 0L,
+                    )
+                    "offline" -> SessionState.Offline(
+                        message = event.status.message ?: "",
+                        requestId = event.status.requestID ?: "",
+                    )
                     else -> return
                 }
                 model.setState(state)
             }
+
+            is ChatEventDto.SessionIdle -> {
+                // Treat session.idle as an explicit signal to return to Idle.
+                // Only apply if we're not in a more specific non-terminal state.
+                val current = model.state
+                if (current !is SessionState.Error
+                    && current !is SessionState.AwaitingPermission
+                    && current !is SessionState.AwaitingQuestion
+                ) {
+                    model.setState(SessionState.Idle)
+                }
+            }
+
+            // These events don't change visible session state — ignore for now.
+            is ChatEventDto.SessionCompacted -> Unit
+            is ChatEventDto.SessionDiffChanged -> Unit
+            is ChatEventDto.TodoUpdated -> Unit
         }
     }
 
@@ -387,6 +482,28 @@ class SessionController(
 
         return out.joinToString(" ")
     }
+}
+
+/** Returns true when [event]'s sessionID matches [id] (or event has no sessionID, like Error). */
+private fun matchesSession(event: ChatEventDto, id: String): Boolean = when (event) {
+    is ChatEventDto.MessageUpdated -> event.sessionID == id
+    is ChatEventDto.PartUpdated -> event.sessionID == id
+    is ChatEventDto.PartDelta -> event.sessionID == id
+    is ChatEventDto.PartRemoved -> event.sessionID == id
+    is ChatEventDto.TurnOpen -> event.sessionID == id
+    is ChatEventDto.TurnClose -> event.sessionID == id
+    is ChatEventDto.Error -> event.sessionID == null || event.sessionID == id
+    is ChatEventDto.MessageRemoved -> event.sessionID == id
+    is ChatEventDto.PermissionAsked -> event.sessionID == id
+    is ChatEventDto.PermissionReplied -> event.sessionID == id
+    is ChatEventDto.QuestionAsked -> event.sessionID == id
+    is ChatEventDto.QuestionReplied -> event.sessionID == id
+    is ChatEventDto.QuestionRejected -> event.sessionID == id
+    is ChatEventDto.SessionStatusChanged -> event.sessionID == id
+    is ChatEventDto.SessionIdle -> event.sessionID == id
+    is ChatEventDto.SessionCompacted -> event.sessionID == id
+    is ChatEventDto.SessionDiffChanged -> event.sessionID == id
+    is ChatEventDto.TodoUpdated -> event.sessionID == id
 }
 
 private fun toPermission(dto: PermissionRequestDto): Permission {

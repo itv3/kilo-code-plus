@@ -1,9 +1,13 @@
 package ai.kilocode.client.session
 
+import ai.kilocode.client.session.model.SessionState
 import ai.kilocode.rpc.dto.ChatEventDto
+import ai.kilocode.rpc.dto.PermissionAlwaysRulesDto
+import ai.kilocode.rpc.dto.PermissionReplyDto
 import ai.kilocode.rpc.dto.PermissionRequestDto
 import ai.kilocode.rpc.dto.QuestionInfoDto
 import ai.kilocode.rpc.dto.QuestionOptionDto
+import ai.kilocode.rpc.dto.QuestionReplyDto
 import ai.kilocode.rpc.dto.QuestionRequestDto
 import ai.kilocode.rpc.dto.ToolRefDto
 
@@ -92,6 +96,83 @@ class PromptLifecycleTest : SessionControllerTestBase() {
             """,
             m,
         )
+    }
+
+    fun `test PermissionReplied with wrong requestID is ignored`() {
+        val (m, _, _) = prompted()
+
+        emit(ChatEventDto.PermissionAsked("ses_test", permission("perm1")))
+        emit(ChatEventDto.PermissionReplied("ses_test", "wrong_id"))
+
+        // State must remain AwaitingPermission
+        assertTrue(m.model.state is SessionState.AwaitingPermission)
+    }
+
+    fun `test QuestionReplied with wrong requestID is ignored`() {
+        val (m, _, _) = prompted()
+
+        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")))
+        emit(ChatEventDto.QuestionReplied("ses_test", "wrong_id"))
+
+        // State must remain AwaitingQuestion
+        assertTrue(m.model.state is SessionState.AwaitingQuestion)
+    }
+
+    fun `test QuestionRejected with wrong requestID is ignored`() {
+        val (m, _, _) = prompted()
+
+        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")))
+        emit(ChatEventDto.QuestionRejected("ses_test", "wrong_id"))
+
+        // State must remain AwaitingQuestion
+        assertTrue(m.model.state is SessionState.AwaitingQuestion)
+    }
+
+    fun `test replyPermission calls RPC`() {
+        val (m, _, _) = prompted()
+        emit(ChatEventDto.PermissionAsked("ses_test", permission("perm1")))
+
+        edt { m.replyPermission("perm1", PermissionReplyDto("once")) }
+        flush()
+
+        assertEquals(1, rpc.permissionReplies.size)
+        assertEquals("perm1", rpc.permissionReplies[0].first)
+        assertEquals("once", rpc.permissionReplies[0].third.reply)
+    }
+
+    fun `test replyPermission with rules saves always rules first`() {
+        val (m, _, _) = prompted()
+        emit(ChatEventDto.PermissionAsked("ses_test", permission("perm1")))
+
+        val rules = PermissionAlwaysRulesDto(approvedAlways = listOf("src/**"))
+        edt { m.replyPermission("perm1", PermissionReplyDto("always"), rules) }
+        flush()
+
+        assertEquals(1, rpc.permissionRulesSaved.size)
+        assertEquals("perm1", rpc.permissionRulesSaved[0].first)
+        assertEquals(1, rpc.permissionReplies.size)
+    }
+
+    fun `test replyQuestion calls RPC`() {
+        val (m, _, _) = prompted()
+        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")))
+
+        edt { m.replyQuestion("q1", QuestionReplyDto(listOf(listOf("A")))) }
+        flush()
+
+        assertEquals(1, rpc.questionReplies.size)
+        assertEquals("q1", rpc.questionReplies[0].first)
+    }
+
+    fun `test rejectQuestion calls RPC`() {
+        val (m, _, _) = prompted()
+        emit(ChatEventDto.QuestionAsked("ses_test", question("q1")))
+
+        edt { m.rejectQuestion("q1") }
+        flush()
+
+        assertEquals(1, rpc.questionRejects.size)
+        assertEquals("q1", rpc.questionRejects[0].first)
     }
 
     private fun permission(id: String) = PermissionRequestDto(

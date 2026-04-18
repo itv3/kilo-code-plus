@@ -150,14 +150,16 @@ class SessionModelTest : UsefulTestCase() {
         assertTrue(model.message("m1")!!.parts["p1"] is Compaction)
     }
 
-    fun `test updateContent unknown type ignored`() {
+    fun `test updateContent unknown type stored as Generic`() {
         model.addMessage(msg("m1", "assistant"))
         events.clear()
 
         model.updateContent("m1", part("p1", "m1", "step-start"))
 
-        assertNull(model.message("m1")!!.parts["p1"])
-        assertTrue(events.isEmpty())
+        val p = model.message("m1")!!.parts["p1"]
+        assertTrue("Expected Generic fallback but got: ${p?.javaClass?.simpleName}", p is Generic)
+        assertEquals("step-start", (p as Generic).type)
+        assertTrue(events.single() is SessionModelEvent.ContentAdded)
     }
 
     fun `test appendDelta appends to existing text content`() {
@@ -334,7 +336,7 @@ class SessionModelTest : UsefulTestCase() {
         assertTrue(events.single() is SessionModelEvent.HistoryLoaded)
     }
 
-    fun `test loadHistory skips unknown content types`() {
+    fun `test loadHistory stores unknown content types as Generic`() {
         val text = PartDto(id = "p1", sessionID = "s1", messageID = "m1", type = "text", text = "visible")
         val snapshot = PartDto(id = "p2", sessionID = "s1", messageID = "m1", type = "snapshot")
 
@@ -342,7 +344,67 @@ class SessionModelTest : UsefulTestCase() {
 
         val entry = model.message("m1")!!
         assertTrue(entry.parts.containsKey("p1"))
-        assertFalse(entry.parts.containsKey("p2"))
+        assertTrue(entry.parts.containsKey("p2"))
+        assertTrue(entry.parts["p2"] is Generic)
+        assertEquals("snapshot", (entry.parts["p2"] as Generic).type)
+    }
+
+    fun `test upsertMessage adds new message and returns true`() {
+        val added = model.upsertMessage(msg("m1", "user"))
+
+        assertTrue(added)
+        assertNotNull(model.message("m1"))
+        val event = events.single() as SessionModelEvent.MessageAdded
+        assertEquals("m1", event.info.info.id)
+    }
+
+    fun `test upsertMessage updates existing message and returns false`() {
+        model.upsertMessage(msg("m1", "user"))
+        events.clear()
+
+        val updated = msg("m1", "assistant") // same id, different role (simulating metadata update)
+        val added = model.upsertMessage(updated)
+
+        assertFalse(added)
+        assertEquals("assistant", model.message("m1")!!.info.role)
+        val event = events.single() as SessionModelEvent.MessageUpdated
+        assertEquals("m1", event.info.info.id)
+    }
+
+    fun `test upsertMessage update preserves existing parts`() {
+        model.upsertMessage(msg("m1", "assistant"))
+        model.updateContent("m1", part("p1", "m1", "text", text = "hello"))
+        events.clear()
+
+        model.upsertMessage(msg("m1", "assistant"))
+
+        assertNotNull(model.message("m1")!!.parts["p1"])
+    }
+
+    fun `test removeContent fires ContentRemoved`() {
+        model.addMessage(msg("m1", "assistant"))
+        model.updateContent("m1", part("p1", "m1", "text", text = "hello"))
+        events.clear()
+
+        model.removeContent("m1", "p1")
+
+        assertNull(model.message("m1")!!.parts["p1"])
+        val event = events.single() as SessionModelEvent.ContentRemoved
+        assertEquals("m1", event.messageId)
+        assertEquals("p1", event.contentId)
+    }
+
+    fun `test removeContent unknown messageId is noop`() {
+        events.clear()
+        model.removeContent("missing", "p1")
+        assertTrue(events.isEmpty())
+    }
+
+    fun `test removeContent unknown contentId is noop`() {
+        model.addMessage(msg("m1", "assistant"))
+        events.clear()
+        model.removeContent("m1", "missing_part")
+        assertTrue(events.isEmpty())
     }
 
     fun `test clear resets messages and state`() {

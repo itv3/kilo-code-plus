@@ -31,6 +31,12 @@ class Tool(id: String, val name: String) : Content(id) {
 /** Context compaction marker. */
 class Compaction(id: String) : Content(id)
 
+/**
+ * Generic fallback for part types not yet given a dedicated class.
+ * Preserves the [type] string so unknown content is not silently dropped.
+ */
+class Generic(id: String, val type: String) : Content(id)
+
 enum class ToolExecState { PENDING, RUNNING, COMPLETED, ERROR }
 
 data class ToolCallRef(
