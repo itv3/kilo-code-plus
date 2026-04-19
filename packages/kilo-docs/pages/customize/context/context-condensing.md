@@ -36,19 +36,11 @@ This summary replaces the earlier conversation history, freeing up context windo
 
 ### Automatic trigger
 
-Compaction fires when the running token count reaches the model's **usable window**:
+Kilo tracks the total token count for the session — input, output, and cached reads and writes — and compares it to the model's context window. Compaction runs when the total fills the window minus a reserved buffer of headroom kept free for the next turn.
 
-```
-usable = model.limit.input - reserved        (if the model exposes an input limit)
-       = model.limit.context - maxOutput      (otherwise)
+The default buffer is 20,000 tokens, or the model's maximum output size if that is smaller. On models that advertise an output cap of up to 32,000 tokens, Kilo uses that cap as the reserve when no input limit is set. The size of the buffer is the same across models; only the overall window size differs, so larger-context models reach the trigger later in absolute token terms.
 
-trigger when: input + output + cache.read + cache.write >= usable
-```
-
-- `reserved` defaults to `min(20,000, model_max_output_tokens)` — typically **20K tokens** of headroom for the next turn, or less for models with a small output cap.
-- `maxOutput` is `min(model.limit.output, 32,000)`.
-- The same formula applies to every model; the effective threshold varies only because different models have different window sizes.
-- If a custom model has `limit.context = 0` (unset), auto-compaction does not run.
+Custom models that do not declare a context window are not tracked, and auto-compaction does not run for them.
 
 ### Context Pruning
 
@@ -133,19 +125,11 @@ This summary replaces the earlier conversation history, freeing up context windo
 
 ### Automatic trigger
 
-Compaction fires when the running token count reaches the model's **usable window**:
+Kilo tracks the total token count for the session — input, output, and cached reads and writes — and compares it to the model's context window. Compaction runs when the total fills the window minus a reserved buffer of headroom kept free for the next turn.
 
-```
-usable = model.limit.input - reserved        (if the model exposes an input limit)
-       = model.limit.context - maxOutput      (otherwise)
+The default buffer is 20,000 tokens, or the model's maximum output size if that is smaller. On models that advertise an output cap of up to 32,000 tokens, Kilo uses that cap as the reserve when no input limit is set. The size of the buffer is the same across models; only the overall window size differs, so larger-context models reach the trigger later in absolute token terms.
 
-trigger when: input + output + cache.read + cache.write >= usable
-```
-
-- `reserved` defaults to `min(20,000, model_max_output_tokens)` — typically **20K tokens** of headroom for the next turn, or less for models with a small output cap.
-- `maxOutput` is `min(model.limit.output, 32,000)`.
-- The same formula applies to every model; the effective threshold varies only because different models have different window sizes.
-- If a [custom model](/docs/code-with-ai/agents/custom-models) has `limit.context = 0` (unset), auto-compaction does not run.
+[Custom models](/docs/code-with-ai/agents/custom-models) that do not declare a context window are not tracked, and auto-compaction does not run for them.
 
 ### Context Pruning
 
