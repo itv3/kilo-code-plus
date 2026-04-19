@@ -1,5 +1,8 @@
 package ai.kilocode.client.ui.md
 
+import com.intellij.ui.components.JBHtmlPane
+import com.intellij.ui.components.JBHtmlPaneConfiguration
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.commonmark.ext.autolink.AutolinkExtension
@@ -11,22 +14,27 @@ import java.awt.Color
 import java.awt.Font
 import java.awt.Point
 import javax.swing.JComponent
-import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
-import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.StyleSheet
 
 /**
- * Markdown rendering component that hides the concrete rendering strategy
- * behind a uniform API. Create instances via [MdView.html].
+ * Markdown rendering component backed by [JBHtmlPane] with editor-aware styling.
  *
- * All public methods must be called on the EDT.
+ * By default, font and colors are derived from the global editor colour scheme.
+ * All style properties are optional overrides on top of those defaults.
+ * Call [resetStyles] to revert to editor defaults after overriding.
+ *
+ * Create instances via [MdView.html]. All public methods must be called on the EDT.
  */
+@Suppress("UnstableApiUsage")
 abstract class MdView private constructor() {
 
     abstract val component: JComponent
     abstract fun set(text: String)
     abstract fun append(delta: String)
     abstract fun clear()
+    /** Revert all style overrides to editor-derived defaults. */
+    abstract fun resetStyles()
     abstract fun addLinkListener(listener: LinkListener)
     abstract fun removeLinkListener(listener: LinkListener)
 
@@ -43,8 +51,8 @@ abstract class MdView private constructor() {
     abstract var tableBorder: Color
 
     /**
-     * When `false`, body background CSS is omitted and the Swing component
-     * is set to non-opaque so the parent's background shows through.
+     * When `false`, the component is transparent — the parent's background shows through
+     * and no background is forced in the CSS body rule.
      */
     abstract var opaque: Boolean
 
@@ -59,20 +67,20 @@ abstract class MdView private constructor() {
 
     internal abstract fun markdown(): String
     internal abstract fun html(): String
-    internal abstract fun styledHtml(): String
+    /** Returns the current CSS override rules applied on top of JBHtmlPane's default stylesheet. */
+    internal abstract fun overrideSheet(): String
     internal abstract fun simulateLink(href: String)
 
     companion object {
         fun html(): MdView = HtmlImpl()
     }
 
+    @Suppress("UnstableApiUsage")
     private class HtmlImpl : MdView() {
 
         private val listeners = mutableListOf<LinkListener>()
         private val source = StringBuilder()
         private var rendered = ""
-        private var wrapped = ""
-        private var dirty = false
 
         private val extensions = listOf(
             AutolinkExtension.create(),
@@ -80,9 +88,7 @@ abstract class MdView private constructor() {
             StrikethroughExtension.create(),
         )
 
-        private val parser: Parser = Parser.builder()
-            .extensions(extensions)
-            .build()
+        private val parser: Parser = Parser.builder().extensions(extensions).build()
 
         private val renderer: HtmlRenderer = HtmlRenderer.builder()
             .extensions(extensions)
@@ -90,72 +96,126 @@ abstract class MdView private constructor() {
             .sanitizeUrls(true)
             .build()
 
-        private val pane: JEditorPane = JEditorPane().apply {
+        // nullable overrides — null means "use JBHtmlPane / editor default"
+        private var fontOverride: Font? = null
+        private var foregroundOverride: Color? = null
+        private var backgroundOverride: Color? = null
+        private var linkColorOverride: Color? = null
+        private var codeBgOverride: Color? = null
+        private var preBgOverride: Color? = null
+        private var preFgOverride: Color? = null
+        private var codeFontOverride: String? = null
+        private var quoteBorderOverride: Color? = null
+        private var quoteFgOverride: Color? = null
+        private var tableBorderOverride: Color? = null
+        private var opaqueState = true
+
+        private val pane: JBHtmlPane = JBHtmlPane(
+            JBHtmlPaneStyleConfiguration {
+                // colorSchemeProvider defaults to EditorColorsManager.getInstance().globalScheme
+                enableInlineCodeBackground = true
+                enableCodeBlocksBackground = true
+            },
+            JBHtmlPaneConfiguration {
+                // fontResolver defaults to EditorCssFontResolver.getGlobalInstance() via JBHtmlPane's ImplService
+                customStyleSheetProvider { buildOverrideStyleSheet() }
+            }
+        ).apply {
             isEditable = false
-            contentType = "text/html"
-            editorKit = HTMLEditorKit()
-            putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
-            border = JBUI.Borders.empty()
+            isOpaque = true
+            background = UIUtil.getPanelBackground()
 
             addHyperlinkListener { e ->
                 if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
                     val href = e.description ?: return@addHyperlinkListener
                     val pt = (e.inputEvent as? java.awt.event.MouseEvent)?.point
                     val event = LinkEvent(href, pt)
-                    for (l in listeners) {
-                        l.onLink(event)
-                    }
+                    for (l in listeners) l.onLink(event)
                 }
             }
         }
 
-        override var font: Font = JBUI.Fonts.label()
-            set(value) { field = value; markDirty() }
+        override val component: JComponent get() = pane
 
-        override var foreground: Color = UIUtil.getLabelForeground()
-            set(value) { field = value; pane.foreground = value; markDirty() }
+        // -- style properties (non-null API backed by nullable overrides) ----
 
-        override var background: Color = UIUtil.getPanelBackground()
-            set(value) { field = value; pane.background = value; markDirty() }
+        override var font: Font
+            get() = fontOverride ?: JBUI.Fonts.label()
+            set(value) { fontOverride = value; markDirty() }
 
-        override var linkColor: Color = Color(0x58, 0x9D, 0xF6)
-            set(value) { field = value; markDirty() }
+        override var foreground: Color
+            get() = foregroundOverride ?: UIUtil.getLabelForeground()
+            set(value) { foregroundOverride = value; markDirty() }
 
-        override var codeBg: Color = Color(0x3C, 0x3F, 0x41)
-            set(value) { field = value; markDirty() }
-
-        override var preBg: Color = Color(0x2B, 0x2B, 0x2B)
-            set(value) { field = value; markDirty() }
-
-        override var preFg: Color = Color(0xA9, 0xB7, 0xC6)
-            set(value) { field = value; markDirty() }
-
-        override var codeFont: String = "JetBrains Mono"
-            set(value) { field = value; markDirty() }
-
-        override var quoteBorder: Color = Color(0x55, 0x55, 0x55)
-            set(value) { field = value; markDirty() }
-
-        override var quoteFg: Color = Color(0x99, 0x99, 0x99)
-            set(value) { field = value; markDirty() }
-
-        override var tableBorder: Color = Color(0x55, 0x55, 0x55)
-            set(value) { field = value; markDirty() }
-
-        override var opaque: Boolean = true
+        override var background: Color
+            get() = backgroundOverride ?: pane.background
             set(value) {
-                field = value
-                pane.isOpaque = value
+                backgroundOverride = value
+                if (opaqueState) pane.background = value
                 markDirty()
             }
 
-        init {
-            pane.font = font
-            pane.foreground = foreground
-            pane.background = background
+        override var linkColor: Color
+            get() = linkColorOverride ?: Color(0x58, 0x9D, 0xF6)
+            set(value) { linkColorOverride = value; markDirty() }
+
+        override var codeBg: Color
+            get() = codeBgOverride ?: Color(0x3C, 0x3F, 0x41)
+            set(value) { codeBgOverride = value; markDirty() }
+
+        override var preBg: Color
+            get() = preBgOverride ?: Color(0x2B, 0x2B, 0x2B)
+            set(value) { preBgOverride = value; markDirty() }
+
+        override var preFg: Color
+            get() = preFgOverride ?: Color(0xA9, 0xB7, 0xC6)
+            set(value) { preFgOverride = value; markDirty() }
+
+        override var codeFont: String
+            // _EditorFontNoLigatures_ is resolved by EditorCssFontResolver to the global editor font
+            get() = codeFontOverride ?: "_EditorFontNoLigatures_"
+            set(value) { codeFontOverride = value; markDirty() }
+
+        override var quoteBorder: Color
+            get() = quoteBorderOverride ?: Color(0x55, 0x55, 0x55)
+            set(value) { quoteBorderOverride = value; markDirty() }
+
+        override var quoteFg: Color
+            get() = quoteFgOverride ?: Color(0x99, 0x99, 0x99)
+            set(value) { quoteFgOverride = value; markDirty() }
+
+        override var tableBorder: Color
+            get() = tableBorderOverride ?: Color(0x55, 0x55, 0x55)
+            set(value) { tableBorderOverride = value; markDirty() }
+
+        override var opaque: Boolean
+            get() = opaqueState
+            set(value) {
+                opaqueState = value
+                pane.isOpaque = value
+                if (value) pane.background = backgroundOverride ?: UIUtil.getPanelBackground()
+                markDirty()
+            }
+
+        override fun resetStyles() {
+            fontOverride = null
+            foregroundOverride = null
+            backgroundOverride = null
+            linkColorOverride = null
+            codeBgOverride = null
+            preBgOverride = null
+            preFgOverride = null
+            codeFontOverride = null
+            quoteBorderOverride = null
+            quoteFgOverride = null
+            tableBorderOverride = null
+            opaqueState = true
+            pane.isOpaque = true
+            pane.background = UIUtil.getPanelBackground()
+            markDirty()
         }
 
-        override val component: JComponent get() = pane
+        // -- content API ---------------------------------------------------
 
         override fun set(text: String) {
             source.clear()
@@ -171,73 +231,68 @@ abstract class MdView private constructor() {
         override fun clear() {
             source.clear()
             rendered = ""
-            wrapped = ""
             pane.text = ""
         }
 
-        override fun addLinkListener(listener: LinkListener) {
-            listeners.add(listener)
-        }
-
-        override fun removeLinkListener(listener: LinkListener) {
-            listeners.remove(listener)
-        }
+        override fun addLinkListener(listener: LinkListener) { listeners.add(listener) }
+        override fun removeLinkListener(listener: LinkListener) { listeners.remove(listener) }
 
         override fun markdown(): String = source.toString()
         override fun html(): String = rendered
-        override fun styledHtml(): String = wrapped
+        override fun overrideSheet(): String = buildOverrideRulesString()
 
         override fun simulateLink(href: String) {
             val event = LinkEvent(href)
-            for (l in listeners) {
-                l.onLink(event)
-            }
+            for (l in listeners) l.onLink(event)
         }
 
         private fun markDirty() {
-            dirty = true
+            pane.reloadCssStylesheets()
             if (source.isNotEmpty()) render()
         }
 
         private fun render() {
-            dirty = false
-            val md = source.toString()
-            val body = renderer.render(parser.parse(md))
+            val body = renderer.render(parser.parse(source.toString()))
             rendered = body
-            wrapped = wrap(body)
-            pane.text = wrapped
+            pane.text = "<html><body>$body</body></html>"
             pane.caretPosition = 0
         }
 
-        private fun wrap(body: String): String {
-            val fg = hex(foreground)
-            val size = font.size
-            val family = font.family
-            val codeSize = (size - 1).coerceAtLeast(1)
-            val bgCss = if (opaque) "background: ${hex(background)}; " else ""
-            return """
-                <html>
-                <head><style>
-                body { font-family: '$family', sans-serif; font-size: ${size}pt;
-                       color: $fg; ${bgCss}margin: 0; padding: 0; }
-                a { color: ${hex(linkColor)}; }
-                pre { background: ${hex(preBg)}; color: ${hex(preFg)}; padding: 8px;
-                      border-radius: 4px; overflow-x: auto; }
-                code { font-family: '$codeFont', monospace; font-size: ${codeSize}pt; }
-                p code { background: ${hex(codeBg)}; padding: 1px 4px; border-radius: 3px; }
-                table { border-collapse: collapse; }
-                th, td { border: 1px solid ${hex(tableBorder)}; padding: 4px 8px; }
-                blockquote { border-left: 3px solid ${hex(quoteBorder)}; margin-left: 0;
-                             padding-left: 8px; color: ${hex(quoteFg)}; }
-                </style></head>
-                <body>$body</body>
-                </html>
-            """.trimIndent()
+        private fun buildOverrideStyleSheet(): StyleSheet {
+            val sheet = StyleSheet()
+            val rules = buildOverrideRulesString()
+            if (rules.isNotEmpty()) {
+                try { sheet.addRule(rules) } catch (_: Exception) {}
+            }
+            return sheet
+        }
+
+        private fun buildOverrideRulesString(): String {
+            val rules = StringBuilder()
+
+            val body = mutableListOf<String>()
+            foregroundOverride?.let { body.add("color: ${hex(it)}") }
+            if (!opaqueState) body.add("background: transparent")
+            fontOverride?.let {
+                body.add("font-family: '${it.family}', sans-serif")
+                body.add("font-size: ${it.size}pt")
+            }
+            if (body.isNotEmpty()) rules.append("body { ${body.joinToString("; ")} } ")
+
+            linkColorOverride?.let { rules.append("a { color: ${hex(it)} } ") }
+            codeFontOverride?.let { rules.append("tt, code, samp, pre { font-family: '${it}', monospace } ") }
+            preBgOverride?.let { rules.append("pre { background: ${hex(it)} } ") }
+            preFgOverride?.let { rules.append("pre { color: ${hex(it)} } ") }
+            codeBgOverride?.let { rules.append("code { background: ${hex(it)} } ") }
+            quoteBorderOverride?.let { rules.append("blockquote { border-left-color: ${hex(it)} } ") }
+            quoteFgOverride?.let { rules.append("blockquote { color: ${hex(it)} } ") }
+            tableBorderOverride?.let { rules.append("th, td { border-color: ${hex(it)} } ") }
+
+            return rules.toString().trim()
         }
 
         companion object {
-            private fun hex(c: Color): String =
-                String.format("#%02x%02x%02x", c.red, c.green, c.blue)
+            private fun hex(c: Color): String = String.format("#%02x%02x%02x", c.red, c.green, c.blue)
         }
     }
 }

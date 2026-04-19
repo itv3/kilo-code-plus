@@ -5,11 +5,12 @@ import java.awt.Color
 import java.awt.Font
 
 /**
- * Tests for [MdView] created via [MdView.html] factory.
+ * Tests for [MdView] created via [MdView.html].
  *
  * Uses [BasePlatformTestCase] to get a real IntelliJ Application so that
- * Swing/HTMLEditorKit initialisation works correctly.
+ * JBHtmlPane initialisation works correctly.
  */
+@Suppress("UnstableApiUsage")
 class MdViewTest : BasePlatformTestCase() {
 
     private lateinit var view: MdView
@@ -34,82 +35,70 @@ class MdViewTest : BasePlatformTestCase() {
 
     fun `test set renders bold`() {
         view.set("hello **world**")
-        val html = view.html()
-        assertTrue("Expected <strong> in rendered HTML", html.contains("<strong>"))
-        assertTrue("Expected 'world' inside strong", html.contains("world"))
+        assertTrue(view.html().contains("<strong>"))
+        assertTrue(view.html().contains("world"))
     }
 
     fun `test set renders italic`() {
         view.set("hello *world*")
-        val html = view.html()
-        assertTrue("Expected <em> in rendered HTML", html.contains("<em>"))
+        assertTrue(view.html().contains("<em>"))
     }
 
     fun `test set renders inline code`() {
         view.set("use `foo()` here")
-        val html = view.html()
-        assertTrue("Expected <code> in rendered HTML", html.contains("<code>"))
-        assertTrue("Expected foo() in code", html.contains("foo()"))
+        assertTrue(view.html().contains("<code>"))
+        assertTrue(view.html().contains("foo()"))
     }
 
     fun `test set renders fenced code block`() {
         view.set("```kotlin\nval x = 1\n```")
-        val html = view.html()
-        assertTrue("Expected <pre> in rendered HTML", html.contains("<pre>"))
-        assertTrue("Expected <code in rendered HTML", html.contains("<code"))
+        assertTrue(view.html().contains("<pre>"))
+        assertTrue(view.html().contains("<code"))
     }
 
     fun `test set renders links`() {
         view.set("[click](https://example.com)")
-        val html = view.html()
-        assertTrue("Expected <a in rendered HTML", html.contains("<a"))
-        assertTrue("Expected href", html.contains("https://example.com"))
+        assertTrue(view.html().contains("<a"))
+        assertTrue(view.html().contains("https://example.com"))
     }
 
     fun `test set renders headings`() {
         view.set("# Title")
-        val html = view.html()
-        assertTrue("Expected <h1> in rendered HTML", html.contains("<h1>"))
+        assertTrue(view.html().contains("<h1>"))
     }
 
     fun `test set renders unordered list`() {
         view.set("- one\n- two\n- three")
-        val html = view.html()
-        assertTrue("Expected <ul> in rendered HTML", html.contains("<ul>"))
-        assertTrue("Expected <li> in rendered HTML", html.contains("<li>"))
+        assertTrue(view.html().contains("<ul>"))
+        assertTrue(view.html().contains("<li>"))
     }
 
     fun `test set renders ordered list`() {
         view.set("1. one\n2. two\n3. three")
-        val html = view.html()
-        assertTrue("Expected <ol> in rendered HTML", html.contains("<ol>"))
+        assertTrue(view.html().contains("<ol>"))
     }
 
     fun `test set renders blockquote`() {
         view.set("> quoted text")
-        val html = view.html()
-        assertTrue("Expected <blockquote> in rendered HTML", html.contains("<blockquote>"))
+        assertTrue(view.html().contains("<blockquote>"))
     }
 
     fun `test set renders strikethrough`() {
         view.set("~~deleted~~")
-        val html = view.html()
-        assertTrue("Expected <del> in rendered HTML", html.contains("<del>"))
+        assertTrue(view.html().contains("<del>"))
     }
 
     fun `test set renders table`() {
         view.set("| a | b |\n|---|---|\n| 1 | 2 |")
-        val html = view.html()
-        assertTrue("Expected <table> in rendered HTML", html.contains("<table>"))
-        assertTrue("Expected <th> in rendered HTML", html.contains("<th>"))
-        assertTrue("Expected <td> in rendered HTML", html.contains("<td>"))
+        assertTrue(view.html().contains("<table>"))
+        assertTrue(view.html().contains("<th>"))
+        assertTrue(view.html().contains("<td>"))
     }
 
     fun `test set renders autolink`() {
         view.set("Visit https://example.com for details")
-        val html = view.html()
-        assertTrue("Expected autolinked URL", html.contains("<a"))
-        assertTrue("Expected href", html.contains("https://example.com"))
+        assertTrue(view.html().contains("<a"))
+        assertTrue(view.html().contains("https://example.com"))
     }
 
     // ---- append ----
@@ -123,8 +112,7 @@ class MdViewTest : BasePlatformTestCase() {
     fun `test append renders accumulated content`() {
         view.append("hello ")
         view.append("**world**")
-        val html = view.html()
-        assertTrue("Expected <strong> after append", html.contains("<strong>"))
+        assertTrue(view.html().contains("<strong>"))
     }
 
     fun `test append after set extends content`() {
@@ -144,8 +132,7 @@ class MdViewTest : BasePlatformTestCase() {
     fun `test clear resets rendered html`() {
         view.set("some content")
         view.clear()
-        val html = view.html()
-        assertFalse("Expected no 'some content' after clear", html.contains("some content"))
+        assertFalse(view.html().contains("some content"))
     }
 
     // ---- link listener ----
@@ -175,7 +162,7 @@ class MdViewTest : BasePlatformTestCase() {
         view.addLinkListener(listener)
         view.removeLinkListener(listener)
         view.simulateLink("https://example.com")
-        assertTrue("Removed listener should not fire", received.isEmpty())
+        assertTrue(received.isEmpty())
     }
 
     // ---- component ----
@@ -218,137 +205,197 @@ class MdViewTest : BasePlatformTestCase() {
 
     fun `test streaming simulation appends tokens`() {
         val tokens = listOf("Hello ", "**wor", "ld**", "\n\n", "Done.")
-        for (token in tokens) {
-            view.append(token)
-        }
+        for (token in tokens) view.append(token)
         assertEquals("Hello **world**\n\nDone.", view.markdown())
-        val html = view.html()
-        assertTrue(html.contains("<strong>"))
-        assertTrue(html.contains("Done."))
+        assertTrue(view.html().contains("<strong>"))
+        assertTrue(view.html().contains("Done."))
     }
 
-    // ---- styling ----
+    // ---- style overrides (empty by default) ----
 
-    fun `test foreground color appears in CSS`() {
+    fun `test no overrides produces empty override sheet`() {
+        assertEquals("", view.overrideSheet())
+    }
+
+    // ---- style overrides appear in override sheet when set ----
+
+    fun `test foreground override appears in override sheet`() {
         view.foreground = Color(0xAA, 0xBB, 0xCC)
         view.set("text")
-        assertTrue(view.styledHtml().contains("#aabbcc"))
+        assertTrue(view.overrideSheet().contains("#aabbcc"))
     }
 
-    fun `test background color appears in CSS`() {
-        view.background = Color(0x11, 0x22, 0x33)
-        view.set("text")
-        assertTrue(view.styledHtml().contains("#112233"))
-    }
-
-    fun `test link color appears in CSS`() {
+    fun `test link color override appears in override sheet`() {
         view.linkColor = Color(0xFF, 0x00, 0x77)
         view.set("[a](https://x.com)")
-        assertTrue(view.styledHtml().contains("#ff0077"))
+        assertTrue(view.overrideSheet().contains("#ff0077"))
     }
 
-    fun `test code background appears in CSS`() {
+    fun `test code bg override appears in override sheet`() {
         view.codeBg = Color(0x10, 0x20, 0x30)
         view.set("`code`")
-        assertTrue(view.styledHtml().contains("#102030"))
+        assertTrue(view.overrideSheet().contains("#102030"))
     }
 
-    fun `test pre background and foreground appear in CSS`() {
+    fun `test pre bg and fg overrides appear in override sheet`() {
         view.preBg = Color(0x0A, 0x0B, 0x0C)
         view.preFg = Color(0xD0, 0xE0, 0xF0)
         view.set("```\ncode\n```")
-        val css = view.styledHtml()
-        assertTrue(css.contains("#0a0b0c"))
-        assertTrue(css.contains("#d0e0f0"))
+        val sheet = view.overrideSheet()
+        assertTrue(sheet.contains("#0a0b0c"))
+        assertTrue(sheet.contains("#d0e0f0"))
     }
 
-    fun `test code font family appears in CSS`() {
+    fun `test code font override appears in override sheet`() {
         view.codeFont = "Fira Code"
         view.set("`x`")
-        assertTrue(view.styledHtml().contains("Fira Code"))
+        assertTrue(view.overrideSheet().contains("Fira Code"))
     }
 
-    fun `test blockquote colors appear in CSS`() {
+    fun `test blockquote color overrides appear in override sheet`() {
         view.quoteBorder = Color(0xAA, 0x00, 0x00)
         view.quoteFg = Color(0x00, 0xBB, 0x00)
         view.set("> quote")
-        val css = view.styledHtml()
-        assertTrue(css.contains("#aa0000"))
-        assertTrue(css.contains("#00bb00"))
+        val sheet = view.overrideSheet()
+        assertTrue(sheet.contains("#aa0000"))
+        assertTrue(sheet.contains("#00bb00"))
     }
 
-    fun `test table border color appears in CSS`() {
+    fun `test table border override appears in override sheet`() {
         view.tableBorder = Color(0x12, 0x34, 0x56)
         view.set("| a |\n|---|\n| 1 |")
-        assertTrue(view.styledHtml().contains("#123456"))
+        assertTrue(view.overrideSheet().contains("#123456"))
     }
 
-    fun `test font family appears in CSS`() {
+    fun `test font family override appears in override sheet`() {
         view.font = Font("Courier New", Font.PLAIN, 14)
         view.set("text")
-        assertTrue(view.styledHtml().contains("Courier New"))
+        assertTrue(view.overrideSheet().contains("Courier New"))
     }
 
-    fun `test font size appears in CSS`() {
+    fun `test font size override appears in override sheet`() {
         view.font = Font("Arial", Font.PLAIN, 18)
         view.set("text")
-        assertTrue(view.styledHtml().contains("18pt"))
+        assertTrue(view.overrideSheet().contains("18pt"))
     }
 
-    fun `test style change re-renders existing content`() {
+    fun `test style change re-renders and override sheet reflects change`() {
         view.set("hello")
         view.foreground = Color(0xDE, 0xAD, 0x00)
-        assertTrue(view.styledHtml().contains("#dead00"))
-        assertTrue(view.styledHtml().contains("hello"))
+        assertTrue(view.overrideSheet().contains("#dead00"))
+        assertTrue(view.html().contains("hello"))
     }
 
     fun `test style change without content does not crash`() {
         view.foreground = Color.RED
         view.linkColor = Color.BLUE
         view.codeFont = "Monospaced"
-        // no content set — should not throw
         assertEquals("", view.markdown())
+    }
+
+    // ---- default codeFont uses editor font placeholder ----
+
+    fun `test default codeFont is editor font placeholder`() {
+        // When no codeFont override is set, the getter returns the editor font placeholder
+        assertTrue(view.codeFont.contains("_Editor"))
+    }
+
+    fun `test default override sheet is empty before any set`() {
+        // Only overrides appear in the sheet; editor defaults are handled by JBHtmlPane
+        assertEquals("", view.overrideSheet())
+    }
+
+    // ---- background sets component background ----
+
+    fun `test background override sets component background`() {
+        view.background = Color(0x11, 0x22, 0x33)
+        assertEquals(Color(0x11, 0x22, 0x33), view.component.background)
+    }
+
+    fun `test background override does not appear in override sheet`() {
+        // background is applied to the Swing component, not via CSS override rule
+        view.background = Color(0x11, 0x22, 0x33)
+        view.set("text")
+        assertFalse(view.overrideSheet().contains("#112233"))
     }
 
     // ---- opaque / transparent ----
 
-    fun `test opaque true includes background in CSS`() {
+    fun `test opaque true sets component opaque`() {
         view.opaque = true
-        view.background = Color(0x11, 0x22, 0x33)
-        view.set("text")
-        assertTrue(view.styledHtml().contains("background: #112233"))
+        assertTrue(view.component.isOpaque)
     }
 
-    fun `test opaque false omits background from body CSS`() {
-        view.opaque = false
-        view.background = Color(0x11, 0x22, 0x33)
-        view.set("text")
-        assertFalse(view.styledHtml().contains("background: #112233"))
-    }
-
-    fun `test opaque false does not affect pre background`() {
-        view.opaque = false
-        view.preBg = Color(0x0A, 0x0B, 0x0C)
-        view.set("```\ncode\n```")
-        assertTrue(view.styledHtml().contains("#0a0b0c"))
-    }
-
-    fun `test opaque toggle re-renders`() {
-        view.background = Color(0xFE, 0xFE, 0xFE)
-        view.set("hello")
-        view.opaque = false
-        assertFalse(view.styledHtml().contains("background: #fefefe"))
-        view.opaque = true
-        assertTrue(view.styledHtml().contains("background: #fefefe"))
-    }
-
-    fun `test component is not opaque when opaque is false`() {
+    fun `test opaque false sets component non-opaque`() {
         view.opaque = false
         assertFalse(view.component.isOpaque)
     }
 
-    fun `test component is opaque when opaque is true`() {
+    fun `test opaque false adds transparent background to override sheet`() {
+        view.opaque = false
+        view.set("text")
+        assertTrue(view.overrideSheet().contains("transparent"))
+    }
+
+    fun `test opaque true does not add transparent rule`() {
+        view.opaque = true
+        view.set("text")
+        assertFalse(view.overrideSheet().contains("transparent"))
+    }
+
+    fun `test opaque false does not affect pre background override`() {
+        view.opaque = false
+        view.preBg = Color(0x0A, 0x0B, 0x0C)
+        view.set("```\ncode\n```")
+        assertTrue(view.overrideSheet().contains("#0a0b0c"))
+    }
+
+    fun `test background override applied to component when opaque is true`() {
+        view.background = Color(0xFE, 0xFE, 0xFE)
+        view.opaque = true
+        assertEquals(Color(0xFE, 0xFE, 0xFE), view.component.background)
+    }
+
+    fun `test opaque toggle updates component opacity`() {
+        view.opaque = false
+        assertFalse(view.component.isOpaque)
         view.opaque = true
         assertTrue(view.component.isOpaque)
+    }
+
+    // ---- resetStyles ----
+
+    fun `test resetStyles clears foreground override`() {
+        view.foreground = Color.RED
+        view.resetStyles()
+        assertEquals("", view.overrideSheet())
+    }
+
+    fun `test resetStyles clears all overrides`() {
+        view.foreground = Color.RED
+        view.linkColor = Color.BLUE
+        view.codeBg = Color.GREEN
+        view.preBg = Color.ORANGE
+        view.preFg = Color.CYAN
+        view.codeFont = "Monospaced"
+        view.quoteBorder = Color.PINK
+        view.quoteFg = Color.MAGENTA
+        view.tableBorder = Color.YELLOW
+        view.font = Font("Arial", Font.PLAIN, 18)
+        view.resetStyles()
+        assertEquals("", view.overrideSheet())
+    }
+
+    fun `test resetStyles restores opaque to true`() {
+        view.opaque = false
+        view.resetStyles()
+        assertTrue(view.component.isOpaque)
+    }
+
+    fun `test resetStyles after set still renders content`() {
+        view.set("hello **world**")
+        view.foreground = Color.RED
+        view.resetStyles()
+        assertTrue(view.html().contains("<strong>"))
     }
 }
