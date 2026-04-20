@@ -50,7 +50,7 @@ export namespace TuiConfig {
   }
 
   function customPath() {
-    return Flag.OPENCODE_TUI_CONFIG
+    return Flag.KILO_TUI_CONFIG
   }
 
   function normalize(raw: Record<string, unknown>) {
@@ -92,12 +92,12 @@ export namespace TuiConfig {
   }
 
   async function loadState(ctx: { directory: string }) {
-    let projectFiles = Flag.OPENCODE_DISABLE_PROJECT_CONFIG ? [] : await ConfigPaths.projectFiles("tui", ctx.directory)
+    let projectFiles = Flag.KILO_DISABLE_PROJECT_CONFIG ? [] : await ConfigPaths.projectFiles("tui", ctx.directory)
     const directories = await ConfigPaths.directories(ctx.directory)
     const custom = customPath()
     await migrateTuiConfig({ directories, custom, cwd: ctx.directory })
     // Re-compute after migration since migrateTuiConfig may have created new tui.json files
-    projectFiles = Flag.OPENCODE_DISABLE_PROJECT_CONFIG ? [] : await ConfigPaths.projectFiles("tui", ctx.directory)
+    projectFiles = Flag.KILO_DISABLE_PROJECT_CONFIG ? [] : await ConfigPaths.projectFiles("tui", ctx.directory)
 
     const acc: Acc = {
       result: {},
@@ -116,10 +116,10 @@ export namespace TuiConfig {
       await mergeFile(acc, file, ctx)
     }
 
-    const dirs = unique(directories).filter((dir) => dir.endsWith(".opencode") || dir === Flag.OPENCODE_CONFIG_DIR)
+    const dirs = unique(directories).filter((dir) => dir.endsWith(".opencode") || dir === Flag.KILO_CONFIG_DIR)
 
     for (const dir of dirs) {
-      if (!dir.endsWith(".opencode") && dir !== Flag.OPENCODE_CONFIG_DIR) continue
+      if (!dir.endsWith(".opencode") && dir !== Flag.KILO_CONFIG_DIR) continue
       for (const file of ConfigPaths.fileInDirectory(dir, "tui")) {
         await mergeFile(acc, file, ctx)
       }
@@ -153,7 +153,7 @@ export namespace TuiConfig {
         (dir) =>
           npm
             .install(dir, {
-              add: ["@opencode-ai/plugin" + (InstallationLocal ? "" : "@" + InstallationVersion)],
+              add: ["@kilocode/plugin" + (InstallationLocal ? "" : "@" + InstallationVersion)],
             })
             .pipe(Effect.forkScoped),
         {

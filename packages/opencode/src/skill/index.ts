@@ -20,7 +20,7 @@ import { Discovery } from "./discovery"
 const log = Log.create({ service: "skill" })
 const EXTERNAL_DIRS = [".claude", ".agents"]
 const EXTERNAL_SKILL_PATTERN = "skills/**/SKILL.md"
-const OPENCODE_SKILL_PATTERN = "{skill,skills}/**/SKILL.md"
+const KILO_SKILL_PATTERN = "{skill,skills}/**/SKILL.md"
 const SKILL_PATTERN = "**/SKILL.md"
 
 export const Info = z.object({
@@ -141,7 +141,7 @@ const loadSkills = Effect.fnUntraced(function* (
   directory: string,
   worktree: string,
 ) {
-  if (!Flag.OPENCODE_DISABLE_EXTERNAL_SKILLS) {
+  if (!Flag.KILO_DISABLE_EXTERNAL_SKILLS) {
     for (const dir of EXTERNAL_DIRS) {
       const root = path.join(Global.Path.home, dir)
       if (!(yield* fsys.isDir(root))) continue
@@ -159,7 +159,7 @@ const loadSkills = Effect.fnUntraced(function* (
 
   const configDirs = yield* config.directories()
   for (const dir of configDirs) {
-    yield* scan(state, bus, dir, OPENCODE_SKILL_PATTERN)
+    yield* scan(state, bus, dir, KILO_SKILL_PATTERN)
   }
 
   const cfg = yield* config.get()

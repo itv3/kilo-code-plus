@@ -114,9 +114,9 @@ export namespace Workspace {
     })
 
     const env = {
-      OPENCODE_AUTH_CONTENT: JSON.stringify(await AppRuntime.runPromise(Auth.Service.use((auth) => auth.all()))),
-      OPENCODE_WORKSPACE_ID: config.id,
-      OPENCODE_EXPERIMENTAL_WORKSPACES: "true",
+      KILO_AUTH_CONTENT: JSON.stringify(await AppRuntime.runPromise(Auth.Service.use((auth) => auth.all()))),
+      KILO_WORKSPACE_ID: config.id,
+      KILO_EXPERIMENTAL_WORKSPACES: "true",
     }
     await adaptor.create(config, env)
 
@@ -492,7 +492,7 @@ export namespace Workspace {
   }
 
   async function startSync(space: Info) {
-    if (!Flag.OPENCODE_EXPERIMENTAL_WORKSPACES) return
+    if (!Flag.KILO_EXPERIMENTAL_WORKSPACES) return
 
     const adaptor = await getAdaptor(space.projectID, space.type)
     const target = await adaptor.target(space)

@@ -51,7 +51,7 @@ export function WorkspaceRouterMiddleware(upgrade: UpgradeWebSocket): Middleware
   const log = Log.create({ service: "workspace-router" })
 
   return async (c, next) => {
-    const raw = c.req.query("directory") || c.req.header("x-opencode-directory") || process.cwd()
+    const raw = c.req.query("directory") || c.req.header("x-kilo-directory") || process.cwd()
     const directory = AppFileSystem.resolve(
       (() => {
         try {
@@ -67,10 +67,10 @@ export function WorkspaceRouterMiddleware(upgrade: UpgradeWebSocket): Middleware
     const sessionWorkspaceID = await getSessionWorkspace(url)
     const workspaceID = sessionWorkspaceID || url.searchParams.get("workspace")
 
-    if (!workspaceID || url.pathname.startsWith("/console") || Flag.OPENCODE_WORKSPACE_ID) {
-      if (Flag.OPENCODE_WORKSPACE_ID) {
+    if (!workspaceID || url.pathname.startsWith("/console") || Flag.KILO_WORKSPACE_ID) {
+      if (Flag.KILO_WORKSPACE_ID) {
         return WorkspaceContext.provide({
-          workspaceID: WorkspaceID.make(Flag.OPENCODE_WORKSPACE_ID),
+          workspaceID: WorkspaceID.make(Flag.KILO_WORKSPACE_ID),
           async fn() {
             return Instance.provide({
               directory,
@@ -144,7 +144,7 @@ export function WorkspaceRouterMiddleware(upgrade: UpgradeWebSocket): Middleware
     }
 
     const headers = new Headers(c.req.raw.headers)
-    headers.delete("x-opencode-workspace")
+    headers.delete("x-kilo-workspace")
 
     const req = new Request(c.req.raw, { headers })
     return ServerProxy.http(proxyURL, target.headers, req, workspace.id)

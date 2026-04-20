@@ -39,7 +39,7 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono => {
     .route("/session", SessionRoutes())
     .route("/permission", PermissionRoutes())
 
-  if (Flag.OPENCODE_EXPERIMENTAL_HTTPAPI) {
+  if (Flag.KILO_EXPERIMENTAL_HTTPAPI) {
     const handler = ExperimentalHttpApiServer.webHandler().handler
     app
       .all("/question", (c) => handler(c.req.raw))

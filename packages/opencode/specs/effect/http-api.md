@@ -130,11 +130,11 @@ The `HttpApi` routes are bridged into the Hono server via `HttpRouter.toWebHandl
 - Effect middleware handles auth and instance lookup independently from Hono middleware
 - Hono's `.all()` catch-all intercepts matching paths before the Hono route handlers
 
-The bridge is gated behind `OPENCODE_EXPERIMENTAL_HTTPAPI` (or `OPENCODE_EXPERIMENTAL`). When the flag is off (default), all requests go through the original Hono handlers unchanged.
+The bridge is gated behind `KILO_EXPERIMENTAL_HTTPAPI` (or `KILO_EXPERIMENTAL`). When the flag is off (default), all requests go through the original Hono handlers unchanged.
 
 ```ts
 // in instance/index.ts
-if (Flag.OPENCODE_EXPERIMENTAL_HTTPAPI) {
+if (Flag.KILO_EXPERIMENTAL_HTTPAPI) {
   const handler = ExperimentalHttpApiServer.webHandler().handler
   app.all("/question", (c) => handler(c.req.raw)).all("/question/*", (c) => handler(c.req.raw))
 }
@@ -309,7 +309,7 @@ The standalone Effect server owns its own middleware stack. It does not share mi
 
 ### Instance and workspace lookup
 
-- the standalone server resolves instance context via an `HttpRouter.middleware` that reads `x-opencode-directory` headers and `directory` query params
+- the standalone server resolves instance context via an `HttpRouter.middleware` that reads `x-kilo-directory` headers and `directory` query params
 - this is the Effect equivalent of the Hono `WorkspaceRouterMiddleware`
 - `HttpApi` handlers yield services from context and assume the correct instance has already been provided
 
@@ -347,7 +347,7 @@ The first slice is successful if:
 - `Observability.layer` must be explicitly provided via `Layer.provideMerge` in the routes layer for OTEL spans and HTTP logs to flow. The `memoMap` deduplicates it with `AppRuntime` — no extra cost.
 - `HttpMiddleware.logger` (enabled by default when `disableLogger` is not set) emits structured `Effect.log` entries with `http.method`, `http.url`, `http.status` — these flow through `OtlpLogger` to motel.
 - Hono OpenAPI stubs must remain registered for SDK codegen until the SDK pipeline reads from the Effect OpenAPI spec instead.
-- the `OPENCODE_EXPERIMENTAL_HTTPAPI` flag gates the bridge at the Hono router level — default off, no behavior change unless opted in.
+- the `KILO_EXPERIMENTAL_HTTPAPI` flag gates the bridge at the Hono router level — default off, no behavior change unless opted in.
 
 ## Route inventory
 
@@ -408,7 +408,7 @@ Recommended near-term sequence after the first spike:
 - [x] compare generated OpenAPI against the current Hono/OpenAPI setup
 - [x] document how auth, instance lookup, and error mapping would compose in the new stack
 - [x] bridge Effect routes into Hono via `toWebHandler` with shared `memoMap`
-- [x] gate behind `OPENCODE_EXPERIMENTAL_HTTPAPI` flag
+- [x] gate behind `KILO_EXPERIMENTAL_HTTPAPI` flag
 - [x] verify OTEL spans and HTTP logs flow to motel
 - [x] bridge question, permission, and provider auth routes
 - [ ] port remaining provider endpoints (`GET /provider`, OAuth mutations)

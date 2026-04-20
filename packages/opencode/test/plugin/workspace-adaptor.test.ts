@@ -4,18 +4,18 @@ import path from "path"
 import { pathToFileURL } from "url"
 import { tmpdir } from "../fixture/fixture"
 
-const disableDefault = process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS
-process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS = "1"
+const disableDefault = process.env.KILO_DISABLE_DEFAULT_PLUGINS
+process.env.KILO_DISABLE_DEFAULT_PLUGINS = "1"
 
 const { Flag } = await import("../../src/flag/flag")
 const { Plugin } = await import("../../src/plugin/index")
 const { Workspace } = await import("../../src/control-plane/workspace")
 const { Instance } = await import("../../src/project/instance")
 
-const experimental = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
+const experimental = Flag.KILO_EXPERIMENTAL_WORKSPACES
 
 // @ts-expect-error tests override the flag directly
-Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+Flag.KILO_EXPERIMENTAL_WORKSPACES = true
 
 afterEach(async () => {
   await Instance.disposeAll()
@@ -23,13 +23,13 @@ afterEach(async () => {
 
 afterAll(() => {
   if (disableDefault === undefined) {
-    delete process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS
+    delete process.env.KILO_DISABLE_DEFAULT_PLUGINS
   } else {
-    process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS = disableDefault
+    process.env.KILO_DISABLE_DEFAULT_PLUGINS = disableDefault
   }
 
   // @ts-expect-error restore original test flag value
-  Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = experimental
+  Flag.KILO_EXPERIMENTAL_WORKSPACES = experimental
 })
 
 describe("plugin.workspace", () => {

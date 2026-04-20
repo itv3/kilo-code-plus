@@ -21,19 +21,19 @@ import { tmpdir } from "../fixture/fixture"
 
 void Log.init({ print: false })
 
-const original = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
+const original = Flag.KILO_EXPERIMENTAL_WORKSPACES
 
 beforeEach(() => {
   Database.close()
   // @ts-expect-error test override
-  Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+  Flag.KILO_EXPERIMENTAL_WORKSPACES = true
 })
 
 afterEach(async () => {
   mock.restore()
   await Instance.disposeAll()
   // @ts-expect-error test override
-  Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = original
+  Flag.KILO_EXPERIMENTAL_WORKSPACES = original
   await resetDatabase()
 })
 
