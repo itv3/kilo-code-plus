@@ -266,11 +266,12 @@ export namespace PlanFollowup {
         {
           question: "Ready to implement?",
           header: "Implement",
-          // Keep false: the main prompt input already routes typed text as a question reply,
-          // so "Type your own answer" would be redundant. This was set to false intentionally
-          // in 65566af7f8 and got flipped back to true during the v1.4.4 upstream merge —
-          // do not change without updating that history.
-          custom: false,
+          // On CLI the main prompt input is hidden while a blocking question is active,
+          // so we need the custom-answer row to allow a free-text reply. On VS Code the
+          // main prompt input below the dock already routes typed text as a question
+          // reply, so "Type your own answer" would be redundant (originally hidden in
+          // 65566af7f8, flipped back during the v1.4.4 upstream merge).
+          custom: Flag.KILO_CLIENT === "cli",
           options: [
             {
               label: ANSWER_NEW_SESSION,
