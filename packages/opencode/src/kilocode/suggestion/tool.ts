@@ -89,6 +89,15 @@ export const SuggestTool = Tool.define<typeof Params, Meta, never, "suggest">(
             ctx.abort.removeEventListener("abort", listener)
           })
 
+        // Restore busy immediately on accept so the session doesn't flash idle
+        // while the follow-up response is being generated. The next runLoop
+        // iteration sets busy too, but not until after the stream finalizes.
+        if (action) {
+          await SessionStatus.set(SessionID.make(ctx.sessionID), { type: "busy" }).catch((err) => {
+            log.warn("failed to restore busy status", { err })
+          })
+        }
+
         if (!action) {
           const metadata: Meta = {
             accepted: undefined,
