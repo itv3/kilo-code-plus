@@ -74,9 +74,9 @@ class KiloBackendChatManager(
         watcher = cs.launch {
             sse.collect { event ->
                 if (event.type in CHAT_EVENTS) {
-                    log.debug("SSE chat event: type=${event.type}, data=${event.data.take(2000)}")
                     val parsed = KiloCliDataParser.parseChatEvent(event.type, event.data)
                     if (parsed != null) {
+                        log.debug("session=${parsed.sid} recv: type=${event.type}")
                         _events.emit(parsed)
                     } else {
                         log.warn("SSE parse returned null for type=${event.type}")
@@ -104,7 +104,7 @@ class KiloBackendChatManager(
 
         val body = KiloCliDataParser.buildPromptJson(prompt)
         val target = "$url/session/$id/prompt_async?directory=${encode(dir)}"
-        log.debug("prompt: POST $target, body=$body")
+        log.debug("session=$id send: op=prompt_async, parts=${prompt.parts.size}")
         val request = Request.Builder()
             .url(target)
             .post(body.toRequestBody(JSON_TYPE))
@@ -131,6 +131,7 @@ class KiloBackendChatManager(
     // ------ abort ------
 
     fun abort(id: String, dir: String) {
+        log.debug("session=$id send: op=abort")
         val http = requireClient()
         val url = requireBase()
 
@@ -193,21 +194,25 @@ class KiloBackendChatManager(
     // ------ permission / question ------
 
     fun replyPermission(requestId: String, dir: String, reply: PermissionReplyDto) {
+        log.debug("send: op=replyPermission, requestId=$requestId, reply=${reply.reply}")
         val body = KiloCliDataParser.buildPermissionReplyJson(reply)
         post("/permission/$requestId/reply?directory=${encode(dir)}", body, "replyPermission")
     }
 
     fun savePermissionRules(requestId: String, dir: String, rules: PermissionAlwaysRulesDto) {
+        log.debug("send: op=savePermissionRules, requestId=$requestId")
         val body = KiloCliDataParser.buildPermissionAlwaysRulesJson(rules)
         post("/permission/$requestId/always-rules?directory=${encode(dir)}", body, "savePermissionRules")
     }
 
     fun replyQuestion(requestId: String, dir: String, answers: QuestionReplyDto) {
+        log.debug("send: op=replyQuestion, requestId=$requestId, count=${answers.answers.size}")
         val body = KiloCliDataParser.buildQuestionReplyJson(answers)
         post("/question/$requestId/reply?directory=${encode(dir)}", body, "replyQuestion")
     }
 
     fun rejectQuestion(requestId: String, dir: String) {
+        log.debug("send: op=rejectQuestion, requestId=$requestId")
         post("/question/$requestId/reject?directory=${encode(dir)}", "{}", "rejectQuestion")
     }
 
@@ -263,3 +268,25 @@ class KiloBackendChatManager(
     private fun encode(value: String): String =
         java.net.URLEncoder.encode(value, "UTF-8")
 }
+
+private val ChatEventDto.sid: String?
+    get() = when (this) {
+        is ChatEventDto.MessageUpdated -> sessionID
+        is ChatEventDto.PartUpdated -> sessionID
+        is ChatEventDto.PartDelta -> sessionID
+        is ChatEventDto.PartRemoved -> sessionID
+        is ChatEventDto.TurnOpen -> sessionID
+        is ChatEventDto.TurnClose -> sessionID
+        is ChatEventDto.Error -> sessionID
+        is ChatEventDto.MessageRemoved -> sessionID
+        is ChatEventDto.PermissionAsked -> sessionID
+        is ChatEventDto.PermissionReplied -> sessionID
+        is ChatEventDto.QuestionAsked -> sessionID
+        is ChatEventDto.QuestionReplied -> sessionID
+        is ChatEventDto.QuestionRejected -> sessionID
+        is ChatEventDto.SessionStatusChanged -> sessionID
+        is ChatEventDto.SessionIdle -> sessionID
+        is ChatEventDto.SessionCompacted -> sessionID
+        is ChatEventDto.SessionDiffChanged -> sessionID
+        is ChatEventDto.TodoUpdated -> sessionID
+    }

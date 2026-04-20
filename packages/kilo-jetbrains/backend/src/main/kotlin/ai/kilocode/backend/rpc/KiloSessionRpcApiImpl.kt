@@ -109,7 +109,10 @@ class KiloSessionRpcApiImpl : KiloSessionRpcApi {
                 is ChatEventDto.SessionDiffChanged -> event.sessionID
                 is ChatEventDto.TodoUpdated -> event.sessionID
             }
-            sid == null || sid == id
+            val passes = sid == null || sid == id
+            if (passes) LOG.debug("session=$id event pass: ${event::class.simpleName}")
+            else LOG.debug("session=$id event skip: ${event::class.simpleName} sid=$sid")
+            passes
         }
 
     override suspend fun updateConfig(directory: String, config: ConfigUpdateDto) =

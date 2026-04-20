@@ -82,6 +82,7 @@ class SessionController(
     }
 
     fun prompt(text: String) {
+        LOG.debug("session=$sessionId prompt: len=${text.length}")
         showMessages()
         cs.launch {
             try {
@@ -103,6 +104,7 @@ class SessionController(
     }
 
     fun abort() {
+        LOG.debug("session=$sessionId abort")
         val id = sessionId ?: return
         cs.launch {
             try {
@@ -114,6 +116,7 @@ class SessionController(
     }
 
     fun selectAgent(name: String) {
+        LOG.debug("session=$sessionId selectAgent: name=$name")
         model.agent = name
         cs.launch {
             try {
@@ -126,6 +129,7 @@ class SessionController(
     }
 
     fun selectModel(provider: String, id: String) {
+        LOG.debug("session=$sessionId selectModel: $provider/$id")
         model.model = "$provider/$id"
         cs.launch {
             try {
@@ -140,6 +144,7 @@ class SessionController(
     // ------ permission / question resolution ------
 
     fun replyPermission(requestId: String, reply: PermissionReplyDto, rules: PermissionAlwaysRulesDto? = null) {
+        LOG.debug("session=$sessionId replyPermission: requestId=$requestId")
         cs.launch {
             try {
                 if (rules != null) sessions.savePermissionRules(requestId, directory, rules)
@@ -151,6 +156,7 @@ class SessionController(
     }
 
     fun replyQuestion(requestId: String, answers: QuestionReplyDto) {
+        LOG.debug("session=$sessionId replyQuestion: requestId=$requestId")
         cs.launch {
             try {
                 sessions.replyQuestion(requestId, directory, answers)
@@ -161,6 +167,7 @@ class SessionController(
     }
 
     fun rejectQuestion(requestId: String) {
+        LOG.debug("session=$sessionId rejectQuestion: requestId=$requestId")
         cs.launch {
             try {
                 sessions.rejectQuestion(requestId, directory)
@@ -174,6 +181,10 @@ class SessionController(
         if (sessionId != null) {
             loadHistory()
             subscribeEvents()
+        }
+
+        model.addListener(this) { event ->
+            LOG.debug("session=$sessionId model: $event")
         }
 
         app.connect()
@@ -226,6 +237,7 @@ class SessionController(
         cs.launch {
             try {
                 val history = sessions.messages(id, directory)
+                LOG.debug("session=$id loadHistory: messages=${history.size}")
                 edt {
                     this@SessionController.model.loadHistory(history)
                     if (!model.isEmpty()) showMessages()
@@ -239,6 +251,7 @@ class SessionController(
 
     private fun subscribeEvents() {
         val id = sessionId ?: return
+        LOG.debug("session=$id subscribeEvents")
         eventJob?.cancel()
         eventJob = cs.launch {
             sessions.events(id, directory).collect { event ->
@@ -293,6 +306,7 @@ class SessionController(
     }
 
     private fun handle(event: ChatEventDto) {
+        LOG.debug("session=$sessionId handle: ${event::class.simpleName}")
         when (event) {
             is ChatEventDto.MessageUpdated -> {
                 val added = model.upsertMessage(event.info)
@@ -443,6 +457,7 @@ class SessionController(
     }
 
     private fun fire(event: SessionControllerEvent, before: (() -> Unit)? = null) {
+        LOG.debug("session=$sessionId controller: $event")
         val application = ApplicationManager.getApplication()
         if (application.isDispatchThread) {
             before?.invoke()
