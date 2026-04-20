@@ -12,7 +12,8 @@ export type PickOutcome = { kind: "submit" } | { kind: "advance" } | { kind: "st
  */
 export function pickOutcome(input: { single: boolean; multi: boolean; custom: boolean }): PickOutcome {
   if (input.multi) return { kind: "stay" }
-  if (input.single && !input.custom) return { kind: "submit" }
+  if (input.single && input.custom) return { kind: "stay" }
+  if (input.single) return { kind: "submit" }
   return { kind: "advance" }
 }
 
