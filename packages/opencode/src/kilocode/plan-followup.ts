@@ -263,7 +263,9 @@ export namespace PlanFollowup {
       questions: [
         {
           question: "Ready to implement?",
+          questionKey: "plan.followup.question",
           header: "Implement",
+          headerKey: "plan.followup.header",
           // Keep false: the main prompt input already routes typed text as a question reply,
           // so "Type your own answer" would be redundant. This was set to false intentionally
           // in 65566af7f8 and got flipped back to true during the v1.4.4 upstream merge —
@@ -272,11 +274,15 @@ export namespace PlanFollowup {
           options: [
             {
               label: ANSWER_NEW_SESSION,
+              labelKey: "plan.followup.answer.newSession",
               description: "Implement in a fresh session with a clean context",
+              descriptionKey: "plan.followup.answer.newSession.description",
             },
             {
               label: ANSWER_CONTINUE,
+              labelKey: "plan.followup.answer.continue",
               description: "Implement the plan in this session",
+              descriptionKey: "plan.followup.answer.continue.description",
             },
           ],
         },

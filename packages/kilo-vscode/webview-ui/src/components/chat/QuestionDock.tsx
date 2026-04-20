@@ -17,6 +17,7 @@ import {
   resolveOptimisticQuestionAgent,
   resolveSelectedQuestionMode,
   toggleAnswer,
+  tr,
 } from "./question-dock-utils"
 
 export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => {
@@ -67,6 +68,19 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
   const summary = createMemo(() => {
     const n = Math.min(store.tab + 1, total())
     return language.t("question.summary", { n, total: total() })
+  })
+
+  // Localized view of the current question. The wire-format `label` is preserved for reply
+  // matching; only the display text goes through `tr()`.
+  const questionText = createMemo(() => tr(language.t, question()?.questionKey, question()?.question ?? ""))
+  const translateOption = (opt: {
+    label: string
+    description?: string
+    labelKey?: string
+    descriptionKey?: string
+  }) => ({
+    label: tr(language.t, opt.labelKey, opt.label),
+    description: opt.description ? tr(language.t, opt.descriptionKey, opt.description) : "",
   })
 
   const focusPrompt = () => requestAnimationFrame(() => window.dispatchEvent(new Event("focusPrompt")))
@@ -282,7 +296,7 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
         <div data-slot="question-dock-header-content">
           <div data-slot="question-header-title">{summary()}</div>
           <Show when={store.collapsed}>
-            <div data-slot="question-collapsed-preview">{question()?.question}</div>
+            <div data-slot="question-collapsed-preview">{questionText()}</div>
           </Show>
         </div>
         <div data-slot="question-header-actions" onClick={(e: MouseEvent) => e.stopPropagation()}>
@@ -325,7 +339,7 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
       <div data-slot="question-dock-body" inert={store.collapsed || undefined}>
         <div data-slot="question-dock-body-inner">
           <Show when={!confirm()}>
-            <div data-slot="question-text">{question()?.question}</div>
+            <div data-slot="question-text">{questionText()}</div>
             <Show when={multi()} fallback={<div data-slot="question-hint">{language.t("ui.question.singleHint")}</div>}>
               <div data-slot="question-hint">{language.t("ui.question.multiHint")}</div>
             </Show>
@@ -333,6 +347,7 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
               <For each={options()}>
                 {(opt, i) => {
                   const picked = () => store.answers[store.tab]?.includes(opt.label) ?? false
+                  const localized = translateOption(opt)
                   return (
                     <button
                       data-slot="question-option"
@@ -352,9 +367,9 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                         </span>
                       </span>
                       <span data-slot="question-option-main">
-                        <span data-slot="option-label">{opt.label}</span>
-                        <Show when={opt.description}>
-                          <span data-slot="option-description">{opt.description}</span>
+                        <span data-slot="option-label">{localized.label}</span>
+                        <Show when={localized.description}>
+                          <span data-slot="option-description">{localized.description}</span>
                         </Show>
                       </span>
                     </button>
@@ -436,7 +451,7 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                   const answered = () => Boolean(value())
                   return (
                     <div data-slot="review-item">
-                      <span data-slot="review-label">{q.question}</span>
+                      <span data-slot="review-label">{tr(language.t, q.questionKey, q.question)}</span>
                       <span data-slot="review-value" data-answered={answered()}>
                         {answered() ? value() : language.t("ui.question.review.notAnswered")}
                       </span>

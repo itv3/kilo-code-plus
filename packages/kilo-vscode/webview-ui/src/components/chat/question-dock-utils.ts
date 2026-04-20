@@ -1,5 +1,17 @@
 import type { QuestionOption } from "../../types/messages"
 
+/**
+ * Translate a backend-provided i18n key, falling back to the canonical label when no key is
+ * set or the key is missing from the dictionary. Our `language.t` returns the key string back
+ * when a translation isn't found, so we detect that and substitute the fallback.
+ */
+export function tr(translate: (key: string) => string, key: string | undefined, fallback: string): string {
+  if (!key) return fallback
+  const result = translate(key)
+  if (result === key) return fallback
+  return result
+}
+
 export type PickOutcome = { kind: "submit" } | { kind: "advance" } | { kind: "stay" }
 
 /**
