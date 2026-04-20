@@ -51,14 +51,16 @@ class SessionModelTest : UsefulTestCase() {
         assertTrue(model.isReady())
     }
 
-    fun `test addMessage stores entry and fires MessageAdded`() {
+    fun `test addMessage stores entry and fires MessageAdded then TurnAdded`() {
         model.addMessage(msg("m1", "user"))
 
         val item = model.message("m1")
         assertNotNull(item)
-        assertEquals(1, events.size)
+        // MessageAdded then TurnAdded (regroup fires immediately after)
+        assertEquals(2, events.size)
         val event = events[0] as SessionModelEvent.MessageAdded
         assertEquals("m1", event.info.info.id)
+        assertTrue(events[1] is SessionModelEvent.TurnAdded)
     }
 
     fun `test addMessage duplicate is ignored`() {
@@ -71,15 +73,17 @@ class SessionModelTest : UsefulTestCase() {
         assertTrue(events.isEmpty())
     }
 
-    fun `test removeMessage removes entry and fires MessageRemoved`() {
+    fun `test removeMessage removes entry and fires MessageRemoved then TurnRemoved`() {
         model.addMessage(msg("m1", "assistant"))
         events.clear()
 
         model.removeMessage("m1")
 
         assertNull(model.message("m1"))
-        assertEquals(1, events.size)
+        // MessageRemoved + TurnRemoved after regroup
+        assertEquals(2, events.size)
         assertEquals("m1", (events[0] as SessionModelEvent.MessageRemoved).id)
+        assertEquals("m1", (events[1] as SessionModelEvent.TurnRemoved).id)
     }
 
     fun `test removeMessage unknown id is noop`() {
@@ -356,8 +360,11 @@ class SessionModelTest : UsefulTestCase() {
 
         assertTrue(added)
         assertNotNull(model.message("m1"))
-        val event = events.single() as SessionModelEvent.MessageAdded
+        // upsertMessage fires MessageAdded then TurnAdded
+        assertEquals(2, events.size)
+        val event = events.filterIsInstance<SessionModelEvent.MessageAdded>().single()
         assertEquals("m1", event.info.info.id)
+        assertTrue(events.any { it is SessionModelEvent.TurnAdded })
     }
 
     fun `test upsertMessage updates existing message and returns false`() {
@@ -514,7 +521,7 @@ class SessionModelTest : UsefulTestCase() {
         model.addListener(child) { extra.add(it) }
 
         model.addMessage(msg("m1", "user"))
-        assertEquals(1, extra.size)
+        assertEquals(2, extra.size)  // MessageAdded + TurnAdded
 
         Disposer.dispose(child)
         extra.clear()
