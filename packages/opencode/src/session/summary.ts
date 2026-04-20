@@ -1,12 +1,12 @@
 import z from "zod"
-import { Effect, Layer, ServiceMap } from "effect"
-import { makeRuntime } from "@/effect/run-service"
+import { Effect, Layer, Context } from "effect"
 import { Bus } from "@/bus"
 import { Snapshot } from "@/snapshot"
 import { Storage } from "@/storage/storage"
 import { Session } from "."
 import { MessageV2 } from "./message-v2"
 import { SessionID, MessageID } from "./schema"
+import { makeRuntime } from "@/effect/run-service" // kilocode_change
 import { SummaryDispatch } from "../kilocode/session/summary-dispatch" // kilocode_change
 
 export namespace SessionSummary {
@@ -72,7 +72,7 @@ export namespace SessionSummary {
     readonly computeDiff: (input: { messages: MessageV2.WithParts[] }) => Effect.Effect<Snapshot.FileDiff[]>
   }
 
-  export class Service extends ServiceMap.Service<Service, Interface>()("@opencode/SessionSummary") {}
+  export class Service extends Context.Service<Service, Interface>()("@opencode/SessionSummary") {}
 
   export const layer = Layer.effect(
     Service,
@@ -159,20 +159,24 @@ export namespace SessionSummary {
     }),
   )
 
-  export const defaultLayer = Layer.unwrap(
-    Effect.sync(() =>
-      layer.pipe(
-        Layer.provide(Session.defaultLayer),
-        Layer.provide(Snapshot.defaultLayer),
-        Layer.provide(Storage.defaultLayer),
-        Layer.provide(Bus.layer),
-      ),
+  export const defaultLayer = Layer.suspend(() =>
+    layer.pipe(
+      Layer.provide(Session.defaultLayer),
+      Layer.provide(Snapshot.defaultLayer),
+      Layer.provide(Storage.defaultLayer),
+      Layer.provide(Bus.layer),
     ),
   )
 
-  const { runPromise } = makeRuntime(Service, defaultLayer)
+  export const DiffInput = z.object({
+    sessionID: SessionID.zod,
+    messageID: MessageID.zod.optional(),
+  })
 
-  // kilocode_change start — tracked dispatcher + timeout + cancel
+  // kilocode_change start - legacy promise helpers + tracked dispatcher for Kilo callsites
+  const { runPromise } = makeRuntime(Service, defaultLayer)
+  export const diff = (input: { sessionID: SessionID; messageID?: MessageID }) => runPromise((svc) => svc.diff(input))
+
   const dispatch = SummaryDispatch.create<Interface>({
     runPromise,
     summarize: (svc, input) => svc.summarize(input),
@@ -180,13 +184,4 @@ export namespace SessionSummary {
   export const summarize = dispatch.summarize
   export const cancel = dispatch.cancel
   // kilocode_change end
-
-  export const DiffInput = z.object({
-    sessionID: SessionID.zod,
-    messageID: MessageID.zod.optional(),
-  })
-
-  export async function diff(input: z.infer<typeof DiffInput>) {
-    return runPromise((svc) => svc.diff(input))
-  }
 }
