@@ -25,6 +25,7 @@ import { SessionStatus } from "@/session/status"
 import { Telemetry } from "@kilocode/kilo-telemetry"
 import { Question } from "@/question"
 import { Permission } from "@/permission"
+import { withTimeout } from "@/util/timeout"
 
 export namespace KiloSessions {
   export const Event = {
@@ -156,6 +157,7 @@ export namespace KiloSessions {
   const focused = new Set<string>()
   const opened = new Set<string>()
   const statusSyncs = new Map<string, Promise<void>>()
+  const STATUS_TIMEOUT_MS = 3_000
 
   async function deriveStatus(sessionID: string): Promise<"idle" | "busy" | "question" | "permission" | "retry"> {
     const permissions = (await Permission.list()).filter((p) => p.sessionID === sessionID)
@@ -246,12 +248,13 @@ export namespace KiloSessions {
       await ingest.sync(evt.properties.sessionID, [{ type: "session_close", data: { reason: evt.properties.reason } }])
     })
 
-    // Session status changes (busy/idle/retry), question lifecycle, permission lifecycle
+    // Session status changes (busy/idle/retry), question lifecycle, permission lifecycle.
+    // withTimeout prevents a hung derive from holding the per-session promise chain open forever.
     const syncStatus = (evt: { properties: { sessionID: string } }) => {
       const sessionID = evt.properties.sessionID
       const prev = statusSyncs.get(sessionID) ?? Promise.resolve()
       const next = prev
-        .then(() => deriveAndSyncStatus(sessionID))
+        .then(() => withTimeout(deriveAndSyncStatus(sessionID), STATUS_TIMEOUT_MS))
         .catch((error) => {
           log.error("status sync failed", { sessionID, error: String(error) })
         })
