@@ -30,6 +30,11 @@ import com.intellij.openapi.util.Disposer
  */
 class SessionModel {
 
+    companion object {
+        /** Part types that are internal server markers and must never be stored or rendered. */
+        val SILENT_PART_TYPES = setOf("step-start", "step-finish")
+    }
+
     private val entries = LinkedHashMap<String, Message>()
     private val turnEntries = LinkedHashMap<String, Turn>()
 
@@ -118,6 +123,7 @@ class SessionModel {
     }
 
     fun updateContent(messageId: String, dto: PartDto) {
+        if (dto.type in SILENT_PART_TYPES) return
         val msg = entries[messageId] ?: return
         val existing = msg.parts[dto.id]
         if (existing != null) {
@@ -177,6 +183,7 @@ class SessionModel {
         for (msg in history) {
             val item = Message(msg.info)
             for (part in msg.parts) {
+                if (part.type in SILENT_PART_TYPES) continue
                 val content = fromDto(part, part.text)
                 item.parts[content.id] = content
             }

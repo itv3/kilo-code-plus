@@ -156,15 +156,35 @@ class SessionModelTest : UsefulTestCase() {
         assertTrue(model.message("m1")!!.parts["p1"] is Compaction)
     }
 
-    fun `test updateContent unknown type stored as Generic`() {
+    fun `test updateContent silently drops step-start parts`() {
         model.addMessage(msg("m1", "assistant"))
         events.clear()
 
         model.updateContent("m1", part("p1", "m1", "step-start"))
 
+        assertNull(model.message("m1")!!.parts["p1"])
+        assertTrue(events.isEmpty())
+    }
+
+    fun `test updateContent silently drops step-finish parts`() {
+        model.addMessage(msg("m1", "assistant"))
+        events.clear()
+
+        model.updateContent("m1", part("p1", "m1", "step-finish"))
+
+        assertNull(model.message("m1")!!.parts["p1"])
+        assertTrue(events.isEmpty())
+    }
+
+    fun `test updateContent unknown type stored as Generic`() {
+        model.addMessage(msg("m1", "assistant"))
+        events.clear()
+
+        model.updateContent("m1", part("p1", "m1", "snapshot"))
+
         val p = model.message("m1")!!.parts["p1"]
         assertTrue("Expected Generic fallback but got: ${p?.javaClass?.simpleName}", p is Generic)
-        assertEquals("step-start", (p as Generic).type)
+        assertEquals("snapshot", (p as Generic).type)
         assertTrue(events.single() is SessionModelEvent.ContentAdded)
     }
 
@@ -353,6 +373,17 @@ class SessionModelTest : UsefulTestCase() {
         assertTrue(entry.parts.containsKey("p2"))
         assertTrue(entry.parts["p2"] is Generic)
         assertEquals("snapshot", (entry.parts["p2"] as Generic).type)
+    }
+
+    fun `test loadHistory silently drops step-start and step-finish parts`() {
+        val text = PartDto(id = "p1", sessionID = "s1", messageID = "m1", type = "text", text = "visible")
+        val stepStart = PartDto(id = "p2", sessionID = "s1", messageID = "m1", type = "step-start")
+        val stepFinish = PartDto(id = "p3", sessionID = "s1", messageID = "m1", type = "step-finish")
+
+        model.loadHistory(listOf(MessageWithPartsDto(msg("m1", "assistant"), listOf(text, stepStart, stepFinish))))
+
+        val entry = model.message("m1")!!
+        assertEquals(listOf("p1"), entry.parts.keys.toList())
     }
 
     fun `test upsertMessage adds new message and returns true`() {

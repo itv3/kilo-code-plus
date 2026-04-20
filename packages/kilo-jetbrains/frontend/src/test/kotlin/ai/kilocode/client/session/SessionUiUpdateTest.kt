@@ -121,13 +121,24 @@ class SessionUiUpdateTest : BasePlatformTestCase() {
 
     fun `test unknown part type falls back to GenericView`() {
         model.upsertMessage(msg("a1", "assistant"))
-        model.updateContent("a1", PartDto("g1", "ses", "a1", "step-start"))
+        model.updateContent("a1", PartDto("g1", "ses", "a1", "snapshot"))
 
         val mv = panel.findMessage("a1")!!
         val gv = mv.part("g1")
         assertNotNull(gv)
         assertTrue(gv is ai.kilocode.client.session.views.GenericView)
-        assertTrue((gv as ai.kilocode.client.session.views.GenericView).labelText().contains("step-start"))
+        assertTrue((gv as ai.kilocode.client.session.views.GenericView).labelText().contains("snapshot"))
+    }
+
+    // ------ silent part types ------
+
+    fun `test step-start part is not rendered in panel`() {
+        model.upsertMessage(msg("a1", "assistant"))
+        model.updateContent("a1", PartDto("g1", "ses", "a1", "step-start"))
+        model.updateContent("a1", PartDto("g2", "ses", "a1", "step-finish"))
+
+        val mv = panel.findMessage("a1")!!
+        assertTrue(mv.partIds().isEmpty())
     }
 
     // ------ history load ------

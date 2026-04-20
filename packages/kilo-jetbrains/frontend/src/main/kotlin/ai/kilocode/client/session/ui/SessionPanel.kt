@@ -22,6 +22,10 @@ import com.intellij.util.ui.JBUI
  *
  * [HistoryLoaded] and [Cleared] both trigger a full rebuild from the model.
  *
+ * A [ProgressPanel] is always kept as the last child — it appears at the
+ * bottom of the transcript inside the scroll pane and shows a spinner while
+ * the session is busy.
+ *
  * All method calls must happen on the EDT.
  */
 class SessionPanel(
@@ -32,6 +36,9 @@ class SessionPanel(
     private val turnViews = LinkedHashMap<String, TurnView>()
     private val msgToTurn = HashMap<String, TurnView>()
     private val msgToView = HashMap<String, MessageView>()
+
+    /** Progress footer — always the last child inside the scroll. */
+    val progress = ProgressPanel(model, parent)
 
     init {
         isOpaque = false
@@ -137,6 +144,7 @@ class SessionPanel(
             register(msgId, tv, mv)
         }
         add(tv)
+        anchorFooter()
         refresh()
     }
 
@@ -168,6 +176,7 @@ class SessionPanel(
         val tv = turnViews.remove(id) ?: return
         for (msgId in tv.messageIds()) unregister(msgId)
         remove(tv)
+        anchorFooter()
         refresh()
     }
 
@@ -188,6 +197,7 @@ class SessionPanel(
             add(tv)
         }
 
+        anchorFooter()
         refresh()
     }
 
@@ -196,7 +206,14 @@ class SessionPanel(
         msgToTurn.clear()
         msgToView.clear()
         removeAll()
+        anchorFooter()
         refresh()
+    }
+
+    /** Re-insert [progress] as the last child so it always renders after all turn views. */
+    private fun anchorFooter() {
+        remove(progress)
+        add(progress)
     }
 
     private fun register(msgId: String, tv: TurnView, mv: MessageView) {
