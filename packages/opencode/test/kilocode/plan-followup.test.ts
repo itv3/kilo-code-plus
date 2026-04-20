@@ -266,7 +266,7 @@ describe("plan follow-up", () => {
       await expect(pending).resolves.toBe("break")
     }))
 
-  test("ask - emits a non-custom single-select question with the canonical answers", () =>
+  test("ask - emits a single-select question with the canonical answers and custom enabled on CLI", () =>
     withInstance(async () => {
       const seeded = await seed({ text: "1. Build" })
       const pending = PlanFollowup.ask({
@@ -282,10 +282,9 @@ describe("plan follow-up", () => {
       expect(q).toBeDefined()
       if (!q) return
 
-      // custom must stay false — "Type your own answer" is redundant because the main prompt
-      // input already routes typed text as a question reply. Regressed once during the v1.4.4
-      // upstream merge, so pin it here.
-      expect(q.custom).toBe(false)
+      // On CLI the main prompt input is hidden while a blocking question is active, so
+      // "Type your own answer" must remain available — i.e. custom must not be false.
+      expect(q.custom).not.toBe(false)
       expect(q.multiple).not.toBe(true)
       expect(q.options.map((item) => item.label)).toEqual([
         PlanFollowup.ANSWER_NEW_SESSION,
@@ -294,6 +293,36 @@ describe("plan follow-up", () => {
 
       await question.reject(item.id)
       await expect(pending).resolves.toBe("break")
+    }))
+
+  test("ask - hides custom answer row on VS Code where the main prompt input handles typed replies", () =>
+    withInstance(async () => {
+      const prev = process.env.KILO_CLIENT
+      try {
+        process.env.KILO_CLIENT = "vscode"
+        const seeded = await seed({ text: "1. Build" })
+        const pending = PlanFollowup.ask({
+          sessionID: seeded.sessionID,
+          messages: seeded.messages,
+          abort: AbortSignal.any([]),
+        })
+
+        const item = await waitQuestion(seeded.sessionID)
+        expect(item).toBeDefined()
+        if (!item) return
+        const q = item.questions[0]
+        expect(q).toBeDefined()
+        if (!q) return
+
+        // On VS Code the dock's main prompt input already accepts free text as a reply,
+        // so the "Type your own answer" row is redundant and must be hidden.
+        expect(q.custom).toBe(false)
+
+        await question.reject(item.id)
+        await expect(pending).resolves.toBe("break")
+      } finally {
+        process.env.KILO_CLIENT = prev
+      }
     }))
 
   test("ask - emits i18n keys alongside the canonical English labels", () =>
@@ -415,6 +444,40 @@ describe("plan follow-up", () => {
       if (!part || part.type !== "text") return
       expect(part.text).toBe("Add rollback support too")
       expect(part.synthetic).toBe(true)
+    }))
+
+  test("ask - retargets prompt queue so injected message is visible in scope", () =>
+    withInstance(async () => {
+      const { KiloSessionPromptQueue } = await import("../../src/kilocode/session/prompt-queue")
+      const seeded = await seed({ text: "1. Refactor\n2. Ship" })
+
+      // Simulate the prompt queue having a target set (like during a running loop)
+      const original = seeded.messages.find((m) => m.info.role === "user")!.info.id
+      KiloSessionPromptQueue.retarget(seeded.sessionID, original)
+
+      const pending = PlanFollowup.ask({
+        sessionID: seeded.sessionID,
+        messages: seeded.messages,
+        abort: AbortSignal.any([]),
+      })
+
+      const item = await waitQuestion(seeded.sessionID)
+      expect(item).toBeDefined()
+      if (!item) return
+      await question.reply({
+        requestID: item.id,
+        answers: [[PlanFollowup.ANSWER_CONTINUE]],
+      })
+
+      await expect(pending).resolves.toBe("continue")
+
+      // The injected user message must be visible when scoped
+      const all = await Session.messages({ sessionID: seeded.sessionID })
+      const scoped = KiloSessionPromptQueue.scope(seeded.sessionID, all)
+      const injected = scoped.findLast((m) => m.info.role === "user")
+      expect(injected).toBeDefined()
+      const part = injected!.parts.find((p) => p.type === "text")
+      expect(part?.type === "text" && part.text).toBe("Implement the plan above.")
     }))
 
   test("ask - creates a new session on Start new session with handover and todos", () =>
