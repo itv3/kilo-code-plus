@@ -573,6 +573,11 @@ export interface SessionCreatedMessage {
   draftID?: string
 }
 
+export interface SessionForkedMessage {
+  type: "sessionForked"
+  sessionID: string
+}
+
 export interface SessionUpdatedMessage {
   type: "sessionUpdated"
   session: SessionInfo
@@ -1533,6 +1538,7 @@ export type ExtensionMessage =
   | PermissionErrorMessage
   | TodoUpdatedMessage
   | SessionCreatedMessage
+  | SessionForkedMessage
   | SessionUpdatedMessage
   | SessionDeletedMessage
   | MessageRemovedMessage
@@ -2061,6 +2067,13 @@ export interface ForkSessionRequest {
   type: "agentManager.forkSession"
   sessionId: string
   worktreeId?: string
+  messageId?: string
+}
+
+export interface SidebarForkSessionRequest {
+  type: "forkSession"
+  sessionId: string
+  messageId?: string
 }
 
 // Close (remove) a session from its worktree
@@ -2579,6 +2592,7 @@ export type WebviewMessage =
   | OpenLocallyRequest
   | AddSessionToWorktreeRequest
   | ForkSessionRequest
+  | SidebarForkSessionRequest
   | CloseSessionRequest
   | PersistSessionRequest
   | ForgetSessionRequest
