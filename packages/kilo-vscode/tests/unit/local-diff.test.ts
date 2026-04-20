@@ -91,6 +91,28 @@ describe("generatedLike", () => {
 })
 
 describe("diffSummary", () => {
+  it("uses candidate local branch fallback when base is empty string and on a feature branch", async () => {
+    await withRepo(async (dir) => {
+      runSync(dir, ["checkout", "-b", "feature"])
+      await fs.writeFile(path.join(dir, "seed.txt"), "seed\nfeature\n")
+      runSync(dir, ["commit", "-am", "feature commit"])
+      const result = await diffSummary(git(), dir, "")
+      const entry = result.find((e) => e.file === "seed.txt")
+      expect(entry?.status).toBe("modified")
+    })
+  })
+
+  it("uses HEAD as fallback when no candidate branches exist and base is empty", async () => {
+    await withRepo(async (dir) => {
+      // Rename main to something else so it doesn't match candidates
+      runSync(dir, ["branch", "-m", "main", "other"])
+      await fs.writeFile(path.join(dir, "seed.txt"), "seed\nuncommitted\n")
+      const result = await diffSummary(git(), dir, "")
+      const entry = result.find((e) => e.file === "seed.txt")
+      expect(entry?.status).toBe("modified")
+    })
+  })
+
   it("returns empty array when ancestor cannot be resolved", async () => {
     await withRepo(async (dir) => {
       const result = await diffSummary(git(), dir, "nonexistent-branch")

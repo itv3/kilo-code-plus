@@ -35,7 +35,7 @@ export async function resolveLocalDiffTarget(
 
   const tracking = await gitOps.resolveTrackingBranch(root, branch)
   const fallback = tracking ? undefined : await gitOps.resolveDefaultBranch(root, branch)
-  const base = tracking ?? fallback ?? "HEAD"
+  const base = tracking || fallback || "HEAD"
 
   log(`Local diff: branch=${branch} tracking=${tracking ?? "none"} default=${fallback ?? "none"} base=${base}`)
 
