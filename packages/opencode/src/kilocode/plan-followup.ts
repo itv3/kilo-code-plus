@@ -439,6 +439,7 @@ export namespace PlanFollowup {
               if (pending.get(next.id) === ctl) pending.delete(next.id)
             })
         } catch (error) {
+          if (pending.get(next.id) === ctl) pending.delete(next.id)
           await idle()
           throw error
         }
