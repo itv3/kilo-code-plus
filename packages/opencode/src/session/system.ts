@@ -34,6 +34,14 @@ export namespace SystemPrompt {
   }
   // kilocode_change end
 
+  // kilocode_change start
+  const LING_EXCLUDES = ["kling", "bling", "spelling"]
+  function isLing(id: string) {
+    const lower = id.toLowerCase()
+    return lower.includes("ling") && !LING_EXCLUDES.some((s) => lower.includes(s))
+  }
+  // kilocode_change end
+
   export function provider(model: Provider.Model) {
     // kilocode_change start
     switch (model.prompt) {
@@ -66,7 +74,7 @@ export namespace SystemPrompt {
     if (model.api.id.includes("claude")) return [PROMPT_ANTHROPIC]
     if (model.api.id.toLowerCase().includes("trinity")) return [PROMPT_TRINITY]
     if (model.api.id.toLowerCase().includes("kimi")) return [PROMPT_KIMI]
-    if (model.api.id.toLowerCase().startsWith("ling")) return [PROMPT_LING] // kilocode_change
+    if (isLing(model.api.id)) return [PROMPT_LING] // kilocode_change
     return [PROMPT_DEFAULT]
   }
 
