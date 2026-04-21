@@ -339,6 +339,9 @@ const AgentManagerContent: Component = () => {
   // Recover persisted local session IDs from webview state
   const persisted = vscode.getState<{ localSessionIDs?: string[]; sidebarWidth?: number }>()
   const [localSessionIDs, setLocalSessionIDs] = createSignal<string[]>(persisted?.localSessionIDs ?? [])
+  /** Remove a session ID from the local tab (no-op if absent). */
+  const evictLocal = (sid: string) =>
+    setLocalSessionIDs((prev) => (prev.includes(sid) ? prev.filter((id) => id !== sid) : prev))
   const [sidebarWidth, setSidebarWidth] = createSignal(persisted?.sidebarWidth ?? DEFAULT_SIDEBAR_WIDTH)
   const [sessionsCollapsed, setSessionsCollapsed] = createSignal(false)
   const [sections, setSections] = createSignal<SectionState[]>([])
@@ -762,20 +765,28 @@ const AgentManagerContent: Component = () => {
     return result
   })
 
-  // Sessions for the currently selected worktree (tab bar), respecting custom order if set
+  // Oldest-first sort before applyTabOrder — worktree label and tab bar must agree on "first session".
+  const sessionsForWorktree = (worktreeId: string): SessionInfo[] => {
+    const ids = new Set(
+      managedSessions()
+        .filter((ms) => ms.worktreeId === worktreeId)
+        .map((ms) => ms.id),
+    )
+    return applyTabOrder(
+      session
+        .sessions()
+        .filter((s) => ids.has(s.id))
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+      worktreeTabOrder()[worktreeId],
+    )
+  }
+
   const activeWorktreeSessions = createMemo((): SessionInfo[] => {
     const sel = selection()
     if (!sel || sel === LOCAL) return []
-    const managed = managedSessions().filter((ms) => ms.worktreeId === sel)
-    const ids = new Set(managed.map((ms) => ms.id))
-    const sessions = session
-      .sessions()
-      .filter((s) => ids.has(s.id))
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    return applyTabOrder(sessions, worktreeTabOrder()[sel])
+    return sessionsForWorktree(sel)
   })
 
-  // Active tab sessions: local sessions when on "local", worktree sessions otherwise
   const activeTabs = createMemo((): SessionInfo[] => {
     const sel = selection()
     if (sel === LOCAL) return localSessions()
@@ -783,11 +794,10 @@ const AgentManagerContent: Component = () => {
     return []
   })
 
-  // Whether the selected context has zero sessions
   const contextEmpty = createMemo(() => {
     const sel = selection()
     if (sel === LOCAL) return localSessionIDs().length === 0
-    if (sel) return activeWorktreeSessions().length === 0
+    if (sel) return activeWorktreeSessions().length === 0 && managedSessions().every((ms) => ms.worktreeId !== sel)
     return false
   })
 
@@ -802,8 +812,6 @@ const AgentManagerContent: Component = () => {
     }
   })
 
-  // Scroll the sidebar to the focused item whenever selection changes (covers keyboard
-  // navigation, new worktree creation, and any other programmatic selection change).
   createEffect(() => {
     const id = selection() ?? session.currentSessionID()
     if (!id) return
@@ -813,22 +821,16 @@ const AgentManagerContent: Component = () => {
     })
   })
 
-  // Read-only mode: viewing an unassigned session (not in a worktree or local)
   const readOnly = createMemo(() => selection() === null && !!session.currentSessionID())
 
-  // Tab scroll: hidden scrollbar with fade overflow indicators
   const visibleTabId = createMemo(() =>
     reviewActive() ? REVIEW_TAB_ID : (session.currentSessionID() ?? activePendingId()),
   )
   const tabScroll = useTabScroll(activeTabs, visibleTabId)
 
-  // Display name for worktree — prefers persisted label, then first session title, then branch
   const worktreeLabel = (wt: WorktreeState): string => {
     if (wt.label) return wt.label
-    const managed = managedSessions().filter((ms) => ms.worktreeId === wt.id)
-    const ids = new Set(managed.map((ms) => ms.id))
-    const sessions = session.sessions().filter((s) => ids.has(s.id))
-    return firstOrderedTitle(sessions, worktreeTabOrder()[wt.id], wt.branch)
+    return firstOrderedTitle(sessionsForWorktree(wt.id), worktreeTabOrder()[wt.id], wt.branch)
   }
 
   const worktreeSubtitle = (wt: WorktreeState): string | undefined => {
@@ -838,7 +840,6 @@ const AgentManagerContent: Component = () => {
 
   const isStaleWorktree = (worktreeId: string): boolean => staleWorktreeIds().has(worktreeId)
 
-  /** True when any session in the given ID list is actively working (busy/retry and not blocked by permissions/questions). */
   const isAnySessionBusy = (ids: string[]): boolean => {
     if (ids.length === 0) return false
     const statuses = session.allStatusMap()
@@ -1008,12 +1009,15 @@ const AgentManagerContent: Component = () => {
   const selectWorktree = (worktreeId: string) => {
     saveTabMemory()
     setSelection(worktreeId)
+    // Try rich session list first, fall back to managed session IDs when
+    // session.sessions() hasn't been populated yet for this worktree.
+    const rich = sessionsForWorktree(worktreeId)
     const managed = managedSessions().filter((ms) => ms.worktreeId === worktreeId)
-    const ids = new Set(managed.map((ms) => ms.id))
-    const sessions = session.sessions().filter((s) => ids.has(s.id))
     const remembered = tabMemory()[worktreeId]
-    const target = remembered ? sessions.find((s) => s.id === remembered) : undefined
-    const fallback = target ?? sessions[0]
+    const target = remembered
+      ? (rich.find((s) => s.id === remembered) ?? managed.find((ms) => ms.id === remembered))
+      : undefined
+    const fallback = target ?? rich[0] ?? managed[0]
     if (fallback) session.selectSession(fallback.id)
     else session.setCurrentSessionID(undefined)
     setReviewActive(remembered === REVIEW_TAB_ID && reviewOpenByContext()[worktreeId] === true)
@@ -1166,14 +1170,7 @@ const AgentManagerContent: Component = () => {
         const ev = msg as AgentManagerWorktreeSetupMessage
         if (ev.status === "ready" || ev.status === "error") {
           const error = ev.status === "error"
-          // Remove from busy map
-          if (ev.worktreeId) {
-            setBusyWorktrees((prev) => {
-              const next = new Map(prev)
-              next.delete(ev.worktreeId!)
-              return next
-            })
-          }
+          if (ev.worktreeId) setBusyWorktrees((prev) => new Map([...prev].filter(([k]) => k !== ev.worktreeId)))
           setSetup({
             active: true,
             message: ev.message,
@@ -1185,9 +1182,9 @@ const AgentManagerContent: Component = () => {
           globalThis.setTimeout(() => setSetup({ active: false, message: "" }), error ? 3000 : 500)
           if (!error && ev.sessionId) {
             session.selectSession(ev.sessionId)
-            // Auto-switch sidebar to the worktree containing this session
             const ms = managedSessions().find((s) => s.id === ev.sessionId)
             if (ms?.worktreeId) setSelection(ms.worktreeId)
+            evictLocal(ev.sessionId)
           }
         } else {
           // Track this worktree as setting up and auto-select it in the sidebar
@@ -1222,6 +1219,10 @@ const AgentManagerContent: Component = () => {
             return [...prev, ev.sessionId]
           })
           vscode.postMessage({ type: "agentManager.persistSession", sessionId: ev.sessionId })
+        } else {
+          saveTabMemory()
+          setSelection(ev.worktreeId)
+          evictLocal(ev.sessionId)
         }
         session.selectSession(ev.sessionId)
       }
@@ -1887,13 +1888,12 @@ const AgentManagerContent: Component = () => {
     if (sel === LOCAL) addPendingTab()
     else if (sel) vscode.postMessage({ type: "agentManager.addSessionToWorktree", worktreeId: sel })
   }
-
-  const handleForkSession = (sessionId: string) => {
+  const handleForkSession = (sessionId: string, messageId?: string) => {
     const sel = selection()
-    if (sel === LOCAL) vscode.postMessage({ type: "agentManager.forkSession", sessionId })
-    else if (sel) vscode.postMessage({ type: "agentManager.forkSession", sessionId, worktreeId: sel })
+    const msg = { type: "agentManager.forkSession" as const, sessionId, ...(messageId ? { messageId } : {}) }
+    if (!sel || sel === LOCAL) return vscode.postMessage(msg)
+    vscode.postMessage({ ...msg, worktreeId: sel })
   }
-
   const handleCloseTab = (sessionId: string) => {
     const pending = isPending(sessionId)
     const isActive = pending ? sessionId === activePendingId() : session.currentSessionID() === sessionId
@@ -2947,6 +2947,7 @@ const AgentManagerContent: Component = () => {
                   openLocally(id)
                 }}
                 onShowHistory={() => setHistory(true)}
+                onForkMessage={readOnly() ? undefined : handleForkSession}
                 readonly={readOnly()}
                 continueInWorktree={selection() === LOCAL}
                 promptBoxId={`agent-manager:${selection() ?? "unassigned"}`}
