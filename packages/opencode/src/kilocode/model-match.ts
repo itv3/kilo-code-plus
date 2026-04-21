@@ -1,5 +1,3 @@
-// kilocode_change - new file
-
 const LING_EXCLUDES = ["kling", "bling", "spelling", "multilingual"]
 
 export function isLing(id: string) {
