@@ -28,8 +28,8 @@ export const REQUEST_TIMEOUT_MS = 120_000 // 2 minutes
 
 type BundledSDK = { languageModel(modelId: string): LanguageModelV3 }
 
-export const KILO_BUNDLED_PROVIDERS: Record<string, (options: any) => BundledSDK> = {
-  "@kilocode/kilo-gateway": createKilo as unknown as (options: any) => BundledSDK,
+export const KILO_BUNDLED_PROVIDERS: Record<string, () => Promise<(options: any) => BundledSDK>> = {
+  "@kilocode/kilo-gateway": async () => createKilo as unknown as (options: any) => BundledSDK,
 }
 
 // ---------------------------------------------------------------------------

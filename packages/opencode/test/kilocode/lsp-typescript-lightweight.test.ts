@@ -4,7 +4,7 @@
 
 import { describe, test, expect, spyOn, afterEach } from "bun:test"
 import path from "path"
-import { LSPServer } from "../../src/lsp/server"
+import { LSPServer } from "../../src/lsp"
 import { TsClient } from "../../src/kilocode/ts-client"
 import { TsCheck } from "../../src/kilocode/ts-check"
 import { Flag } from "../../src/flag/flag"
