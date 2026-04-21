@@ -100,7 +100,7 @@ This sets the `explore` subagent to always use Haiku regardless of the parent's 
 
 In the legacy extension, each mode has **Sticky Models** — switching from one mode to another (e.g., Code → Architect) uses whatever model you last selected for that mode, not the model from the mode you came from. This means you can assign different models to different modes:
 
-- **Plan:** a reasoning-heavy model (Gemini Pro, Claude Opus)
+- **Architect:** a reasoning-heavy model (Gemini Pro, Claude Opus)
 - **Code:** a fast coding model (Claude Sonnet, GPT-4.1)
 - **Debug:** a cost-efficient model (Gemini Flash, DeepSeek)
 
