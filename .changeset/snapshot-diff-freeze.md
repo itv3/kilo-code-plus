@@ -2,4 +2,4 @@
 "kilo-code": patch
 ---
 
-Prevent TUI freeze on turns that edit very large files by skipping patch generation for oversized file diffs. Additions and deletions are still reported so session summaries stay accurate.
+Fix TUI freeze on huge-file diffs. Session-summary and file-view patches now use git directly instead of a JavaScript Myers implementation, so files of any size render a full diff without blocking the session.

@@ -88,10 +88,12 @@ test("pathological diffFull workload finishes quickly and does not block abort",
       // the event loop stayed responsive (ESC would actually arrive).
       expect(ticks).toBeGreaterThan(0)
 
-      // The huge file's patch is empty (skipped) but still counted.
+      // With git-based diff the patch is a real unified diff, not empty.
       const hit = diffs.find((d) => d.file === "fat.json")
       expect(hit).toBeDefined()
-      expect(hit!.patch).toBe("")
+      expect(hit!.patch).toMatch(/^diff --git /m)
+      expect(hit!.patch).toContain("-v1_line_0")
+      expect(hit!.patch).toContain("+v2_line_0")
       expect(hit!.additions).toBeGreaterThan(0)
       expect(hit!.deletions).toBeGreaterThan(0)
     },

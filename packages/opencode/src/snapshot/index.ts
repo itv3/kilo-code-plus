@@ -13,6 +13,7 @@ import { Global } from "../global"
 import { Hash } from "../util/hash"
 import { Log } from "../util/log"
 import { DiffEngine } from "../kilocode/snapshot/diff-engine" // kilocode_change
+import { DiffFull } from "../kilocode/snapshot/diff-full" // kilocode_change
 
 export namespace Snapshot {
   export const Patch = z.object({
@@ -721,24 +722,26 @@ export namespace Snapshot {
 
                 for (let i = 0; i < rows.length; i += step) {
                   const run = rows.slice(i, i + step)
+                  // kilocode_change start — bulk-load patches from `git diff` so Myers never runs on the main thread
+                  const patches = yield* DiffFull.batch(
+                    (cmd) => git([...quote, ...args(cmd)], { cwd: state.directory }),
+                    from,
+                    to,
+                    run.filter((r) => !r.binary).map((r) => r.file),
+                  )
+                  // kilocode_change end
                   const text = yield* load(run)
 
                   for (const row of run) {
                     const hit = text?.get(row.file) ?? { before: "", after: "" }
                     const [before, after] = row.binary ? ["", ""] : text ? [hit.before, hit.after] : yield* show(row)
-                    // kilocode_change start — cap runaway inputs so Myers never blocks the event loop
-                    const skipped = row.binary ? undefined : DiffEngine.shouldSkip(before, after)
-                    if (skipped) {
-                      log.warn("diffFull.skipped", {
-                        file: row.file,
-                        reason: skipped,
-                        bytesBefore: before.length,
-                        bytesAfter: after.length,
-                      })
-                    }
+                    // kilocode_change start — prefer the git-diff output; if we have to fall back to Myers,
+                    // cap it so a future git regression can't reintroduce the event-loop freeze
+                    const got = patches.get(row.file)
+                    const capped = !got && !row.binary && DiffEngine.shouldSkip(before, after)
                     result.push({
                       file: row.file,
-                      patch: row.binary || skipped ? "" : patch(row.file, before, after),
+                      patch: row.binary ? "" : (got ?? (capped ? "" : patch(row.file, before, after))),
                       additions: row.additions,
                       deletions: row.deletions,
                       status: row.status,
