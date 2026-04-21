@@ -90,9 +90,12 @@ const markRead = (filepath: string) =>
     yield* ft.read(ctx.sessionID, filepath)
   })
 
-// iconv-lite's utf-16le/utf-16be do not emit a BOM on their own, but this
-// codebase only supports UTF-16 with BOM. Prepend one for fixture files.
+// iconv-lite's UTF codecs don't emit BOMs, but this codebase supports
+// "UTF-X with BOM" as a distinct variant. Prepend one here for fixture files
+// that are meant to have one.
+const UTF8_BOM = "utf-8-bom"
 const encodeBytes = (text: string, encoding: string): Buffer => {
+  if (encoding === UTF8_BOM) return Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), iconv.encode(text, "utf-8")])
   const lower = encoding.toLowerCase()
   if (lower === "utf-16le") return Buffer.concat([Buffer.from([0xff, 0xfe]), iconv.encode(text, encoding)])
   if (lower === "utf-16be") return Buffer.concat([Buffer.from([0xfe, 0xff]), iconv.encode(text, encoding)])
@@ -109,6 +112,10 @@ const putEncoded = (filepath: string, text: string, encoding: string) =>
 const loadDecoded = (filepath: string, encoding: string) =>
   Effect.promise(async () => {
     const bytes = await fs.readFile(filepath)
+    if (encoding === UTF8_BOM) {
+      const stripped = bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
+      return iconv.decode(stripped ? bytes.subarray(3) : bytes, "utf-8")
+    }
     return iconv.decode(bytes, encoding)
   })
 
@@ -131,6 +138,7 @@ describe("tool encoding preservation", () => {
   describe("ReadTool decodes files with non-UTF-8 encodings", () => {
     const cases: Array<[string, string, string]> = [
       ["UTF-8", "utf-8", samples.utf8],
+      ["UTF-8 with BOM", UTF8_BOM, samples.utf8],
       ["UTF-16 LE with BOM", "utf-16le", samples.utf8],
       ["UTF-16 BE with BOM", "utf-16be", samples.utf8],
       ["Shift_JIS", "Shift_JIS", samples.shiftJis],
@@ -176,6 +184,7 @@ describe("tool encoding preservation", () => {
 
   describe("WriteTool preserves existing file encoding when overwriting", () => {
     const cases: Array<[string, string, string]> = [
+      ["UTF-8 with BOM", UTF8_BOM, samples.utf8],
       ["Shift_JIS", "Shift_JIS", samples.shiftJis],
       ["GB2312", "gb2312", samples.gb2312],
       ["Windows-1251", "windows-1251", samples.windows1251],
@@ -219,6 +228,7 @@ describe("tool encoding preservation", () => {
 
   describe("EditTool preserves existing file encoding across edits", () => {
     const cases: Array<[string, string, string, string, string]> = [
+      ["UTF-8 with BOM", UTF8_BOM, samples.utf8 + "\n second line", "world", "earth"],
       ["Shift_JIS", "Shift_JIS", samples.shiftJis, "日本語", "ニホンゴ"],
       ["GB2312", "gb2312", samples.gb2312, "简体中文", "中文简体"],
       ["Windows-1251", "windows-1251", samples.windows1251, "мир", "планета"],

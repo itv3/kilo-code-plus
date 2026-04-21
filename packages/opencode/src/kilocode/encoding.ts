@@ -17,13 +17,26 @@ import iconv from "iconv-lite"
  *  - UTF-32 (extremely rare)
  *
  * Detection strategy:
- *  1. If the bytes are valid UTF-8, treat as UTF-8.
- *  2. Otherwise, trust jschardet. iconv-lite handles BOM stripping on decode
- *     and BOM emission on encode for UTF-16 LE/BE, so explicit BOM handling
- *     is unnecessary.
+ *  1. If the bytes are valid UTF-8, treat as UTF-8 (tracking the presence of a
+ *     BOM so it can be written back).
+ *  2. Otherwise, trust jschardet.
+ *
+ * iconv-lite's UTF codecs strip BOMs on decode and do not emit them on encode,
+ * so UTF BOMs are handled explicitly in {@link encode} to round-trip cleanly.
  */
 export namespace Encoding {
   export const DEFAULT = "utf-8"
+  /**
+   * Synthetic label for UTF-8 files that start with a BOM. iconv-lite's utf-8
+   * codec always strips BOMs on decode and never emits one on encode, so we
+   * track the "with BOM" case explicitly to round-trip it faithfully.
+   */
+  export const UTF8_BOM = "utf-8-bom"
+  const UTF8_BOM_BYTES = Buffer.from([0xef, 0xbb, 0xbf])
+
+  function hasUtf8Bom(bytes: Buffer): boolean {
+    return bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
+  }
 
   /** Remap jschardet labels to iconv-lite compatible names. */
   function normalize(name: string): string {
@@ -72,7 +85,7 @@ export namespace Encoding {
 
   export function detect(bytes: Buffer): string {
     if (bytes.length === 0) return DEFAULT
-    if (isUtf8(bytes)) return DEFAULT
+    if (isUtf8(bytes)) return hasUtf8Bom(bytes) ? UTF8_BOM : DEFAULT
     const result = jschardet.detect(bytes)
     if (!result.encoding) return DEFAULT
     const enc = normalize(result.encoding)
@@ -83,13 +96,15 @@ export namespace Encoding {
   }
 
   export function decode(bytes: Buffer, encoding: string): string {
+    if (encoding === UTF8_BOM) return iconv.decode(bytes, "utf-8")
     return iconv.decode(bytes, encoding)
   }
 
   export function encode(text: string, encoding: string): Buffer {
-    // iconv-lite's utf-16le/utf-16be do not emit a BOM, but UTF-16 without a
-    // BOM is unsupported in this codebase. Prepend the appropriate BOM so the
-    // next detection pass can still recognise the encoding.
+    // iconv-lite's UTF codecs strip/ignore BOMs, but we support "UTF-X with BOM"
+    // as a distinct variant. Prepend the BOM manually so round-tripping keeps
+    // the original byte signature intact.
+    if (encoding === UTF8_BOM) return Buffer.concat([UTF8_BOM_BYTES, iconv.encode(text, "utf-8")])
     const lower = encoding.toLowerCase()
     if (lower === "utf-16le") return Buffer.concat([Buffer.from([0xff, 0xfe]), iconv.encode(text, encoding)])
     if (lower === "utf-16be") return Buffer.concat([Buffer.from([0xfe, 0xff]), iconv.encode(text, encoding)])
