@@ -32,7 +32,7 @@ class QuestionPanel(
     private val controller: SessionController,
 ) : JPanel(BorderLayout()) {
 
-    private lateinit var requestId: String
+    private var requestId: String? = null
 
     init {
         isOpaque = false
@@ -45,8 +45,11 @@ class QuestionPanel(
 
     /** Populate the panel for the first item in [question] and make it visible. */
     fun show(question: Question) {
+        val item = question.items.firstOrNull() ?: run {
+            hidePanel()
+            return
+        }
         requestId = question.id
-        val item = question.items.firstOrNull() ?: return
 
         removeAll()
         add(panel {
@@ -73,16 +76,20 @@ class QuestionPanel(
 
     /** Hide this panel. */
     fun hidePanel() {
+        requestId = null
+        removeAll()
         isVisible = false
     }
 
     private fun reply(answers: List<List<String>>) {
-        controller.replyQuestion(requestId, QuestionReplyDto(answers))
+        val id = requestId ?: return
+        controller.replyQuestion(id, QuestionReplyDto(answers))
         hidePanel()
     }
 
     private fun reject() {
-        controller.rejectQuestion(requestId)
+        val id = requestId ?: return
+        controller.rejectQuestion(id)
         hidePanel()
     }
 }
