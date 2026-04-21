@@ -101,14 +101,9 @@ export const EditTool = Tool.define(
             Effect.gen(function* () {
               if (params.oldString === "") {
                 const existed = yield* afs.existsSafe(filePath)
-                // kilocode_change start - preserve existing file encoding
-                let encoding = "utf-8"
-                if (existed) {
-                  const encoded = yield* EncodedIO.read(filePath)
-                  contentOld = encoded.text
-                  encoding = encoded.encoding
-                }
-                // kilocode_change end
+                const pre = existed ? yield* EncodedIO.read(filePath) : { text: "", encoding: "utf-8" } // kilocode_change
+                contentOld = pre.text // kilocode_change
+                const encoding = pre.encoding // kilocode_change - preserve file encoding on write
                 contentNew = params.newString
                 diff = trimDiff(createTwoFilesPatch(filePath, filePath, contentOld, contentNew))
                 cachedFilediff = buildFileDiff(filePath, contentOld, contentNew) // kilocode_change
@@ -137,11 +132,9 @@ export const EditTool = Tool.define(
               if (!info) throw new Error(`File ${filePath} not found`)
               if (info.type === "Directory") throw new Error(`Path is a directory, not a file: ${filePath}`)
               yield* filetime.assert(ctx.sessionID, filePath)
-              // kilocode_change start - preserve existing file encoding
-              const encoded = yield* EncodedIO.read(filePath)
-              contentOld = encoded.text
-              const encoding = encoded.encoding
-              // kilocode_change end
+              const pre = yield* EncodedIO.read(filePath) // kilocode_change - preserve file encoding
+              contentOld = pre.text // kilocode_change
+              const encoding = pre.encoding // kilocode_change
 
               const ending = detectLineEnding(contentOld)
               const old = convertToLineEnding(normalizeLineEndings(params.oldString), ending)

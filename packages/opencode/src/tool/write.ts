@@ -43,15 +43,9 @@ export const WriteTool = Tool.define(
           yield* assertExternalDirectoryEffect(ctx, filepath)
 
           const exists = yield* fs.existsSafe(filepath)
-          // kilocode_change start - preserve existing file encoding
-          let contentOld = ""
-          let encoding = "utf-8"
-          if (exists) {
-            const encoded = yield* EncodedIO.read(filepath)
-            contentOld = encoded.text
-            encoding = encoded.encoding
-          }
-          // kilocode_change end
+          const pre = exists ? yield* EncodedIO.read(filepath) : { text: "", encoding: "utf-8" } // kilocode_change
+          const contentOld = pre.text // kilocode_change
+          const encoding = pre.encoding // kilocode_change - preserve file encoding on write
           if (exists) yield* filetime.assert(ctx.sessionID, filepath)
 
           const diff = trimDiff(createTwoFilesPatch(filepath, filepath, contentOld, params.content))

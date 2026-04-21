@@ -131,7 +131,6 @@ const samples = {
   eucKr: "안녕하세요, 세계! 한국어 테스트입니다.",
   windows1251: "Привет, мир! Это тест кириллицы.",
   koi8r: "Привет, мир! КОИ-8 Р тест.",
-  latin1: "Caf\u00e9 na\u00efve r\u00e9sum\u00e9 — \u00a3100",
 }
 
 describe("tool encoding preservation", () => {
@@ -152,7 +151,7 @@ describe("tool encoding preservation", () => {
 
     for (const [label, encoding, text] of cases) {
       it.live(`decodes ${label} content for the model`, () =>
-        providEncoded(encoding, text, (filepath) =>
+        provideEncoded(encoding, text, (filepath) =>
           Effect.gen(function* () {
             const result = yield* runRead({ filePath: filepath })
             expect(result.output).toContain(text)
@@ -164,7 +163,7 @@ describe("tool encoding preservation", () => {
 
   describe("ReadTool does not flag non-Latin text files as binary", () => {
     it.live("accepts Shift_JIS", () =>
-      providEncoded("Shift_JIS", samples.shiftJis, (filepath) =>
+      provideEncoded("Shift_JIS", samples.shiftJis, (filepath) =>
         Effect.gen(function* () {
           const result = yield* runRead({ filePath: filepath })
           expect(result.output).toContain(samples.shiftJis)
@@ -173,7 +172,7 @@ describe("tool encoding preservation", () => {
     )
 
     it.live("accepts UTF-16 LE with BOM (contains NUL bytes)", () =>
-      providEncoded("utf-16le", samples.utf8, (filepath) =>
+      provideEncoded("utf-16le", samples.utf8, (filepath) =>
         Effect.gen(function* () {
           const result = yield* runRead({ filePath: filepath })
           expect(result.output).toContain(samples.utf8)
@@ -262,7 +261,9 @@ describe("tool encoding preservation", () => {
       provideTmpdirInstance((dir) =>
         Effect.gen(function* () {
           const filepath = path.join(dir, "doc.txt")
+          const replacement = "日本語"
           const original = "line1\n" + samples.shiftJis + "\nline3\n"
+          const expected = original.replace(samples.shiftJis, replacement)
           yield* putEncoded(filepath, original, "Shift_JIS")
 
           const patch = [
@@ -271,7 +272,7 @@ describe("tool encoding preservation", () => {
             "@@",
             " line1",
             "-" + samples.shiftJis,
-            "+" + samples.eucJp.replace(/[^\u3000-\u30ff\u4e00-\u9fff]/g, ""),
+            "+" + replacement,
             " line3",
             "*** End Patch",
           ].join("\n")
@@ -279,12 +280,11 @@ describe("tool encoding preservation", () => {
           yield* runPatch({ patchText: patch })
 
           const decoded = yield* loadDecoded(filepath, "Shift_JIS")
-          expect(decoded).toContain("line1")
-          expect(decoded).toContain("line3")
+          expect(decoded).toBe(expected)
 
-          // File must still decode as Shift_JIS — UTF-8 bytes would mojibake here.
+          // Bytes must still be Shift_JIS, not silently promoted to UTF-8.
           const bytes = yield* loadBytes(filepath)
-          expect(bytes.includes(Buffer.from([0xe3, 0x81]))).toBe(false)
+          expect(bytes.equals(encodeBytes(expected, "Shift_JIS"))).toBe(true)
         }),
       ),
     )
@@ -303,7 +303,7 @@ describe("tool encoding preservation", () => {
 })
 
 // Shared helper to set up a temp instance with an encoded file at `file.txt`.
-function providEncoded<A, E, R>(encoding: string, text: string, body: (filepath: string) => Effect.Effect<A, E, R>) {
+function provideEncoded<A, E, R>(encoding: string, text: string, body: (filepath: string) => Effect.Effect<A, E, R>) {
   return provideTmpdirInstance((dir) =>
     Effect.gen(function* () {
       const filepath = path.join(dir, "file.txt")

@@ -89,8 +89,8 @@ export namespace Encoding {
     const result = jschardet.detect(bytes)
     if (!result.encoding) return DEFAULT
     const enc = normalize(result.encoding)
-    // Reject unsupported Unicode encodings
-    if (enc.startsWith("utf-32")) return DEFAULT
+    // Reject unsupported Unicode encodings (UTF-32 and anything iconv-lite cannot decode)
+    if (enc.toLowerCase().startsWith("utf-32")) return DEFAULT
     if (!iconv.encodingExists(enc)) return DEFAULT
     return enc
   }
@@ -113,7 +113,7 @@ export namespace Encoding {
 
   /** Read a file, detecting its encoding. */
   export async function read(path: string): Promise<{ text: string; encoding: string }> {
-    const bytes = Buffer.from(await readFile(path))
+    const bytes = await readFile(path)
     const encoding = detect(bytes)
     return { text: decode(bytes, encoding), encoding }
   }

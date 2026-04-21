@@ -237,8 +237,9 @@ export const ReadTool = Tool.define(
 
 // kilocode_change start
 export async function lines(filepath: string, opts: { limit: number; offset: number }) {
-  const encoded = await Encoding.read(filepath)
-  const stream = Readable.from([encoded.text])
+  // kilocode_change end
+  const encoded = await Encoding.read(filepath) // kilocode_change - decode with detected encoding
+  const stream = Readable.from([encoded.text]) // kilocode_change - replaces createReadStream
   const rl = createInterface({
     input: stream,
     // Note: we use the crlfDelay option to recognize all instances of CR LF
@@ -280,10 +281,10 @@ export async function lines(filepath: string, opts: { limit: number; offset: num
 
   return { raw, count, cut, more, offset: opts.offset }
 }
-// kilocode_change end
 
 // kilocode_change start
 export async function isBinaryFile(filepath: string, fileSize: number): Promise<boolean> {
+  // kilocode_change end
   const ext = path.extname(filepath).toLowerCase()
   // binary check for common non-text extensions
   switch (ext) {
@@ -329,12 +330,11 @@ export async function isBinaryFile(filepath: string, fileSize: number): Promise<
     const result = await fh.read(bytes, 0, sampleSize, 0)
     if (result.bytesRead === 0) return false
 
-    // If encoding detection identifies a known text encoding (including UTF-16
-    // LE/BE with BOM or CJK), it's text — not binary. This prevents UTF-16
-    // files with legitimate null bytes from being falsely rejected.
+    // kilocode_change start - treat detected non-UTF-8 text (CJK, UTF-16 with BOM) as text, not binary
     const sample = bytes.subarray(0, result.bytesRead)
     const enc = Encoding.detect(sample)
     if (enc !== "utf-8") return false
+    // kilocode_change end
 
     let nonPrintableCount = 0
     for (let i = 0; i < result.bytesRead; i++) {
@@ -349,4 +349,3 @@ export async function isBinaryFile(filepath: string, fileSize: number): Promise<
     await fh.close()
   }
 }
-// kilocode_change end
