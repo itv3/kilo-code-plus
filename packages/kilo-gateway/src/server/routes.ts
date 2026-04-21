@@ -421,9 +421,19 @@ export function createKiloRoutes(deps: KiloRoutesDeps) {
 
         const response = result.response
         if (!response.ok) {
-          guard.cleanup()
-          const errorText = await response.text()
-          return c.json({ error: `FIM request failed: ${response.status} ${errorText}` }, response.status as any)
+          const error = await response
+            .text()
+            .then((text) => ({ text }))
+            .catch((err) => ({ err }))
+            .finally(() => guard.cleanup())
+          if ("err" in error) {
+            if (!guard.signal.aborted) throw error.err
+            const reason = guard.signal.reason
+            const timed = reason instanceof DOMException && reason.name === "TimeoutError"
+            const status = timed ? 504 : 499
+            return c.json({ error: timed ? "FIM request timed out" : "FIM request canceled" }, status as any)
+          }
+          return c.json({ error: `FIM request failed: ${response.status} ${error.text}` }, response.status as any)
         }
 
         return new Response(stream(response.body, guard.cleanup), {
