@@ -664,6 +664,7 @@
   ],
   "patchedDependencies": {
     "@standard-community/standard-openapi@0.2.9": "patches/@standard-community%2Fstandard-openapi@0.2.9.patch",
+    "stream-chat@9.38.0": "patches/stream-chat@9.38.0.patch",
   },
   "overrides": {
     "@effect/platform-node-shared": "4.0.0-beta.46",
