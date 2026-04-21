@@ -1,7 +1,6 @@
 import z from "zod"
 import * as path from "path"
 import * as fs from "fs/promises"
-import { readFileSync } from "fs"
 import { Log } from "../util/log"
 import { Encoding } from "../kilocode/encoding" // kilocode_change
 
@@ -307,17 +306,17 @@ export namespace Patch {
   interface ApplyPatchFileUpdate {
     unified_diff: string
     content: string
-    encoding: Encoding.Info // kilocode_change
+    encoding: string // kilocode_change
   }
 
   export function deriveNewContentsFromChunks(filePath: string, chunks: UpdateFileChunk[]): ApplyPatchFileUpdate {
     // kilocode_change start - encoding-aware read
     let originalContent: string
-    let enc: Encoding.Info
+    let encoding: string
     try {
       const result = Encoding.readSync(filePath)
       originalContent = result.text
-      enc = result.info
+      encoding = result.encoding
     } catch (error) {
       throw new Error(`Failed to read file ${filePath}: ${error}`)
     }
@@ -346,7 +345,7 @@ export namespace Patch {
     return {
       unified_diff: unifiedDiff,
       content: newContent,
-      encoding: enc, // kilocode_change
+      encoding, // kilocode_change
     }
   }
 
@@ -531,17 +530,10 @@ export namespace Patch {
     const modified: string[] = []
     const deleted: string[] = []
 
-    // kilocode_change start - encoding-aware writes
     for (const hunk of hunks) {
       switch (hunk.type) {
         case "add":
-          // Create parent directories
-          const addDir = path.dirname(hunk.path)
-          if (addDir !== "." && addDir !== "/") {
-            await fs.mkdir(addDir, { recursive: true })
-          }
-
-          await Encoding.write(hunk.path, hunk.contents, Encoding.DEFAULT)
+          await Encoding.write(hunk.path, hunk.contents) // kilocode_change - encoding-aware write
           added.push(hunk.path)
           log.info(`Added file: ${hunk.path}`)
           break
@@ -556,26 +548,20 @@ export namespace Patch {
           const fileUpdate = deriveNewContentsFromChunks(hunk.path, hunk.chunks)
 
           if (hunk.move_path) {
-            // Handle file move
-            const moveDir = path.dirname(hunk.move_path)
-            if (moveDir !== "." && moveDir !== "/") {
-              await fs.mkdir(moveDir, { recursive: true })
-            }
-
+            // kilocode_change start - encoding-aware move
             await Encoding.write(hunk.move_path, fileUpdate.content, fileUpdate.encoding)
             await fs.unlink(hunk.path)
+            // kilocode_change end
             modified.push(hunk.move_path)
             log.info(`Moved file: ${hunk.path} -> ${hunk.move_path}`)
           } else {
-            // Regular update
-            await Encoding.write(hunk.path, fileUpdate.content, fileUpdate.encoding)
+            await Encoding.write(hunk.path, fileUpdate.content, fileUpdate.encoding) // kilocode_change
             modified.push(hunk.path)
             log.info(`Updated file: ${hunk.path}`)
           }
           break
       }
     }
-    // kilocode_change end
 
     return { added, modified, deleted }
   }

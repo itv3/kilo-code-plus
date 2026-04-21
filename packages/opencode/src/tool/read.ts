@@ -318,15 +318,12 @@ export async function isBinaryFile(filepath: string, fileSize: number): Promise<
     if (result.bytesRead === 0) return false
 
     // kilocode_change start - encoding-aware binary detection
+    // If encoding detection identifies a known text encoding (including UTF-16
+    // LE/BE with BOM or CJK), it's text — not binary. This prevents UTF-16
+    // files with legitimate null bytes from being falsely rejected.
     const sample = bytes.subarray(0, result.bytesRead)
-    // If encoding detection recognizes a known text encoding, it's not binary.
-    // This prevents UTF-16 (with null bytes) and CJK encodings from being
-    // falsely flagged as binary.
-    const info = Encoding.detect(sample)
-    if (info.encoding !== "iso-8859-1" && info.encoding !== "utf-8") {
-      // jschardet confidently identified a non-default encoding → text file
-      return false
-    }
+    const enc = Encoding.detect(sample)
+    if (enc !== "utf-8") return false
 
     let nonPrintableCount = 0
     for (let i = 0; i < result.bytesRead; i++) {

@@ -16,6 +16,7 @@ import { trimDiff, buildFileDiff } from "./edit" // kilocode_change
 import { assertExternalDirectoryEffect } from "./external-directory"
 import { filterDiagnostics } from "./diagnostics" // kilocode_change
 import { ConfigValidation } from "../kilocode/config-validation" // kilocode_change
+import { EncodedIO } from "../kilocode/tool/encoded-io" // kilocode_change
 
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5
 
@@ -42,7 +43,15 @@ export const WriteTool = Tool.define(
           yield* assertExternalDirectoryEffect(ctx, filepath)
 
           const exists = yield* fs.existsSafe(filepath)
-          const contentOld = exists ? yield* fs.readFileString(filepath) : ""
+          // kilocode_change start - preserve existing file encoding
+          let contentOld = ""
+          let encoding = "utf-8"
+          if (exists) {
+            const encoded = yield* EncodedIO.read(filepath)
+            contentOld = encoded.text
+            encoding = encoded.encoding
+          }
+          // kilocode_change end
           if (exists) yield* filetime.assert(ctx.sessionID, filepath)
 
           const diff = trimDiff(createTwoFilesPatch(filepath, filepath, contentOld, params.content))
@@ -58,7 +67,7 @@ export const WriteTool = Tool.define(
             },
           })
 
-          yield* fs.writeWithDirs(filepath, params.content)
+          yield* EncodedIO.write(filepath, params.content, encoding) // kilocode_change
           yield* format.file(filepath)
           yield* bus.publish(File.Event.Edited, { file: filepath })
           yield* bus.publish(FileWatcher.Event.Updated, {

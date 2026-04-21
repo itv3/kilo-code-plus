@@ -15,6 +15,7 @@ import DESCRIPTION from "./apply_patch.txt"
 import { File } from "../file"
 import { filterDiagnostics } from "./diagnostics" // kilocode_change
 import { ConfigValidation } from "../kilocode/config-validation" // kilocode_change
+import { EncodedIO } from "../kilocode/tool/encoded-io" // kilocode_change
 import { Format } from "../format"
 
 const PatchParams = z.object({
@@ -61,6 +62,7 @@ export const ApplyPatchTool = Tool.define(
         diff: string
         additions: number
         deletions: number
+        encoding: string // kilocode_change - preserved per-file encoding
       }> = []
 
       let totalDiff = ""
@@ -91,6 +93,7 @@ export const ApplyPatchTool = Tool.define(
               diff,
               additions,
               deletions,
+              encoding: "utf-8", // kilocode_change - new files default to utf-8
             })
 
             totalDiff += diff + "\n"
@@ -106,13 +109,18 @@ export const ApplyPatchTool = Tool.define(
               )
             }
 
-            const oldContent = yield* afs.readFileString(filePath)
+            // kilocode_change start - preserve existing file encoding
+            const readResult = yield* EncodedIO.read(filePath)
+            const oldContent = readResult.text
+            let encoding = readResult.encoding
             let newContent = oldContent
+            // kilocode_change end
 
             // Apply the update chunks to get new content
             try {
               const fileUpdate = Patch.deriveNewContentsFromChunks(filePath, hunk.chunks)
               newContent = fileUpdate.content
+              encoding = fileUpdate.encoding // kilocode_change
             } catch (error) {
               return yield* Effect.fail(new Error(`apply_patch verification failed: ${error}`))
             }
@@ -138,6 +146,7 @@ export const ApplyPatchTool = Tool.define(
               diff,
               additions,
               deletions,
+              encoding, // kilocode_change
             })
 
             totalDiff += diff + "\n"
@@ -145,9 +154,12 @@ export const ApplyPatchTool = Tool.define(
           }
 
           case "delete": {
-            const contentToDelete = yield* afs
-              .readFileString(filePath)
-              .pipe(Effect.catch((error) => Effect.fail(new Error(`apply_patch verification failed: ${error}`))))
+            // kilocode_change start - encoding-aware read
+            const deleteRead = yield* EncodedIO.read(filePath).pipe(
+              Effect.catch((error) => Effect.fail(new Error(`apply_patch verification failed: ${error}`))),
+            )
+            const contentToDelete = deleteRead.text
+            // kilocode_change end
             const deleteDiff = trimDiff(createTwoFilesPatch(filePath, filePath, contentToDelete, ""))
 
             const deletions = contentToDelete.split("\n").length
@@ -160,6 +172,7 @@ export const ApplyPatchTool = Tool.define(
               diff: deleteDiff,
               additions: 0,
               deletions,
+              encoding: deleteRead.encoding, // kilocode_change
             })
 
             totalDiff += deleteDiff + "\n"
@@ -199,22 +212,18 @@ export const ApplyPatchTool = Tool.define(
         const edited = change.type === "delete" ? undefined : (change.movePath ?? change.filePath)
         switch (change.type) {
           case "add":
-            // Create parent directories (recursive: true is safe on existing/root dirs)
-
-            yield* afs.writeWithDirs(change.filePath, change.newContent)
+            yield* EncodedIO.write(change.filePath, change.newContent, change.encoding) // kilocode_change
             updates.push({ file: change.filePath, event: "add" })
             break
 
           case "update":
-            yield* afs.writeWithDirs(change.filePath, change.newContent)
+            yield* EncodedIO.write(change.filePath, change.newContent, change.encoding) // kilocode_change
             updates.push({ file: change.filePath, event: "change" })
             break
 
           case "move":
             if (change.movePath) {
-              // Create parent directories (recursive: true is safe on existing/root dirs)
-
-              yield* afs.writeWithDirs(change.movePath!, change.newContent)
+              yield* EncodedIO.write(change.movePath!, change.newContent, change.encoding) // kilocode_change
               yield* afs.remove(change.filePath)
               updates.push({ file: change.filePath, event: "unlink" })
               updates.push({ file: change.movePath, event: "add" })

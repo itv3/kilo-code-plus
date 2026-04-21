@@ -22,6 +22,7 @@ import { assertExternalDirectoryEffect } from "./external-directory"
 import { AppFileSystem } from "../filesystem"
 import { filterDiagnostics } from "./diagnostics" // kilocode_change
 import { ConfigValidation } from "../kilocode/config-validation" // kilocode_change
+import { EncodedIO } from "../kilocode/tool/encoded-io" // kilocode_change
 
 const MAX_DIFF_CONTENT = 500_000 // kilocode_change
 
@@ -100,7 +101,14 @@ export const EditTool = Tool.define(
             Effect.gen(function* () {
               if (params.oldString === "") {
                 const existed = yield* afs.existsSafe(filePath)
-                if (existed) contentOld = yield* afs.readFileString(filePath) // kilocode_change
+                // kilocode_change start - preserve existing file encoding
+                let encoding = "utf-8"
+                if (existed) {
+                  const encoded = yield* EncodedIO.read(filePath)
+                  contentOld = encoded.text
+                  encoding = encoded.encoding
+                }
+                // kilocode_change end
                 contentNew = params.newString
                 diff = trimDiff(createTwoFilesPatch(filePath, filePath, contentOld, contentNew))
                 cachedFilediff = buildFileDiff(filePath, contentOld, contentNew) // kilocode_change
@@ -114,7 +122,7 @@ export const EditTool = Tool.define(
                     filediff: cachedFilediff, // kilocode_change
                   },
                 })
-                yield* afs.writeWithDirs(filePath, params.newString)
+                yield* EncodedIO.write(filePath, params.newString, encoding) // kilocode_change
                 yield* format.file(filePath)
                 yield* bus.publish(File.Event.Edited, { file: filePath })
                 yield* bus.publish(FileWatcher.Event.Updated, {
@@ -129,7 +137,11 @@ export const EditTool = Tool.define(
               if (!info) throw new Error(`File ${filePath} not found`)
               if (info.type === "Directory") throw new Error(`Path is a directory, not a file: ${filePath}`)
               yield* filetime.assert(ctx.sessionID, filePath)
-              contentOld = yield* afs.readFileString(filePath)
+              // kilocode_change start - preserve existing file encoding
+              const encoded = yield* EncodedIO.read(filePath)
+              contentOld = encoded.text
+              const encoding = encoded.encoding
+              // kilocode_change end
 
               const ending = detectLineEnding(contentOld)
               const old = convertToLineEnding(normalizeLineEndings(params.oldString), ending)
@@ -157,14 +169,14 @@ export const EditTool = Tool.define(
                 },
               })
 
-              yield* afs.writeWithDirs(filePath, contentNew)
+              yield* EncodedIO.write(filePath, contentNew, encoding) // kilocode_change
               yield* format.file(filePath)
               yield* bus.publish(File.Event.Edited, { file: filePath })
               yield* bus.publish(FileWatcher.Event.Updated, {
                 file: filePath,
                 event: "change",
               })
-              contentNew = yield* afs.readFileString(filePath)
+              contentNew = (yield* EncodedIO.read(filePath)).text // kilocode_change
               diff = trimDiff(
                 createTwoFilesPatch(
                   filePath,
