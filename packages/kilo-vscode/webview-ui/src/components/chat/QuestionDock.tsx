@@ -102,6 +102,10 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
 
   const reject = () => {
     if (store.sending) return
+    if (prevAgent !== undefined) {
+      session.selectAgent(prevAgent)
+      prevAgent = undefined
+    }
     setStore("sending", true)
     session.rejectQuestion(props.request.id)
     focusPrompt()

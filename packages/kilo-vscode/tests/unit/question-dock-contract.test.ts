@@ -43,6 +43,18 @@ describe("QuestionDock explicit submit contract", () => {
     expect(pick).toContain("syncAgent(answers, kinds)")
   })
 
+  it("restores the optimistic agent before dismissing a question", () => {
+    const reject = extractBody(source, "reject")
+    expect(reject).toContain("if (prevAgent !== undefined)")
+    expect(reject).toContain("session.selectAgent(prevAgent)")
+    expect(reject).toContain("prevAgent = undefined")
+    const reset = reject.indexOf("prevAgent = undefined")
+    const sending = reject.indexOf('setStore("sending", true)')
+    expect(reset).toBeGreaterThan(-1)
+    expect(sending).toBeGreaterThan(-1)
+    expect(reset, "reject should restore the agent before sending the dismissal").toBeLessThan(sending)
+  })
+
   it("keeps the footer Submit button wired to submit()", () => {
     expect(source).toContain('<Button variant="primary" size="small" onClick={submit} disabled={store.sending}>')
   })
