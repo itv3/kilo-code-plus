@@ -13,6 +13,8 @@ import ai.kilocode.client.session.ui.SessionPanel
 import ai.kilocode.client.session.ui.StatusPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import ai.kilocode.log.ChatLogSummary
+import ai.kilocode.log.KiloLog
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +49,7 @@ class SessionUi(
     companion object {
         private const val STATUS = "status"
         private const val MESSAGES = "messages"
+        private val LOG = KiloLog.create(SessionUi::class.java)
     }
 
     private val controller = SessionController(this, null, sessions, workspace, app, cs)
@@ -162,6 +165,9 @@ class SessionUi(
 
     private fun send(text: String) {
         if (text.isBlank()) return
+        LOG.debug {
+            "${ChatLogSummary.prompt(text)} agent=${controller.model.agent ?: "none"} model=${controller.model.model ?: "none"} ready=${controller.ready}"
+        }
         controller.prompt(text)
         prompt.clear()
     }

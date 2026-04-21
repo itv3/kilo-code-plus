@@ -6,6 +6,7 @@ import ai.kilocode.backend.app.KiloBackendAppService
 import ai.kilocode.backend.app.KiloBackendChatManager
 import ai.kilocode.backend.app.KiloBackendSessionManager
 import ai.kilocode.backend.workspace.KiloBackendWorkspaceManager
+import ai.kilocode.log.ChatLogSummary
 import ai.kilocode.rpc.KiloSessionRpcApi
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
@@ -110,8 +111,8 @@ class KiloSessionRpcApiImpl : KiloSessionRpcApi {
                 is ChatEventDto.TodoUpdated -> event.sessionID
             }
             val passes = sid == null || sid == id
-            if (passes) LOG.debug("session=$id event pass: ${event::class.simpleName}")
-            else LOG.debug("session=$id event skip: ${event::class.simpleName} sid=$sid")
+            if (passes) LOG.debug { "${ChatLogSummary.sid(id)} pass=true ${ChatLogSummary.eventBody(event)}" }
+            else LOG.debug { "${ChatLogSummary.sid(id)} pass=false srcSid=$sid ${ChatLogSummary.eventBody(event)}" }
             passes
         }
 

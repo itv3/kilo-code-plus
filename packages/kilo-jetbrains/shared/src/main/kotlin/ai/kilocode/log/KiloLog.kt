@@ -16,7 +16,8 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 
 interface KiloLog {
-    fun debug(msg: String)
+    val isDebugEnabled: Boolean
+    fun debug(block: () -> String)
     fun info(msg: String)
     fun warn(msg: String, t: Throwable? = null)
     fun error(msg: String, t: Throwable? = null)
@@ -34,7 +35,11 @@ interface KiloLog {
 
 internal class IntellijLog(cls: Class<*>) : KiloLog {
     private val delegate = Logger.getInstance(cls)
-    override fun debug(msg: String) = delegate.debug(msg)
+    override val isDebugEnabled: Boolean
+        get() = delegate.isDebugEnabled
+    override fun debug(block: () -> String) {
+        if (delegate.isDebugEnabled) delegate.debug(block())
+    }
     override fun info(msg: String) = delegate.info(msg)
     override fun warn(msg: String, t: Throwable?) {
         if (t != null) delegate.warn(msg, t) else delegate.warn(msg)
@@ -97,7 +102,12 @@ internal class FileLog(cls: Class<*>) : KiloLog {
         }
     }
 
-    override fun debug(msg: String) = logger.log(Level.FINE, msg)
+    override val isDebugEnabled: Boolean
+        get() = logger.isLoggable(Level.FINE)
+
+    override fun debug(block: () -> String) {
+        if (logger.isLoggable(Level.FINE)) logger.log(Level.FINE, block())
+    }
     override fun info(msg: String) = logger.log(Level.INFO, msg)
     override fun warn(msg: String, t: Throwable?) {
         if (t != null) logger.log(Level.WARNING, msg, t) else logger.log(Level.WARNING, msg)
@@ -143,7 +153,14 @@ internal class KiloFormatter : Formatter() {
 }
 
 internal class CompositeLog(vararg val delegates: KiloLog) : KiloLog {
-    override fun debug(msg: String) = delegates.forEach { it.debug(msg) }
+    override val isDebugEnabled: Boolean
+        get() = delegates.any { it.isDebugEnabled }
+    override fun debug(block: () -> String) {
+        val active = delegates.filter { it.isDebugEnabled }
+        if (active.isEmpty()) return
+        val msg = block()
+        active.forEach { it.debug { msg } }
+    }
     override fun info(msg: String) = delegates.forEach { it.info(msg) }
     override fun warn(msg: String, t: Throwable?) = delegates.forEach { it.warn(msg, t) }
     override fun error(msg: String, t: Throwable?) = delegates.forEach { it.error(msg, t) }

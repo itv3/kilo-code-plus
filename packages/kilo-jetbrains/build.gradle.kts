@@ -74,12 +74,14 @@ tasks.named<JavaExec>("runIde") {
 }
 
 tasks.withType<RunIdeTask> {
-    providers.gradleProperty("kilo.dev.log.level").orNull?.let {
-        systemProperty("kilo.dev.log.level", it)
-    }
+    val level = providers.gradleProperty("kilo.dev.log.level").orNull ?: "DEBUG"
+    val content = providers.gradleProperty("kilo.dev.log.chat.content").orNull ?: "off"
+    val preview = providers.gradleProperty("kilo.dev.log.chat.preview.max").orNull ?: "160"
+    systemProperty("kilo.dev.log.level", level)
+    systemProperty("kilo.dev.log.chat.content", content)
+    systemProperty("kilo.dev.log.chat.preview.max", preview)
 }
 
 tasks.named<Delete>("clean") {
     delete(layout.buildDirectory)
 }
-

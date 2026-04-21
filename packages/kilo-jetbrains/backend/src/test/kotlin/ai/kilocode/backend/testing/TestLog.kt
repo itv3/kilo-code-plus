@@ -7,8 +7,11 @@ import ai.kilocode.log.KiloLog
  */
 class TestLog : KiloLog {
     val messages = mutableListOf<String>()
+    override var isDebugEnabled: Boolean = true
 
-    override fun debug(msg: String) {
+    override fun debug(block: () -> String) {
+        if (!isDebugEnabled) return
+        val msg = block()
         synchronized(messages) { messages.add("DEBUG: $msg") }
         println("[test] DEBUG: $msg")
     }
