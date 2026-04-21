@@ -419,18 +419,28 @@ export namespace PlanFollowup {
             return
           }
 
-          void Instance.provide({
+          const queue = Instance.provide({
             directory: next.directory,
-            fn: () => PlanFollowupRuntime.loop(next.id),
-          }).catch((error) => {
-            log.error("failed to start follow-up session", { sessionID: next.id, error })
-            void idle()
+            fn: async () => {
+              if (ctl.signal.aborted) {
+                await idle()
+                return
+              }
+              await PlanFollowupRuntime.loop(next.id)
+            },
           })
+
+          void queue
+            .catch((error) => {
+              log.error("failed to start follow-up session", { sessionID: next.id, error })
+              void idle()
+            })
+            .finally(() => {
+              if (pending.get(next.id) === ctl) pending.delete(next.id)
+            })
         } catch (error) {
           await idle()
           throw error
-        } finally {
-          if (pending.get(next.id) === ctl) pending.delete(next.id)
         }
       },
     })
