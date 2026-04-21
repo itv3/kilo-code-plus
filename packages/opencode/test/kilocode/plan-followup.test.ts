@@ -13,6 +13,7 @@ import { Session } from "../../src/session"
 import { LLM } from "../../src/session/llm"
 import { MessageV2 } from "../../src/session/message-v2"
 import { AppRuntime } from "../../src/effect/app-runtime"
+import { SessionStatus } from "../../src/session/status"
 import { Todo } from "../../src/session/todo"
 import { Global } from "../../src/global"
 import { Log } from "../../src/util/log"
@@ -1121,6 +1122,86 @@ describe("plan follow-up", () => {
       expect(finalPart.text).toContain("Implement the following plan:")
       expect(finalPart.text).toContain("## Handover from Planning Session")
       expect(finalPart.text).toContain("example")
+    }))
+
+  test("ask - marks new session busy while handover is pending and clears on abort", () =>
+    withInstance(async () => {
+      const seeded = await seed({ text: "1. Build" })
+
+      let followup: SessionID | undefined
+      const states: Array<{ sessionID: SessionID; type: string }> = []
+      const created = Bus.subscribe(Session.Event.Created, (event) => {
+        if (event.properties.info.id === seeded.sessionID) return
+        if (!followup) followup = event.properties.info.id
+      })
+      const status = Bus.subscribe(SessionStatus.Event.Status, (event) => {
+        states.push({ sessionID: event.properties.sessionID, type: event.properties.status.type })
+      })
+
+      const deferred = Promise.withResolvers<string>()
+      const agentSpy = spyOn(PlanFollowupRuntime, "agent").mockResolvedValue(fakeAgent as any)
+      const modelSpy = spyOn(PlanFollowupRuntime, "model").mockResolvedValue(fakeModel)
+      const llmSpy = spyOn(LLM, "stream").mockResolvedValue({
+        text: deferred.promise,
+      } as any)
+      const loop = spyOn(PlanFollowupRuntime, "loop").mockResolvedValue({
+        info: {
+          id: MessageID.make("msg_test"),
+          role: "assistant",
+          sessionID: SessionID.make("ses_test"),
+          time: { created: Date.now() },
+          parentID: MessageID.make("msg_parent"),
+          modelID: ModelID.make("test"),
+          providerID: ProviderID.make("test"),
+          mode: "code",
+          agent: "code",
+          path: { cwd: "/tmp", root: "/tmp" },
+          cost: 0,
+          tokens: { total: 0, input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+        },
+        parts: [],
+      } as MessageV2.WithParts)
+      using _ = {
+        [Symbol.dispose]() {
+          agentSpy.mockRestore()
+          modelSpy.mockRestore()
+          llmSpy.mockRestore()
+          loop.mockRestore()
+          created()
+          status()
+        },
+      }
+
+      const pending = PlanFollowup.ask({
+        sessionID: seeded.sessionID,
+        messages: seeded.messages,
+        abort: AbortSignal.any([]),
+      })
+
+      const item = await waitQuestion(seeded.sessionID)
+      expect(item).toBeDefined()
+      if (!item) return
+      await question.reply({
+        requestID: item.id,
+        answers: [[PlanFollowup.ANSWER_NEW_SESSION]],
+      })
+
+      for (let i = 0; i < 100; i++) {
+        if (followup && states.some((x) => x.sessionID === followup && x.type === "busy")) break
+        await Bun.sleep(10)
+      }
+
+      expect(followup).toBeDefined()
+      if (!followup) return
+      expect(states.some((x) => x.sessionID === followup && x.type === "busy")).toBe(true)
+
+      const { SessionPrompt } = await import("../../src/session/prompt")
+      await SessionPrompt.cancel(followup)
+      deferred.resolve("## Discoveries\n\nexample")
+      await expect(pending).resolves.toBe("break")
+
+      expect(states.some((x) => x.sessionID === followup && x.type === "idle")).toBe(true)
+      expect(loop).not.toHaveBeenCalled()
     }))
 
   test("ask - returns break when assistant text is empty", () =>
