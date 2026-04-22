@@ -4,8 +4,8 @@ import { open } from "fs/promises"
 import * as path from "path"
 import { Readable } from "stream" // kilocode_change
 import { createInterface } from "readline"
-import { Tool } from "./tool"
-import { AppFileSystem } from "../filesystem"
+import * as Tool from "./tool"
+import { AppFileSystem } from "@opencode-ai/shared/filesystem"
 import { LSP } from "../lsp"
 import { FileTime } from "../file/time"
 import DESCRIPTION from "./read.txt"
@@ -195,7 +195,7 @@ export const ReadTool = Tool.define(
         )
       }
 
-      let output = [`<path>${filepath}</path>`, `<type>file</type>`, "<content>" + "\n"].join("\n")
+      let output = [`<path>${filepath}</path>`, `<type>file</type>`, "<content>\n"].join("\n")
       output += file.raw.map((line, i) => `${i + file.offset}: ${line}`).join("\n")
 
       const last = file.offset + file.raw.length - 1
