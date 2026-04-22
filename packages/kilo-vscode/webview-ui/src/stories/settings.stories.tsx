@@ -3,6 +3,7 @@
  * Stories for Settings and ProvidersTab components.
  */
 
+import { onMount } from "solid-js"
 import type { Meta, StoryObj } from "storybook-solidjs-vite"
 import { StoryProviders, mockSessionValue } from "./StoryProviders"
 import { SessionContext } from "../context/session"
