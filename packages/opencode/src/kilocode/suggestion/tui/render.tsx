@@ -33,7 +33,6 @@ export function Suggest(props: {
   InlineTool: (props: InlineProps) => JSX.Element
   BlockTool: (props: BlockProps) => JSX.Element
   pendingRequest?: SuggestionRequest
-  inputFocused?: () => boolean
 }) {
   const { theme } = useTheme()
   const accepted = createMemo(() => props.metadata.accepted)
@@ -62,7 +61,7 @@ export function Suggest(props: {
         }
       </Match>
       <Match when={props.pendingRequest} keyed>
-        {(request) => <SuggestBar request={request} inputFocused={props.inputFocused} />}
+        {(request) => <SuggestBar request={request} />}
       </Match>
       <Match when={true}>
         {(_) =>
