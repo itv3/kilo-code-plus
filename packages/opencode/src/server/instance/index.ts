@@ -50,7 +50,7 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono => {
       .all("/provider/auth", (c) => handler(c.req.raw))
   }
 
-  return app
+  const full = app // kilocode_change
     .route("/question", QuestionRoutes())
     .route("/provider", ProviderRoutes())
     .route("/sync", SyncRoutes())
@@ -299,5 +299,5 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono => {
       },
     )
 
-  return registerKiloRoutes(app) // kilocode_change
+  return registerKiloRoutes(full) // kilocode_change
 }

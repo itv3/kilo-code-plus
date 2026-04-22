@@ -91,6 +91,20 @@ export type EventLspUpdated = {
   }
 }
 
+export type EventInstallationUpdated = {
+  type: "installation.updated"
+  properties: {
+    version: string
+  }
+}
+
+export type EventInstallationUpdateAvailable = {
+  type: "installation.update-available"
+  properties: {
+    version: string
+  }
+}
+
 export type EventTuiPromptAppend = {
   type: "tui.prompt.append"
   properties: {
@@ -199,20 +213,6 @@ export type EventSessionNetworkRestored = {
   }
 }
 
-export type EventInstallationUpdated = {
-  type: "installation.updated"
-  properties: {
-    version: string
-  }
-}
-
-export type EventInstallationUpdateAvailable = {
-  type: "installation.update-available"
-  properties: {
-    version: string
-  }
-}
-
 export type EventMessagePartDelta = {
   type: "message.part.delta"
   properties: {
@@ -221,21 +221,6 @@ export type EventMessagePartDelta = {
     partID: string
     field: string
     delta: string
-  }
-}
-
-export type EventSessionTurnOpen = {
-  type: "session.turn.open"
-  properties: {
-    sessionID: string
-  }
-}
-
-export type EventSessionTurnClose = {
-  type: "session.turn.close"
-  properties: {
-    sessionID: string
-    reason: "completed" | "error" | "interrupted"
   }
 }
 
@@ -265,6 +250,21 @@ export type EventPermissionReplied = {
     sessionID: string
     requestID: string
     reply: "once" | "always" | "reject"
+  }
+}
+
+export type EventSessionTurnOpen = {
+  type: "session.turn.open"
+  properties: {
+    sessionID: string
+  }
+}
+
+export type EventSessionTurnClose = {
+  type: "session.turn.close"
+  properties: {
+    sessionID: string
+    reason: "completed" | "error" | "interrupted"
   }
 }
 
@@ -441,60 +441,13 @@ export type EventQuestionRejected = {
   properties: QuestionRejected
 }
 
-export type Todo = {
-  /**
-   * Brief description of the task
-   */
-  content: string
-  /**
-   * Current status of the task: pending, in_progress, completed, cancelled
-   */
-  status: string
-  /**
-   * Priority level of the task: high, medium, low
-   */
-  priority: string
-}
-
-export type EventTodoUpdated = {
-  type: "todo.updated"
+export type EventCommandExecuted = {
+  type: "command.executed"
   properties: {
+    name: string
     sessionID: string
-    todos: Array<Todo>
-  }
-}
-
-export type SessionStatus =
-  | {
-      type: "idle"
-    }
-  | {
-      type: "retry"
-      attempt: number
-      message: string
-      next: number
-    }
-  | {
-      type: "busy"
-    }
-  | {
-      type: "offline"
-      requestID: string
-      message: string
-    }
-
-export type EventSessionStatus = {
-  type: "session.status"
-  properties: {
-    sessionID: string
-    status: SessionStatus
-  }
-}
-
-export type EventSessionIdle = {
-  type: "session.idle"
-  properties: {
-    sessionID: string
+    arguments: string
+    messageID: string
   }
 }
 
@@ -557,20 +510,60 @@ export type EventSuggestionDismissed = {
   }
 }
 
-export type EventSessionCompacted = {
-  type: "session.compacted"
+export type SessionStatus =
+  | {
+      type: "idle"
+    }
+  | {
+      type: "retry"
+      attempt: number
+      message: string
+      next: number
+    }
+  | {
+      type: "busy"
+    }
+  | {
+      type: "offline"
+      requestID: string
+      message: string
+    }
+
+export type EventSessionStatus = {
+  type: "session.status"
+  properties: {
+    sessionID: string
+    status: SessionStatus
+  }
+}
+
+export type EventSessionIdle = {
+  type: "session.idle"
   properties: {
     sessionID: string
   }
 }
 
-export type EventCommandExecuted = {
-  type: "command.executed"
+export type Todo = {
+  /**
+   * Brief description of the task
+   */
+  content: string
+  /**
+   * Current status of the task: pending, in_progress, completed, cancelled
+   */
+  status: string
+  /**
+   * Priority level of the task: high, medium, low
+   */
+  priority: string
+}
+
+export type EventTodoUpdated = {
+  type: "todo.updated"
   properties: {
-    name: string
     sessionID: string
-    arguments: string
-    messageID: string
+    todos: Array<Todo>
   }
 }
 
@@ -578,6 +571,13 @@ export type EventVcsBranchUpdated = {
   type: "vcs.branch.updated"
   properties: {
     branch?: string
+  }
+}
+
+export type EventSessionCompacted = {
+  type: "session.compacted"
+  properties: {
+    sessionID: string
   }
 }
 
@@ -1271,6 +1271,8 @@ export type GlobalEvent = {
     | EventFileWatcherUpdated
     | EventLspClientDiagnostics
     | EventLspUpdated
+    | EventInstallationUpdated
+    | EventInstallationUpdateAvailable
     | EventTuiPromptAppend
     | EventTuiCommandExecute
     | EventTuiToastShow
@@ -1281,27 +1283,25 @@ export type GlobalEvent = {
     | EventSessionNetworkReplied
     | EventSessionNetworkRejected
     | EventSessionNetworkRestored
-    | EventInstallationUpdated
-    | EventInstallationUpdateAvailable
     | EventMessagePartDelta
-    | EventSessionTurnOpen
-    | EventSessionTurnClose
     | EventPermissionAsked
     | EventPermissionReplied
+    | EventSessionTurnOpen
+    | EventSessionTurnClose
     | EventSessionDiff
     | EventSessionError
     | EventQuestionAsked
     | EventQuestionReplied
     | EventQuestionRejected
-    | EventTodoUpdated
-    | EventSessionStatus
-    | EventSessionIdle
+    | EventCommandExecuted
     | EventSuggestionShown
     | EventSuggestionAccepted
     | EventSuggestionDismissed
-    | EventSessionCompacted
-    | EventCommandExecuted
+    | EventSessionStatus
+    | EventSessionIdle
+    | EventTodoUpdated
     | EventVcsBranchUpdated
+    | EventSessionCompacted
     | EventKiloSessionsRemoteStatusChanged
     | EventWorktreeReady
     | EventWorktreeFailed
@@ -1548,9 +1548,9 @@ export type ProviderConfig = {
            */
           disabled?: boolean
           [key: string]: unknown | boolean | undefined
-        }
+        } | null
       }
-    }
+    } | null
   }
 }
 
@@ -2241,6 +2241,8 @@ export type Event =
   | EventFileWatcherUpdated
   | EventLspClientDiagnostics
   | EventLspUpdated
+  | EventInstallationUpdated
+  | EventInstallationUpdateAvailable
   | EventTuiPromptAppend
   | EventTuiCommandExecute
   | EventTuiToastShow
@@ -2251,27 +2253,25 @@ export type Event =
   | EventSessionNetworkReplied
   | EventSessionNetworkRejected
   | EventSessionNetworkRestored
-  | EventInstallationUpdated
-  | EventInstallationUpdateAvailable
   | EventMessagePartDelta
-  | EventSessionTurnOpen
-  | EventSessionTurnClose
   | EventPermissionAsked
   | EventPermissionReplied
+  | EventSessionTurnOpen
+  | EventSessionTurnClose
   | EventSessionDiff
   | EventSessionError
   | EventQuestionAsked
   | EventQuestionReplied
   | EventQuestionRejected
-  | EventTodoUpdated
-  | EventSessionStatus
-  | EventSessionIdle
+  | EventCommandExecuted
   | EventSuggestionShown
   | EventSuggestionAccepted
   | EventSuggestionDismissed
-  | EventSessionCompacted
-  | EventCommandExecuted
+  | EventSessionStatus
+  | EventSessionIdle
+  | EventTodoUpdated
   | EventVcsBranchUpdated
+  | EventSessionCompacted
   | EventKiloSessionsRemoteStatusChanged
   | EventWorktreeReady
   | EventWorktreeFailed
