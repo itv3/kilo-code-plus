@@ -72,20 +72,6 @@ const DOCS = new Map<string, string[]>([
       "packages/kilo-docs/pages/customize/workflows.md:/docs/img/screenshot-tests/kilo-vscode/visual-regression/settings/agent-behaviour-workflows-chromium-linux.png",
     ],
   ],
-  [
-    "settings--providers-configure",
-    [
-      "packages/kilo-docs/pages/ai-providers/openai-compatible.md:/docs/img/screenshot-tests/kilo-vscode/visual-regression/settings/providers-configure-chromium-linux.png",
-      "packages/kilo-docs/pages/code-with-ai/agents/custom-models.md:/docs/img/screenshot-tests/kilo-vscode/visual-regression/settings/providers-configure-chromium-linux.png",
-    ],
-  ],
-  [
-    "settings--custom-provider-dialog-docs",
-    [
-      "packages/kilo-docs/pages/ai-providers/openai-compatible.md:/docs/img/screenshot-tests/kilo-vscode/visual-regression/settings/custom-provider-dialog-docs-chromium-linux.png",
-      "packages/kilo-docs/pages/code-with-ai/agents/custom-models.md:/docs/img/screenshot-tests/kilo-vscode/visual-regression/settings/custom-provider-dialog-docs-chromium-linux.png",
-    ],
-  ],
 ])
 
 // Generate one test() per story so Playwright's scheduler can distribute
