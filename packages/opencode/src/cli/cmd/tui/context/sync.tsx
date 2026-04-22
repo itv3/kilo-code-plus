@@ -17,7 +17,7 @@ import type {
   ProviderListResponse,
   ProviderAuthMethod,
   VcsInfo,
-} from "@opencode-ai/sdk/v2"
+} from "@kilocode/sdk/v2"
 import { createStore, produce, reconcile } from "solid-js/store"
 import { useProject } from "@tui/context/project"
 import { useEvent } from "@tui/context/event"
@@ -468,7 +468,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       },
       get ready() {
         return true
-        if (process.env.OPENCODE_FAST_BOOT) return true
+        if (process.env.KILO_FAST_BOOT) return true
         return store.status !== "loading"
       },
       get path() {
