@@ -424,12 +424,7 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
   if (!model.capabilities.reasoning) return {}
 
   const id = model.id.toLowerCase()
-  // kilocode_change start: add opus-4.7 (with xhigh effort)
-  const isOpus47 = ["opus-4-7", "opus-4.7"].some((v) => model.api.id.includes(v))
-  const isAnthropicAdaptive =
-    isOpus47 || ["opus-4-6", "opus-4.6", "sonnet-4-6", "sonnet-4.6"].some((v) => model.api.id.includes(v))
-  const adaptiveEfforts = isOpus47 ? ["low", "medium", "high", "xhigh", "max"] : ["low", "medium", "high", "max"]
-  // kilocode_change end
+  const adaptiveEfforts = anthropicAdaptiveEfforts(model.api.id)
 
   if (
     id.includes("deepseek") ||
@@ -988,7 +983,8 @@ export function smallOptions(model: Provider.Model) {
     }
     return { thinkingConfig: { thinkingBudget: 0 } }
   }
-  if (model.providerID === "openrouter") {
+  // kilocode_change - add Kilo Gateway support
+  if (model.providerID === "openrouter" || model.api.npm === "@kilocode/kilo-gateway") {
     if (model.api.id.includes("google")) {
       return { reasoning: { enabled: false } }
     }

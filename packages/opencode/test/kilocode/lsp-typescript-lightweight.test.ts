@@ -80,8 +80,8 @@ describe("typescript lightweight mode", () => {
       expect(src).toContain("native_tsgo")
     })
 
-    test("lsp/index.ts uses TsClient for lightweight diagnostics", async () => {
-      const src = await Bun.file(path.resolve(import.meta.dir, "../../src/lsp/index.ts")).text()
+    test("lsp/lsp.ts uses TsClient for lightweight diagnostics", async () => {
+      const src = await Bun.file(path.resolve(import.meta.dir, "../../src/lsp/lsp.ts")).text()
       expect(src).toContain("TsClient.create")
       expect(src).toContain("KILO_EXPERIMENTAL_LSP_TOOL")
     })
