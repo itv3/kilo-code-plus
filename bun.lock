@@ -32,7 +32,7 @@
     },
     "packages/app": {
       "name": "@opencode-ai/app",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@kilocode/kilo-i18n": "workspace:*",
         "@kilocode/kilo-ui": "workspace:*",
@@ -88,7 +88,7 @@
     },
     "packages/desktop": {
       "name": "@opencode-ai/desktop",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@opencode-ai/app": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
@@ -121,7 +121,7 @@
     },
     "packages/desktop-electron": {
       "name": "@opencode-ai/desktop-electron",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@opencode-ai/app": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
@@ -172,7 +172,7 @@
     },
     "packages/kilo-docs": {
       "name": "@kilocode/kilo-docs",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@docsearch/css": "^4",
         "@docsearch/js": "^4",
@@ -201,8 +201,9 @@
     },
     "packages/kilo-gateway": {
       "name": "@kilocode/kilo-gateway",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
+        "@ai-sdk/alibaba": "1.0.17",
         "@ai-sdk/anthropic": "3.0.71",
         "@ai-sdk/openai": "3.0.48",
         "@ai-sdk/openai-compatible": "2.0.37",
@@ -236,7 +237,7 @@
     },
     "packages/kilo-i18n": {
       "name": "@kilocode/kilo-i18n",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "devDependencies": {
         "@tsconfig/node22": "catalog:",
         "@types/bun": "catalog:",
@@ -249,7 +250,7 @@
     },
     "packages/kilo-telemetry": {
       "name": "@kilocode/kilo-telemetry",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@kilocode/kilo-gateway": "workspace:*",
         "@opentelemetry/api": "1.9.0",
@@ -269,7 +270,7 @@
     },
     "packages/kilo-ui": {
       "name": "@kilocode/kilo-ui",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@kobalte/core": "0.13.11",
         "@opencode-ai/shared": "workspace:*",
@@ -304,7 +305,7 @@
     },
     "packages/kilo-vscode": {
       "name": "kilo-code",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@anthropic-ai/sdk": "^0.39.0",
         "@kilocode/kilo-i18n": "workspace:*",
@@ -359,7 +360,7 @@
     },
     "packages/opencode": {
       "name": "@kilocode/cli",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "bin": {
         "kilo": "./bin/kilo",
         "kilocode": "./bin/kilo",
@@ -512,7 +513,7 @@
     },
     "packages/plugin": {
       "name": "@kilocode/plugin",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@kilocode/sdk": "workspace:*",
         "effect": "catalog:",
@@ -537,7 +538,7 @@
     },
     "packages/script": {
       "name": "@opencode-ai/script",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "semver": "^7.6.3",
       },
@@ -548,7 +549,7 @@
     },
     "packages/sdk/js": {
       "name": "@kilocode/sdk",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "cross-spawn": "catalog:",
       },
@@ -587,7 +588,7 @@
     },
     "packages/storybook": {
       "name": "@opencode-ai/storybook",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "devDependencies": {
         "@opencode-ai/ui": "workspace:*",
         "@solidjs/meta": "catalog:",
@@ -610,7 +611,7 @@
     },
     "packages/ui": {
       "name": "@opencode-ai/ui",
-      "version": "7.2.14",
+      "version": "7.2.17",
       "dependencies": {
         "@kilocode/sdk": "workspace:*",
         "@kobalte/core": "catalog:",
@@ -669,6 +670,7 @@
   ],
   "patchedDependencies": {
     "@standard-community/standard-openapi@0.2.9": "patches/@standard-community%2Fstandard-openapi@0.2.9.patch",
+    "stream-chat@9.38.0": "patches/stream-chat@9.38.0.patch",
   },
   "overrides": {
     "@effect/platform-node-shared": "4.0.0-beta.46",

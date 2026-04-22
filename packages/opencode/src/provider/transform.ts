@@ -7,6 +7,7 @@ import type * as ModelsDev from "./models"
 import { iife } from "@/util/iife"
 import { Flag } from "@/flag/flag"
 import { kiloProviderOptions } from "@/kilocode/provider-options"
+import { isLing } from "@/kilocode/model-match" // kilocode_change
 
 type Modality = NonNullable<ModelsDev.Model["modalities"]>["input"][number]
 
@@ -60,23 +61,23 @@ function normalizeMessages(
   const claude = model.api.id.includes("anthropic") || model.api.id.includes("claude") || model.id.includes("claude")
   if (model.api.npm === "@ai-sdk/anthropic" || (bedrock && claude)) {
     // kilocode_change end
-  msgs = msgs
-    .map((msg) => {
-      if (typeof msg.content === "string") {
-        if (msg.content === "") return undefined
-        return msg
-      }
-      if (!Array.isArray(msg.content)) return msg
-      const filtered = msg.content.filter((part) => {
-        if (part.type === "text" || part.type === "reasoning") {
-          return part.text !== ""
+    msgs = msgs
+      .map((msg) => {
+        if (typeof msg.content === "string") {
+          if (msg.content === "") return undefined
+          return msg
         }
-        return true
+        if (!Array.isArray(msg.content)) return msg
+        const filtered = msg.content.filter((part) => {
+          if (part.type === "text" || part.type === "reasoning") {
+            return part.text !== ""
+          }
+          return true
+        })
+        if (filtered.length === 0) return undefined
+        return { ...msg, content: filtered }
       })
-      if (filtered.length === 0) return undefined
-      return { ...msg, content: filtered }
-    })
-    .filter((msg): msg is ModelMessage => msg !== undefined && msg.content !== "")
+      .filter((msg): msg is ModelMessage => msg !== undefined && msg.content !== "")
   }
 
   if (model.api.id.includes("claude")) {
@@ -371,6 +372,7 @@ export function temperature(model: Provider.Model) {
     }
     return 0.6
   }
+  if (isLing(model.api.id)) return 0.3 // kilocode_change
   return undefined
 }
 
@@ -380,6 +382,7 @@ export function topP(model: Provider.Model) {
   if (["minimax-m2", "gemini", "kimi-k2.5", "kimi-k2p5", "kimi-k2-5"].some((s) => id.includes(s))) {
     return 0.95
   }
+  if (isLing(model.api.id)) return 0.95 // kilocode_change
   return undefined
 }
 
@@ -390,6 +393,7 @@ export function topK(model: Provider.Model) {
     return 20
   }
   if (id.includes("gemini")) return 64
+  if (isLing(model.api.id)) return 20 // kilocode_change
   return undefined
 }
 
@@ -407,7 +411,6 @@ function anthropicAdaptiveEfforts(apiId: string): string[] | null {
 }
 
 export function variants(model: Provider.Model): Record<string, Record<string, any>> {
-
   // kilocode_change start
   if (
     ["@kilocode/kilo-gateway", "@ai-sdk/openai-compatible"].includes(model.api.npm) &&
@@ -443,8 +446,8 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
 
   // see: https://docs.x.ai/docs/guides/reasoning#control-how-hard-the-model-thinks
   if (id.includes("grok") && id.includes("grok-3-mini")) {
-      if (model.api.npm === "@openrouter/ai-sdk-provider" || model.api.npm === "@kilocode/kilo-gateway") {
-        // kilocode_change - add Kilo Gateway support
+    if (model.api.npm === "@openrouter/ai-sdk-provider" || model.api.npm === "@kilocode/kilo-gateway") {
+      // kilocode_change - add Kilo Gateway support
       return {
         low: { reasoning: { effort: "low" } },
         high: { reasoning: { effort: "high" } },
@@ -468,8 +471,13 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
         }
       }
       // kilocode_change end
-      if (!model.id.includes("gpt") && !model.id.includes("gemini-3") && !model.id.includes("claude") 
-        && !model.id.includes("mercury")) return {} // kilocode_change
+      if (
+        !model.id.includes("gpt") &&
+        !model.id.includes("gemini-3") &&
+        !model.id.includes("claude") &&
+        !model.id.includes("mercury")
+      )
+        return {} // kilocode_change
       return Object.fromEntries(OPENAI_EFFORTS.map((effort) => [effort, { reasoning: { effort } }]))
 
     case "@ai-sdk/gateway":
@@ -843,7 +851,7 @@ export function options(input: {
 
   // kilocode_change start
   if (input.model.api.npm === "@openrouter/ai-sdk-provider" || input.model.api.npm === "@kilocode/kilo-gateway") {
-  // kilocode_change end
+    // kilocode_change end
     result["usage"] = {
       include: true,
     }

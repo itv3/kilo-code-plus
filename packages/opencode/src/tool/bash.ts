@@ -61,8 +61,11 @@ const Parameters = z.object({
     .optional(),
   description: z
     .string()
+    .optional() // kilocode_change
     .describe(
-      "Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
+      // kilocode_change start
+      "Recommended: a clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
+      // kilocode_change end
     ),
 })
 
@@ -611,7 +614,7 @@ export const BashTool = Tool.define(
                   cwd,
                   env: yield* shellEnv(ctx, cwd),
                   timeout,
-                  description: params.description,
+                  description: params.description ?? params.command, // kilocode_change
                 },
                 ctx,
               )
