@@ -18,8 +18,7 @@ import { Instance } from "../../src/project/instance"
 import { Server } from "../../src/server/server"
 import { Session } from "../../src/session"
 import { Snapshot } from "../../src/snapshot"
-import { Filesystem } from "../../src/util/filesystem"
-import { Log } from "../../src/util/log"
+import { Filesystem, Log } from "../../src/util"
 import { tmpdir } from "../fixture/fixture"
 
 Log.init({ print: false })
