@@ -1,7 +1,9 @@
 import path from "path"
 import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
+import { Bus } from "../../src/bus"
 import { KiloSessionPromptQueue } from "../../src/kilocode/session/prompt-queue"
+import { Suggestion } from "../../src/kilocode/suggestion"
 import { ModelID, ProviderID } from "../../src/provider/schema"
 import { Instance } from "../../src/project/instance"
 import { Session } from "../../src/session"
@@ -221,6 +223,48 @@ describe("session prompt queue", () => {
     expect(ids[ids.length - 1]).toBe(injected)
   })
 
+  test("retains distinct reserved versions during rapid replacement", async () => {
+    const sessionID = SessionID.make("session_reserve_race")
+    const gate = Promise.withResolvers<void>()
+    const runs: string[] = []
+
+    const one = Effect.runPromise(
+      Effect.gen(function* () {
+        yield* KiloSessionPromptQueue.reserve(sessionID)
+        return yield* KiloSessionPromptQueue.enqueue(
+          sessionID,
+          MessageID.make("message_b"),
+          Effect.promise(() => gate.promise).pipe(Effect.as("b")),
+          Effect.succeed("b-cancelled"),
+        )
+      }),
+    )
+
+    const two = Effect.runPromise(
+      Effect.gen(function* () {
+        yield* KiloSessionPromptQueue.reserve(sessionID)
+        return yield* KiloSessionPromptQueue.enqueue(
+          sessionID,
+          MessageID.make("message_c"),
+          Effect.sync(() => {
+            runs.push("c")
+            return "c"
+          }),
+          Effect.sync(() => {
+            runs.push("c-cancelled")
+            return "c-cancelled"
+          }),
+        )
+      }),
+    )
+
+    gate.resolve()
+
+    expect(await one).toBe("b-cancelled")
+    expect(await two).toBe("c")
+    expect(runs).toEqual(["c"])
+  })
+
   test("cancels the in-flight turn when a new prompt arrives", async () => {
     const ready = Promise.withResolvers<void>()
     const injected = Promise.withResolvers<void>()
@@ -417,5 +461,50 @@ describe("session prompt queue", () => {
     } finally {
       server.stop(true)
     }
+  })
+
+  test("new prompt dismisses a pending suggestion", async () => {
+    const shown = Promise.withResolvers<void>()
+    const dismissed = Promise.withResolvers<void>()
+    await using tmp = await tmpdir({ git: true })
+
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const session = await Session.create({ title: "Suggestion unblock regression" })
+        const offShown = Bus.subscribe(Suggestion.Event.Shown, (event) => {
+          if (event.properties.sessionID === session.id) shown.resolve()
+        })
+        const offDismissed = Bus.subscribe(Suggestion.Event.Dismissed, (event) => {
+          if (event.properties.sessionID === session.id) dismissed.resolve()
+        })
+
+        try {
+          const base = Suggestion.show({
+            sessionID: session.id,
+            text: "Run review?",
+            actions: [{ label: "Review", prompt: "/local-review-uncommitted" }],
+          }).catch((err) => {
+            if (err instanceof Suggestion.DismissedError) return "dismissed"
+            throw err
+          })
+
+          await shown.promise
+          await SessionPrompt.prompt({
+            sessionID: session.id,
+            agent: "code",
+            parts: [{ type: "text", text: "replacement prompt" }],
+            noReply: true,
+          })
+          await dismissed.promise
+
+          expect(await base).toBe("dismissed")
+          expect(await Suggestion.list()).toEqual([])
+        } finally {
+          offShown()
+          offDismissed()
+        }
+      },
+    })
   })
 })

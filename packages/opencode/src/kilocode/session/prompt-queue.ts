@@ -9,6 +9,12 @@ type Slot = {
   readonly tail: Promise<void>
 }
 
+type Reserve = {
+  readonly id: number
+  readonly version: number
+  readonly previous: Promise<void>
+}
+
 type Target = {
   readonly base: MessageID
   readonly extras: ReadonlySet<MessageID>
@@ -18,6 +24,8 @@ export namespace KiloSessionPromptQueue {
   const tails = new Map<SessionID, Promise<void>>()
   const versions = new Map<SessionID, number>()
   const targets = new Map<SessionID, Target>()
+  const reserved = new Map<SessionID, Reserve>()
+  let ids = 0
 
   const version = (sessionID: SessionID) => versions.get(sessionID) ?? 0
   const settle = (promise: Promise<void>) =>
@@ -29,6 +37,20 @@ export namespace KiloSessionPromptQueue {
   export function cancel(sessionID: SessionID) {
     return Effect.sync(() => {
       versions.set(sessionID, version(sessionID) + 1)
+    })
+  }
+
+  export function reserve(sessionID: SessionID) {
+    return Effect.sync(() => {
+      const next = version(sessionID) + 1
+      versions.set(sessionID, next)
+      const slot = {
+        id: ++ids,
+        version: next,
+        previous: tails.get(sessionID) ?? Promise.resolve(),
+      } satisfies Reserve
+      reserved.set(sessionID, slot)
+      return slot
     })
   }
 
@@ -90,12 +112,16 @@ export namespace KiloSessionPromptQueue {
   ): Effect.Effect<A, E> {
     return Effect.acquireUseRelease(
       Effect.sync(() => {
-        const previous = tails.get(sessionID) ?? Promise.resolve()
+        const held = reserved.get(sessionID)
+        const same = !!held && held.previous === tails.get(sessionID) && held.version === version(sessionID)
+        const seed = same ? held : undefined
+        if (seed) reserved.delete(sessionID)
+        const previous = seed?.previous ?? tails.get(sessionID) ?? Promise.resolve()
         const done = Promise.withResolvers<void>()
         // Keep later queued prompts moving; each caller still observes its own failure.
         const tail = settle(previous).then(() => done.promise)
         tails.set(sessionID, tail)
-        return { version: version(sessionID), previous, done, tail } satisfies Slot
+        return { version: seed?.version ?? version(sessionID), previous, done, tail } satisfies Slot
       }),
       (slot) =>
         Effect.promise(() => settle(slot.previous)).pipe(
