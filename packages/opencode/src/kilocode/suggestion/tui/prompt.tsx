@@ -2,18 +2,18 @@
 
 import { useKeyboard } from "@opentui/solid"
 import type { SuggestionRequest } from "@kilocode/sdk/v2"
-import { createMemo, createSignal, For, Show } from "solid-js"
+import { createMemo, createSignal, For } from "solid-js"
 import { SplitBorder } from "../../../cli/cmd/tui/component/border"
 import { useKeybind } from "../../../cli/cmd/tui/context/keybind"
 import { useSDK } from "../../../cli/cmd/tui/context/sdk"
 import { tint, useTheme } from "../../../cli/cmd/tui/context/theme"
 import { useDialog } from "../../../cli/cmd/tui/ui/dialog"
 
-export function SuggestPrompt(props: {
-  request: SuggestionRequest
-  nonBlocking?: boolean
-  inputFocused?: () => boolean
-}) {
+// The footer-mounted overlay only ever hosts blocking suggestions now; the
+// built-in suggest tool emits non-blocking requests that render inline at
+// the tool-part slot via `SuggestBar`. See `./bar.tsx` and the dispatch in
+// `cli/cmd/tui/routes/session/index.tsx`.
+export function SuggestPrompt(props: { request: SuggestionRequest }) {
   const sdk = useSDK()
   const { theme } = useTheme()
   const keybind = useKeybind()
@@ -55,15 +55,12 @@ export function SuggestPrompt(props: {
   useKeyboard((evt) => {
     if (dialog.stack.length > 0) return
     if (evt.defaultPrevented) return
-    const suppressed = props.nonBlocking && props.inputFocused?.()
 
     if (evt.name === "escape") {
       evt.preventDefault()
       reject()
       return
     }
-
-    if (suppressed) return
 
     const total = options().length
     const max = Math.min(total, 9)
@@ -155,23 +152,12 @@ export function SuggestPrompt(props: {
         justifyContent="space-between"
       >
         <box flexDirection="row" gap={2}>
-          <Show
-            when={props.nonBlocking && props.inputFocused?.()}
-            fallback={
-              <>
-                <text fg={theme.text}>
-                  {"↑↓"} <span style={{ fg: theme.textMuted }}>select</span>
-                </text>
-                <text fg={theme.text}>
-                  enter <span style={{ fg: theme.textMuted }}>choose</span>
-                </text>
-              </>
-            }
-          >
-            <text fg={theme.text}>
-              click <span style={{ fg: theme.textMuted }}>choose</span>
-            </text>
-          </Show>
+          <text fg={theme.text}>
+            {"↑↓"} <span style={{ fg: theme.textMuted }}>select</span>
+          </text>
+          <text fg={theme.text}>
+            enter <span style={{ fg: theme.textMuted }}>choose</span>
+          </text>
           <text fg={theme.text}>
             esc <span style={{ fg: theme.textMuted }}>dismiss</span>
           </text>

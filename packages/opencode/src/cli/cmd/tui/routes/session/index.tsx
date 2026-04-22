@@ -159,8 +159,9 @@ export function Session() {
   const nonBlockingQuestions = createMemo(() => questions().filter((q) => q.blocking === false))
   const question = createMemo(() => blockingQuestions()[0] ?? nonBlockingQuestions()[0])
   const blockingSuggestions = createMemo(() => suggestions().filter((s) => s.blocking !== false))
-  const nonBlockingSuggestions = createMemo(() => suggestions().filter((s) => s.blocking === false))
-  const suggestion = createMemo(() => blockingSuggestions()[0] ?? nonBlockingSuggestions()[0])
+  // Footer overlay only hosts blocking suggestions now; non-blocking ones
+  // render inline at the tool-part slot via `SuggestBar`.
+  const blockingSuggestion = createMemo(() => blockingSuggestions()[0])
   const visible = createMemo(
     () =>
       !session()?.parentID &&
@@ -1285,14 +1286,8 @@ export function Session() {
               <Show when={permissions().length === 0 && !question()}>
                 {/* kilocode_change end */}
                 {/* kilocode_change start */}
-                <Show when={suggestion()} keyed>
-                  {(request) => (
-                    <SuggestPrompt
-                      request={request}
-                      nonBlocking={request.blocking === false}
-                      inputFocused={() => prompt?.focused ?? false}
-                    />
-                  )}
+                <Show when={blockingSuggestion()} keyed>
+                  {(request) => <SuggestPrompt request={request} />}
                 </Show>
               </Show>
               <Show when={session()?.parentID}>
@@ -1640,6 +1635,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
 function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMessage }) {
   const ctx = use()
   const sync = useSync()
+  const promptRef = usePromptRef() // kilocode_change - for suggest tool inline bar
 
   // Hide tool if showDetails is false and tool completed successfully
   const shouldHide = createMemo(() => {
@@ -1718,7 +1714,26 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
         </Match>
         {/* kilocode_change start */}
         <Match when={props.part.tool === "suggest"}>
-          <Suggest {...toolprops} InlineTool={InlineTool} BlockTool={BlockTool} />
+          {(() => {
+            const pending = createMemo(() => {
+              const requests = sync.data.suggestion[props.message.sessionID] ?? []
+              return requests.find(
+                (r) =>
+                  r.blocking === false &&
+                  r.tool?.callID === props.part.callID &&
+                  r.tool?.messageID === props.part.messageID,
+              )
+            })
+            return (
+              <Suggest
+                {...toolprops}
+                InlineTool={InlineTool}
+                BlockTool={BlockTool}
+                pendingRequest={pending()}
+                inputFocused={() => promptRef.current?.focused ?? false}
+              />
+            )
+          })()}
         </Match>
         {/* kilocode_change end */}
         <Match when={props.part.tool === "skill"}>

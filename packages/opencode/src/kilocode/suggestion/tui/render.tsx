@@ -2,7 +2,8 @@
 
 import { createMemo, Show, type JSX } from "solid-js"
 import { useTheme } from "../../../cli/cmd/tui/context/theme"
-import type { ToolPart as MessageToolPart } from "@kilocode/sdk/v2"
+import type { SuggestionRequest, ToolPart as MessageToolPart } from "@kilocode/sdk/v2"
+import { SuggestBar } from "./bar"
 
 type InlineProps = {
   icon: string
@@ -31,6 +32,8 @@ export function Suggest(props: {
   part: MessageToolPart
   InlineTool: (props: InlineProps) => JSX.Element
   BlockTool: (props: BlockProps) => JSX.Element
+  pendingRequest?: SuggestionRequest
+  inputFocused?: () => boolean
 }) {
   const { theme } = useTheme()
   const accepted = createMemo(() => props.metadata.accepted)
@@ -52,6 +55,10 @@ export function Suggest(props: {
         </box>
       ),
     })
+  }
+
+  if (props.pendingRequest) {
+    return <SuggestBar request={props.pendingRequest} inputFocused={props.inputFocused} />
   }
 
   return props.InlineTool({
