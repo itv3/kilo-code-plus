@@ -114,7 +114,7 @@ export namespace ServerProxy {
     req: Request,
     workspaceID: WorkspaceID,
   ) {
-    if (!Workspace.isSyncing(workspaceID)) {
+    if (!(await Workspace.isSyncing(workspaceID))) { // kilocode_change missing await
       return new Response(`broken sync connection for workspace: ${workspaceID}`, {
         status: 503,
         headers: {
