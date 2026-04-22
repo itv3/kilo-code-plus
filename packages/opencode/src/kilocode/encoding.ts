@@ -38,6 +38,12 @@ export namespace Encoding {
     return bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
   }
 
+  /** True if `bytes[0..limit]` starts with a UTF-16 LE or BE byte-order mark. */
+  export function hasUtf16Bom(bytes: Buffer, limit = bytes.length): boolean {
+    if (limit < 2) return false
+    return (bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes[0] === 0xfe && bytes[1] === 0xff)
+  }
+
   /** Remap jschardet labels to iconv-lite compatible names. */
   function normalize(name: string): string {
     const lower = name.toLowerCase().replace(/[^a-z0-9]/g, "")

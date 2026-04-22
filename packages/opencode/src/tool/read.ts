@@ -330,10 +330,8 @@ export async function isBinaryFile(filepath: string, fileSize: number): Promise<
     const result = await fh.read(bytes, 0, sampleSize, 0)
     if (result.bytesRead === 0) return false
 
-    // kilocode_change start - treat detected non-UTF-8 text (CJK, UTF-16 with BOM) as text, not binary
-    const sample = bytes.subarray(0, result.bytesRead)
-    const enc = Encoding.detect(sample)
-    if (enc !== "utf-8") return false
+    // kilocode_change start - UTF-16 BOM: NUL bytes are legitimate, skip the NUL/control-char heuristic
+    if (Encoding.hasUtf16Bom(bytes, result.bytesRead)) return false
     // kilocode_change end
 
     let nonPrintableCount = 0

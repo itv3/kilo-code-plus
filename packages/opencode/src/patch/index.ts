@@ -549,7 +549,7 @@ export namespace Patch {
 
           if (hunk.move_path) {
             // Handle file move
-            await Encoding.write(hunk.move_path, fileUpdate.content, fileUpdate.encoding) // kilocode_change
+            await Encoding.write(hunk.move_path, fileUpdate.content, fileUpdate.encoding) // kilocode_change - encoding-aware write (mkdirs)
             await fs.unlink(hunk.path)
             modified.push(hunk.move_path)
             log.info(`Moved file: ${hunk.path} -> ${hunk.move_path}`)
