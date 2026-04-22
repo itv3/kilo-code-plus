@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
+import { Effect } from "effect"
+import { KiloSessionPromptQueue } from "../../src/kilocode/session/prompt-queue"
 import { Instance } from "../../src/project/instance"
 import { Question } from "../../src/question"
-import { SessionID } from "../../src/session/schema"
+import { MessageID, SessionID } from "../../src/session/schema"
 import { tmpdir } from "../fixture/fixture"
 
 describe("Question.dismissAll", () => {
@@ -102,6 +104,70 @@ describe("Question.dismissAll", () => {
       fn: async () => {
         await Question.dismissAll("ses_missing")
         expect(await Question.list()).toEqual([])
+      },
+    })
+  })
+
+  test("ask rejects immediately when a followup is queued on the session", async () => {
+    // When a newer prompt has already been enqueued on the session, a tool
+    // that subsequently calls Question.ask would otherwise block the run until
+    // the user manually dismisses it. Verify the pre-emptive hasFollowup check
+    // rejects with RejectedError before any pending entry is registered.
+    await using tmp = await tmpdir({ git: true })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const sessionID = SessionID.make("ses_auto_ask")
+        const started = Promise.withResolvers<void>()
+        const release = Promise.withResolvers<void>()
+
+        // Slot 1 stays running so activeSince is pinned to its seq.
+        const first = Effect.runPromise(
+          KiloSessionPromptQueue.enqueue(
+            sessionID,
+            MessageID.make("message_ask_1"),
+            Effect.gen(function* () {
+              started.resolve()
+              yield* Effect.promise(() => release.promise)
+              return "first" as const
+            }),
+            Effect.succeed("first-cancelled" as const),
+          ),
+        )
+        await started.promise
+
+        // Slot 2 arrives while slot 1 is active — latest > activeSince.
+        const second = Effect.runPromise(
+          KiloSessionPromptQueue.enqueue(
+            sessionID,
+            MessageID.make("message_ask_2"),
+            Effect.succeed("second" as const),
+            Effect.succeed("second-cancelled" as const),
+          ),
+        )
+        await Bun.sleep(10)
+        expect(KiloSessionPromptQueue.hasFollowup(sessionID)).toBe(true)
+
+        await expect(
+          Question.ask({
+            sessionID,
+            questions: [
+              {
+                header: "Continue?",
+                question: "Should I continue?",
+                options: [
+                  { label: "Yes", description: "Go" },
+                  { label: "No", description: "Stop" },
+                ],
+              },
+            ],
+          }),
+        ).rejects.toBeInstanceOf(Question.RejectedError)
+        expect(await Question.list()).toEqual([])
+
+        release.resolve()
+        expect(await first).toBe("first")
+        expect(await second).toBe("second")
       },
     })
   })

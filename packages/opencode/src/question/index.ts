@@ -8,6 +8,9 @@ import { Log } from "@/util/log"
 import { withStatics } from "@/util/schema"
 import { QuestionID } from "./schema"
 import { makeRuntime } from "@/effect/run-service" // kilocode_change
+// kilocode_change start
+import { KiloSessionPromptQueue } from "@/kilocode/session/prompt-queue"
+// kilocode_change end
 
 export namespace Question {
   const log = Log.create({ service: "question" })
@@ -195,6 +198,15 @@ export namespace Question {
           blocking: input.blocking, // kilocode_change
           tool: input.tool,
         })
+
+        // kilocode_change start — auto-dismiss when a newer prompt is queued on this session,
+        // otherwise a tool that calls Question.ask after the queue event would block the run.
+        if (KiloSessionPromptQueue.hasFollowup(input.sessionID)) {
+          log.info("auto-dismissed — followup queued", { sessionID: input.sessionID })
+          return yield* Effect.fail(new RejectedError())
+        }
+        // kilocode_change end
+
         pending.set(id, { info, deferred })
         yield* bus.publish(Event.Asked, info)
 

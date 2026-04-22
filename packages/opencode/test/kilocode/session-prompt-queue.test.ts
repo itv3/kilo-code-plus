@@ -604,4 +604,136 @@ describe("session prompt queue", () => {
       },
     })
   })
+
+  test("auto-dismisses a suggestion shown after a queued prompt", async () => {
+    // Reverse ordering of the "new prompt dismisses a pending suggestion" test:
+    // queue the follow-up first, then open the blocker. Suggestion.show must see
+    // hasFollowup=true and reject synchronously, before any pending entry or
+    // Shown event is published.
+    await using tmp = await tmpdir({ git: true })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const sessionID = SessionID.make("ses_auto_suggestion")
+        const started = Promise.withResolvers<void>()
+        const release = Promise.withResolvers<void>()
+
+        // Slot 1: active, activeSince snapshots latest=1.
+        const first = Effect.runPromise(
+          KiloSessionPromptQueue.enqueue(
+            sessionID,
+            MessageID.make("message_auto_sug_1"),
+            Effect.gen(function* () {
+              started.resolve()
+              yield* Effect.promise(() => release.promise)
+              return "first" as const
+            }),
+            Effect.succeed("first-cancelled" as const),
+          ),
+        )
+        await started.promise
+
+        // Slot 2: enqueued while slot 1 is active → latest=2 > activeSince=1.
+        const second = Effect.runPromise(
+          KiloSessionPromptQueue.enqueue(
+            sessionID,
+            MessageID.make("message_auto_sug_2"),
+            Effect.succeed("second" as const),
+            Effect.succeed("second-cancelled" as const),
+          ),
+        )
+        await Bun.sleep(10)
+        expect(KiloSessionPromptQueue.hasFollowup(sessionID)).toBe(true)
+
+        let shown = 0
+        const offShown = Bus.subscribe(Suggestion.Event.Shown, (event) => {
+          if (event.properties.sessionID === sessionID) shown++
+        })
+        try {
+          await expect(
+            Suggestion.show({
+              sessionID,
+              text: "Run review?",
+              actions: [{ label: "Review", prompt: "/local-review-uncommitted" }],
+            }),
+          ).rejects.toBeInstanceOf(Suggestion.DismissedError)
+        } finally {
+          offShown()
+        }
+        expect(shown).toBe(0)
+        expect(await Suggestion.list()).toEqual([])
+
+        release.resolve()
+        expect(await first).toBe("first")
+        expect(await second).toBe("second")
+      },
+    })
+  })
+
+  test("auto-dismisses a question shown after a queued prompt", async () => {
+    await using tmp = await tmpdir({ git: true })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const sessionID = SessionID.make("ses_auto_question")
+        const started = Promise.withResolvers<void>()
+        const release = Promise.withResolvers<void>()
+
+        const first = Effect.runPromise(
+          KiloSessionPromptQueue.enqueue(
+            sessionID,
+            MessageID.make("message_auto_q_1"),
+            Effect.gen(function* () {
+              started.resolve()
+              yield* Effect.promise(() => release.promise)
+              return "first" as const
+            }),
+            Effect.succeed("first-cancelled" as const),
+          ),
+        )
+        await started.promise
+
+        const second = Effect.runPromise(
+          KiloSessionPromptQueue.enqueue(
+            sessionID,
+            MessageID.make("message_auto_q_2"),
+            Effect.succeed("second" as const),
+            Effect.succeed("second-cancelled" as const),
+          ),
+        )
+        await Bun.sleep(10)
+        expect(KiloSessionPromptQueue.hasFollowup(sessionID)).toBe(true)
+
+        let asked = 0
+        const offAsked = Bus.subscribe(Question.Event.Asked, (event) => {
+          if (event.properties.sessionID === sessionID) asked++
+        })
+        try {
+          await expect(
+            Question.ask({
+              sessionID,
+              questions: [
+                {
+                  header: "Continue?",
+                  question: "Should I continue?",
+                  options: [
+                    { label: "Yes", description: "Go ahead" },
+                    { label: "No", description: "Stop" },
+                  ],
+                },
+              ],
+            }),
+          ).rejects.toBeInstanceOf(Question.RejectedError)
+        } finally {
+          offAsked()
+        }
+        expect(asked).toBe(0)
+        expect(await Question.list()).toEqual([])
+
+        release.resolve()
+        expect(await first).toBe("first")
+        expect(await second).toBe("second")
+      },
+    })
+  })
 })
