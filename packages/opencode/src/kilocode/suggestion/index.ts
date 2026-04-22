@@ -2,7 +2,7 @@ import { Bus } from "../../bus"
 import { BusEvent } from "../../bus/bus-event"
 import { Identifier } from "../../id/id"
 import { SessionID } from "../../session/schema"
-import { Log } from "../../util/log"
+import { Log } from "../../util"
 import z from "zod"
 import { KiloSessionPromptQueue } from "../session/prompt-queue"
 
