@@ -14,7 +14,6 @@ import { ApplyPatchTool } from "../../src/tool/apply_patch"
 import { Bus } from "../../src/bus"
 import * as CrossSpawnSpawner from "../../src/effect/cross-spawn-spawner"
 import { EditTool } from "../../src/tool/edit"
-import { FileTime } from "../../src/file/time"
 import { Format } from "../../src/format"
 import { Instance } from "../../src/project/instance"
 import { Instruction } from "../../src/session/instruction"
@@ -47,7 +46,6 @@ const it = testEffect(
     Agent.defaultLayer,
     AppFileSystem.defaultLayer,
     CrossSpawnSpawner.defaultLayer,
-    FileTime.defaultLayer,
     Instruction.defaultLayer,
     LSP.defaultLayer,
     Bus.layer,
@@ -84,11 +82,8 @@ const runPatch = (args: Tool.InferParameters<typeof ApplyPatchTool>) =>
     return yield* tool.execute(args, ctx)
   })
 
-const markRead = (filepath: string) =>
-  Effect.gen(function* () {
-    const ft = yield* FileTime.Service
-    yield* ft.read(ctx.sessionID, filepath)
-  })
+// FileTime was removed upstream; edit/write no longer require a prior read.
+const markRead = (_filepath: string) => Effect.void
 
 // iconv-lite's UTF codecs don't emit BOMs, but this codebase supports
 // "UTF-X with BOM" as a distinct variant. Prepend one here for fixture files
