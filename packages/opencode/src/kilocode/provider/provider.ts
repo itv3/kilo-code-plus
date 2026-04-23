@@ -6,12 +6,11 @@
 // This module exports patch functions and data that the upstream provider.ts
 // calls at well-defined injection points (each marked with kilocode_change).
 
-import { createKilo, type KiloProvider } from "@kilocode/kilo-gateway"
+import { createKilo, type KiloProvider, AI_SDK_PROVIDERS, PROMPTS } from "@kilocode/kilo-gateway"
 import { DEFAULT_HEADERS } from "@/kilocode/const"
 import { AiSdkProvider, Prompt } from "@/provider/models"
 import { ProviderID, ModelID } from "@/provider/schema"
-import z from "zod"
-import { Effect } from "effect"
+import { Effect, Schema } from "effect"
 import type { LanguageModelV3 } from "@ai-sdk/provider"
 import { mapValues, omit, pickBy } from "remeda"
 
@@ -32,14 +31,25 @@ export const KILO_BUNDLED_PROVIDERS: Record<string, () => Promise<(options: any)
 }
 
 // ---------------------------------------------------------------------------
-// Model schema extensions  (spread into Provider.Model via .extend())
+// Model schema extensions  (spread into Provider.Model Schema.Struct)
 // ---------------------------------------------------------------------------
 
+/** Accepts any input; returns the value if it matches one of the literals, else undefined.
+ *  Mirrors zod's `.enum(values).optional().catch(undefined)` tolerance for unknown values. */
+function safeEnum<const T extends readonly [string, ...string[]]>(values: T) {
+  const allowed = new Set<string>(values)
+  return Schema.transform(Schema.Unknown, Schema.Union(Schema.Literals(values), Schema.Undefined), {
+    strict: true,
+    decode: (input) => (typeof input === "string" && allowed.has(input) ? (input as T[number]) : undefined),
+    encode: (output) => output,
+  })
+}
+
 export const KILO_MODEL_SCHEMA_EXTENSIONS = {
-  recommendedIndex: z.number().optional(),
-  prompt: Prompt.optional().catch(undefined),
-  isFree: z.boolean().optional(),
-  ai_sdk_provider: AiSdkProvider.optional(),
+  recommendedIndex: Schema.optional(Schema.Number),
+  prompt: Schema.optional(safeEnum(PROMPTS)),
+  isFree: Schema.optional(Schema.Boolean),
+  ai_sdk_provider: Schema.optional(safeEnum(AI_SDK_PROVIDERS)),
 }
 
 // ---------------------------------------------------------------------------
