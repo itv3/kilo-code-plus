@@ -266,11 +266,11 @@ function parse(stdout: string) {
     .flatMap((item) => (item.type === "match" ? [row(item.data)] : []))
 }
 
-declare const OPENCODE_RIPGREP_WORKER_PATH: string
+declare const KILO_RIPGREP_WORKER_PATH: string
 
 function target(): Effect.Effect<string | URL, Error> {
-  if (typeof OPENCODE_RIPGREP_WORKER_PATH !== "undefined") {
-    return Effect.succeed(OPENCODE_RIPGREP_WORKER_PATH)
+  if (typeof KILO_RIPGREP_WORKER_PATH !== "undefined") {
+    return Effect.succeed(KILO_RIPGREP_WORKER_PATH)
   }
   const js = new URL("./ripgrep.worker.js", import.meta.url)
   return Effect.tryPromise({
