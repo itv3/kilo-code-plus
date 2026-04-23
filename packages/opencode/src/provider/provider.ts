@@ -1020,7 +1020,7 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
     release_date: model.release_date,
     variants: {},
   }
-  Object.assign(m, patchKiloModel(provider.id, model)) // kilocode_change
+  Object.assign(base, patchKiloModel(provider.id, model)) // kilocode_change
 
   return {
     ...base,

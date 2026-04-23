@@ -142,6 +142,7 @@ export interface Interface {
   readonly ask: (input: {
     sessionID: SessionID
     questions: ReadonlyArray<Info>
+    blocking?: boolean // kilocode_change
     tool?: Tool
   }) => Effect.Effect<ReadonlyArray<Answer>, RejectedError>
   readonly reply: (input: { requestID: QuestionID; answers: ReadonlyArray<Answer> }) => Effect.Effect<void>

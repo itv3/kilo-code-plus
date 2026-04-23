@@ -34,22 +34,11 @@ export const KILO_BUNDLED_PROVIDERS: Record<string, () => Promise<(options: any)
 // Model schema extensions  (spread into Provider.Model Schema.Struct)
 // ---------------------------------------------------------------------------
 
-/** Accepts any input; returns the value if it matches one of the literals, else undefined.
- *  Mirrors zod's `.enum(values).optional().catch(undefined)` tolerance for unknown values. */
-function safeEnum<const T extends readonly [string, ...string[]]>(values: T) {
-  const allowed = new Set<string>(values)
-  return Schema.transform(Schema.Unknown, Schema.Union(Schema.Literals(values), Schema.Undefined), {
-    strict: true,
-    decode: (input) => (typeof input === "string" && allowed.has(input) ? (input as T[number]) : undefined),
-    encode: (output) => output,
-  })
-}
-
 export const KILO_MODEL_SCHEMA_EXTENSIONS = {
   recommendedIndex: Schema.optional(Schema.Number),
-  prompt: Schema.optional(safeEnum(PROMPTS)),
+  prompt: Schema.optional(Schema.Literals(PROMPTS)),
   isFree: Schema.optional(Schema.Boolean),
-  ai_sdk_provider: Schema.optional(safeEnum(AI_SDK_PROVIDERS)),
+  ai_sdk_provider: Schema.optional(Schema.Literals(AI_SDK_PROVIDERS)),
 }
 
 // ---------------------------------------------------------------------------

@@ -1139,7 +1139,7 @@ export const SessionRoutes = lazy(() =>
         }),
       ),
       async (c) => {
-        const { KiloSessions } = await import("../../kilo-sessions/kilo-sessions")
+        const { KiloSessions } = await import("@/kilo-sessions/kilo-sessions")
         const body = c.req.valid("json")
         KiloSessions.setViewedSessions({ focused: body.focused ?? [], open: body.open ?? [] })
         // kilocode_change end

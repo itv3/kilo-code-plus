@@ -17,12 +17,12 @@ import { errors } from "../../error"
 import { lazy } from "@/util/lazy"
 import { Effect, Option } from "effect"
 import { Agent } from "@/agent/agent"
-import { Snapshot } from "../../snapshot" // kilocode_change
-import { Review } from "../../kilocode/review/review" // kilocode_change
-import { WorktreeDiff } from "../../kilocode/review/worktree-diff" // kilocode_change
-import { WorktreeFamily } from "../../kilocode/worktree-family" // kilocode_change
-import { Log } from "../../util" // kilocode_change
-import { Filesystem } from "../../util" // kilocode_change
+import { Snapshot } from "@/snapshot" // kilocode_change
+import { Review } from "@/kilocode/review/review" // kilocode_change
+import { WorktreeDiff } from "@/kilocode/review/worktree-diff" // kilocode_change
+import { WorktreeFamily } from "@/kilocode/worktree-family" // kilocode_change
+import { Log } from "@/util" // kilocode_change
+import { Filesystem } from "@/util" // kilocode_change
 import path from "path" // kilocode_change
 
 const ConsoleOrgOption = z.object({

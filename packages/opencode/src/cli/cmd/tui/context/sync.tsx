@@ -125,8 +125,6 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
     const sdk = useSDK()
     const toast = useToast() // kilocode_change
 
-    const fullSyncedSessions = new Set<string>() // kilocode_change
-
     // kilocode_change start
     function evict(sessionID: string) {
       // Collect child session IDs so we can evict them too.

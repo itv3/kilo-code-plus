@@ -115,7 +115,6 @@ describe("lsp.spawn", () => {
   // kilocode_change start - Typescript spawn is gated behind KILO_EXPERIMENTAL_LSP_TOOL.
   test("spawns tsgo LSP when KILO_EXPERIMENTAL_LSP_TOOL is enabled", async () => {
     const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
-    // @ts-expect-error - override static flag for test
     Flag.KILO_EXPERIMENTAL_LSP_TOOL = true
     await using tmp = await tmpdir()
 
@@ -138,7 +137,6 @@ describe("lsp.spawn", () => {
         },
       })
     } finally {
-      // @ts-expect-error
       Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
       spawnSpy.mockRestore()
       tsgoSpy.mockRestore()
@@ -147,13 +145,11 @@ describe("lsp.spawn", () => {
 
   test("Typescript.spawn returns undefined when KILO_EXPERIMENTAL_LSP_TOOL is off", async () => {
     const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
-    // @ts-expect-error
     Flag.KILO_EXPERIMENTAL_LSP_TOOL = false
     try {
       const result = await LSPServer.Typescript.spawn("/tmp/any")
       expect(result).toBeUndefined()
     } finally {
-      // @ts-expect-error
       Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
     }
   })
