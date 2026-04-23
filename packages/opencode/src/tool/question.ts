@@ -3,6 +3,7 @@ import { Effect } from "effect"
 import * as Tool from "./tool"
 import { Question } from "../question"
 import DESCRIPTION from "./question.txt"
+import { KiloQuestionTool } from "@/kilocode/tool/question" // kilocode_change
 
 const parameters = z.object({
   questions: z.array(Question.Prompt.zod).describe("Questions to ask"),
@@ -23,24 +24,17 @@ export const QuestionTool = Tool.define<typeof parameters, Metadata, Question.Se
       parameters,
       execute: (params: z.infer<typeof parameters>, ctx: Tool.Context<Metadata>) =>
         Effect.gen(function* () {
-          // kilocode_change start - gracefully surface RejectedError (e.g. from Question.dismissAll
-          // when a new prompt arrives mid-question) as a "dismissed" outcome instead of turning it
-          // into a defect via Effect.orDie, which would kill the in-flight stream.
+          // kilocode_change start - surface Question.dismissAll's RejectedError as a normal
+          // tool result via KiloQuestionTool helpers, so Effect.orDie below does not turn
+          // it into a defect and kill the in-flight stream.
           const answers = yield* question
             .ask({
               sessionID: ctx.sessionID,
               questions: params.questions,
               tool: ctx.callID ? { messageID: ctx.messageID, callID: ctx.callID } : undefined,
             })
-            .pipe(Effect.catchTag("QuestionRejectedError", () => Effect.succeed<"dismissed">("dismissed")))
-          if (answers === "dismissed") {
-            const dismissed: Metadata = { answers: [], dismissed: true }
-            return {
-              title: "Question dismissed",
-              output: "User dismissed the question.",
-              metadata: dismissed,
-            }
-          }
+            .pipe(KiloQuestionTool.catchDismissed)
+          if (KiloQuestionTool.isDismissed(answers)) return KiloQuestionTool.dismissedResult()
           // kilocode_change end
 
           const formatted = params.questions
