@@ -1710,7 +1710,6 @@ export interface SendMessageRequest {
 export interface AbortRequest {
   type: "abort"
   sessionID: string
-  queuedMessageIDs?: string[]
 }
 
 export interface RevertSessionRequest {

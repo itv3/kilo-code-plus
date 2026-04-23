@@ -54,7 +54,7 @@ import { clearCommandsCache, loadCommands } from "./kilo-provider/commands"
 import { fetchMessagePage, MESSAGE_PAGE_LIMIT } from "./kilo-provider/message-page"
 import { childID } from "./kilo-provider/task-session"
 import { handleNetworkEvent, clearNetworkWaits } from "./kilo-provider/network"
-import { abortSession, parseQueued } from "./kilo-provider/abort"
+import { abortSession } from "./kilo-provider/abort"
 import {
   buildAutocompleteSettingsMessage,
   routeAutocompleteMessage,
@@ -622,7 +622,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         }
         case "abort":
           this.cancelRetry(message.sessionID ?? "")
-          await this.handleAbort(message.sessionID, parseQueued(message.queuedMessageIDs))
+          await this.handleAbort(message.sessionID)
           break
         case "revertSession":
           this.handleRevertSession(message.sessionID, message.messageID).catch((e) =>
@@ -2550,7 +2550,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     }
   }
 
-  private async handleAbort(sessionID?: string, queuedMessageIDs: string[] = []): Promise<void> {
+  private async handleAbort(sessionID?: string): Promise<void> {
     if (!this.client) {
       return
     }
@@ -2565,7 +2565,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         client: this.client,
         sessionID: targetSessionID,
         dir: this.getWorkspaceDirectory(targetSessionID),
-        queuedMessageIDs,
       })
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Failed to abort session:", error)
