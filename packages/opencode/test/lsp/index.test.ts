@@ -60,11 +60,14 @@ describe("lsp.spawn", () => {
     ),
   )
 
+  // kilocode_change start - enable flag so spawn() is reached past the TsClient short-circuit
   it.live("would spawn builtin LSP for files inside instance when lsp is true", () =>
     provideTmpdirInstance(
       (dir) =>
         LSP.Service.use((lsp) =>
           Effect.gen(function* () {
+            const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
+            Flag.KILO_EXPERIMENTAL_LSP_TOOL = true
             const spy = spyOn(LSPServer.Typescript, "spawn").mockResolvedValue(undefined)
 
             try {
@@ -75,6 +78,7 @@ describe("lsp.spawn", () => {
               })
               expect(spy).toHaveBeenCalledTimes(1)
             } finally {
+              Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
               spy.mockRestore()
             }
           }),
@@ -88,6 +92,8 @@ describe("lsp.spawn", () => {
       (dir) =>
         LSP.Service.use((lsp) =>
           Effect.gen(function* () {
+            const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
+            Flag.KILO_EXPERIMENTAL_LSP_TOOL = true
             const spy = spyOn(LSPServer.Typescript, "spawn").mockResolvedValue(undefined)
 
             try {
@@ -98,6 +104,7 @@ describe("lsp.spawn", () => {
               })
               expect(spy).toHaveBeenCalledTimes(1)
             } finally {
+              Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
               spy.mockRestore()
             }
           }),
@@ -111,6 +118,7 @@ describe("lsp.spawn", () => {
       },
     ),
   )
+  // kilocode_change end
 
   // kilocode_change start - Typescript spawn is gated behind KILO_EXPERIMENTAL_LSP_TOOL.
   test("spawns tsgo LSP when KILO_EXPERIMENTAL_LSP_TOOL is enabled", async () => {
