@@ -52,6 +52,8 @@ export type AutocompleteRef = {
   onInput: (value: string) => void
   onKeyDown: (e: KeyEvent) => void
   onCursorChange: () => void
+  // kilocode_change - let the prompt close autocomplete without mutating draft text
+  dismiss: () => void
   visible: false | "@" | "/"
 }
 
@@ -487,6 +489,13 @@ export function Autocomplete(props: {
     })
   }
 
+  // kilocode_change start - keep slash text intact when overlays hide the prompt,
+  // but still allow normal autocomplete dismissal to clean it up.
+  function dismiss() {
+    command.keybinds(true)
+    setStore("visible", false)
+  }
+
   function hide() {
     const text = props.input().plainText
     if (store.visible === "/" && !text.endsWith(" ") && text.startsWith("/")) {
@@ -497,15 +506,20 @@ export function Autocomplete(props: {
         draft.input = props.input().plainText
       })
     }
-    command.keybinds(true)
-    setStore("visible", false)
+    dismiss()
   }
+  // kilocode_change end
 
   onMount(() => {
     props.ref({
       get visible() {
         return store.visible
       },
+      // kilocode_change start
+      dismiss() {
+        dismiss()
+      },
+      // kilocode_change end
       onInput(value) {
         if (store.visible) {
           if (
