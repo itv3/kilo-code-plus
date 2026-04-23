@@ -147,6 +147,7 @@ export const EditTool = Tool.define(
               metadata: {
                 filepath: filePath,
                 diff,
+                filediff: cachedFilediff, // kilocode_change
               },
             })
 
