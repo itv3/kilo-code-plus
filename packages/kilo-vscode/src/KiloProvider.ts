@@ -2826,7 +2826,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     await this.extensionContext?.globalState.update("kilo.dismissedNotificationIds", undefined)
 
     // Re-send all settings to the webview so the UI reflects the reset
-    this.sendAutocompleteSettings()
+    this.postMessage(buildAutocompleteSettingsMessage())
     this.sendBrowserSettings()
     this.sendNotificationSettings()
     this.sendTimelineSetting()
@@ -2994,11 +2994,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     }
     this.streams.flush(sessionID)
     this.postMessage(msg)
-  }
-
-  /** Read autocomplete settings from VS Code configuration and push to the webview. */
-  private sendAutocompleteSettings(): void {
-    this.postMessage(buildAutocompleteSettingsMessage())
   }
 
   /** Wait until the webview has sent "webviewReady". Resolves immediately when already ready. */
