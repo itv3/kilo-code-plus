@@ -58,13 +58,15 @@ export class AutocompleteModel {
     // ends the stream. Without this, errors never reach ErrorBackoff.
     let sseError: Error | undefined
 
+    const temp = this.currentModel === "inception/mercury-edit" ? 0 : 0.2
+
     const { stream } = await client.kilo.fim(
       {
         prefix,
         suffix,
         model: this.currentModel,
         maxTokens: 256,
-        temperature: 0.2,
+        temperature: temp,
       },
       {
         signal,
