@@ -812,25 +812,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
             .update("language", message.locale || undefined, vscode.ConfigurationTarget.Global)
           this.connectionService.notifyLanguageChanged(message.locale as string)
           break
-        case "requestAutocompleteSettings":
-          this.sendAutocompleteSettings()
-          break
-        case "updateAutocompleteSetting": {
-          const allowedKeys = new Set([
-            "enableAutoTrigger",
-            "enableSmartInlineTaskKeybinding",
-            "enableChatAutocomplete",
-            "model",
-          ])
-          if (allowedKeys.has(message.key)) {
-            await vscode.workspace
-              .getConfiguration("kilo-code.new.autocomplete")
-              .update(message.key, message.value, vscode.ConfigurationTarget.Global)
-            this.sendAutocompleteSettings()
-            await vscode.commands.executeCommand("kilo-code.new.autocomplete.reload")
-          }
-          break
-        }
         case "requestChatCompletion": {
           if (!this.chatAutocomplete) {
             this.chatAutocomplete = new ChatTextAreaAutocomplete(this.connectionService)
@@ -3013,22 +2994,6 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     }
     this.streams.flush(sessionID)
     this.postMessage(msg)
-  }
-
-  /**
-   * Read autocomplete settings from VS Code configuration and push to the webview.
-   */
-  private sendAutocompleteSettings(): void {
-    const config = vscode.workspace.getConfiguration("kilo-code.new.autocomplete")
-    this.postMessage({
-      type: "autocompleteSettingsLoaded",
-      settings: {
-        enableAutoTrigger: config.get<boolean>("enableAutoTrigger", true),
-        enableSmartInlineTaskKeybinding: config.get<boolean>("enableSmartInlineTaskKeybinding", false),
-        enableChatAutocomplete: config.get<boolean>("enableChatAutocomplete", false),
-        model: config.get<string>("model", "mistralai/codestral-2508"),
-      },
-    })
   }
 
   /** Wait until the webview has sent "webviewReady". Resolves immediately when already ready. */
