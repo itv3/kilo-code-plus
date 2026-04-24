@@ -1,18 +1,6 @@
 /**
  * Regression test for the Slot wrapper in plugin/slots.tsx.
  *
- * PR #9425 introduced a wrapper around the opentui Slot that memoizes the
- * fallback children so stateful defaults (like the session prompt) aren't
- * recreated when props change. The first implementation used an object spread
- * `{...props}` to forward props, which *breaks SolidJS prop reactivity*: every
- * prop except the getter-defined `children` freezes at mount time.
- *
- * Downstream consequence: `ref`, `visible`, `disabled`, `on_submit` stop
- * updating on the session_prompt slot once the outer <Show> no longer gates
- * mounting. That's what made Enter stop submitting after a blocking overlay
- * closed — the prompt ref callback and submit handler were captured against
- * stale closures.
- *
  * This test locks in two things:
  *   1. A static invariant: the wrapper does NOT spread raw props (`...props`),
  *      which would silently reintroduce the regression on refactors.
