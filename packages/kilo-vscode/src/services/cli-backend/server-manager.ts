@@ -73,6 +73,12 @@ export class ServerManager {
         cwd: spawnCwd,
         env: {
           ...process.env,
+          // VS Code's http.proxy / http.noProxy settings are not reflected in
+          // process.env, so spawned children bypass the user's configured proxy
+          // and fail behind corporate firewalls. Forward them as the standard
+          // HTTP_PROXY / HTTPS_PROXY / NO_PROXY env vars that Bun's fetch and
+          // most HTTP clients already respect.
+          ...buildProxyEnv(),
           // Force mimalloc (the allocator Bun ships with) to return freed pages
           // to the OS immediately instead of retaining them in its arenas.
           // Without this, Bun.spawn's piped stdio accumulates ~2 MB of native
@@ -225,6 +231,27 @@ export class ServerStartupError extends Error {
 
 function stripAnsi(str: string): string {
   return str.replace(/\x1b\[[0-9;]*m/g, "")
+}
+
+/**
+ * Translate VS Code's `http.proxy` / `http.noProxy` settings into the standard
+ * HTTP_PROXY / HTTPS_PROXY / NO_PROXY env vars, so the spawned CLI (and any
+ * HTTP client it uses) honors the user's proxy configuration. Returns an empty
+ * object when no proxy is configured, so callers can spread unconditionally.
+ */
+export function buildProxyEnv(): Record<string, string> {
+  const httpConfig = vscode.workspace.getConfiguration("http")
+  const proxy = httpConfig.get<string>("proxy")
+  const noProxy = httpConfig.get<string[]>("noProxy")
+  const env: Record<string, string> = {}
+  if (proxy && proxy.trim() !== "") {
+    env.HTTP_PROXY = proxy
+    env.HTTPS_PROXY = proxy
+  }
+  if (Array.isArray(noProxy) && noProxy.length > 0) {
+    env.NO_PROXY = noProxy.join(",")
+  }
+  return env
 }
 
 export function toErrorMessage(
