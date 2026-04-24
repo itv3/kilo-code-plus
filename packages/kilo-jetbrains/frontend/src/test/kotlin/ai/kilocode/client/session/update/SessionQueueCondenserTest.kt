@@ -1,6 +1,5 @@
-package ai.kilocode.client.session
+package ai.kilocode.client.session.update
 
-import ai.kilocode.client.session.update.SessionQueueCondenser
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.DiffFileDto
 import ai.kilocode.rpc.dto.MessageDto

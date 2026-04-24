@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.ui
 
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.JComponent
@@ -8,7 +9,7 @@ import javax.swing.JPanel
 
 class SessionRootPanel : JLayeredPane() {
 
-    val content = JPanel()
+    val content = JPanel(BorderLayout())
 
     val overlay = Overlay()
 

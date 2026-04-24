@@ -24,29 +24,21 @@ import ai.kilocode.log.KiloLog
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import java.awt.Component
 import java.awt.BorderLayout
-import java.awt.CardLayout
 import javax.swing.BoxLayout
+import javax.swing.BoxLayout.Y_AXIS
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 /**
- * Top-level session UI — a thin composition root.
+ * Top-level session UI composition root.
  *
- * Responsibilities:
- * - Creates and wires [ai.kilocode.client.session.update.SessionController], [SessionMessageListPanel], [EmptySessionPanel],
- *   [ConnectionPanel],
- *   [PromptPanel], [QuestionPanel], [PermissionPanel].
- * - Switches between the status (loading) card and the transcript card via
- *   [ai.kilocode.client.session.update.SessionControllerEvent.ViewChanged].
- * - Keeps [ConnectionPanel] on a transparent overlay layer directly above the
- *   prompt.
- * - Delegates all transcript and dock updates to the panels themselves via
- *   [SessionModelEvent] listeners (no inline rendering logic here).
- * - Scrolls to the bottom on new content.
+ * It builds the session panels, wires controller/model listeners, and swaps the
+ * center body between the empty state and the message list.
  *
- * Views must never call RPC or services directly; everything goes through
- * the controller.
+ * The only custom layout logic kept here is the prompt-relative connection
+ * overlay. All user actions still flow through [SessionController].
  */
 class SessionUi(
     project: Project,
@@ -57,108 +49,127 @@ class SessionUi(
 ) : JPanel(BorderLayout()), Disposable {
 
     companion object {
-        private const val STATUS = "status"
-        private const val MESSAGES = "messages"
         private val LOG = KiloLog.create(SessionUi::class.java)
     }
 
-    private val flushMs = Registry.intValue("kilo.session.flushMs", EVENT_FLUSH_MS.toInt())
-        .takeIf { it > 0 }
-        ?.toLong()
-        ?: EVENT_FLUSH_MS
+    private val project = project
+
+    private val flushMs =
+        Registry.intValue("kilo.session.flushMs", EVENT_FLUSH_MS.toInt())
+            .takeIf { it > 0 }
+            ?.toLong()
+            ?: EVENT_FLUSH_MS
 
     private val controller = SessionController(
-      this, null, sessions, workspace, app, cs, this,
-      flushMs = flushMs,
-      condense = Registry.`is`("kilo.session.condense", true),
+        this, null, sessions, workspace, app, cs, this,
+        flushMs = flushMs,
+        condense = Registry.`is`("kilo.session.condense", true),
     )
 
-    // ------ card switch ------
 
-    private val cards = CardLayout()
-    private val center = JPanel(cards)
+    private lateinit var root: SessionRootPanel
 
-    // ------ status (loading) panel ------
+    private lateinit var sessionContent: JPanel
 
-    private val status = EmptySessionPanel(this)
+    private lateinit var emptyBody: EmptySessionPanel
 
-    // ------ transcript ------
+    private lateinit var messageBody: SessionMessageListPanel
 
-    private val transcript = SessionMessageListPanel(controller.model, this)
+    private lateinit var messageScroll: JBScrollPane
 
-    private val scroll = JBScrollPane(transcript).apply {
-        border = JBUI.Borders.empty()
-        verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-        horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-    }
+    private lateinit var question: QuestionPanel
+    private lateinit var permission: PermissionPanel
+    private lateinit var connection: ConnectionPanel
 
-    // ------ dock panels (above prompt) ------
+    private lateinit var prompt: PromptPanel
 
-    private val question = QuestionPanel(controller)
-    private val permission = PermissionPanel(controller)
-    private val connection = ConnectionPanel(this, controller)
-
-    // ------ prompt ------
-
-    private val prompt = PromptPanel(
-        project = project,
-        onSend = { text -> send(text) },
-        onAbort = { controller.abort() },
-    )
-
-    private val root = SessionRootPanel().apply {
-        content.layout = BorderLayout()
-    }
 
     init {
-        // South area: question dock, permission dock, and prompt stacked vertically.
-        // BoxLayout(Y_AXIS) collapses invisible panels to zero height automatically,
-        // so hiding a dock doesn't leave an empty gap above the prompt.
-        val south = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            isOpaque = false
+        buildUi()
+        bindUi()
+        showBody(emptyBody)
+    }
+
+    private fun buildUi() {
+        root = SessionRootPanel()
+
+        sessionContent = JPanel(BorderLayout())
+
+        emptyBody = EmptySessionPanel(this)
+        messageBody = SessionMessageListPanel(controller.model, this)
+
+        messageScroll = JBScrollPane(messageBody).apply {
+            border = JBUI.Borders.empty()
+            verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+            horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        }
+        question = QuestionPanel(controller)
+        permission = PermissionPanel(controller)
+        connection = ConnectionPanel(this, controller)
+
+        prompt = PromptPanel(
+            project = project,
+            onSend = { text -> sendPrompot(text) },
+            onAbort = { controller.abort() },
+        )
+
+        root.content.add(sessionContent, BorderLayout.CENTER)
+        // Question and permission panels stay in normal flow so the prompt moves
+        // naturally when either dock appears.
+        root.content.add(JPanel().apply {
+            this.layout = BoxLayout(this, Y_AXIS)
             add(question)
             add(permission)
             add(prompt)
-        }
+        }, BorderLayout.SOUTH)
 
-        center.add(status, STATUS)
-        center.add(scroll, MESSAGES)
-        cards.show(center, STATUS)
-
-        root.content.add(center, BorderLayout.CENTER)
-        root.content.add(south, BorderLayout.SOUTH)
+        // Keep connection status visually attached to the prompt without taking
+        // space in the south stack.
         root.addOverlay(connection) { panel, child ->
-            val box = SwingUtilities.convertRectangle(prompt.parent, prompt.bounds, panel)
+            val box = SwingUtilities.convertRectangle(
+                prompt.parent,
+                prompt.bounds,
+                panel
+            )
             val h = child.preferredSize.height
             java.awt.Rectangle(box.x, maxOf(0, box.y - h), box.width, h)
         }
 
         add(root, BorderLayout.CENTER)
+    }
 
-        // ------ picker wiring ------
-
+    private fun bindUi() {
         prompt.mode.onSelect = { item -> controller.selectAgent(item.id) }
         prompt.model.onSelect = picker@{ item ->
             val group = item.group ?: return@picker
             controller.selectModel(group, item.id)
         }
 
-        // ------ controller lifecycle events ------
-
         controller.addListener(this) { event ->
             when (event) {
                 is SessionControllerEvent.WorkspaceReady -> {
                     val m = controller.model
-                    prompt.mode.setItems(m.agents.map { LabelPicker.Item(it.name, it.display) }, m.agent)
-                    val items = m.models.map { LabelPicker.Item(it.id, it.display, it.provider) }
-                    val selected = m.model?.let { full -> items.firstOrNull { "${it.group}/${it.id}" == full }?.id }
+                    prompt.mode.setItems(m.agents.map {
+                        LabelPicker.Item(
+                            it.name,
+                            it.display
+                        )
+                    }, m.agent)
+                    val items = m.models.map {
+                        LabelPicker.Item(
+                            it.id,
+                            it.display,
+                            it.provider
+                        )
+                    }
+                    val selected =
+                        m.model?.let { full -> items.firstOrNull { "${it.group}/${it.id}" == full }?.id }
                     prompt.model.setItems(items, selected)
                     prompt.setReady(m.isReady())
                 }
 
                 is SessionControllerEvent.ViewChanged ->
-                    cards.show(center, if (event.show) MESSAGES else STATUS)
+                    showBody(if (event.show) messageScroll else emptyBody)
 
                 is SessionControllerEvent.AppChanged,
                 is SessionControllerEvent.WorkspaceChanged ->
@@ -166,11 +177,9 @@ class SessionUi(
             }
         }
 
-        // ------ model events — prompt state + dock + auto-scroll ------
-
         controller.model.addListener(this) { event ->
             when (event) {
-                is SessionModelEvent.StateChanged -> onState(event.state)
+                is SessionModelEvent.StateChanged -> onStateChanged(event.state)
 
                 is SessionModelEvent.TurnAdded,
                 is SessionModelEvent.TurnUpdated,
@@ -192,9 +201,7 @@ class SessionUi(
         }
     }
 
-    // ------ private helpers ------
-
-    private fun send(text: String) {
+    private fun sendPrompot(text: String) {
         if (text.isBlank()) return
         LOG.debug {
             "${ChatLogSummary.prompt(text)} agent=${controller.model.agent ?: "none"} model=${controller.model.model ?: "none"} ready=${controller.ready}"
@@ -203,17 +210,19 @@ class SessionUi(
         prompt.clear()
     }
 
-    private fun onState(state: SessionState) {
+    private fun onStateChanged(state: SessionState) {
         prompt.setBusy(state.isBusy())
         when (state) {
             is SessionState.AwaitingQuestion -> {
                 permission.hidePanel()
                 question.show(state.question)
             }
+
             is SessionState.AwaitingPermission -> {
                 question.hidePanel()
                 permission.show(state.permission)
             }
+
             else -> {
                 question.hidePanel()
                 permission.hidePanel()
@@ -224,22 +233,24 @@ class SessionUi(
     }
 
     private fun scrollToBottom() {
-        val bar = scroll.verticalScrollBar
+        val bar = messageScroll.verticalScrollBar
         bar.value = bar.maximum
     }
 
     private fun refresh() {
-        center.revalidate()
-        center.repaint()
-        root.content.revalidate()
-        root.content.repaint()
         root.revalidate()
         root.repaint()
     }
 
-    override fun doLayout() {
-        super.doLayout()
-        root.doLayout()
+    private fun showBody(panel: Component) {
+        if (sessionContent.getComponentCount() == 1 && sessionContent.getComponent(
+                0
+            ) === panel
+        ) return
+        sessionContent.removeAll()
+        sessionContent.add(panel, BorderLayout.CENTER)
+        sessionContent.revalidate()
+        sessionContent.repaint()
     }
 
     override fun dispose() {}

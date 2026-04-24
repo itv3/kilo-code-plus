@@ -1,10 +1,9 @@
-package ai.kilocode.client.session
+package ai.kilocode.client.session.ui
 
 import ai.kilocode.client.session.model.Permission
 import ai.kilocode.client.session.model.PermissionMeta
 import ai.kilocode.client.session.model.SessionModel
 import ai.kilocode.client.session.model.SessionState
-import ai.kilocode.client.session.ui.ProgressPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

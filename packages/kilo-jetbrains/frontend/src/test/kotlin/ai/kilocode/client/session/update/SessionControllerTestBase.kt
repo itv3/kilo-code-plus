@@ -1,4 +1,4 @@
-package ai.kilocode.client.session
+package ai.kilocode.client.session.update
 
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService

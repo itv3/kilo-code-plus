@@ -1,10 +1,9 @@
-package ai.kilocode.client.session
+package ai.kilocode.client.session.update
 
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.model.SessionModelEvent
 import ai.kilocode.client.session.model.SessionState
-import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.DiffFileDto
 import ai.kilocode.rpc.dto.SessionStatusDto

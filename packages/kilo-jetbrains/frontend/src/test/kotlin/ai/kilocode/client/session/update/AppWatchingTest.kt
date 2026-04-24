@@ -1,4 +1,4 @@
-package ai.kilocode.client.session
+package ai.kilocode.client.session.update
 
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto

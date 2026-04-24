@@ -106,7 +106,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         layout()
         assertFalse(question.isVisible)
 
-        controller().model.setState(questionState())
+        controller().model.setState(questionStateChanged())
         layout()
 
         assertTrue(question.isVisible)
@@ -125,7 +125,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         layout()
         assertFalse(permission.isVisible)
 
-        controller().model.setState(permissionState())
+        controller().model.setState(permissionStateChanged())
         layout()
 
         assertTrue(permission.isVisible)
@@ -162,7 +162,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         return field.get(ui) as SessionController
     }
 
-    private fun questionState() = SessionState.AwaitingQuestion(
+    private fun questionStateChanged() = SessionState.AwaitingQuestion(
         Question(
             id = "q1",
             items = listOf(
@@ -177,7 +177,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         )
     )
 
-    private fun permissionState() = SessionState.AwaitingPermission(
+    private fun permissionStateChanged() = SessionState.AwaitingPermission(
         Permission(
             id = "p1",
             sessionId = "ses",

@@ -1,4 +1,4 @@
-package ai.kilocode.client.session
+package ai.kilocode.client.session.update
 
 class ViewSwitchingTest : SessionControllerTestBase() {
 
