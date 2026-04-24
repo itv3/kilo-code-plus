@@ -235,18 +235,27 @@ export namespace KiloSessionPrompt {
 
   /**
    * Returns a shallow-modified copy of `msgs` where every message before the
-   * last user message has its media stripped:
+   * last real user turn has its media stripped:
    *   - `file` parts with an image/PDF MIME become placeholder `text` parts
    *     (same placeholder shape as `toModelMessagesEffect({ stripMedia: true })`).
    *   - Completed assistant `tool` parts keep their non-media attachments but
    *     drop image/PDF attachments.
    *
-   * Media in the last user message (the current turn) is preserved so the
-   * model can still analyse attachments the user just sent. Shallow copies
-   * only — input is never mutated.
+   * The cutoff anchors on the newest user message that carries at least one
+   * non-synthetic part. Synthetic-only user turns — e.g. the `"Summarize the
+   * task tool output above…"` message emitted by `handleSubtask` when a task
+   * command continues a turn, or the auto-compaction continue prompt in
+   * `compaction.process` — do not count as the current turn, so attachments
+   * the user just sent before that handoff are preserved.
+   *
+   * Media in and after the cutoff is left alone so the model can still
+   * analyse attachments the user just sent. Shallow copies only — input is
+   * never mutated.
    */
   export function stripHistoricalMedia(msgs: MessageV2.WithParts[]): MessageV2.WithParts[] {
-    const cutoff = msgs.findLastIndex((m) => m.info.role === "user")
+    const cutoff = msgs.findLastIndex(
+      (m) => m.info.role === "user" && m.parts.some((p) => p.type !== "text" || !p.synthetic),
+    )
     if (cutoff <= 0) return msgs
     return msgs.map((msg, idx) => {
       if (idx >= cutoff) return msg

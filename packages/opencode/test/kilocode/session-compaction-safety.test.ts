@@ -57,6 +57,17 @@ function textPart(messageID: string, text: string, partID = "p_" + messageID): M
   }
 }
 
+function syntheticTextPart(messageID: string, text: string, partID = "p_syn_" + messageID): MessageV2.TextPart {
+  return {
+    id: PartID.make(partID),
+    sessionID,
+    messageID: MessageID.make(messageID),
+    type: "text",
+    text,
+    synthetic: true,
+  }
+}
+
 function filePart(
   messageID: string,
   mime: string,
@@ -330,6 +341,33 @@ describe("KiloSessionPrompt.stripHistoricalMedia", () => {
     expect(input[0].parts).toBe(firstPartsSnapshot)
     expect(input[0].parts[1]).toBe(histImage)
     expect(histImage.type).toBe("file")
+  })
+
+  test("skips synthetic-only user turns when picking the cutoff", () => {
+    // Repro of the handleSubtask() scenario: the real user just attached an
+    // image, then a task command completed and appended the synthetic
+    // "Summarize the task tool output above..." user turn. On the next
+    // runLoop pass the synthetic user must NOT be treated as the current
+    // turn, otherwise the real user's image gets stripped mid-turn.
+    const currentImage = filePart("msg_current", "image/png", "current.png")
+    const msgs = [
+      user("msg_hist", [textPart("msg_hist", "older"), filePart("msg_hist", "image/png", "old.png")]),
+      assistant("msg_a", "msg_hist", [], { finish: "end_turn" }),
+      user("msg_current", [textPart("msg_current", "check this"), currentImage]),
+      assistant("msg_subtask", "msg_current", [], { finish: "tool-calls" }),
+      user("msg_syn", [
+        syntheticTextPart("msg_syn", "Summarize the task tool output above and continue with your task."),
+      ]),
+    ]
+    const result = KiloSessionPrompt.stripHistoricalMedia(msgs)
+    // real current-turn user's image preserved
+    expect(result[2].parts[1]).toBe(currentImage)
+    // older user's image stripped
+    const histFilePart = result[0].parts[1]
+    expect(histFilePart.type).toBe("text")
+    expect((histFilePart as MessageV2.TextPart).text).toBe("[Attached image/png: old.png]")
+    // synthetic user preserved as-is
+    expect(result[4]).toBe(msgs[4])
   })
 })
 
