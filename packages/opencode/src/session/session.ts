@@ -130,17 +130,7 @@ export const Info = z
         additions: z.number(),
         deletions: z.number(),
         files: z.number(),
-        // kilocode_change start - use lightweight diff schema (without before/after file contents)
-        diffs: z
-          .object({
-            file: z.string(),
-            additions: z.number(),
-            deletions: z.number(),
-            status: z.enum(["added", "deleted", "modified"]).optional(),
-          })
-          .array()
-          .optional(),
-        // kilocode_change end
+        diffs: Snapshot.FileDiff.zod.array().optional(),
       })
       .optional(),
     share: z
@@ -254,14 +244,15 @@ export const Event = {
     "session.diff",
     z.object({
       sessionID: SessionID.zod,
-      diff: Snapshot.FileDiff.array(),
+      diff: Snapshot.FileDiff.zod.array(),
     }),
   ),
   Error: BusEvent.define(
     "session.error",
     z.object({
       sessionID: SessionID.zod.optional(),
-      error: MessageV2.Assistant.shape.error,
+      // z.lazy defers access to break circular dep: session → message-v2 → provider → plugin → session
+      error: z.lazy(() => (MessageV2.Assistant.zod as unknown as z.ZodObject<any>).shape.error),
     }),
   ),
   // kilocode_change start
