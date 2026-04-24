@@ -214,7 +214,7 @@ export async function aggregateSessionStats(days?: number, projectFilter?: strin
             }
           }
           sessionModelUsage[modelKey].messages++
-          sessionModelUsage[modelKey].cost += cost
+          sessionModelUsage[modelKey].cost += cost // kilocode_change
 
           if (message.info.tokens) {
             sessionTokens.input += message.info.tokens.input || 0
