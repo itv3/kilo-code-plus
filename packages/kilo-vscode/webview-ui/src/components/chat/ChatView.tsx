@@ -143,7 +143,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const startWorktree = () => vscode.postMessage({ type: "agentManager.createWorktree" })
 
   const startWorktreeFromBranch = () =>
-    vscode.postMessage({ type: "agentManager.createWorktree", baseBranch: repoBranch() || undefined })
+    vscode.postMessage({ type: "agentManager.createWorktree", baseBranch: repoBranch()! })
 
   const openAgentManager = () => vscode.postMessage({ type: "openAgentManager" })
 
@@ -238,7 +238,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
               </Tooltip>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content class="session-worktree-split-menu">
-                  <DropdownMenu.Item onSelect={startWorktreeFromBranch}>
+                  <DropdownMenu.Item disabled={!repoBranch()} onSelect={startWorktreeFromBranch}>
                     <span class="session-worktree-menu-gap" aria-hidden="true" />
                     <DropdownMenu.ItemLabel class="session-worktree-menu-label">
                       <span>{language.t("sidebar.session.newWorktree.from")}</span>

@@ -1539,6 +1539,9 @@ export class AgentManagerProvider implements Disposable {
 
   public async createFromSidebar(baseBranch?: string, branchName?: string): Promise<void> {
     this.openPanel()
+    const panel = this.panel
+    if (!panel) return
+    await panel.waitForReady()
     await this.waitForStateReady("createFromSidebar")
     await this.onCreateWorktree(baseBranch, branchName)
   }
