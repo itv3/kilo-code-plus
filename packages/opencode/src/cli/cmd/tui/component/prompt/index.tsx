@@ -439,13 +439,13 @@ export function Prompt(props: PromptProps) {
     props.ref?.(undefined)
   })
 
+  // kilocode_change start - close autocomplete while blocking overlays hide the prompt
   createEffect(() => {
-    // kilocode_change start - close autocomplete while blocking overlays hide the prompt
     if (props.visible === false || props.disabled) {
       auto()?.dismiss()
     }
-    // kilocode_change end
   })
+  // kilocode_change end
 
   createEffect(() => {
     if (!input || input.isDestroyed) return

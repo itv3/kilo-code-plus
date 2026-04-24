@@ -52,8 +52,9 @@ export type AutocompleteRef = {
   onInput: (value: string) => void
   onKeyDown: (e: KeyEvent) => void
   onCursorChange: () => void
-  // kilocode_change - let the prompt close autocomplete without mutating draft text
+  // kilocode_change start - let the prompt close autocomplete without mutating draft text
   dismiss: () => void
+  // kilocode_change end
   visible: false | "@" | "/"
 }
 
