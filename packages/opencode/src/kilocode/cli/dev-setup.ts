@@ -50,7 +50,7 @@ export const DevSetupCommand = cmd({
     }
 
     const repo = await detectRepo()
-    const shell = (args.shell as Shell | undefined) ?? detectShell()
+    const shell = args.shell ? parse(args.shell) : detectShell()
     const snippet = aliasLine(shell, repo)
 
     if (args.print) {
@@ -143,12 +143,19 @@ export const DevAliasCommand = cmd({
       return
     }
     const repo = await detectRepo()
-    process.stdout.write(aliasLine(args.shell as Shell, repo) + "\n")
+    process.stdout.write(aliasLine(parse(args.shell), repo) + "\n")
   },
 })
 
 const { TEXT_HIGHLIGHT: H, TEXT_NORMAL: N, TEXT_DIM: D, TEXT_SUCCESS: S, TEXT_NORMAL_BOLD: B } = UI.Style
 const Style = UI.Style
+
+function parse(value: unknown): Shell {
+  if (value === "bash") return value
+  if (value === "fish") return value
+  if (value === "powershell") return value
+  return "zsh"
+}
 
 function detectShell(): Shell {
   if (process.platform === "win32") return "powershell"

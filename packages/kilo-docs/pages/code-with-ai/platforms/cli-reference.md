@@ -587,7 +587,7 @@ Options:
       --path         directory path to generate the agent file  [string]
       --description  what the agent should do  [string]
       --mode         agent mode  [string] [choices: "all", "primary", "subagent"]
-      --tools        comma-separated list of tools to enable (default: all). Available: "bash, read, write, edit, list, glob, grep, webfetch, task, todowrite"  [string]
+      --tools        comma-separated list of tools to enable (default: all). Available: "bash, read, write, edit, glob, grep, webfetch, task, todowrite"  [string]
   -m, --model        model to use in the format of provider/model  [string]
 ```
 
@@ -824,6 +824,21 @@ check configuration for warnings and errors
 Options:
   --help     Show help  [boolean]
   --version  Show version number  [boolean]
+```
+
+## kilo dev-setup
+
+```
+install a `kilodev` shell alias for this checkout
+
+Options:
+      --help     Show help  [boolean]
+      --version  Show version number  [boolean]
+      --shell    shell flavor (auto-detected from $SHELL)  [string] [choices: "zsh", "bash", "fish", "powershell"]
+      --rc       rc file to modify (auto-detected)  [string]
+  -y, --yes      skip confirmation  [boolean] [default: false]
+      --print    just print the snippet, do not modify any file  [boolean] [default: false]
+      --dry-run  show what would change without writing  [boolean] [default: false]
 ```
 
 ## kilo plugin

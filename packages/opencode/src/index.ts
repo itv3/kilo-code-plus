@@ -87,12 +87,13 @@ const args = hideBin(process.argv)
 
 function show(out: string) {
   const text = out.trimStart()
+  const end = out.endsWith(EOL) ? "" : EOL // kilocode_change - keep shell prompt on the next line
   if (!text.startsWith("opencode ")) {
     process.stderr.write(UI.logo() + EOL + EOL)
-    process.stderr.write(text)
+    process.stderr.write(text + end)
     return
   }
-  process.stderr.write(out)
+  process.stderr.write(out + end)
 }
 
 let cli = yargs(args) // kilocode_change
