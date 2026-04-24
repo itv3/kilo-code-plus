@@ -235,6 +235,7 @@ for (const item of targets) {
       KILO_RIPGREP_WORKER_PATH: rgPath,
       KILO_CHANNEL: `'${Script.channel}'`,
       KILO_LIBC: item.os === "linux" ? `'${item.abi ?? "glibc"}'` : "",
+      KILO_BUILD_KIND: Script.release ? `'release'` : `'source'`, // kilocode_change
     },
   })
 

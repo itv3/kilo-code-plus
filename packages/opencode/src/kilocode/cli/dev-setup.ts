@@ -4,7 +4,6 @@ import { existsSync } from "fs"
 import { mkdir } from "fs/promises"
 import { fileURLToPath } from "url"
 import { cmd } from "@/cli/cmd/cmd"
-import { Installation } from "@/installation"
 import { UI } from "@/cli/ui"
 
 type Shell = "zsh" | "bash" | "fish" | "powershell"
@@ -43,13 +42,8 @@ export const DevSetupCommand = cmd({
         default: false,
       }),
   handler: async (args) => {
-    if (!Installation.isLocal()) {
-      UI.error("dev-setup only works when running from a source checkout (./bin/kilodev)")
-      process.exitCode = 1
-      return
-    }
-
-    const repo = await detectRepo()
+    const repo = await safeDetectRepo()
+    if (!repo) return
     const shell = args.shell ? parse(args.shell) : detectShell()
     const snippet = aliasLine(shell, repo)
 
@@ -137,15 +131,21 @@ export const DevAliasCommand = cmd({
       default: "zsh",
     }),
   handler: async (args) => {
-    if (!Installation.isLocal()) {
-      UI.error("dev-alias only works when running from a source checkout (./bin/kilodev)")
-      process.exitCode = 1
-      return
-    }
-    const repo = await detectRepo()
+    const repo = await safeDetectRepo()
+    if (!repo) return
     process.stdout.write(aliasLine(parse(args.shell), repo) + "\n")
   },
 })
+
+async function safeDetectRepo(): Promise<string | undefined> {
+  try {
+    return await detectRepo()
+  } catch (err) {
+    UI.error(err instanceof Error ? err.message : String(err))
+    process.exitCode = 1
+    return undefined
+  }
+}
 
 const { TEXT_HIGHLIGHT: H, TEXT_NORMAL: N, TEXT_DIM: D, TEXT_SUCCESS: S, TEXT_NORMAL_BOLD: B } = UI.Style
 const Style = UI.Style
@@ -262,15 +262,56 @@ function stamp(): string {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
 }
 
-async function detectRepo(): Promise<string> {
-  const hint = process.env.KILO_DEV_REPO
-  if (hint) return hint
-  const walk = async (dir: string): Promise<string> => {
+// Walk up from `start` until we find a directory containing
+// packages/opencode/package.json. Exported for test coverage.
+export async function findRepoFrom(start: string): Promise<string | undefined> {
+  let dir = start
+  while (true) {
     const candidate = path.join(dir, "packages", "opencode", "package.json")
     if (await Bun.file(candidate).exists()) return dir
     const parent = path.dirname(dir)
-    if (parent === dir) throw new Error("cannot locate repo root")
-    return walk(parent)
+    if (parent === dir) return undefined
+    dir = parent
   }
-  return walk(path.dirname(fileURLToPath(import.meta.url)))
+}
+
+// bunfs single-file executable virtual roots — `import.meta.url` points here,
+// which is not a real on-disk path and must be skipped.
+function isBunfsPath(p: string): boolean {
+  if (p.startsWith("/$bunfs/")) return true
+  // Windows bunfs root, e.g. `B:/~BUN/root/...`. Drive letter may be any case.
+  if (/^[A-Za-z]:[\\/]~BUN[\\/]/.test(p)) return true
+  return false
+}
+
+// Exported for test coverage.
+export async function detectRepo(): Promise<string> {
+  const hint = process.env.KILO_DEV_REPO
+  if (hint) return hint
+
+  const candidates: string[] = []
+
+  const meta = (() => {
+    try {
+      return fileURLToPath(import.meta.url)
+    } catch {
+      return undefined
+    }
+  })()
+  if (meta && !isBunfsPath(meta)) candidates.push(path.dirname(meta))
+
+  // process.execPath points at the binary itself; walk up from its directory.
+  // For a local build it's <repo>/packages/opencode/dist/<target>/bin/kilo, so
+  // findRepoFrom eventually hits the repo's packages/opencode/package.json.
+  if (process.execPath) candidates.push(path.dirname(process.execPath))
+  candidates.push(process.cwd())
+
+  for (const start of candidates) {
+    const found = await findRepoFrom(start)
+    if (found) return found
+  }
+
+  throw new Error(
+    "cannot locate kilocode source checkout; set KILO_DEV_REPO=/path/to/kilocode or run ./bin/kilodev dev-setup from the repo",
+  )
 }

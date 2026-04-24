@@ -15,7 +15,7 @@ import { UninstallCommand } from "./cli/cmd/uninstall"
 import { ModelsCommand } from "./cli/cmd/models"
 import { UI } from "./cli/ui"
 import { Installation } from "./installation"
-import { InstallationVersion } from "./installation/version"
+import { InstallationBuildKind, InstallationVersion } from "./installation/version" // kilocode_change - add InstallationBuildKind
 import { NamedError } from "@opencode-ai/shared/util/error"
 import { FormatError } from "./cli/error"
 import { ServeCommand } from "./cli/cmd/serve"
@@ -237,10 +237,14 @@ let cli = yargs(args) // kilocode_change
   .command(SessionCommand)
   .command(RemoteCommand) // kilocode_change
   .command(ConfigCLICommand) // kilocode_change
-  .command(DevSetupCommand) // kilocode_change
-  .command(DevAliasCommand) // kilocode_change
   .command(PluginCommand)
   .command(DbCommand)
+
+// kilocode_change start - dev-only commands are hidden from release builds
+if (InstallationBuildKind !== "release") {
+  cli = cli.command(DevSetupCommand).command(DevAliasCommand)
+}
+// kilocode_change end
 
 // kilocode_change start - registered after initial chain to avoid self-referential type error
 cli = cli.command(createHelpCommand(() => cli))
