@@ -826,21 +826,6 @@ Options:
   --version  Show version number  [boolean]
 ```
 
-## kilo dev-setup
-
-```
-install a `kilodev` shell alias for this checkout
-
-Options:
-      --help     Show help  [boolean]
-      --version  Show version number  [boolean]
-      --shell    shell flavor (auto-detected from $SHELL)  [string] [choices: "zsh", "bash", "fish", "powershell"]
-      --rc       rc file to modify (auto-detected)  [string]
-  -y, --yes      skip confirmation  [boolean] [default: false]
-      --print    just print the snippet, do not modify any file  [boolean] [default: false]
-      --dry-run  show what would change without writing  [boolean] [default: false]
-```
-
 ## kilo plugin
 
 ```
