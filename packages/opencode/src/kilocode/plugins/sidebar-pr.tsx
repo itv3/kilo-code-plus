@@ -34,97 +34,89 @@ function wait(ms: number, signal: AbortSignal) {
 
 async function lookup(cwd: string, branch: string): Promise<Pr | null> {
   const ctrl = new AbortController()
-  const timer = wait(15_000, ctrl.signal).then(() => ctrl.abort())
-  const ok = await probeGh(cwd, ctrl.signal).finally(() => ctrl.abort())
-  await timer.catch(() => undefined)
-  if (!ok) return null
+  const deadline = wait(20_000, ctrl.signal).then(() => ctrl.abort())
 
-  // Try the tracking ref first (works when PR was checked out via `gh pr checkout`
-  // or when the branch's upstream is a fork). Fall back to an explicit branch
-  // lookup (works for same-repo branches pushed to origin).
-  const build = (b?: string) => {
-    const a = ["gh", "pr", "view"]
-    if (b) a.push(b)
-    a.push("--json", "number,title")
-    return a
-  }
-  for (const cmd of [build(), build(branch)]) {
-    const ctrl = new AbortController()
-    const timer = wait(15_000, ctrl.signal).then(() => ctrl.abort())
-    const res = await Process.text(cmd, {
-      cwd,
-      abort: ctrl.signal,
-      nothrow: true,
-      timeout: 1_000,
-    }).finally(() => ctrl.abort())
-    await timer.catch(() => undefined)
-    if (res.code !== 0) continue
-    const text = res.text.trim()
-    if (!text) continue
-    const data = JSON.parse(text) as Partial<Pr>
-    if (typeof data.number === "number" && typeof data.title === "string") {
-      return { number: data.number, title: data.title }
+  try {
+    if (!(await probeGh(cwd, ctrl.signal))) return null
+
+    // Try the tracking ref first (works when PR was checked out via `gh pr checkout`
+    // or when the branch's upstream is a fork). Fall back to an explicit branch
+    // lookup (works for same-repo branches pushed to origin).
+    const build = (b?: string) => {
+      const a = ["gh", "pr", "view"]
+      if (b) a.push(b)
+      a.push("--json", "number,title")
+      return a
     }
-  }
-
-  return await lookupBySha(cwd)
-}
-
-async function lookupBySha(cwd: string): Promise<Pr | null> {
-  const head = await (async () => {
-    const ctrl = new AbortController()
-    const timer = wait(15_000, ctrl.signal).then(() => ctrl.abort())
-    const res = await Process.text(["git", "rev-parse", "HEAD"], {
-      cwd,
-      abort: ctrl.signal,
-      nothrow: true,
-      timeout: 1_000,
-    }).finally(() => ctrl.abort())
-    await timer.catch(() => undefined)
-    if (res.code !== 0) return ""
-    return res.text.trim()
-  })()
-  if (!head) return null
-
-  {
-    const ctrl = new AbortController()
-    const timer = wait(15_000, ctrl.signal).then(() => ctrl.abort())
-    const res = await Process.text(
-      [
-        "gh",
-        "pr",
-        "list",
-        "--state",
-        "all",
-        "--search",
-        `${head} is:pr`,
-        "--limit",
-        "5",
-        "--json",
-        "number,title,headRefOid",
-      ],
-      {
+    for (const cmd of [build(), build(branch)]) {
+      const res = await Process.text(cmd, {
         cwd,
         abort: ctrl.signal,
         nothrow: true,
         timeout: 1_000,
-      },
-    ).finally(() => ctrl.abort())
-    await timer.catch(() => undefined)
-    if (res.code !== 0) return null
-
-    const text = res.text.trim()
-    if (!text) return null
-
-    const items = JSON.parse(text) as Array<Partial<Pr> & { headRefOid?: string }>
-    if (!Array.isArray(items) || items.length === 0) return null
-
-    // Only accept a PR whose HEAD matches ours exactly — avoids returning a
-    // random PR that merely references the SHA in a commit message.
-    for (const item of items) {
-      if (item.headRefOid === head && typeof item.number === "number" && typeof item.title === "string") {
-        return { number: item.number, title: item.title }
+      })
+      if (res.code !== 0) continue
+      const text = res.text.trim()
+      if (!text) continue
+      const data = JSON.parse(text) as Partial<Pr>
+      if (typeof data.number === "number" && typeof data.title === "string") {
+        return { number: data.number, title: data.title }
       }
+    }
+
+    return await lookupBySha(cwd, ctrl.signal)
+  } finally {
+    ctrl.abort()
+    await deadline.catch(() => undefined)
+  }
+}
+
+async function lookupBySha(cwd: string, signal: AbortSignal): Promise<Pr | null> {
+  const sha = await Process.text(["git", "rev-parse", "HEAD"], {
+    cwd,
+    abort: signal,
+    nothrow: true,
+    timeout: 1_000,
+  })
+  if (sha.code !== 0) return null
+
+  const head = sha.text.trim()
+  if (!head) return null
+
+  const res = await Process.text(
+    [
+      "gh",
+      "pr",
+      "list",
+      "--state",
+      "all",
+      "--search",
+      `${head} is:pr`,
+      "--limit",
+      "5",
+      "--json",
+      "number,title,headRefOid",
+    ],
+    {
+      cwd,
+      abort: signal,
+      nothrow: true,
+      timeout: 1_000,
+    },
+  )
+  if (res.code !== 0) return null
+
+  const text = res.text.trim()
+  if (!text) return null
+
+  const items = JSON.parse(text) as Array<Partial<Pr> & { headRefOid?: string }>
+  if (!Array.isArray(items) || items.length === 0) return null
+
+  // Only accept a PR whose HEAD matches ours exactly — avoids returning a
+  // random PR that merely references the SHA in a commit message.
+  for (const item of items) {
+    if (item.headRefOid === head && typeof item.number === "number" && typeof item.title === "string") {
+      return { number: item.number, title: item.title }
     }
   }
 
@@ -164,7 +156,9 @@ function View(props: { api: TuiPluginApi }) {
   })
 
   const [pr] = createResource(key, async (k) => {
+    if (!k) return null
     const [d, b] = k.split("\0")
+    if (!d || !b) return null
     return lookup(d, b).catch(() => null)
   })
 
