@@ -1,5 +1,6 @@
 import path from "path"
 import os from "os"
+import { mkdir } from "fs/promises"
 import { fileURLToPath } from "url"
 import { cmd } from "@/cli/cmd/cmd"
 import { Installation } from "@/installation"
@@ -209,6 +210,7 @@ async function applyBlock(rc: string, snippet: string): Promise<{ created: boole
   const prev = exists ? await file.text() : ""
   const block = `${MARKER_START}\n${snippet}\n${MARKER_END}\n`
 
+  if (!exists) await mkdir(path.dirname(rc), { recursive: true })
   await Bun.write(rc, replaceOrAppend(prev, block))
   if (!exists) return { created: true }
 
