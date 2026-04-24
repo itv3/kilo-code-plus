@@ -45,7 +45,7 @@ import { resolveProjectDirectory } from "./project-directory"
 import { getBusySessionCount, seedSessionStatuses } from "./session-status"
 import { retry } from "./services/cli-backend/retry"
 import { slimPart, slimParts } from "./kilo-provider/slim-metadata"
-import { handleContinueInWorktree } from "./kilo-provider/continue-worktree"
+import { handleSidebarWorktreeMessage } from "./kilo-provider/sidebar-worktree"
 import { parseMessageFiles, type MessageFile } from "./kilo-provider/message-files"
 import { handleFileSearch } from "./kilo-provider/file-search"
 import { getTerminalContents } from "./services/terminal/context"
@@ -586,6 +586,20 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       await routeSuggestionWebviewMessage(this.questionCtx, message)
       if (await ModelState.handleMessage(message.type, message, this.client, (msg) => this.postMessage(msg))) return
       if (await routeAutocompleteMessage(message, (msg) => this.postMessage(msg))) return
+      if (
+        await handleSidebarWorktreeMessage(message, {
+          post: (msg) => this.postMessage(msg),
+          openAgentManager: () => vscode.commands.executeCommand("kilo-code.new.agentManagerOpen"),
+          openAdvancedWorktree: () => vscode.commands.executeCommand("kilo-code.new.agentManager.advancedWorktree"),
+          openChanges: () => vscode.commands.executeCommand("kilo-code.new.showChanges"),
+          createWorktree: async (baseBranch, branchName) => {
+            await this.createWorktreeHandler?.(baseBranch, branchName)
+          },
+          continueInWorktree: this.continueInWorktreeHandler ?? undefined,
+        })
+      ) {
+        return
+      }
       switch (message.type) {
         case "webviewReady":
           console.log("[Kilo New] KiloProvider: ✅ webviewReady received")
@@ -707,37 +721,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "openMarketplacePanel":
           vscode.commands.executeCommand("kilo-code.new.marketplaceButtonClicked", this.projectDirectory)
           break
-        case "openAgentManager":
-          vscode.commands.executeCommand("kilo-code.new.agentManagerOpen")
-          break
-        case "openAdvancedWorktree":
-          vscode.commands.executeCommand("kilo-code.new.agentManager.advancedWorktree")
-          break
-        case "agentManager.requestRepoInfo": {
-          const root = getWorkspaceRoot()
-          if (!root) break
-          const git = new GitOps({ log: () => {} })
-          const branch = await git.currentBranch(root).catch(() => "")
-          git.dispose()
-          if (!branch || branch === "HEAD") break
-          this.postMessage({ type: "agentManager.repoInfo", branch })
-          break
-        }
-        case "agentManager.createWorktree":
-          await this.createWorktreeHandler?.(message.baseBranch, message.branchName)
-          break
-        case "openChanges":
-          vscode.commands.executeCommand("kilo-code.new.showChanges")
-          break
         case "openDiffVirtual":
           this.openDiffVirtual(message.diff)
-          break
-        case "continueInWorktree":
-          handleContinueInWorktree({
-            sessionId: message.sessionId,
-            handler: this.continueInWorktreeHandler ?? undefined,
-            post: (msg) => this.postMessage(msg),
-          })
           break
         case "forkSession":
           handleForkSession(this.forkCtx, message.sessionId, message.messageId).catch((e) =>

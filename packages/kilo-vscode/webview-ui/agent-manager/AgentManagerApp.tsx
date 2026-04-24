@@ -1,5 +1,3 @@
-// Agent Manager root component
-
 /** @jsxImportSource solid-js */
 
 import {
