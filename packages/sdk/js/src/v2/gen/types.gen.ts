@@ -1079,6 +1079,13 @@ export type EventMessagePartRemoved = {
   }
 }
 
+export type SnapshotSummaryFileDiff = {
+  file: string
+  additions: number
+  deletions: number
+  status?: "added" | "deleted" | "modified"
+}
+
 export type PermissionAction = "allow" | "deny" | "ask"
 
 export type PermissionRule = {
@@ -1100,12 +1107,7 @@ export type Session = {
     additions: number
     deletions: number
     files: number
-    diffs?: Array<{
-      file: string
-      additions: number
-      deletions: number
-      status?: "added" | "deleted" | "modified"
-    }>
+    diffs?: Array<SnapshotSummaryFileDiff>
   }
   share?: {
     url: string
@@ -1232,12 +1234,7 @@ export type SyncEventSessionUpdated = {
         additions: number
         deletions: number
         files: number
-        diffs?: Array<{
-          file: string
-          additions: number
-          deletions: number
-          status?: "added" | "deleted" | "modified"
-        }>
+        diffs?: Array<SnapshotSummaryFileDiff>
       } | null
       share?: {
         url: string | null
@@ -1704,10 +1701,6 @@ export type Config = {
    */
   autoshare?: boolean
   /**
-   * Enable remote control of sessions via Kilo Cloud. Equivalent to running /remote on startup.
-   */
-  remote_control?: boolean
-  /**
    * Automatically update to the latest version. Set to true to auto-update, false to disable, or 'notify' to show update notifications
    */
   autoupdate?: boolean | "notify"
@@ -1719,6 +1712,10 @@ export type Config = {
    * When set, ONLY these providers will be enabled. All other providers will be ignored
    */
   enabled_providers?: Array<string>
+  /**
+   * Enable remote control of sessions via Kilo Cloud. Equivalent to running /remote on startup.
+   */
+  remote_control?: boolean
   /**
    * Model to use in the format of provider/model, eg anthropic/claude-2
    */
@@ -2090,12 +2087,7 @@ export type GlobalSession = {
     additions: number
     deletions: number
     files: number
-    diffs?: Array<{
-      file: string
-      additions: number
-      deletions: number
-      status?: "added" | "deleted" | "modified"
-    }>
+    diffs?: Array<SnapshotSummaryFileDiff>
   }
   share?: {
     url: string
