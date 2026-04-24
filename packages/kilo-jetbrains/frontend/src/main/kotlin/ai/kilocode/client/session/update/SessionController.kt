@@ -1,4 +1,4 @@
-package ai.kilocode.client.session
+package ai.kilocode.client.session.update
 
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.awt.Component
 
 /**
  * Session lifecycle orchestrator for a single session.
@@ -49,15 +50,15 @@ import kotlinx.coroutines.launch
  * via [SessionControllerEvent] to registered listeners.
  */
 class SessionController(
-    parent: Disposable,
-    id: String?,
-    private val sessions: KiloSessionService,
-    private val workspace: Workspace,
-    private val app: KiloAppService,
-    private val cs: CoroutineScope,
-    comp: java.awt.Component? = null,
-    private val flushMs: Long = EVENT_FLUSH_MS,
-    private val condense: Boolean = true,
+  parent: Disposable,
+  id: String?,
+  private val sessions: KiloSessionService,
+  private val workspace: Workspace,
+  private val app: KiloAppService,
+  private val cs: CoroutineScope,
+  comp: Component? = null,
+  private val flushMs: Long = EVENT_FLUSH_MS,
+  private val condense: Boolean = true,
 ) : Disposable {
 
     companion object {
@@ -73,7 +74,14 @@ class SessionController(
     private val listeners = mutableListOf<SessionControllerListener>()
     private var sessionId: String? = id
     private val directory: String get() = workspace.directory
-    private val updates = SessionUpdateQueue(parent, comp, flushMs, ::handle, condense, id != null) { sessionId ?: "pending" }
+    private val updates = SessionUpdateQueue(
+      parent,
+      comp,
+      flushMs,
+      ::handle,
+      condense,
+      id != null
+    ) { sessionId ?: "pending" }
 
     private var partType: String? = null
     private var tool: String? = null

@@ -28,7 +28,7 @@ import com.intellij.util.ui.JBUI
  *
  * All method calls must happen on the EDT.
  */
-class SessionPanel(
+class SessionMessageListPanel(
     private val model: SessionModel,
     parent: Disposable,
 ) : SessionLayoutPanel() {

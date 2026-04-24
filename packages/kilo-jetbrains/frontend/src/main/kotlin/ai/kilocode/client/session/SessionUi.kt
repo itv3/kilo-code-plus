@@ -11,7 +11,11 @@ import ai.kilocode.client.session.ui.LabelPicker
 import ai.kilocode.client.session.ui.PermissionPanel
 import ai.kilocode.client.session.ui.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel
-import ai.kilocode.client.session.ui.SessionPanel
+import ai.kilocode.client.session.ui.SessionRootPanel
+import ai.kilocode.client.session.ui.SessionMessageListPanel
+import ai.kilocode.client.session.update.EVENT_FLUSH_MS
+import ai.kilocode.client.session.update.SessionController
+import ai.kilocode.client.session.update.SessionControllerEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -23,7 +27,6 @@ import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import javax.swing.BoxLayout
-import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -31,11 +34,11 @@ import javax.swing.SwingUtilities
  * Top-level session UI — a thin composition root.
  *
  * Responsibilities:
- * - Creates and wires [SessionController], [SessionPanel], [EmptySessionPanel],
+ * - Creates and wires [ai.kilocode.client.session.update.SessionController], [SessionMessageListPanel], [EmptySessionPanel],
  *   [ConnectionPanel],
  *   [PromptPanel], [QuestionPanel], [PermissionPanel].
  * - Switches between the status (loading) card and the transcript card via
- *   [SessionControllerEvent.ViewChanged].
+ *   [ai.kilocode.client.session.update.SessionControllerEvent.ViewChanged].
  * - Keeps [ConnectionPanel] on a transparent overlay layer directly above the
  *   prompt.
  * - Delegates all transcript and dock updates to the panels themselves via
@@ -65,9 +68,9 @@ class SessionUi(
         ?: EVENT_FLUSH_MS
 
     private val controller = SessionController(
-        this, null, sessions, workspace, app, cs, this,
-        flushMs = flushMs,
-        condense = Registry.`is`("kilo.session.condense", true),
+      this, null, sessions, workspace, app, cs, this,
+      flushMs = flushMs,
+      condense = Registry.`is`("kilo.session.condense", true),
     )
 
     // ------ card switch ------
@@ -81,7 +84,7 @@ class SessionUi(
 
     // ------ transcript ------
 
-    private val transcript = SessionPanel(controller.model, this)
+    private val transcript = SessionMessageListPanel(controller.model, this)
 
     private val scroll = JBScrollPane(transcript).apply {
         border = JBUI.Borders.empty()
@@ -103,34 +106,8 @@ class SessionUi(
         onAbort = { controller.abort() },
     )
 
-    private val content = JPanel(BorderLayout())
-
-    private val overlay = object : JPanel(null) {
-        override fun contains(x: Int, y: Int): Boolean {
-            for (child in components) {
-                if (child.isVisible && child.bounds.contains(x, y)) return true
-            }
-            return false
-        }
-    }.apply {
-        isOpaque = false
-    }
-
-    private val root: JLayeredPane = object : JLayeredPane() {
-        override fun doLayout() {
-            content.setBounds(0, 0, width, height)
-            overlay.setBounds(0, 0, width, height)
-
-            content.doLayout()
-            prompt.parent?.doLayout()
-
-            val box = SwingUtilities.convertRectangle(prompt.parent, prompt.bounds, overlay)
-            val h = connection.preferredSize.height
-            connection.setBounds(box.x, maxOf(0, box.y - h), box.width, h)
-            connection.doLayout()
-        }
-
-        override fun getPreferredSize() = content.preferredSize
+    private val root = SessionRootPanel().apply {
+        content.layout = BorderLayout()
     }
 
     init {
@@ -149,15 +126,13 @@ class SessionUi(
         center.add(scroll, MESSAGES)
         cards.show(center, STATUS)
 
-        content.add(center, BorderLayout.CENTER)
-        content.add(south, BorderLayout.SOUTH)
-
-        overlay.add(connection)
-
-        root.add(content)
-        root.setLayer(content, JLayeredPane.DEFAULT_LAYER)
-        root.add(overlay)
-        root.setLayer(overlay, JLayeredPane.PALETTE_LAYER)
+        root.content.add(center, BorderLayout.CENTER)
+        root.content.add(south, BorderLayout.SOUTH)
+        root.addOverlay(connection) { panel, child ->
+            val box = SwingUtilities.convertRectangle(prompt.parent, prompt.bounds, panel)
+            val h = child.preferredSize.height
+            java.awt.Rectangle(box.x, maxOf(0, box.y - h), box.width, h)
+        }
 
         add(root, BorderLayout.CENTER)
 
@@ -256,8 +231,8 @@ class SessionUi(
     private fun refresh() {
         center.revalidate()
         center.repaint()
-        content.revalidate()
-        content.repaint()
+        root.content.revalidate()
+        root.content.repaint()
         root.revalidate()
         root.repaint()
     }

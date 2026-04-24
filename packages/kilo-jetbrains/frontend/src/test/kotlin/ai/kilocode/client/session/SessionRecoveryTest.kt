@@ -5,13 +5,12 @@ import ai.kilocode.rpc.dto.PermissionRequestDto
 import ai.kilocode.rpc.dto.QuestionInfoDto
 import ai.kilocode.rpc.dto.QuestionRequestDto
 import ai.kilocode.rpc.dto.SessionStatusDto
-import ai.kilocode.rpc.dto.SessionTimeDto
 
 /**
  * Tests for pending permission/question recovery after history load.
  *
  * VS Code rehydrates pending prompts by calling list endpoints after
- * reconnect. JetBrains now does the same in [SessionController.recoverPending].
+ * reconnect. JetBrains now does the same in [ai.kilocode.client.session.update.SessionController.recoverPending].
  */
 class SessionRecoveryTest : SessionControllerTestBase() {
 

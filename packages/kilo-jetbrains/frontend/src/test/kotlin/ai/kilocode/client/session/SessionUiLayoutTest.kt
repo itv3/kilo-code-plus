@@ -14,6 +14,8 @@ import ai.kilocode.client.session.ui.ConnectionPanel
 import ai.kilocode.client.session.ui.PermissionPanel
 import ai.kilocode.client.session.ui.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel
+import ai.kilocode.client.session.ui.SessionRootPanel
+import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.testing.FakeAppRpcApi
 import ai.kilocode.client.testing.FakeSessionRpcApi
 import ai.kilocode.client.testing.FakeWorkspaceRpcApi
@@ -26,7 +28,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import javax.swing.JLayeredPane
-import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 @Suppress("UnstableApiUsage")
@@ -71,15 +72,13 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
     }
 
     fun `test root contains content and overlay layers`() {
-        val root = find<JLayeredPane>(ui)
+        val root = find<SessionRootPanel>(ui)
 
         assertEquals(2, root.componentCount)
-        assertTrue(root.components.all { it is JPanel })
-        val panels = root.components.map { it as JPanel }
-        val overlay = panels.first { it.components.any { child -> child is ConnectionPanel } }
-        val content = panels.first { it !== overlay }
-        assertEquals(JLayeredPane.DEFAULT_LAYER, root.getLayer(content))
-        assertEquals(JLayeredPane.PALETTE_LAYER, root.getLayer(overlay))
+        assertSame(root.content, root.components.first { it === root.content })
+        assertSame(root.overlay, root.components.first { it === root.overlay })
+        assertEquals(JLayeredPane.DEFAULT_LAYER, root.getLayer(root.content))
+        assertEquals(JLayeredPane.PALETTE_LAYER, root.getLayer(root.overlay))
     }
 
     fun `test overlay panel matches prompt width and sits above prompt`() {
@@ -138,7 +137,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
 
     private fun layout() {
         ui.doLayout()
-        find<JLayeredPane>(ui).doLayout()
+        find<SessionRootPanel>(ui).doLayout()
     }
 
     private inline fun <reified T> find(root: java.awt.Container): T {

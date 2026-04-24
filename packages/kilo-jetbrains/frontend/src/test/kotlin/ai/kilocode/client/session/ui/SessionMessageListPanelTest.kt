@@ -11,24 +11,24 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
- * Tests for [SessionPanel] — structural and index integrity.
+ * Tests for [SessionMessageListPanel] — structural and index integrity.
  *
  * Uses [BasePlatformTestCase] for a real IntelliJ Application; layout
  * is not measured (no screen), but the structural / index state is fully
  * testable.
  */
 @Suppress("UnstableApiUsage")
-class SessionPanelTest : BasePlatformTestCase() {
+class SessionMessageListPanelTest : BasePlatformTestCase() {
 
     private lateinit var model: SessionModel
     private lateinit var parent: Disposable
-    private lateinit var panel: SessionPanel
+    private lateinit var panel: SessionMessageListPanel
 
     override fun setUp() {
         super.setUp()
         parent = Disposer.newDisposable("test")
         model = SessionModel()
-        panel = SessionPanel(model, parent)
+        panel = SessionMessageListPanel(model, parent)
     }
 
     override fun tearDown() {

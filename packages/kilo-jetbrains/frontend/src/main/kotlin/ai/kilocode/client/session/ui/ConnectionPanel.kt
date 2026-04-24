@@ -1,9 +1,9 @@
 package ai.kilocode.client.session.ui
 
 import ai.kilocode.client.plugin.KiloBundle
-import ai.kilocode.client.session.SessionController
-import ai.kilocode.client.session.SessionControllerEvent
-import ai.kilocode.client.session.SessionControllerListener
+import ai.kilocode.client.session.update.SessionController
+import ai.kilocode.client.session.update.SessionControllerEvent
+import ai.kilocode.client.session.update.SessionControllerListener
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import com.intellij.openapi.Disposable

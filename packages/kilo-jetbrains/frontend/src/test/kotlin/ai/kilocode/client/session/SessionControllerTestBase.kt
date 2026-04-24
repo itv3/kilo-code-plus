@@ -10,6 +10,8 @@ import ai.kilocode.client.testing.FakeWorkspaceRpcApi
 import ai.kilocode.client.testing.FakeSessionRpcApi
 import ai.kilocode.client.app.KiloWorkspaceService
 import ai.kilocode.client.app.Workspace
+import ai.kilocode.client.session.update.SessionController
+import ai.kilocode.client.session.update.SessionControllerEvent
 import ai.kilocode.rpc.dto.AgentDto
 import ai.kilocode.rpc.dto.AgentsDto
 import ai.kilocode.rpc.dto.ChatEventDto
@@ -36,7 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 /**
- * Base class for [SessionController] tests.
+ * Base class for [ai.kilocode.client.session.update.SessionController] tests.
  *
  * Provides real IntelliJ Application/EDT/Disposer via [BasePlatformTestCase],
  * real frontend services wired to fake RPC backends, and shared helpers.
@@ -128,7 +130,17 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
 
     protected fun controller(id: String? = null, flushMs: Long, condense: Boolean): SessionController {
         val root = Root()
-        val m = SessionController(parent, id, sessions, workspace, app, scope, root, flushMs, condense)
+        val m = SessionController(
+          parent,
+          id,
+          sessions,
+          workspace,
+          app,
+          scope,
+          root,
+          flushMs,
+          condense
+        )
         controllers.add(m)
         roots[m] = root
         return m

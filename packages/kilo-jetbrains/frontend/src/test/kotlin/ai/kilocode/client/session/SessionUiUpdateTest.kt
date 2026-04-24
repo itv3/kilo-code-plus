@@ -2,7 +2,7 @@ package ai.kilocode.client.session
 
 import ai.kilocode.client.session.model.SessionModel
 import ai.kilocode.client.session.model.SessionState
-import ai.kilocode.client.session.ui.SessionPanel
+import ai.kilocode.client.session.ui.SessionMessageListPanel
 import ai.kilocode.client.session.views.TextView
 import ai.kilocode.rpc.dto.MessageDto
 import ai.kilocode.rpc.dto.MessageTimeDto
@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
  * Integration test: mutate [SessionModel] directly on the EDT and verify
- * that [SessionPanel] reflects the changes without any end-to-end RPC flow.
+ * that [SessionMessageListPanel] reflects the changes without any end-to-end RPC flow.
  *
  * This tests the full model → event → view update pipeline in isolation.
  */
@@ -23,13 +23,13 @@ class SessionUiUpdateTest : BasePlatformTestCase() {
 
     private lateinit var model: SessionModel
     private lateinit var parent: Disposable
-    private lateinit var panel: SessionPanel
+    private lateinit var panel: SessionMessageListPanel
 
     override fun setUp() {
         super.setUp()
         parent = Disposer.newDisposable("test")
         model = SessionModel()
-        panel = SessionPanel(model, parent)
+        panel = SessionMessageListPanel(model, parent)
     }
 
     override fun tearDown() {
