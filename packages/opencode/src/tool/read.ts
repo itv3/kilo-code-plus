@@ -1,6 +1,6 @@
 import z from "zod"
 import { Effect, Option, Scope } from "effect"
-import { open, lstat } from "fs/promises" // kilocode_change
+import { lstat } from "fs/promises" // kilocode_change
 import * as path from "path"
 import { Readable } from "stream" // kilocode_change
 import { createInterface } from "readline"
@@ -14,7 +14,6 @@ import { Instruction } from "../session/instruction"
 import { isImageAttachment, isPdfAttachment, sniffAttachmentMime } from "@/util/media"
 // kilocode_change start
 import { Encoding } from "../kilocode/encoding"
-import { readDirectoryFiles } from "../kilocode/tool/read-directory"
 // kilocode_change end
 
 const DEFAULT_READ_LIMIT = 2000
