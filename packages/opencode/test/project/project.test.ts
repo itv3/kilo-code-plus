@@ -533,8 +533,8 @@ describe("Project.fromDirectory with bare repos", () => {
       expect(project.id).not.toBe(ProjectID.global)
       expect(project.worktree).toBe(barePath)
 
-      const correctCache = path.join(barePath, "opencode")
-      const wrongCache = path.join(parentDir, ".git", "opencode")
+      const correctCache = path.join(barePath, "kilo") // kilocode_change
+      const wrongCache = path.join(parentDir, ".git", "kilo") // kilocode_change
 
       expect(await Bun.file(correctCache).exists()).toBe(true)
       expect(await Bun.file(wrongCache).exists()).toBe(false)
@@ -564,9 +564,11 @@ describe("Project.fromDirectory with bare repos", () => {
 
       expect(projA.id).not.toBe(projB.id)
 
-      const cacheA = path.join(bareA, "opencode")
-      const cacheB = path.join(bareB, "opencode")
-      const wrongCache = path.join(parentDir, ".git", "opencode")
+      // kilocode_change start
+      const cacheA = path.join(bareA, "kilo")
+      const cacheB = path.join(bareB, "kilo")
+      const wrongCache = path.join(parentDir, ".git", "kilo")
+      // kilocode_change end
 
       expect(await Bun.file(cacheA).exists()).toBe(true)
       expect(await Bun.file(cacheB).exists()).toBe(true)
@@ -592,7 +594,7 @@ describe("Project.fromDirectory with bare repos", () => {
       expect(project.id).not.toBe(ProjectID.global)
       expect(project.worktree).toBe(barePath)
 
-      const correctCache = path.join(barePath, "opencode")
+      const correctCache = path.join(barePath, "kilo") // kilocode_change
       expect(await Bun.file(correctCache).exists()).toBe(true)
     } finally {
       await $`rm -rf ${barePath} ${worktreePath}`.quiet().nothrow()
