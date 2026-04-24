@@ -247,7 +247,6 @@ export const ChatView: Component<ChatViewProps> = (props) => {
             </DropdownMenu>
           </div>
         </Show>
-        <Show when={!hasChat}></Show>
         <Show when={hasChat && canContinueInWorktree() && server.gitInstalled()}>
           <div class="session-move-group">
             <Tooltip value={moveTooltip()} placement="top">
