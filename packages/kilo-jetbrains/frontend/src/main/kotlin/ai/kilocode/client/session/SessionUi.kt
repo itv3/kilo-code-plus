@@ -269,8 +269,3 @@ class SessionUi(
 
     override fun dispose() {}
 }
-
-private fun SessionState.isBusy(): Boolean = when (this) {
-    is SessionState.Idle, is SessionState.Error -> false
-    else -> true
-}
