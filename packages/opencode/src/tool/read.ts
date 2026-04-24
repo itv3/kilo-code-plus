@@ -1,8 +1,8 @@
 import z from "zod"
 import { Effect, Option, Scope } from "effect"
-import { createReadStream } from "fs"
-import { lstat } from "fs/promises" // kilocode_change
+import { open, lstat } from "fs/promises" // kilocode_change
 import * as path from "path"
+import { Readable } from "stream" // kilocode_change
 import { createInterface } from "readline"
 import * as Tool from "./tool"
 import { AppFileSystem } from "@opencode-ai/shared/filesystem"
@@ -12,6 +12,10 @@ import { Instance } from "../project/instance"
 import { assertExternalDirectoryEffect } from "./external-directory"
 import { Instruction } from "../session/instruction"
 import { isImageAttachment, isPdfAttachment, sniffAttachmentMime } from "@/util/media"
+// kilocode_change start
+import { Encoding } from "../kilocode/encoding"
+import { readDirectoryFiles } from "../kilocode/tool/read-directory"
+// kilocode_change end
 
 const DEFAULT_READ_LIMIT = 2000
 const MAX_LINE_LENGTH = 2000
@@ -331,7 +335,10 @@ export const ReadTool = Tool.define(
 // kilocode_change start
 export async function lines(filepath: string, opts: { limit: number; offset: number }) {
   // kilocode_change end
-  const stream = createReadStream(filepath, { encoding: "utf8" })
+  // kilocode_change start - decode with detected encoding; replaces createReadStream(filepath, { encoding: "utf8" })
+  const encoded = await Encoding.read(filepath)
+  const stream = Readable.from([encoded.text])
+  // kilocode_change end
   const rl = createInterface({
     input: stream,
     // Note: we use the crlfDelay option to recognize all instances of CR LF

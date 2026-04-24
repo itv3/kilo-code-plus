@@ -5,6 +5,7 @@ import { KiloSessionPrompt } from "@/kilocode/session/prompt" // kilocode_change
 import { KiloSessionPromptQueue } from "@/kilocode/session/prompt-queue" // kilocode_change
 import { KiloSession } from "@/kilocode/session" // kilocode_change
 import { Suggestion } from "@/kilocode/suggestion" // kilocode_change
+import { Question } from "@/question" // kilocode_change
 import z from "zod"
 import { SessionID, MessageID, PartID } from "./schema"
 import { MessageV2 } from "./message-v2"
@@ -1285,6 +1286,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       function* (input: PromptInput) {
         const session = yield* sessions.get(input.sessionID)
         yield* revert.cleanup(session)
+        // kilocode_change start - persist queued prompts immediately while serializing each follow-up loop
         const message = yield* createUserMessage(input)
         yield* sessions.touch(input.sessionID)
 
@@ -1297,12 +1299,17 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           yield* sessions.setPermission({ sessionID: session.id, permission: permissions })
         }
 
-        if (input.noReply === true) return message
-        // kilocode_change start — dismiss pending suggestions so a previous loop
-        // blocked on a suggestion can settle before the queue runs the next prompt
+        // kilocode_change start — unblock tools waiting on user input so any in-flight
+        // handle.process can return. Adding a new user message is the signal that any
+        // pending tool prompt is superseded, so we dismiss even on the noReply path.
+        // Critically we never cancel the in-flight fiber here — that would abort the
+        // streamText call mid-tokens and cut off the assistant reply. The enqueue call
+        // below serializes this prompt after the current turn's current LLM step, and
+        // runLoop checks hasFollowup between steps to break out once it has been
+        // enqueued during the turn.
         yield* Effect.promise(() => Suggestion.dismissAll(input.sessionID))
-        // kilocode_change end
-        // kilocode_change start - serialize follow-up loops via queue
+        yield* Effect.promise(() => Question.dismissAll(input.sessionID))
+        if (input.noReply === true) return message
         return yield* KiloSessionPromptQueue.enqueue(
           input.sessionID,
           message.info.id,
@@ -1312,6 +1319,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         // kilocode_change end
       },
     )
+    // kilocode_change end
 
     const lastAssistant = Effect.fnUntraced(function* (sessionID: SessionID) {
       // kilocode_change start - retry when cancel races before shellImpl writes messages
@@ -1604,6 +1612,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 overflow: !handle.message.finish,
               })
             }
+            // kilocode_change start — break out so a newer queued prompt can take over
+            // instead of starting another LLM step for the now-superseded turn. The
+            // current handle.process has fully drained (tokens + inline tool calls) by
+            // the time we get here, so nothing is cut off.
+            if (KiloSessionPromptQueue.hasFollowup(sessionID)) {
+              closeReasons.set(sessionID, "interrupted")
+              return "break" as const
+            }
+            // kilocode_change end
             return "continue" as const
           }).pipe(Effect.ensuring(instruction.clear(handle.message.id)))
           if (outcome === "break") break
