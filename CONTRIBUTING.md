@@ -52,20 +52,21 @@ bun dev .
 
 `bin/kilodev` is a self-locating launcher that runs this checkout from wherever you invoke it. Running it with no arguments launches the TUI pointed at the caller's directory; any arguments are forwarded to the CLI unchanged.
 
-One-shot install (recommended). From the repo root, pick your shell:
+One-shot install (recommended). From the repo root:
 
 ```bash
-./bin/kilodev dev-alias zsh  >> ~/.zshrc  && source ~/.zshrc
-./bin/kilodev dev-alias bash >> ~/.bashrc && source ~/.bashrc
-./bin/kilodev dev-alias fish >> ~/.config/fish/config.fish
+./bin/kilodev dev-setup
 ```
 
-Windows PowerShell:
+This detects your shell, shows exactly what it will add, asks for confirmation, writes an idempotent block to your rc file, and saves a timestamped backup of the original. Re-running is safe — it only rewrites when the snippet has changed.
 
-```powershell
-./bin/kilodev dev-alias powershell | Out-File -Append $PROFILE
-. $PROFILE
-```
+Useful flags:
+
+- `--yes` — skip the confirmation prompt (good for CI/containers).
+- `--print` — just print the snippet, don't touch any file (pipe-friendly).
+- `--dry-run` — show what would change without writing.
+- `--shell <zsh|bash|fish|powershell>` — override shell detection.
+- `--rc <path>` — override the rc file.
 
 Manual alternatives (equivalent, no CLI invocation needed):
 
@@ -77,7 +78,7 @@ Then from anywhere:
 ```bash
 cd ~/some/project
 kilodev                      # opens TUI with project = ~/some/project
-kilodev dev-alias zsh        # prints the shell snippet
+kilodev dev-setup --print    # prints the alias line (scripting)
 kilodev run --dir "$PWD" "…" # subcommands pass through; use --dir for run/serve
 ```
 
