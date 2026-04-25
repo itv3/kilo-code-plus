@@ -792,25 +792,29 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       const shellName = (
         process.platform === "win32" ? path.win32.basename(sh, ".exe") : path.basename(sh)
       ).toLowerCase()
+      // kilocode_change start - pass cwd as the first positional arg ($1) instead of
+      // relying on $PWD / the shell's starting cwd. Login shells (`-l`) source
+      // `/etc/profile` and `~/.profile` BEFORE running the `-c` script, and on some CI
+      // images those scripts change directory (e.g. via nvm, direnv, or similar), so
+      // both `$PWD` and `pwd -P` return a wrong path by the time the `-c` script runs.
+      // Passing the resolved cwd explicitly guarantees we land in the session directory.
+      const cwd = ctx.directory
       const invocations: Record<string, { args: string[] }> = {
         nu: { args: ["-c", input.command] },
         fish: { args: ["-c", input.command] },
-        // kilocode_change start - use `$(pwd -P)` instead of `$PWD` so the real cwd reported
-        // by the kernel is captured. When the child shell inherits a stale PWD env var
-        // (common on CI where Bun's cwd differs from the spawn cwd), $PWD can point to the
-        // parent process's directory and the `cd "$__oc_cwd"` below silently escapes the
-        // session directory. `pwd -P` ignores $PWD and asks the kernel via getcwd().
         zsh: {
           args: [
             "-l",
             "-c",
             `
-              __oc_cwd=$(pwd -P)
+              __oc_cwd=\${1:-$PWD}
               [[ -f ~/.zshenv ]] && source ~/.zshenv >/dev/null 2>&1 || true
               [[ -f "\${ZDOTDIR:-$HOME}/.zshrc" ]] && source "\${ZDOTDIR:-$HOME}/.zshrc" >/dev/null 2>&1 || true
               cd "$__oc_cwd"
               eval ${JSON.stringify(input.command)}
             `,
+            "_opencode",
+            cwd,
           ],
         },
         bash: {
@@ -818,12 +822,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             "-l",
             "-c",
             `
-              __oc_cwd=$(pwd -P)
+              __oc_cwd=\${1:-$PWD}
               shopt -s expand_aliases
               [[ -f ~/.bashrc ]] && source ~/.bashrc >/dev/null 2>&1 || true
               cd "$__oc_cwd"
               eval ${JSON.stringify(input.command)}
             `,
+            "_opencode",
+            cwd,
           ],
         },
         // kilocode_change end
@@ -834,7 +840,6 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       }
 
       const args = (invocations[shellName] ?? invocations[""]).args
-      const cwd = ctx.directory
       const shellEnv = yield* plugin.trigger(
         "shell.env",
         { cwd, sessionID: input.sessionID, callID: part.callID },
