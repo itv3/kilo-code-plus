@@ -795,12 +795,17 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       const invocations: Record<string, { args: string[] }> = {
         nu: { args: ["-c", input.command] },
         fish: { args: ["-c", input.command] },
+        // kilocode_change start - use `$(pwd -P)` instead of `$PWD` so the real cwd reported
+        // by the kernel is captured. When the child shell inherits a stale PWD env var
+        // (common on CI where Bun's cwd differs from the spawn cwd), $PWD can point to the
+        // parent process's directory and the `cd "$__oc_cwd"` below silently escapes the
+        // session directory. `pwd -P` ignores $PWD and asks the kernel via getcwd().
         zsh: {
           args: [
             "-l",
             "-c",
             `
-              __oc_cwd=$PWD
+              __oc_cwd=$(pwd -P)
               [[ -f ~/.zshenv ]] && source ~/.zshenv >/dev/null 2>&1 || true
               [[ -f "\${ZDOTDIR:-$HOME}/.zshrc" ]] && source "\${ZDOTDIR:-$HOME}/.zshrc" >/dev/null 2>&1 || true
               cd "$__oc_cwd"
@@ -813,7 +818,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             "-l",
             "-c",
             `
-              __oc_cwd=$PWD
+              __oc_cwd=$(pwd -P)
               shopt -s expand_aliases
               [[ -f ~/.bashrc ]] && source ~/.bashrc >/dev/null 2>&1 || true
               cd "$__oc_cwd"
@@ -821,6 +826,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             `,
           ],
         },
+        // kilocode_change end
         cmd: { args: ["/c", input.command] },
         powershell: { args: ["-NoProfile", "-Command", input.command] },
         pwsh: { args: ["-NoProfile", "-Command", input.command] },

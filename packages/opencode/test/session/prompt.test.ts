@@ -46,7 +46,6 @@ import { testEffect } from "../lib/effect"
 import { reply, TestLLMServer } from "../lib/llm-server"
 
 void Log.init({ print: false })
-
 const summary = Layer.succeed(
   SessionSummary.Service,
   SessionSummary.Service.of({
@@ -1060,18 +1059,43 @@ unix("shell completes a fast command on the preferred shell", () =>
   provideTmpdirInstance(
     (dir) =>
       Effect.gen(function* () {
+        // kilocode_change start - temporary CI debug: probe actual spawn cwd
+        const fs = yield* Effect.promise(() => import("fs"))
+        const { Instance } = yield* Effect.promise(() => import("@/project/instance"))
         const { prompt, run, chat } = yield* boot()
+        // Probe multiple ways to see where the shell actually lands
         const result = yield* prompt.shell({
           sessionID: chat.id,
           agent: "build",
-          command: "pwd",
+          command:
+            'echo "dir_arg=DIRARG_PLACEHOLDER"; echo "proc_cwd=$(readlink /proc/self/cwd 2>/dev/null || pwd -P)"; echo "getcwd=$(pwd -P)"; echo "pwd_env=$PWD"; echo "ls_marker=$(ls -a 2>&1 | head -20 | tr \'\\n\' \'|\')"',
         })
 
         expect(result.info.role).toBe("assistant")
         const tool = completedTool(result.parts)
         if (!tool) return
 
-        expect(tool.state.input.command).toBe("pwd")
+        if (!tool.state.output.includes(dir)) {
+          const info = {
+            dir,
+            realDir: fs.realpathSync(dir),
+            dirExists: fs.existsSync(dir),
+            dirContents: fs.existsSync(dir) ? fs.readdirSync(dir) : null,
+            instanceDirectory: Instance.directory,
+            instanceWorktree: Instance.worktree,
+            processCwd: process.cwd(),
+            envPWD: process.env.PWD,
+          }
+          throw new Error(
+            "Expected output to contain tmpdir.\n\n===== DEBUG =====\n" +
+              JSON.stringify(info, null, 2) +
+              "\n\nshell output:\n" +
+              tool.state.output +
+              "\n=================\n",
+          )
+        }
+        // kilocode_change end
+
         expect(tool.state.output).toContain(dir)
         expect(tool.state.metadata.output).toContain(dir)
         yield* run.assertNotBusy(chat.id)
