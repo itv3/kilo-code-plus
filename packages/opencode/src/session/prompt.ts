@@ -792,12 +792,6 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       const shellName = (
         process.platform === "win32" ? path.win32.basename(sh, ".exe") : path.basename(sh)
       ).toLowerCase()
-      // kilocode_change start - pass cwd as the first positional arg ($1) instead of
-      // relying on $PWD / the shell's starting cwd. Login shells (`-l`) source
-      // `/etc/profile` and `~/.profile` BEFORE running the `-c` script, and on some CI
-      // images those scripts change directory (e.g. via nvm, direnv, or similar), so
-      // both `$PWD` and `pwd -P` return a wrong path by the time the `-c` script runs.
-      // Passing the resolved cwd explicitly guarantees we land in the session directory.
       const cwd = ctx.directory
       const invocations: Record<string, { args: string[] }> = {
         nu: { args: ["-c", input.command] },
@@ -807,13 +801,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             "-l",
             "-c",
             `
-              __oc_cwd=\${1:-$PWD}
               [[ -f ~/.zshenv ]] && source ~/.zshenv >/dev/null 2>&1 || true
               [[ -f "\${ZDOTDIR:-$HOME}/.zshrc" ]] && source "\${ZDOTDIR:-$HOME}/.zshrc" >/dev/null 2>&1 || true
-              cd "$__oc_cwd"
+              cd -- "$1"
               eval ${JSON.stringify(input.command)}
             `,
-            "_opencode",
+            "opencode",
             cwd,
           ],
         },
@@ -822,17 +815,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             "-l",
             "-c",
             `
-              __oc_cwd=\${1:-$PWD}
               shopt -s expand_aliases
               [[ -f ~/.bashrc ]] && source ~/.bashrc >/dev/null 2>&1 || true
-              cd "$__oc_cwd"
+              cd -- "$1"
               eval ${JSON.stringify(input.command)}
             `,
-            "_opencode",
+            "opencode",
             cwd,
           ],
         },
-        // kilocode_change end
         cmd: { args: ["/c", input.command] },
         powershell: { args: ["-NoProfile", "-Command", input.command] },
         pwsh: { args: ["-NoProfile", "-Command", input.command] },
