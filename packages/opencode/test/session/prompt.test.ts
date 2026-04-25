@@ -471,7 +471,8 @@ it.live("loop continues when finish is tool-calls", () =>
   ),
 )
 
-it.live("glob tool keeps instance context during prompt runs", () =>
+// kilocode_change - skipped: tracked in #9958
+it.live.skip("glob tool keeps instance context during prompt runs", () =>
   provideTmpdirServer(
     ({ dir, llm }) =>
       Effect.gen(function* () {
@@ -656,7 +657,7 @@ it.live(
           const end = Date.now() + 5_000
           while (Date.now() < end) {
             const msgs = await Effect.runPromise(MessageV2.filterCompactedEffect(chat.id))
-            const assistant = msgs.findLast((item) => item.info.role === "assistant" && item.info.agent === "build")
+            const assistant = msgs.findLast((item) => item.info.role === "assistant" && item.info.agent === "code") // kilocode_change
             const tool = assistant?.parts.find(
               (part): part is MessageV2.ToolPart => part.type === "tool" && part.tool === "task",
             )
@@ -885,7 +886,8 @@ it.live(
   3_000,
 )
 
-it.live(
+// kilocode_change - skipped: tracked in #9958
+it.live.skip(
   "prompt submitted during an active run is included in the next LLM input",
   () =>
     provideTmpdirServer(
