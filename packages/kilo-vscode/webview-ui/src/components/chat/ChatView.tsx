@@ -308,7 +308,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
               onClick={openAgentManager}
               aria-label={language.t("sidebar.session.openAgentManager")}
             >
-              <Icon name="circuit-board" size="small" />
+              <Icon name="organization" size="small" />
             </Button>
           </Tooltip>
         </div>
