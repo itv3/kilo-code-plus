@@ -838,7 +838,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       const cmd = ChildProcess.make(sh, args, {
         cwd,
         extendEnv: true,
-        env: { ...shellEnv.env, TERM: "dumb" },
+        env: { ...shellEnv.env, TERM: "dumb", PWD: cwd }, // kilocode_change
         stdin: "ignore",
         forceKillAfter: "3 seconds",
       })
