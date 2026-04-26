@@ -179,6 +179,7 @@ class KiloBackendWorkspaceTest {
 
         val err = ws.state.value as KiloWorkspaceState.Error
         assertTrue(err.message.contains("providers"))
+        assertTrue(log.messages.any { it.contains("Workspace error [/test/project]: Failed to load:") && it.contains("providers") })
     }
 
     @Test

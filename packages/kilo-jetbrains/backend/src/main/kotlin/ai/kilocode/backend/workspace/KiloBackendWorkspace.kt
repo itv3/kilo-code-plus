@@ -129,9 +129,7 @@ class KiloBackendWorkspace(
                 throw e
             } catch (e: Exception) {
                 log.warn("Workspace data load failed for $directory: ${e.message}")
-                _state.value = KiloWorkspaceState.Error(
-                    "Failed to load: ${synchronized(errors) { errors.joinToString() }}"
-                )
+                setWorkspaceError("Failed to load: ${synchronized(errors) { errors.joinToString() }}")
             }
             }
         }
@@ -285,14 +283,19 @@ class KiloBackendWorkspace(
     ): T? {
         repeat(MAX_RETRIES) { attempt ->
             val result = block()
-            if (result != null) return result
-            if (attempt < MAX_RETRIES - 1) {
-                log.warn("$name: attempt ${attempt + 1}/$MAX_RETRIES failed — retrying in ${RETRY_DELAY_MS}ms")
-                delay(RETRY_DELAY_MS)
-            }
+        if (result != null) return result
+        if (attempt < MAX_RETRIES - 1) {
+            log.warn("$name: attempt ${attempt + 1}/$MAX_RETRIES failed — retrying in ${RETRY_DELAY_MS}ms")
+            delay(RETRY_DELAY_MS)
+        }
         }
         log.error("$name: all $MAX_RETRIES attempts failed")
         return null
+    }
+
+    private fun setWorkspaceError(message: String) {
+        _state.value = KiloWorkspaceState.Error(message)
+        log.warn("Workspace error [$directory]: $message")
     }
 
     private class LoadFailure(resource: String) : Exception("Failed to load $resource")

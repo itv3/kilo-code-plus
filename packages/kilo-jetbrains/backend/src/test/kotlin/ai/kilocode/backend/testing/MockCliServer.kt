@@ -30,10 +30,12 @@ class MockCliServer : AutoCloseable {
     // Configurable REST responses — can be changed between requests
     @Volatile var health = """{"healthy":true,"version":"1.0.0"}"""
     @Volatile var config = """{"model":"test/model"}"""
+    @Volatile var warnings = "[]"
     @Volatile var notifications = "[]"
     @Volatile var profile = """{"profile":{"email":"test@test.com","name":"Test"},"balance":null,"currentOrgId":null}"""
     @Volatile var profileStatus = 200
     @Volatile var configStatus = 200
+    @Volatile var warningsStatus = 200
     @Volatile var notificationsStatus = 200
 
     // Project-scoped REST responses
@@ -184,6 +186,7 @@ class MockCliServer : AutoCloseable {
             when {
                 path == "/global/health" -> respond(output, 200, health)
                 path == "/global/config" -> respond(output, configStatus, config)
+                path.startsWith("/config/warnings") -> respond(output, warningsStatus, warnings)
                 path.startsWith("/kilo/notifications") -> respond(output, notificationsStatus, notifications)
                 path.startsWith("/kilo/profile") -> {
                     if (profileStatus == 401) {

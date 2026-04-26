@@ -135,6 +135,25 @@ class SessionController(
         }
     }
 
+    fun retryConnection() {
+        LOG.debug {
+            "${ChatLogSummary.sid(sessionId ?: "pending")} kind=connection-retry app=${model.app.status} workspace=${model.workspace.status}"
+        }
+        // App retry policy is backend-owned and may escalate from lightweight refresh to restart.
+        if (model.app.status != KiloAppStatusDto.READY || model.app.status == KiloAppStatusDto.ERROR) {
+            app.retryAsync()
+            return
+        }
+        if (model.app.warnings.isNotEmpty()) {
+            app.retryAsync()
+            return
+        }
+        // Pure workspace failures stay scoped to workspace reload.
+        if (model.workspace.status == KiloWorkspaceStatusDto.ERROR) {
+            workspace.reload()
+        }
+    }
+
     fun selectAgent(name: String) {
         LOG.debug { "${ChatLogSummary.sid(sessionId ?: "pending")} kind=config agent=$name" }
         model.agent = name
