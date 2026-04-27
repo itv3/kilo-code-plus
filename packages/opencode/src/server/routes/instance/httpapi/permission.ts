@@ -4,6 +4,10 @@ import { Effect, Layer, Schema } from "effect"
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"
 
 const root = "/permission"
+const SaveAlwaysRulesBody = Schema.Struct({
+  approvedAlways: Schema.Array(Schema.String).pipe(Schema.optional),
+  deniedAlways: Schema.Array(Schema.String).pipe(Schema.optional),
+})
 
 export const PermissionApi = HttpApi.make("permission")
   .add(
@@ -29,6 +33,19 @@ export const PermissionApi = HttpApi.make("permission")
             identifier: "permission.reply",
             summary: "Respond to permission request",
             description: "Approve or deny a permission request from the AI assistant.",
+          }),
+        ),
+        HttpApiEndpoint.post("saveAlwaysRules", `${root}/:requestID/always-rules`, {
+          params: { requestID: PermissionID },
+          payload: SaveAlwaysRulesBody,
+          success: Schema.Boolean,
+          // kilocode_change - keep experimental HttpApi parity with classic route semantics
+          error: [HttpApiError.NotFoundNoContent],
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "permission.saveAlwaysRules",
+            summary: "Save always-allow/deny permission rules",
+            description: "Save approved/denied always-rules for a pending permission request.",
           }),
         ),
       )
@@ -69,8 +86,22 @@ export const permissionHandlers = Layer.unwrap(
       return true
     })
 
+    const saveAlwaysRules = Effect.fn("PermissionHttpApi.saveAlwaysRules")(function* (ctx: {
+      params: { requestID: PermissionID }
+      payload: Schema.Schema.Type<typeof SaveAlwaysRulesBody>
+    }) {
+      const ok = yield* svc.saveAlwaysRules({
+        requestID: ctx.params.requestID,
+        approvedAlways: ctx.payload.approvedAlways ? [...ctx.payload.approvedAlways] : undefined,
+        deniedAlways: ctx.payload.deniedAlways ? [...ctx.payload.deniedAlways] : undefined,
+      })
+      // kilocode_change - match the classic Hono route so clients can stale-clean up
+      if (!ok) return yield* new HttpApiError.NotFound({})
+      return true
+    })
+
     return HttpApiBuilder.group(PermissionApi, "permission", (handlers) =>
-      handlers.handle("list", list).handle("reply", reply),
+      handlers.handle("list", list).handle("reply", reply).handle("saveAlwaysRules", saveAlwaysRules),
     )
   }),
 ).pipe(Layer.provide(Permission.defaultLayer))

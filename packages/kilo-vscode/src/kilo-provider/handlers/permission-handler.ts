@@ -24,6 +24,8 @@ export interface PermissionContext {
   recordPermissionDirectory(requestID: string, directory: string): void
   /** Look up the directory recorded for a pending permission, if any. */
   getPermissionDirectory(requestID: string): string | undefined
+  /** Clear a cached directory record when the permission is no longer pending. */
+  clearPermissionDirectory(requestID: string): void
 }
 
 export function recoveryDirs(workspace: string, dirs: ReadonlyMap<string, string>) {
@@ -87,6 +89,7 @@ export async function handlePermissionResponse(
   const dir = ctx.getPermissionDirectory(permissionId) ?? ctx.getWorkspaceDirectory(target)
 
   const staleCleanup = () => {
+    ctx.clearPermissionDirectory(permissionId)
     ctx.postMessage({ type: "permissionError", permissionID: permissionId, stale: true })
     void fetchAndSendPendingPermissions(ctx)
   }

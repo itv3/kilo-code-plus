@@ -1,12 +1,13 @@
+import { Effect } from "effect" // kilocode_change
 import { Hono } from "hono"
 import { describeRoute, validator, resolver } from "hono-openapi"
 import z from "zod"
-import { AppRuntime } from "@/effect/app-runtime"
 import { Permission } from "@/permission"
 import { PermissionID } from "@/permission/schema"
 import { NotFoundError } from "@/storage" // kilocode_change
 import { errors } from "../../error"
 import { lazy } from "@/util/lazy"
+import { jsonRequest, runRequest } from "./trace" // kilocode_change
 
 export const PermissionRoutes = lazy(() =>
   new Hono()
@@ -38,16 +39,19 @@ export const PermissionRoutes = lazy(() =>
       async (c) => {
         const params = c.req.valid("param")
         const json = c.req.valid("json")
-        // kilocode_change start — surface stale/unknown requestIDs as 404 so the caller can clean up its UI
-        const ok = await AppRuntime.runPromise(
-          Permission.Service.use((svc) =>
-            svc.reply({
+        const ok = await runRequest(
+          "PermissionRoutes.reply",
+          c,
+          Effect.gen(function* () {
+            const svc = yield* Permission.Service
+            return yield* svc.reply({
               requestID: params.requestID,
               reply: json.reply,
               message: json.message,
-            }),
-          ),
+            })
+          }),
         )
+        // kilocode_change start — surface stale/unknown requestIDs as 404 so the caller can clean up its UI
         if (!ok) throw new NotFoundError({ message: `Permission request not found: ${params.requestID}` })
         // kilocode_change end
         return c.json(true)
@@ -88,14 +92,17 @@ export const PermissionRoutes = lazy(() =>
       async (c) => {
         const params = c.req.valid("param")
         const json = c.req.valid("json")
-        const ok = await AppRuntime.runPromise(
-          Permission.Service.use((svc) =>
-            svc.saveAlwaysRules({
+        const ok = await runRequest(
+          "PermissionRoutes.saveAlwaysRules",
+          c,
+          Effect.gen(function* () {
+            const svc = yield* Permission.Service
+            return yield* svc.saveAlwaysRules({
               requestID: params.requestID,
               approvedAlways: json.approvedAlways,
               deniedAlways: json.deniedAlways,
-            }),
-          ),
+            })
+          }),
         )
         if (!ok) throw new NotFoundError({ message: `Permission request not found: ${params.requestID}` })
         return c.json(true)
@@ -119,9 +126,10 @@ export const PermissionRoutes = lazy(() =>
           },
         },
       }),
-      async (c) => {
-        const permissions = await AppRuntime.runPromise(Permission.Service.use((svc) => svc.list()))
-        return c.json(permissions)
-      },
+      async (c) =>
+        jsonRequest("PermissionRoutes.list", c, function* () {
+          const svc = yield* Permission.Service
+          return yield* svc.list()
+        }),
     ),
 )
