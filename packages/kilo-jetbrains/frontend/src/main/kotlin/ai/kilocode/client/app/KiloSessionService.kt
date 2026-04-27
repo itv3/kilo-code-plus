@@ -84,6 +84,10 @@ class KiloSessionService internal constructor(
         }
     }
 
+    /** Load recent sessions for the current worktree family. */
+    suspend fun recent(dir: String, limit: Int): List<SessionDto> =
+        call { recent(dir, limit) }.sessions
+
     /** Create a new session. Caller awaits the result. */
     suspend fun create(dir: String): SessionDto {
         LOG.info("create: dir=$dir")

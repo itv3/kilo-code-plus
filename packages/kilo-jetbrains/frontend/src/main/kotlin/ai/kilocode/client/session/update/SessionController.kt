@@ -25,6 +25,7 @@ import ai.kilocode.rpc.dto.PermissionReplyDto
 import ai.kilocode.rpc.dto.PermissionRequestDto
 import ai.kilocode.rpc.dto.QuestionReplyDto
 import ai.kilocode.rpc.dto.QuestionRequestDto
+import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -88,6 +89,22 @@ class SessionController(
     private var eventJob: Job? = null
 
     val ready: Boolean get() = model.isReady()
+
+    fun recent(
+        limit: Int,
+        onResult: (List<SessionDto>) -> Unit,
+        onError: () -> Unit = {},
+    ) {
+        cs.launch {
+            try {
+                val items = sessions.recent(directory, limit)
+                edt { onResult(items) }
+            } catch (e: Exception) {
+                LOG.warn("kind=session-recent dir=${ChatLogSummary.dir(directory)} failed message=${e.message}", e)
+                edt { onError() }
+            }
+        }
+    }
 
     fun addListener(parent: Disposable, listener: SessionControllerListener) {
         listeners.add(listener)

@@ -26,11 +26,18 @@ import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStateDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
+import ai.kilocode.rpc.dto.MessageDto
+import ai.kilocode.rpc.dto.MessageTimeDto
+import ai.kilocode.rpc.dto.MessageWithPartsDto
+import ai.kilocode.rpc.dto.SessionDto
+import ai.kilocode.rpc.dto.SessionTimeDto
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.components.JBScrollPane
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import javax.swing.JLayeredPane
 
 @Suppress("UnstableApiUsage")
@@ -40,6 +47,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
     private lateinit var sessions: KiloSessionService
     private lateinit var app: KiloAppService
     private lateinit var workspaces: KiloWorkspaceService
+    private lateinit var rpc: FakeSessionRpcApi
     private lateinit var workspace: Workspace
     private lateinit var ui: SessionUi
 
@@ -47,7 +55,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         super.setUp()
         scope = CoroutineScope(SupervisorJob())
 
-        val rpc = FakeSessionRpcApi()
+        rpc = FakeSessionRpcApi()
         val appRpc = FakeAppRpcApi().also {
             it.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
         }
@@ -164,12 +172,43 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         assertSame(find<SessionMessageListPanel>(ui), scroll.viewport.view)
     }
 
+    fun `test clicking recent session calls opener`() {
+        val opened = mutableListOf<String>()
+        rpc.recent.add(session("ses_1"))
+        ui = SessionUi(project, workspace, sessions, app, scope, onOpenSession = { opened.add(it.id) }).apply {
+            setSize(800, 600)
+        }
+
+        settle()
+        find<EmptySessionPanel>(ui).clickRecent(0)
+
+        assertEquals(listOf("ses_1"), opened)
+    }
+
+    fun `test existing session id loads history and shows message body`() {
+        rpc.history.add(MessageWithPartsDto(message("msg1"), emptyList()))
+
+        ui = SessionUi(project, workspace, sessions, app, scope, id = "ses_test").apply {
+            setSize(800, 600)
+        }
+        settle()
+
+        assertSame(find<SessionMessageListPanel>(ui), find<JBScrollPane>(ui).viewport.view)
+    }
+
     private fun layout() {
         ui.doLayout()
         val root = find<SessionRootPanel>(ui)
         root.doLayout()
         root.content.doLayout()
         find<PromptPanel>(ui).parent.doLayout()
+    }
+
+    private fun settle() = runBlocking {
+        repeat(5) {
+            delay(100)
+            com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents()
+        }
     }
 
     private fun showConnection() {
@@ -225,5 +264,21 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
             always = emptyList(),
             meta = PermissionMeta(raw = emptyMap()),
         )
+    )
+
+    private fun session(id: String) = SessionDto(
+        id = id,
+        projectID = "prj",
+        directory = "/test",
+        title = "Recent $id",
+        version = "1",
+        time = SessionTimeDto(created = 1.0, updated = 2.0),
+    )
+
+    private fun message(id: String) = MessageDto(
+        id = id,
+        sessionID = "ses_test",
+        role = "user",
+        time = MessageTimeDto(created = 0.0),
     )
 }

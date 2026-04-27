@@ -50,9 +50,11 @@ class MockCliServer : AutoCloseable {
 
     // Session REST responses
     @Volatile var sessions = "[]"
+    @Volatile var recentSessions = "[]"
     @Volatile var sessionCreate = """{"id":"ses_test","slug":"test","projectID":"prj_test","directory":"/test","title":"New Session","version":"1.0.0","time":{"created":1000,"updated":1000}}"""
     @Volatile var sessionStatuses = "{}"
     @Volatile var sessionsStatus = 200
+    @Volatile var recentSessionsStatus = 200
     @Volatile var sessionCreateStatus = 200
     @Volatile var sessionGetStatus = 200
     @Volatile var sessionDeleteStatus = 200
@@ -66,6 +68,8 @@ class MockCliServer : AutoCloseable {
 
     /** Return the number of requests received for [path] (bare, no query). */
     fun requestCount(path: String): Int = counts[path]?.get() ?: 0
+
+    @Volatile var lastExperimentalSessionPath: String? = null
 
     /** Reset all request counters. */
     fun resetCounts() { counts.clear() }
@@ -200,6 +204,10 @@ class MockCliServer : AutoCloseable {
                 bare == "/agent" -> respond(output, agentsStatus, agents)
                 bare == "/command" -> respond(output, commandsStatus, commands)
                 bare == "/skill" -> respond(output, skillsStatus, skills)
+                bare == "/experimental/session" -> {
+                    lastExperimentalSessionPath = path
+                    respond(output, recentSessionsStatus, recentSessions)
+                }
                 bare == "/session/status" -> respond(output, sessionStatusesStatus, sessionStatuses)
                 bare == "/session" && method == "GET" -> respond(output, sessionsStatus, sessions)
                 bare == "/session" && method == "POST" -> respond(output, sessionCreateStatus, sessionCreate)

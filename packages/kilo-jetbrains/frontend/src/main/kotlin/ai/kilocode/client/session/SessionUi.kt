@@ -16,6 +16,7 @@ import ai.kilocode.client.session.ui.SessionMessageListPanel
 import ai.kilocode.client.session.update.EVENT_FLUSH_MS
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.session.update.SessionControllerEvent
+import ai.kilocode.rpc.dto.SessionDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -41,6 +42,8 @@ class SessionUi(
     sessions: KiloSessionService,
     app: KiloAppService,
     cs: CoroutineScope,
+    id: String? = null,
+    private val onOpenSession: (SessionDto) -> Unit = {},
 ) : JPanel(BorderLayout()), Disposable {
 
     companion object {
@@ -48,7 +51,6 @@ class SessionUi(
     }
 
     private val project = project
-
     private val flushMs =
         Registry.intValue("kilo.session.flushMs", EVENT_FLUSH_MS.toInt())
             .takeIf { it > 0 }
@@ -56,7 +58,7 @@ class SessionUi(
             ?: EVENT_FLUSH_MS
 
     private val controller = SessionController(
-        this, null, sessions, workspace, app, cs, this,
+        this, id, sessions, workspace, app, cs, this,
         flushMs = flushMs,
         condense = Registry.`is`("kilo.session.condense", true),
     )
@@ -78,7 +80,6 @@ class SessionUi(
 
     private lateinit var prompt: PromptPanel
 
-
     init {
         buildUi()
         bindUi()
@@ -90,7 +91,7 @@ class SessionUi(
 
         sessionContent = JPanel(BorderLayout())
 
-        emptyBody = EmptySessionPanel(this)
+        emptyBody = EmptySessionPanel(this, controller, onOpenSession)
         messageBody = SessionMessageListPanel(controller.model, this)
 
         scroll = JBScrollPane(emptyBody).apply {
@@ -153,12 +154,14 @@ class SessionUi(
                     prompt.setReady(m.isReady())
                 }
 
-                is SessionControllerEvent.ViewChanged ->
+                is SessionControllerEvent.ViewChanged -> {
                     showBody(if (event.show) messageBody else emptyBody)
+                }
 
                 is SessionControllerEvent.AppChanged,
-                is SessionControllerEvent.WorkspaceChanged ->
+                is SessionControllerEvent.WorkspaceChanged -> {
                     prompt.setReady(controller.model.isReady())
+                }
             }
         }
 
