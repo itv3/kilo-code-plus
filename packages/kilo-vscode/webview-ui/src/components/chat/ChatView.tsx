@@ -172,17 +172,15 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const changesTooltip = () => {
     const stats = session.worktreeStats()
     if (!stats?.files) return language.t("sidebar.session.showChanges.tooltip.empty")
-    if (stats.files === 1) {
-      return language.t("sidebar.session.showChanges.tooltip.one", {
-        additions: stats.additions,
-        deletions: stats.deletions,
-      })
-    }
-    return language.t("sidebar.session.showChanges.tooltip.other", {
-      files: stats.files,
-      additions: stats.additions,
-      deletions: stats.deletions,
-    })
+    return (
+      <span class="session-changes-tooltip">
+        <span>{stats.files === 1 ? "1 file changed" : `${stats.files} files changed`}</span>
+        <span class="session-changes-tooltip-separator">·</span>
+        <span class="session-diff-add">+{stats.additions}</span>
+        <span class="session-diff-del">-{stats.deletions}</span>
+        <span>Open the changes view.</span>
+      </span>
+    )
   }
 
   const showAdvancedWorktree = () => vscode.postMessage({ type: "openAdvancedWorktree" })
@@ -260,7 +258,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
           </div>
         </Show>
         <Show when={hasChat && canContinueInWorktree() && server.gitInstalled()}>
-          <div class="session-move-group">
+          <>
             <Tooltip value={moveTooltip()} placement="top">
               <Button
                 variant="ghost"
@@ -294,10 +292,11 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                 <Show when={session.worktreeStats()?.files}>
                   <span class="session-diff-add">+{session.worktreeStats()!.additions}</span>
                   <span class="session-diff-del">-{session.worktreeStats()!.deletions}</span>
+                  <span class="session-move-dot" aria-hidden="true" />
                 </Show>
               </Button>
             </Tooltip>
-          </div>
+          </>
         </Show>
       </div>
     </div>

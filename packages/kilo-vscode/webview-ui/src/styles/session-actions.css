@@ -20,7 +20,7 @@
   display: flex;
   gap: 4px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   min-height: 22px;
   justify-content: flex-start;
 }
@@ -188,56 +188,27 @@
   font-weight: 600;
 }
 
-.session-move-group {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 2px;
-  border-radius: var(--session-action-radius);
-  color: var(--vscode-descriptionForeground);
-  transition:
-    background-color 150ms ease,
-    color 150ms ease;
-}
-
-.session-move-group > [data-component="tooltip-trigger"] {
-  display: flex;
-  flex: 0 0 auto;
-}
-
-.session-move-group:hover,
-.session-move-group:has(.session-move-action:focus-visible),
-.session-move-group:has(.session-move-changes:focus-visible) {
-  color: var(--vscode-foreground);
-}
-
-.session-move-group:hover .session-move-action,
-.session-move-group:hover .session-move-changes,
-.session-move-group:has(.session-move-action:focus-visible) .session-move-action,
-.session-move-group:has(.session-move-action:focus-visible) .session-move-changes,
-.session-move-group:has(.session-move-changes:focus-visible) .session-move-action,
-.session-move-group:has(.session-move-changes:focus-visible) .session-move-changes {
-  background: var(--surface-interactive-hover, var(--vscode-list-hoverBackground));
-}
-
 .session-move-action {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  border-radius: var(--session-action-radius) 0 0 var(--session-action-radius);
-  color: inherit;
+  border-radius: var(--session-action-radius);
+  color: var(--vscode-descriptionForeground);
   padding: 4px 6px !important;
   background: transparent;
   box-shadow: none;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .session-move-action:hover:not(:disabled),
 .session-move-action:focus-visible:not(:disabled),
 .session-move-action:active:not(:disabled) {
-  color: inherit;
-  background: inherit;
+  color: var(--vscode-foreground);
+  background: var(--surface-interactive-hover, var(--vscode-list-hoverBackground));
   box-shadow: none;
 }
 
@@ -258,18 +229,23 @@
   align-items: center;
   gap: 3px;
   flex: 0 0 auto;
-  border-radius: 0 var(--session-action-radius) var(--session-action-radius) 0;
-  color: inherit;
+  overflow: hidden;
+  position: relative;
+  border-radius: var(--session-action-radius);
+  color: var(--vscode-descriptionForeground);
   padding: 4px 6px !important;
   background: transparent;
   box-shadow: none;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .session-move-changes:hover:not(:disabled),
 .session-move-changes:focus-visible:not(:disabled),
 .session-move-changes:active:not(:disabled) {
-  color: inherit;
-  background: inherit;
+  color: var(--vscode-foreground);
+  background: var(--surface-interactive-hover, var(--vscode-list-hoverBackground));
   box-shadow: none;
 }
 
@@ -281,6 +257,17 @@
 
 .session-move-changes--empty {
   opacity: 0.7;
+}
+
+.session-move-dot {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #34d399;
+  opacity: 0;
 }
 
 /* Diff stats badge styles retained for the inline move button stats */
@@ -325,10 +312,23 @@
   color: #f87171;
 }
 
-/* Collapse diff stats to icon-only when truly narrow */
-@container (max-width: 300px) {
+.session-changes-tooltip {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 4px;
+  row-gap: 2px;
+}
+
+.session-changes-tooltip-separator {
+  color: var(--vscode-descriptionForeground);
+}
+
+/* Collapse diff stats to icon-only before the row wraps. */
+@container (max-width: 420px) {
   .session-actions-row {
     gap: 4px;
+    flex-wrap: wrap;
   }
 
   .session-actions-row > *,
@@ -341,17 +341,21 @@
   }
 
   .session-move-changes {
-    gap: 2px;
+    gap: 0;
+    width: 26px;
+    min-width: 26px;
     padding-left: 5px !important;
     padding-right: 5px !important;
   }
 
   .session-diff-add,
   .session-diff-del {
-    position: relative;
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
   }
 
-  .session-move-label {
-    max-width: 116px;
+  .session-move-dot {
+    opacity: 1;
   }
 }
