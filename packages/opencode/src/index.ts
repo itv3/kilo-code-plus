@@ -90,10 +90,10 @@ function show(out: string) {
   const end = out.endsWith(EOL) ? "" : EOL // kilocode_change - keep shell prompt on the next line
   if (!text.startsWith("opencode ")) {
     process.stderr.write(UI.logo() + EOL + EOL)
-    process.stderr.write(text + end)
+    process.stderr.write(text + end) // kilocode_change
     return
   }
-  process.stderr.write(out + end)
+  process.stderr.write(out + end) // kilocode_change
 }
 
 let cli = yargs(args) // kilocode_change
