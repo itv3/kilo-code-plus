@@ -98,7 +98,7 @@
       {
         "command": "kilo-code.new.agentManagerOpen",
         "title": "Agent Manager",
-        "icon": "$(circuit-board)"
+        "icon": "$(organization)"
       },
       {
         "command": "kilo-code.new.kiloClawOpen",
