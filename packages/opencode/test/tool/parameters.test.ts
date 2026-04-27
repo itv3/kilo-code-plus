@@ -77,9 +77,11 @@ describe("tool parameters", () => {
       expect(parsed.timeout).toBe(5000)
       expect(parsed.workdir).toBe("/tmp")
     })
-    test("rejects missing description (required by zod)", () => {
-      expect(accepts(Bash, { command: "ls" })).toBe(false)
+    // kilocode_change start - description is optional in kilo (see bash.ts Parameters)
+    test("accepts missing description (optional in kilo)", () => {
+      expect(accepts(Bash, { command: "ls" })).toBe(true)
     })
+    // kilocode_change end
     test("rejects missing command", () => {
       expect(accepts(Bash, { description: "list" })).toBe(false)
     })
