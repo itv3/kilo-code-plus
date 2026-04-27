@@ -98,8 +98,8 @@ The `modalities` object declares which content types the model can receive and p
 
 | Sub-field | Type    | Required | Description                                      |
 | --------- | ------- | -------- | ------------------------------------------------ |
-| `input`   | `array` | No       | Content types the model accepts from the user    |
-| `output`  | `array` | No       | Content types the model can generate in response |
+| `input`   | `array` | Yes      | Content types the model accepts from the user    |
+| `output`  | `array` | Yes      | Content types the model can generate in response |
 
 For a standard text model that can also inspect images, use:
 
