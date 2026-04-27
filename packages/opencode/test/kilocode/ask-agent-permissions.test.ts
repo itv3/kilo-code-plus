@@ -111,6 +111,11 @@ describe("Ask agent bash permissions", () => {
     const denied = [
       "echo hi > file",
       "echo hi >> file",
+      "echo hi | tee file",
+      "echo hi; touch file",
+      "echo hi && touch file",
+      "echo $(touch file)",
+      "echo `touch file`",
       "cat a > b",
       "jq . a.json > b.json",
       "sort names.txt -o names.txt",
