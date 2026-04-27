@@ -114,6 +114,8 @@ describe("Ask agent bash permissions", () => {
       "cat a > b",
       "jq . a.json > b.json",
       "sort names.txt -o names.txt",
+      "sort --output=names.txt names.txt",
+      "sort names.txt --output=names.txt",
     ]
 
     for (const cmd of denied) {

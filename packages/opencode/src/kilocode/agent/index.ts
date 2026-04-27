@@ -118,6 +118,8 @@ export const readOnlyBash: Record<string, "allow" | "ask" | "deny"> = {
   "* >| *": "deny",
   "sort -o *": "deny",
   "sort * -o *": "deny",
+  "sort --output*": "deny",
+  "sort * --output*": "deny",
 }
 
 function askGuard(mcp: Record<string, "allow" | "ask" | "deny"> = {}) {
