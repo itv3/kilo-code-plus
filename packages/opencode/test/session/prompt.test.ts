@@ -845,9 +845,15 @@ it.live(
             yield* sessions.updateMessage(childAssistant)
             yield* ctx.metadata({
               title: "done",
+<<<<<<< HEAD
               metadata: { sessionId: child.id, model: ref },
             })
             return { title: "done", metadata: { sessionId: child.id, model: ref }, output: "done" }
+=======
+              metadata: { sessionId: child.id, model: ref, variant: undefined },
+            })
+            return { title: "done", metadata: { sessionId: child.id, model: ref, variant: undefined }, output: "done" }
+>>>>>>> ede6f5ae18 (test(session): add test for handleSubtask propagating child session cost to wrapper)
           })
         yield* Effect.addFinalizer(() => Effect.sync(() => void (task.execute = original)))
 
