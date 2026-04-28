@@ -92,6 +92,8 @@ export namespace ConfigProtection {
       // File tools include metadata.filepath. They may read global config
       // without prompting, but edits are still protected separately via `edit`.
       if (request.metadata?.filepath) return false
+      // Bash read-only file commands may read global config when explicitly allowed.
+      if (request.metadata?.access === "read") return false
       for (const pattern of request.patterns) {
         const dir = pattern.replace(/\/\*$/, "")
         if (path.isAbsolute(dir) && isAbsolute(dir)) return true
