@@ -132,13 +132,15 @@ export namespace KiloIndexing {
   // Mirror of IndexingStatus using Effect Schema for BusEvent.define, which
   // requires a Schema.Top. The zod form above is kept for consumers that still
   // depend on the z.infer-derived type.
+  const StateSchema = Schema.Literals(INDEXING_STATUS_STATES).annotate({ identifier: "IndexingStatusState" })
+
   const StatusSchema = Schema.Struct({
-    state: Schema.Literals(INDEXING_STATUS_STATES),
+    state: StateSchema,
     message: Schema.String,
     processedFiles: Schema.Number,
     totalFiles: Schema.Number,
     percent: Schema.Number,
-  })
+  }).annotate({ identifier: "IndexingStatus" })
 
   type Entry = {
     manager?: CodeIndexManager
