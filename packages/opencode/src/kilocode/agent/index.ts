@@ -110,6 +110,8 @@ export const readOnlyBash: Record<string, "allow" | "ask" | "deny"> = {
   "git branch -r *": "allow",
   "git remote -v *": "allow",
   "gh *": "ask",
+  "*\n*": "deny",
+  "*<(*": "deny",
   "*|*": "deny",
   "*;*": "deny",
   "*&&*": "deny",

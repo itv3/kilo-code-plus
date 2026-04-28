@@ -121,6 +121,8 @@ describe("Ask agent bash permissions", () => {
       "sort names.txt -o names.txt",
       "sort --output=names.txt names.txt",
       "sort names.txt --output=names.txt",
+      "echo ok\ntouch ask-bypass.txt",
+      "cat <(touch ask-bypass.txt)",
     ]
 
     for (const cmd of denied) {
