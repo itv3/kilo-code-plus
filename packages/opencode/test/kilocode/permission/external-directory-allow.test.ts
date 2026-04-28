@@ -282,18 +282,24 @@ describe("bash external_directory access metadata", () => {
       directory: tmp.path,
       fn: async () => {
         const bash = await init()
-        const err = new Error("stop after external permission")
-        const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []
         const file = path.join(outer.path, "hello.txt")
-        const command = `cat ${quote(file)} && rm ${quote(file)}`
+        const commands = [
+          `cat ${quote(file)} && rm ${quote(file)}`,
+          `cat ${quote(file)} && printf x > ${quote(file)}`,
+        ]
 
-        await expect(
-          Effect.runPromise(bash.execute({ command, description: "Read then remove external file" }, capture(requests, err))),
-        ).rejects.toThrow(err.message)
+        for (const command of commands) {
+          const err = new Error("stop after external permission")
+          const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []
 
-        const req = requests.find((item) => item.permission === "external_directory")
-        expect(req).toBeDefined()
-        expect(req?.metadata).not.toMatchObject({ access: "read" })
+          await expect(
+            Effect.runPromise(bash.execute({ command, description: "Read then write external file" }, capture(requests, err))),
+          ).rejects.toThrow(err.message)
+
+          const req = requests.find((item) => item.permission === "external_directory")
+          expect(req).toBeDefined()
+          expect(req?.metadata).not.toMatchObject({ access: "read" })
+        }
       },
     })
   })
