@@ -19,6 +19,7 @@ class SessionUiFactory(
         workspace: Workspace,
         manager: SessionManager,
         id: String? = null,
+        loading: Boolean = id == null,
     ): SessionUi = SessionUi(
         project = project,
         workspace = workspace,
@@ -26,6 +27,7 @@ class SessionUiFactory(
         app = service<KiloAppService>(),
         cs = scope(),
         id = id,
+        loading = loading,
         open = manager::openSession,
     )
 

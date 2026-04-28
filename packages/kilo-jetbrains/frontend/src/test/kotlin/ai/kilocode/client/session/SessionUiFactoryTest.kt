@@ -48,7 +48,7 @@ class SessionUiFactoryTest : BasePlatformTestCase() {
     }
 
     fun `test factory creates blank session ui`() {
-        val ui = direct().create(project, workspace, FakeManager())
+        val ui = direct().create(project, workspace, FakeManager(), null, true)
 
         assertNotNull(ui)
     }

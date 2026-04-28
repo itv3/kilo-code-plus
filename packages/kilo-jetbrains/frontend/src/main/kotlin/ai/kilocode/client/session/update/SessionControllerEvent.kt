@@ -33,6 +33,24 @@ sealed class SessionControllerEvent {
             override fun toString() = "ViewChanged session"
         }
     }
+
+    sealed class ConnectionChanged : SessionControllerEvent() {
+        data object Hide : ConnectionChanged() {
+            override fun toString() = "ConnectionChanged hide"
+        }
+
+        data object ShowConnecting : ConnectionChanged() {
+            override fun toString() = "ConnectionChanged connecting"
+        }
+
+        data class ShowError(val summary: String, val detail: String?, val source: String = "app") : ConnectionChanged() {
+            override fun toString() = "ConnectionChanged error $source"
+        }
+
+        data class ShowWarning(val summary: String, val detail: String?) : ConnectionChanged() {
+            override fun toString() = "ConnectionChanged warning"
+        }
+    }
 }
 
 /**

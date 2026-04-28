@@ -10,8 +10,6 @@ import ai.kilocode.client.testing.FakeWorkspaceRpcApi
 import ai.kilocode.client.testing.FakeSessionRpcApi
 import ai.kilocode.client.app.KiloWorkspaceService
 import ai.kilocode.client.app.Workspace
-import ai.kilocode.client.session.update.SessionController
-import ai.kilocode.client.session.update.SessionControllerEvent
 import ai.kilocode.rpc.dto.AgentDto
 import ai.kilocode.rpc.dto.AgentsDto
 import ai.kilocode.rpc.dto.ChatEventDto
@@ -122,13 +120,20 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
 
     // ------ Controller creation ------
 
-    protected fun controller(id: String? = null) = controller(id, Long.MAX_VALUE)
-
-    protected fun controller(id: String? = null, flushMs: Long): SessionController {
-        return controller(id, flushMs, true)
+    protected fun controller(
+        id: String? = null,
+        flushMs: Long = Long.MAX_VALUE,
+        displayMs: Long = Long.MAX_VALUE,
+    ): SessionController {
+        return controller(id, flushMs, true, displayMs)
     }
 
-    protected fun controller(id: String? = null, flushMs: Long, condense: Boolean): SessionController {
+    protected fun controller(
+        id: String? = null,
+        flushMs: Long,
+        condense: Boolean,
+        displayMs: Long = Long.MAX_VALUE,
+    ): SessionController {
         val root = Root()
         val m = SessionController(
           parent,
@@ -139,7 +144,8 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
           scope,
           root,
           flushMs,
-          condense
+          condense,
+          displayMs
         )
         controllers.add(m)
         roots[m] = root
@@ -198,6 +204,14 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
         }
     }
 
+    protected fun pause(ms: Long) = runBlocking {
+        val tick = 10L
+        repeat((ms / tick).coerceAtLeast(1).toInt()) {
+            delay(tick)
+            edt { UIUtil.dispatchAllInvocationEvents() }
+        }
+    }
+
     protected fun edt(block: () -> Unit) {
         ApplicationManager.getApplication().invokeAndWait(block)
     }
@@ -231,7 +245,7 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
 
     protected fun assertSession(expected: String, c: SessionController, show: Boolean = true) {
         assertEquals(expected.trimIndent().trim(), c.toString().trim())
-        assertEquals(show, c.model.showMessages)
+        assertEquals(show, c.model.showSession)
     }
 
     protected fun assertControllerEvents(expected: String, events: List<SessionControllerEvent>) {

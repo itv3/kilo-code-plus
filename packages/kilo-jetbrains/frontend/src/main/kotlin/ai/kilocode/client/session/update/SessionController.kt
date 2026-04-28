@@ -17,9 +17,11 @@ import ai.kilocode.client.session.model.QuestionItem
 import ai.kilocode.client.session.model.QuestionOption
 import ai.kilocode.client.session.model.ToolCallRef
 import ai.kilocode.rpc.dto.ChatEventDto
+import ai.kilocode.rpc.dto.ConfigWarningDto
 import ai.kilocode.rpc.dto.ConfigUpdateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
+import ai.kilocode.rpc.dto.LoadErrorDto
 import ai.kilocode.rpc.dto.PermissionAlwaysRulesDto
 import ai.kilocode.rpc.dto.PermissionReplyDto
 import ai.kilocode.rpc.dto.PermissionRequestDto
@@ -60,12 +62,14 @@ class SessionController(
   comp: Component? = null,
   private val flushMs: Long = EVENT_FLUSH_MS,
   private val condense: Boolean = true,
+  private val displayMs: Long = DISPLAY_DELAY_MS,
   private val open: (SessionDto) -> Unit = {},
 ) : Disposable {
 
     companion object {
         private val LOG = KiloLog.create(SessionController::class.java)
         internal const val RECENT_LIMIT = 5
+        internal const val DISPLAY_DELAY_MS = 1_000L
     }
 
     init {
@@ -89,33 +93,43 @@ class SessionController(
     private var partType: String? = null
     private var tool: String? = null
     private var eventJob: Job? = null
-    private var recentsLoading = false
-    private var recentsLoaded = false
+    private var history: HistoryState = HistoryState.Idle
+    private var recents: RecentsState = RecentsState.Idle
     private var view: SessionControllerEvent.ViewChanged? = null
+    private var conn: SessionControllerEvent.ConnectionChanged? = null
+    private val connDelay = DelayedState(displayMs, ::connectionState)
+    private val historyDelay = DelayedState(displayMs) { history }
+    private val recentsDelay = DelayedState(displayMs) { recents }
 
     val ready: Boolean get() = model.isReady()
+    internal val blank: Boolean get() = sessionId == null && model.isEmpty() && !model.showSession
 
     fun refreshRecents(force: Boolean = false) {
-        if (model.showMessages) return
-        if (recentsLoading) return
-        if (recentsLoaded && !force) return
-        recentsLoading = true
-        view(SessionControllerEvent.ViewChanged.ShowProgress)
+        if (model.showSession) return
+        if (recents is RecentsState.Loading) return
+        if (recents is RecentsState.Loaded && !force) return
+        val state = RecentsState.Loading()
+        recents = state
+        recentsDelay.run(state) {
+            view(SessionControllerEvent.ViewChanged.ShowProgress)
+        }
         cs.launch {
             try {
                 val items = sessions.recent(directory, RECENT_LIMIT)
                 edt {
-                    recentsLoading = false
-                    recentsLoaded = true
-                    if (model.showMessages) return@edt
+                    if (recents != state) return@edt
+                    recentsDelay.cancel()
+                    recents = RecentsState.Loaded
+                    if (model.showSession) return@edt
                     view(SessionControllerEvent.ViewChanged.ShowRecents(items))
                 }
             } catch (e: Exception) {
                 LOG.warn("kind=session-recent dir=${ChatLogSummary.dir(directory)} failed message=${e.message}", e)
                 edt {
-                    recentsLoading = false
-                    recentsLoaded = true
-                    if (model.showMessages) return@edt
+                    if (recents != state) return@edt
+                    recentsDelay.cancel()
+                    recents = RecentsState.Loaded
+                    if (model.showSession) return@edt
                     view(SessionControllerEvent.ViewChanged.ShowRecents(emptyList()))
                 }
             }
@@ -273,6 +287,7 @@ class SessionController(
                 fire(SessionControllerEvent.AppChanged) {
                     model.app = state
                     model.version = app.version
+                    syncConnection()
                 }
             }
         }
@@ -281,6 +296,7 @@ class SessionController(
             workspace.state.collect { state ->
                 fire(SessionControllerEvent.WorkspaceChanged) {
                     model.workspace = state
+                    syncConnection()
 
                     if (state.status != KiloWorkspaceStatusDto.READY) return@fire
 
@@ -317,7 +333,13 @@ class SessionController(
     private fun loadHistory() {
         val id = sessionId ?: return
         cs.launch {
-            view(SessionControllerEvent.ViewChanged.ShowProgress)
+            val state = HistoryState.Loading()
+            runEdt {
+                history = state
+            }
+            historyDelay.run(state) {
+                if (!model.showSession) view(SessionControllerEvent.ViewChanged.ShowProgress)
+            }
             try {
                 val history = sessions.messages(id, directory)
                 LOG.debug { "${ChatLogSummary.sid(id)} ${ChatLogSummary.history(history)}" }
@@ -336,6 +358,11 @@ class SessionController(
                 LOG.warn("${ChatLogSummary.sid(id)} kind=history dir=${ChatLogSummary.dir(directory)} failed message=${e.message}", e)
                 edt { refreshRecents(force = true) }
             } finally {
+                edt {
+                    if (history != state) return@edt
+                    historyDelay.cancel()
+                    history = HistoryState.Idle
+                }
                 updates.holdFlush(false)
                 updates.requestFlush(true)
             }
@@ -548,8 +575,12 @@ class SessionController(
     }
 
     private fun showMessages() {
-        if (!model.showMessages) {
-            model.showMessages = true
+        if (!model.showSession) {
+            model.showSession = true
+            historyDelay.cancel()
+            history = HistoryState.Idle
+            recentsDelay.cancel()
+            recents = RecentsState.Idle
             view(SessionControllerEvent.ViewChanged.ShowSession)
         }
     }
@@ -558,6 +589,66 @@ class SessionController(
         if (view == event) return
         view = event
         fire(event)
+    }
+
+    private fun connection(event: SessionControllerEvent.ConnectionChanged) {
+        if (event is SessionControllerEvent.ConnectionChanged.Hide || event is SessionControllerEvent.ConnectionChanged.ShowWarning) {
+            connDelay.cancel()
+            showConnection(event)
+            return
+        }
+        if (conn == event) {
+            connDelay.cancel()
+            return
+        }
+        connDelay.run(event, ::showConnection)
+    }
+
+    private fun showConnection(event: SessionControllerEvent.ConnectionChanged) {
+        if (conn == event) return
+        if (conn == null && event is SessionControllerEvent.ConnectionChanged.Hide) {
+            conn = event
+            return
+        }
+        conn = event
+        fire(event)
+    }
+
+    private fun syncConnection() {
+        connection(connectionState())
+    }
+
+    private fun connectionState(): SessionControllerEvent.ConnectionChanged {
+        val app = model.app
+        val workspace = model.workspace
+
+        if (app.status == KiloAppStatusDto.ERROR) {
+            return SessionControllerEvent.ConnectionChanged.ShowError(
+                app.error ?: KiloBundle.message("session.connection.error.unknown"),
+                app.errors.toErrorText(),
+            )
+        }
+
+        if (workspace.status == KiloWorkspaceStatusDto.ERROR) {
+            return SessionControllerEvent.ConnectionChanged.ShowError(
+                workspace.error ?: KiloBundle.message("session.connection.error.unknown"),
+                null,
+                "workspace",
+            )
+        }
+
+        if (app.status == KiloAppStatusDto.READY && workspace.status == KiloWorkspaceStatusDto.READY && app.warnings.isNotEmpty()) {
+            return SessionControllerEvent.ConnectionChanged.ShowWarning(
+                summary(app.warnings.size),
+                app.warnings.toWarningText(),
+            )
+        }
+
+        if (app.status == KiloAppStatusDto.READY && workspace.status == KiloWorkspaceStatusDto.READY) {
+            return SessionControllerEvent.ConnectionChanged.Hide
+        }
+
+        return SessionControllerEvent.ConnectionChanged.ShowConnecting
     }
 
     private fun status(): String = when (partType) {
@@ -604,6 +695,9 @@ class SessionController(
     }
 
     override fun dispose() {
+        connDelay.dispose()
+        historyDelay.dispose()
+        recentsDelay.dispose()
         eventJob?.cancel()
         cs.cancel()
     }
@@ -674,6 +768,47 @@ private fun matchesSession(event: ChatEventDto, id: String): Boolean = when (eve
     is ChatEventDto.SessionCompacted -> event.sessionID == id
     is ChatEventDto.SessionDiffChanged -> event.sessionID == id
     is ChatEventDto.TodoUpdated -> event.sessionID == id
+}
+
+private fun summary(count: Int): String {
+    val base = KiloBundle.message("session.connection.warning.config")
+    if (count <= 1) return base
+    return "$base ($count)"
+}
+
+private sealed interface RecentsState {
+    data object Idle : RecentsState
+    data class Loading(val id: Any = Any()) : RecentsState
+    data object Loaded : RecentsState
+}
+
+private sealed interface HistoryState {
+    data object Idle : HistoryState
+    data class Loading(val id: Any = Any()) : HistoryState
+}
+
+private fun List<LoadErrorDto>.toErrorText(): String? {
+    val out = mapNotNull { it.toDetailLine() }
+    if (out.isEmpty()) return null
+    return out.joinToString("\n")
+}
+
+private fun List<ConfigWarningDto>.toWarningText(): String? {
+    val out = mapNotNull { it.toDetailLine() }
+    if (out.isEmpty()) return null
+    return out.joinToString("\n\n")
+}
+
+private fun LoadErrorDto.toDetailLine(): String? {
+    val detail = detail?.trim()?.ifEmpty { null } ?: return null
+    if (resource == "connection") return detail
+    return "$resource: $detail"
+}
+
+private fun ConfigWarningDto.toDetailLine(): String {
+    val head = "$path: $message"
+    val tail = detail?.trim()?.ifEmpty { null } ?: return head
+    return "$head\n$tail"
 }
 
 private fun toPermission(dto: PermissionRequestDto): Permission {

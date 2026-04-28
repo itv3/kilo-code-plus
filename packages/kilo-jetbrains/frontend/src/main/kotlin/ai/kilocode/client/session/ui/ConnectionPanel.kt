@@ -4,10 +4,6 @@ import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.session.update.SessionControllerEvent
 import ai.kilocode.client.session.update.SessionControllerListener
-import ai.kilocode.rpc.dto.ConfigWarningDto
-import ai.kilocode.rpc.dto.LoadErrorDto
-import ai.kilocode.rpc.dto.KiloAppStatusDto
-import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
@@ -99,48 +95,30 @@ class ConnectionPanel(
         header.add(retry, BorderLayout.EAST)
         add(header, BorderLayout.NORTH)
         controller.addListener(this, this)
-        render()
+        hidePanel()
     }
 
     override fun onEvent(event: SessionControllerEvent) {
         when (event) {
-            is SessionControllerEvent.AppChanged,
-            is SessionControllerEvent.WorkspaceChanged -> render()
+            is SessionControllerEvent.ConnectionChanged.Hide -> hidePanel()
+
+            is SessionControllerEvent.ConnectionChanged.ShowConnecting -> showConnecting()
+
+            is SessionControllerEvent.ConnectionChanged.ShowError -> {
+                showError(event.summary, event.detail)
+                showPanel()
+            }
+
+            is SessionControllerEvent.ConnectionChanged.ShowWarning -> {
+                showWarning(event.summary, event.detail)
+                showPanel()
+            }
 
             else -> Unit
         }
     }
 
-    private fun render() {
-        val app = controller.model.app
-        val workspace = controller.model.workspace
-
-        if (app.status == KiloAppStatusDto.ERROR) {
-            showError(
-                app.error ?: KiloBundle.message("session.connection.error.unknown"),
-                app.errors.toErrorText(),
-            )
-            showPanel()
-            return
-        }
-
-        if (workspace.status == KiloWorkspaceStatusDto.ERROR) {
-            showError(workspace.error ?: KiloBundle.message("session.connection.error.unknown"), null)
-            showPanel()
-            return
-        }
-
-        if (app.status == KiloAppStatusDto.READY && workspace.status == KiloWorkspaceStatusDto.READY && app.warnings.isNotEmpty()) {
-            showWarning(summary(app.warnings.size), app.warnings.toWarningText())
-            showPanel()
-            return
-        }
-
-        if (app.status == KiloAppStatusDto.READY && workspace.status == KiloWorkspaceStatusDto.READY) {
-            hidePanel()
-            return
-        }
-
+    private fun showConnecting() {
         label.foreground = UIUtil.getContextHelpForeground()
         label.text = KiloBundle.message("session.connection.connecting")
         detail = null
@@ -169,12 +147,6 @@ class ConnectionPanel(
         expanded = false
         toggle.isVisible = this.detail != null
         renderDetails()
-    }
-
-    private fun summary(count: Int): String {
-        val base = KiloBundle.message("session.connection.warning.config")
-        if (count <= 1) return base
-        return "$base ($count)"
     }
 
     private fun renderDetails() {
@@ -271,28 +243,4 @@ class ConnectionPanel(
 
     internal fun maxExpandedHeight() =
         header.preferredSize.height + details.getFontMetrics(details.font).height * DETAILS_LINES + scrollChrome()
-}
-
-private fun List<LoadErrorDto>.toErrorText(): String? {
-    val out = mapNotNull { it.toDetailLine() }
-    if (out.isEmpty()) return null
-    return out.joinToString("\n")
-}
-
-private fun List<ConfigWarningDto>.toWarningText(): String? {
-    val out = mapNotNull { it.toDetailLine() }
-    if (out.isEmpty()) return null
-    return out.joinToString("\n\n")
-}
-
-private fun LoadErrorDto.toDetailLine(): String? {
-    val detail = detail?.trim()?.ifEmpty { null } ?: return null
-    if (resource == "connection") return detail
-    return "$resource: $detail"
-}
-
-private fun ConfigWarningDto.toDetailLine(): String {
-    val head = "$path: $message"
-    val tail = detail?.trim()?.ifEmpty { null } ?: return head
-    return "$head\n$tail"
 }

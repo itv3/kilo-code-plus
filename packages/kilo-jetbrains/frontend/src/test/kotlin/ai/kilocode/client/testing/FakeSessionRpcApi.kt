@@ -14,6 +14,7 @@ import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.rpc.dto.SessionListDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import ai.kilocode.rpc.dto.SessionTimeDto
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +46,7 @@ class FakeSessionRpcApi : KiloSessionRpcApi {
     /** Recent sessions returned by [recent]. */
     val recent = mutableListOf<SessionDto>()
     var recentFailures = 0
+    var recentGate: CompletableDeferred<Unit>? = null
 
     /** Push chat events here; tests collect from [events]. */
     val events = MutableSharedFlow<ChatEventDto>(extraBufferCapacity = 64, replay = 64)
@@ -90,6 +92,7 @@ class FakeSessionRpcApi : KiloSessionRpcApi {
     override suspend fun recent(directory: String, limit: Int): SessionListDto {
         assertNotEdt("recent")
         recentCalls.add(directory to limit)
+        recentGate?.await()
         if (recentFailures > 0) {
             recentFailures--
             throw IllegalStateException("recent unavailable")

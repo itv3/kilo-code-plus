@@ -1,13 +1,11 @@
 package ai.kilocode.client.session.ui
 
 import ai.kilocode.client.session.update.SessionController
+import ai.kilocode.client.session.update.SessionControllerEvent
 import ai.kilocode.client.session.update.SessionControllerTestBase
 import ai.kilocode.rpc.dto.ConfigWarningDto
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
-import ai.kilocode.rpc.dto.KiloWorkspaceStateDto
-import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
-import ai.kilocode.rpc.dto.LoadErrorDto
 import java.awt.Dimension
 
 @Suppress("UnstableApiUsage")
@@ -25,9 +23,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
     fun `test loading hides retry and details`() {
         edt {
-            controller.model.app = KiloAppStateDto(KiloAppStatusDto.CONNECTING)
-            controller.model.workspace = KiloWorkspaceStateDto(KiloWorkspaceStatusDto.PENDING)
-            panel.onEvent(ai.kilocode.client.session.update.SessionControllerEvent.AppChanged)
+            panel.onEvent(SessionControllerEvent.ConnectionChanged.ShowConnecting)
         }
 
         assertTrue(panel.isVisible)
@@ -40,15 +36,10 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
     fun `test app error starts collapsed and expands details`() {
         edt {
-            controller.model.app = KiloAppStateDto(
-                status = KiloAppStatusDto.ERROR,
-                error = "CLI startup failed",
-                errors = listOf(
-                    LoadErrorDto(resource = "connection", detail = "stderr line"),
-                    LoadErrorDto(resource = "config", detail = "HTTP 500: broken"),
-                ),
-            )
-            panel.onEvent(ai.kilocode.client.session.update.SessionControllerEvent.AppChanged)
+            panel.onEvent(SessionControllerEvent.ConnectionChanged.ShowError(
+                "CLI startup failed",
+                "stderr line\nconfig: HTTP 500: broken",
+            ))
         }
 
         assertTrue(panel.isVisible)
@@ -73,12 +64,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
     fun `test workspace error shows retry without details`() {
         edt {
-            controller.model.app = KiloAppStateDto(KiloAppStatusDto.READY)
-            controller.model.workspace = KiloWorkspaceStateDto(
-                status = KiloWorkspaceStatusDto.ERROR,
-                error = "Workspace failed",
-            )
-            panel.onEvent(ai.kilocode.client.session.update.SessionControllerEvent.WorkspaceChanged)
+            panel.onEvent(SessionControllerEvent.ConnectionChanged.ShowError("Workspace failed", null))
         }
 
         assertTrue(panel.isVisible)
@@ -95,7 +81,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
                 status = KiloAppStatusDto.ERROR,
                 error = "CLI startup failed",
             )
-            panel.onEvent(ai.kilocode.client.session.update.SessionControllerEvent.AppChanged)
+            panel.onEvent(SessionControllerEvent.ConnectionChanged.ShowError("CLI startup failed", null))
         }
         edt { panel.clickRetry() }
         flush()
@@ -105,18 +91,10 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
     fun `test ready warnings show collapsed banner with retry`() {
         edt {
-            controller.model.app = KiloAppStateDto(
-                status = KiloAppStatusDto.READY,
-                warnings = listOf(
-                    ConfigWarningDto(
-                        path = ".kilo/kilo.json",
-                        message = "Invalid JSON",
-                        detail = "CloseBraceExpected at line 11, column 1",
-                    )
-                ),
-            )
-            controller.model.workspace = KiloWorkspaceStateDto(KiloWorkspaceStatusDto.READY)
-            panel.onEvent(ai.kilocode.client.session.update.SessionControllerEvent.AppChanged)
+            panel.onEvent(SessionControllerEvent.ConnectionChanged.ShowWarning(
+                "Configuration warnings",
+                ".kilo/kilo.json: Invalid JSON\nCloseBraceExpected at line 11, column 1",
+            ))
         }
 
         assertTrue(panel.isVisible)
@@ -143,8 +121,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
                 status = KiloAppStatusDto.READY,
                 warnings = listOf(ConfigWarningDto(path = ".kilo/kilo.json", message = "Invalid JSON")),
             )
-            controller.model.workspace = KiloWorkspaceStateDto(KiloWorkspaceStatusDto.READY)
-            panel.onEvent(ai.kilocode.client.session.update.SessionControllerEvent.AppChanged)
+            panel.onEvent(SessionControllerEvent.ConnectionChanged.ShowWarning("Configuration warnings", null))
         }
         edt { panel.clickRetry() }
         flush()
@@ -154,12 +131,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
     fun `test expanded details height is capped at ten lines`() {
         edt {
-            controller.model.app = KiloAppStateDto(
-                status = KiloAppStatusDto.ERROR,
-                error = "CLI startup failed",
-                errors = listOf(LoadErrorDto(resource = "connection", detail = lines(30))),
-            )
-            panel.onEvent(ai.kilocode.client.session.update.SessionControllerEvent.AppChanged)
+            panel.onEvent(SessionControllerEvent.ConnectionChanged.ShowError("CLI startup failed", lines(30)))
             panel.size = Dimension(480, 1000)
         }
 
@@ -167,6 +139,15 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
         assertTrue(panel.detailsVisible())
         assertTrue(panel.preferredSize.height <= panel.maxExpandedHeight())
+    }
+
+    fun `test raw app and workspace events do not render panel`() {
+        edt {
+            panel.onEvent(SessionControllerEvent.AppChanged)
+            panel.onEvent(SessionControllerEvent.WorkspaceChanged)
+        }
+
+        assertFalse(panel.isVisible)
     }
 
     private fun lines(count: Int) = (1..count).joinToString("\n") { "line $it" }

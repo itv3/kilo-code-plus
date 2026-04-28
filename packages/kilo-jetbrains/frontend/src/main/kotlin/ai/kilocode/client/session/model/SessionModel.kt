@@ -46,7 +46,7 @@ class SessionModel {
     var models: List<ModelItem> = emptyList()
     var agent: String? = null
     var model: String? = null
-    var showMessages: Boolean = false
+    var showSession: Boolean = false
 
     var state: SessionState = SessionState.Idle
         private set

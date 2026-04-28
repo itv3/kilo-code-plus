@@ -39,15 +39,40 @@ import javax.swing.JPanel
  * It builds the session panels, wires controller/model listeners, and swaps the
  * center body between the empty state and the message list.
  */
-class SessionUi(
+class SessionUi private constructor(
     project: Project,
     workspace: Workspace,
     sessions: KiloSessionService,
     app: KiloAppService,
     cs: CoroutineScope,
-    id: String? = null,
-    open: (SessionDto) -> Unit = {},
+    id: String?,
+    displayMs: Long,
+    open: (SessionDto) -> Unit,
+    private val loading: Boolean,
 ) : JPanel(BorderLayout()), Disposable {
+
+    constructor(
+        project: Project,
+        workspace: Workspace,
+        sessions: KiloSessionService,
+        app: KiloAppService,
+        cs: CoroutineScope,
+        id: String? = null,
+        displayMs: Long = SessionController.DISPLAY_DELAY_MS,
+        open: (SessionDto) -> Unit = {},
+    ) : this(project, workspace, sessions, app, cs, id, displayMs, open, id == null)
+
+    internal constructor(
+        project: Project,
+        workspace: Workspace,
+        sessions: KiloSessionService,
+        app: KiloAppService,
+        cs: CoroutineScope,
+        id: String? = null,
+        displayMs: Long = SessionController.DISPLAY_DELAY_MS,
+        loading: Boolean,
+        open: (SessionDto) -> Unit = {},
+    ) : this(project, workspace, sessions, app, cs, id, displayMs, open, loading)
 
     companion object {
         private val LOG = KiloLog.create(SessionUi::class.java)
@@ -64,6 +89,7 @@ class SessionUi(
         this, id, sessions, workspace, app, cs, this,
         flushMs = flushMs,
         condense = Registry.`is`("kilo.session.condense", true),
+        displayMs = displayMs,
         open = open,
     )
 
@@ -71,6 +97,8 @@ class SessionUi(
     private lateinit var root: SessionRootPanel
 
     private lateinit var sessionContent: JPanel
+
+    private lateinit var blankBody: JPanel
 
     private lateinit var progressBody: JPanel
 
@@ -87,13 +115,19 @@ class SessionUi(
     init {
         buildUi()
         bindUi()
-        showBody(progressBody)
+        showBody(if (loading) progressBody else blankBody)
     }
+
+    internal val blank: Boolean get() = controller.blank
 
     private fun buildUi() {
         root = SessionRootPanel()
 
         sessionContent = JPanel(BorderLayout())
+
+        blankBody = JPanel(BorderLayout()).apply {
+            isOpaque = false
+        }
 
         progressBody = JPanel(BorderLayout()).apply {
             isOpaque = false
@@ -104,7 +138,7 @@ class SessionUi(
         }
         messageBody = SessionMessageListPanel(controller.model, this)
 
-        scroll = JBScrollPane(progressBody).apply {
+        scroll = JBScrollPane(blankBody).apply {
             border = JBUI.Borders.empty()
             verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
             horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
@@ -181,6 +215,8 @@ class SessionUi(
                 is SessionControllerEvent.WorkspaceChanged -> {
                     prompt.setReady(controller.model.isReady())
                 }
+
+                is SessionControllerEvent.ConnectionChanged -> Unit
             }
         }
 

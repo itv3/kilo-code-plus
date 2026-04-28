@@ -30,6 +30,7 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
     private lateinit var app: KiloAppService
     private val managers = mutableListOf<SessionSidePanelManager>()
     private val created = mutableListOf<Pair<String, String?>>()
+    private val loading = mutableListOf<Boolean>()
 
     override fun setUp() {
         super.setUp()
@@ -65,11 +66,27 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
 
         manager.newSession()
         val first = active(manager)
+        first.controller().prompt("hello")
+        settle()
         manager.newSession()
         val second = active(manager)
 
         assertNotSame(first, second)
         assertEquals(listOf("/test" to null, "/test" to null), created)
+        assertEquals(listOf(true, false), loading)
+    }
+
+    fun `test new session on blank session keeps active component`() {
+        val manager = manager()
+
+        manager.newSession()
+        val first = active(manager)
+        manager.newSession()
+        val second = active(manager)
+
+        assertSame(first, second)
+        assertEquals(listOf("/test" to null), created)
+        assertEquals(listOf(true), loading)
     }
 
     fun `test opening same existing session reuses component`() {
@@ -84,6 +101,7 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
 
         assertSame(first, second)
         assertEquals(listOf("/test" to "ses_1", "/test" to null), created)
+        assertEquals(listOf(false, false), loading)
     }
 
     fun `test open session resolves historical workspace`() {
@@ -92,6 +110,7 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
         manager.openSession(session("ses_1", "/repo"))
 
         assertEquals(listOf("/repo" to "ses_1"), created)
+        assertEquals(listOf(false), loading)
     }
 
     fun `test dispose removes active component`() {
@@ -108,9 +127,10 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
         val manager = SessionSidePanelManager(
             project = project,
             root = workspace,
-            create = { project, workspace, owner, id ->
+            create = { project, workspace, owner, id, show ->
                 created.add(workspace.directory to id)
-                SessionUi(project, workspace, sessions, app, scope, id = id, open = owner::openSession)
+                loading.add(show)
+                SessionUi(project, workspace, sessions, app, scope, id = id, loading = show, open = owner::openSession)
             },
             resolve = { workspaces.workspace(it) },
         )
@@ -119,6 +139,19 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
     }
 
     private fun active(manager: SessionSidePanelManager) = manager.component.getComponent(0) as JPanel
+
+    private fun JPanel.controller(): ai.kilocode.client.session.update.SessionController {
+        val field = SessionUi::class.java.getDeclaredField("controller")
+        field.isAccessible = true
+        return field.get(this) as ai.kilocode.client.session.update.SessionController
+    }
+
+    private fun settle() = kotlinx.coroutines.runBlocking {
+        repeat(5) {
+            kotlinx.coroutines.delay(100)
+            com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents()
+        }
+    }
 
     private fun session(id: String) = session(id, "/test")
 

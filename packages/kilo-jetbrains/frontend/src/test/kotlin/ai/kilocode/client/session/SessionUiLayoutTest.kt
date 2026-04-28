@@ -68,7 +68,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         workspaces = KiloWorkspaceService(scope, workspaceRpc)
         workspace = workspaces.workspace("/test")
 
-        ui = SessionUi(project, workspace, sessions, app, scope).apply {
+        ui = SessionUi(project, workspace, sessions, app, scope, displayMs = 0).apply {
             setSize(800, 600)
         }
         layout()
@@ -173,10 +173,27 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         assertSame(find<SessionMessageListPanel>(ui), scroll.viewport.view)
     }
 
+    fun `test new session starts with loading body`() {
+        ui = SessionUi(project, workspace, sessions, app, scope, displayMs = 1_000).apply {
+            setSize(800, 600)
+        }
+
+        assertFalse(find<JBScrollPane>(ui).viewport.view is EmptySessionPanel)
+    }
+
+    fun `test action-created new session starts blank`() {
+        ui = SessionUi(project, workspace, sessions, app, scope, displayMs = 1_000, loading = false).apply {
+            setSize(800, 600)
+        }
+
+        assertFalse(find<JBScrollPane>(ui).viewport.view is EmptySessionPanel)
+        assertFalse(find<JBScrollPane>(ui).viewport.view is SessionMessageListPanel)
+    }
+
     fun `test clicking recent session calls opener`() {
         val opened = mutableListOf<String>()
         rpc.recent.add(session("ses_1"))
-        ui = SessionUi(project, workspace, sessions, app, scope, open = { opened.add(it.id) }).apply {
+        ui = SessionUi(project, workspace, sessions, app, scope, displayMs = 0, open = { opened.add(it.id) }).apply {
             setSize(800, 600)
         }
 
@@ -190,12 +207,44 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
     fun `test existing session id loads history and shows message body`() {
         rpc.history.add(MessageWithPartsDto(message("msg1"), emptyList()))
 
-        ui = SessionUi(project, workspace, sessions, app, scope, id = "ses_test").apply {
+        ui = SessionUi(project, workspace, sessions, app, scope, id = "ses_test", displayMs = 0).apply {
             setSize(800, 600)
         }
         settle()
 
         assertSame(find<SessionMessageListPanel>(ui), find<JBScrollPane>(ui).viewport.view)
+    }
+
+    fun `test new session keeps loading body before recents delay`() {
+        rpc.recentGate = kotlinx.coroutines.CompletableDeferred()
+        ui = SessionUi(project, workspace, sessions, app, scope, displayMs = 1_000).apply {
+            setSize(800, 600)
+        }
+
+        settleShort(100)
+
+        assertFalse(find<JBScrollPane>(ui).viewport.view is EmptySessionPanel)
+    }
+
+    fun `test slow recents switch to loading body only after progress event`() {
+        rpc.recentGate = kotlinx.coroutines.CompletableDeferred()
+        rpc.recent.add(session("ses_1"))
+        ui = SessionUi(project, workspace, sessions, app, scope, displayMs = 50).apply {
+            setSize(800, 600)
+        }
+
+        settleShort(20)
+        assertFalse(find<JBScrollPane>(ui).viewport.view is EmptySessionPanel)
+
+        settleShort(80)
+        assertFalse(find<JBScrollPane>(ui).viewport.view is EmptySessionPanel)
+
+        rpc.recentGate!!.complete(Unit)
+        settle()
+
+        val panel = find<EmptySessionPanel>(ui)
+        assertSame(panel, find<JBScrollPane>(ui).viewport.view)
+        assertEquals(1, panel.recentCount())
     }
 
     private fun layout() {
@@ -213,11 +262,13 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         }
     }
 
+    private fun settleShort(ms: Long) = runBlocking {
+        delay(ms)
+        com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents()
+    }
+
     private fun showConnection() {
-        val m = controller().model
-        m.app = KiloAppStateDto(KiloAppStatusDto.CONNECTING)
-        m.workspace = KiloWorkspaceStateDto(KiloWorkspaceStatusDto.PENDING)
-        find<ConnectionPanel>(ui).onEvent(SessionControllerEvent.AppChanged)
+        find<ConnectionPanel>(ui).onEvent(SessionControllerEvent.ConnectionChanged.ShowConnecting)
     }
 
     private inline fun <reified T> find(root: java.awt.Container): T {
