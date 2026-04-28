@@ -32,8 +32,11 @@ internal class DelayedState(
     fun cancel() {
         edt {
             pending.clear()
+            timer.stop()
         }
     }
+
+    internal fun active() = timer.isRunning
 
     private fun <T : Any> apply(item: Pending<T>) {
         if (!alive) return
@@ -49,6 +52,7 @@ internal class DelayedState(
             if (item.due > now) continue
             apply(item)
         }
+        if (pending.isEmpty()) timer.stop()
     }
 
     private fun due(): Long {

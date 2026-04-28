@@ -102,6 +102,7 @@ class SessionController(
 
     val ready: Boolean get() = model.isReady()
     internal val blank: Boolean get() = sessionId == null && model.isEmpty() && !model.showSession
+    internal val id: String? get() = sessionId
 
     fun openSession(session: SessionDto) {
         assertEdt()

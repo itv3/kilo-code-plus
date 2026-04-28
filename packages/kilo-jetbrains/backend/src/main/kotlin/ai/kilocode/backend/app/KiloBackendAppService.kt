@@ -390,8 +390,12 @@ class KiloBackendAppService private constructor(
 
     private suspend fun refreshConfigState() {
         val current = _appState.value as? KiloAppState.Ready ?: return
+        val connection = connection.state.value as? ConnectionState.Connected ?: return
         val cfg = fetchConfig().value ?: return
         val warns = fetchWarnings()
+        val state = _appState.value
+        if (state !is KiloAppState.Ready || state.data !== current.data) return
+        if (this.connection.state.value != connection) return
         config = cfg
         setAppReady(
             current.data.copy(

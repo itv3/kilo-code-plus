@@ -24,6 +24,7 @@ import javax.swing.JPanel
 @Suppress("UnstableApiUsage")
 class SessionSidePanelManagerTest : BasePlatformTestCase() {
     private lateinit var scope: CoroutineScope
+    private lateinit var rpc: FakeSessionRpcApi
     private lateinit var workspaces: KiloWorkspaceService
     private lateinit var workspace: Workspace
     private lateinit var sessions: KiloSessionService
@@ -31,11 +32,13 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
     private val managers = mutableListOf<SessionSidePanelManager>()
     private val created = mutableListOf<Pair<String, String?>>()
     private val loading = mutableListOf<Boolean>()
+    private val ui = mutableListOf<SessionUi>()
 
     override fun setUp() {
         super.setUp()
         scope = CoroutineScope(SupervisorJob())
-        sessions = KiloSessionService(project, scope, FakeSessionRpcApi())
+        rpc = FakeSessionRpcApi()
+        sessions = KiloSessionService(project, scope, rpc)
         app = KiloAppService(scope, FakeAppRpcApi().also {
             it.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
         })
@@ -106,6 +109,35 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
         assertEquals(listOf(false, false), loading)
     }
 
+    fun `test prompted blank session is reused from recents`() {
+        val manager = manager()
+        manager.newSession()
+        val first = active(manager)
+
+        com.intellij.openapi.application.ApplicationManager.getApplication().invokeAndWait {
+            first.controller().prompt("hello")
+        }
+        settle()
+        manager.newSession()
+        manager.openSession(session("ses_test"))
+        val second = active(manager)
+
+        assertSame(first, second)
+        assertEquals(1, rpc.creates)
+        assertEquals(listOf("/test" to null, "/test" to null), created)
+    }
+
+    fun `test anonymous blank session is disposed when replaced`() {
+        val manager = manager()
+        manager.newSession()
+        val first = active(manager)
+
+        manager.openSession(session("ses_1"))
+
+        assertNotSame(first, active(manager))
+        assertFalse(ui.contains(first))
+    }
+
     fun `test open session resolves historical workspace`() {
         val manager = manager()
 
@@ -132,7 +164,10 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
             create = { project, workspace, owner, id, show ->
                 created.add(workspace.directory to id)
                 loading.add(show)
-                SessionUi(project, workspace, sessions, app, scope, id = id, loading = show, open = owner::openSession)
+                SessionUi(project, workspace, sessions, app, scope, id = id, loading = show, open = owner::openSession).also {
+                    ui.add(it)
+                    Disposer.register(it) { ui.remove(it) }
+                }
             },
             resolve = { workspaces.workspace(it) },
         )

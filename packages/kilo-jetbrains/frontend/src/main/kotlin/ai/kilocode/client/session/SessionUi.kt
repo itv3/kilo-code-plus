@@ -120,6 +120,8 @@ class SessionUi private constructor(
 
     internal val blank: Boolean get() = controller.blank
 
+    internal val id: String? get() = controller.id
+
     private fun buildUi() {
         root = SessionRootPanel()
 

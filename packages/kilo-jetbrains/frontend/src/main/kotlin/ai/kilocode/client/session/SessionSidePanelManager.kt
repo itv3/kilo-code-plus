@@ -33,10 +33,12 @@ class SessionSidePanelManager(
     override fun newSession() {
         val active = current
         if (active?.blank == true) return
+        register(active)
         show(create(project, root, this, null, active == null))
     }
 
     override fun openSession(session: SessionDto) {
+        register(current)
         val ui = opened.getOrPut(session.id) {
             create(project, resolve(session.directory), this, session.id, false).also {
                 all.add(it)
@@ -48,11 +50,27 @@ class SessionSidePanelManager(
     private fun show(ui: SessionUi) {
         all.add(ui)
         if (current === ui) return
+        release(current)
         component.removeAll()
         current = ui
         component.add(ui, BorderLayout.CENTER)
         component.revalidate()
         component.repaint()
+    }
+
+    private fun register(ui: SessionUi?) {
+        val id = ui?.id ?: return
+        opened.putIfAbsent(id, ui)
+    }
+
+    private fun release(ui: SessionUi?) {
+        if (ui == null) return
+        if (ui.id != null) {
+            register(ui)
+            return
+        }
+        all.remove(ui)
+        Disposer.dispose(ui)
     }
 
     override fun dispose() {

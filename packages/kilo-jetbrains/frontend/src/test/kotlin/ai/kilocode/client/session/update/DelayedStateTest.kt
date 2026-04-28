@@ -80,6 +80,28 @@ class DelayedStateTest : BasePlatformTestCase() {
         assertTrue(out.isEmpty())
     }
 
+    fun `test cancel stops timer`() {
+        var state = "loading"
+        val delay = delayed(30)
+
+        delay.run("loading", { state }) {}
+        pause(10)
+        delay.cancel()
+        pause(10)
+
+        assertFalse(delay.active())
+    }
+
+    fun `test timer stops after pending actions drain`() {
+        var state = "loading"
+        val delay = delayed(30)
+
+        delay.run("loading", { state }) {}
+        pause(120)
+
+        assertFalse(delay.active())
+    }
+
     fun `test dispose suppresses pending actions`() {
         var state = "loading"
         val out = mutableListOf<String>()
