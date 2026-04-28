@@ -82,19 +82,29 @@ function abortMissingMergiraf(): never {
  * Attempt syntax-aware resolution of conflicted files via mergiraf.
  * Re-materializes each file with diff3 markers first so mergiraf can
  * reconstruct the base revision (needed for its structural heuristics).
- * Returns the number of files fully resolved and staged.
+ * Returns the number of files fully resolved and staged. Any per-file
+ * failure (missing base/theirs, mergiraf crash, stage failure) is logged
+ * and skipped so the overall merge continues to the next transform pass.
  */
 async function runMergiraf(files: string[]): Promise<number> {
   let solved = 0
   for (const file of files) {
     const co = await $`git checkout --conflict=diff3 -- ${file}`.quiet().nothrow()
     if (co.exitCode !== 0) continue
-    await $`mergiraf solve ${file}`.quiet().nothrow()
+    const mg = await $`mergiraf solve ${file}`.quiet().nothrow()
+    if (mg.exitCode !== 0) {
+      logger.debug(`mergiraf failed on ${file} (exit ${mg.exitCode}) — leaving for next transform pass`)
+      continue
+    }
     const content = await Bun.file(file)
       .text()
       .catch(() => "")
-    if (content.includes("<<<<<<< ")) continue
-    await $`git add ${file}`.quiet()
+    if (!content || content.includes("<<<<<<< ")) continue
+    const add = await $`git add ${file}`.quiet().nothrow()
+    if (add.exitCode !== 0) {
+      logger.debug(`git add failed on ${file} (exit ${add.exitCode}) — leaving for next transform pass`)
+      continue
+    }
     solved++
   }
   return solved
