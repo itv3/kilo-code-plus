@@ -467,45 +467,32 @@ export type EventCommandExecuted = {
   }
 }
 
-export type SuggestionAction = {
-  /**
-   * Button or option label (1-5 words)
-   */
-  label: string
-  /**
-   * Brief explanation of what this action does
-   */
-  description?: string
-  /**
-   * Synthetic user prompt to inject when this action is accepted
-   */
-  prompt: string
-}
-
-export type SuggestionRequest = {
-  id: string
-  sessionID: string
-  /**
-   * Suggestion text shown to the user
-   */
-  text: string
-  /**
-   * Available actions the user can take
-   */
-  actions: Array<SuggestionAction>
-  /**
-   * Whether this suggestion blocks prompt input. When unset, the TUI treats the suggestion as blocking for backwards compatibility; the built-in suggest tool always sets this to false.
-   */
-  blocking?: boolean
-  tool?: {
-    messageID: string
-    callID: string
-  }
-}
-
 export type EventSuggestionShown = {
   type: "suggestion.shown"
-  properties: SuggestionRequest
+  properties: {
+    id: string
+    sessionID: string
+    text: string
+    actions: Array<{
+      /**
+       * Button or option label (1-5 words)
+       */
+      label: string
+      /**
+       * Brief explanation of what this action does
+       */
+      description?: string
+      /**
+       * Synthetic user prompt to inject when this action is accepted
+       */
+      prompt: string
+    }>
+    blocking?: boolean
+    tool?: {
+      messageID: string
+      callID: string
+    }
+  }
 }
 
 export type EventSuggestionAccepted = {
@@ -514,7 +501,20 @@ export type EventSuggestionAccepted = {
     sessionID: string
     requestID: string
     index: number
-    action: SuggestionAction
+    action: {
+      /**
+       * Button or option label (1-5 words)
+       */
+      label: string
+      /**
+       * Brief explanation of what this action does
+       */
+      description?: string
+      /**
+       * Synthetic user prompt to inject when this action is accepted
+       */
+      prompt: string
+    }
   }
 }
 
@@ -1153,6 +1153,23 @@ export type EventSessionDeleted = {
   }
 }
 
+export type IndexingStatusState = "Disabled" | "In Progress" | "Complete" | "Error" | "Standby"
+
+export type IndexingStatus = {
+  state: IndexingStatusState
+  message: string
+  processedFiles: number
+  totalFiles: number
+  percent: number
+}
+
+export type EventIndexingStatus = {
+  type: "indexing.status"
+  properties: {
+    status: IndexingStatus
+  }
+}
+
 export type SyncEventMessageUpdated = {
   type: "sync"
   name: "message.updated.1"
@@ -1224,31 +1241,31 @@ export type SyncEventSessionUpdated = {
   data: {
     sessionID: string
     info: {
-      id: string | null
-      slug: string | null
-      projectID: string | null
-      workspaceID: string | null
-      directory: string | null
-      parentID: string | null
-      summary: {
+      id?: string | null
+      slug?: string | null
+      projectID?: string | null
+      workspaceID?: string | null
+      directory?: string | null
+      parentID?: string | null
+      summary?: {
         additions: number
         deletions: number
         files: number
         diffs?: Array<SnapshotSummaryFileDiff>
       } | null
       share?: {
-        url: string | null
+        url?: string | null
       }
-      title: string | null
-      version: string | null
+      title?: string | null
+      version?: string | null
       time?: {
-        created: number | null
-        updated: number | null
-        compacting: number | null
-        archived: number | null
+        created?: number | null
+        updated?: number | null
+        compacting?: number | null
+        archived?: number | null
       }
-      permission: PermissionRuleset | null
-      revert: {
+      permission?: PermissionRuleset | null
+      revert?: {
         messageID: string
         partID?: string
         snapshot?: string
@@ -1333,6 +1350,7 @@ export type GlobalEvent = {
     | EventSessionCreated
     | EventSessionUpdated
     | EventSessionDeleted
+    | EventIndexingStatus
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
@@ -1371,6 +1389,127 @@ export type ServerConfig = {
    * Additional domains to allow for CORS
    */
   cors?: Array<string>
+}
+
+/**
+ * Codebase indexing configuration
+ */
+export type IndexingConfig = {
+  /**
+   * Enable codebase indexing
+   */
+  enabled?: boolean
+  /**
+   * Embedding provider to use for codebase indexing
+   */
+  provider?:
+    | "openai"
+    | "ollama"
+    | "openai-compatible"
+    | "gemini"
+    | "mistral"
+    | "vercel-ai-gateway"
+    | "bedrock"
+    | "openrouter"
+    | "voyage"
+  /**
+   * Embedding model ID (uses provider default if omitted)
+   */
+  model?: string
+  /**
+   * Override embedding vector dimension (auto-detected from model if omitted)
+   */
+  dimension?: number
+  /**
+   * Vector store backend (default: qdrant)
+   */
+  vectorStore?: "lancedb" | "qdrant"
+  /**
+   * OpenAI embedding provider options
+   */
+  openai?: {
+    apiKey?: string
+  }
+  /**
+   * Ollama embedding provider options
+   */
+  ollama?: {
+    baseUrl?: string
+  }
+  /**
+   * OpenAI-compatible embedding provider options
+   */
+  "openai-compatible"?: {
+    baseUrl?: string
+    apiKey?: string
+  }
+  /**
+   * Gemini embedding provider options
+   */
+  gemini?: {
+    apiKey?: string
+  }
+  /**
+   * Mistral embedding provider options
+   */
+  mistral?: {
+    apiKey?: string
+  }
+  /**
+   * Vercel AI Gateway embedding provider options
+   */
+  "vercel-ai-gateway"?: {
+    apiKey?: string
+  }
+  /**
+   * AWS Bedrock embedding provider options
+   */
+  bedrock?: {
+    region?: string
+    profile?: string
+  }
+  /**
+   * OpenRouter embedding provider options
+   */
+  openrouter?: {
+    apiKey?: string
+    specificProvider?: string
+  }
+  /**
+   * Voyage embedding provider options
+   */
+  voyage?: {
+    apiKey?: string
+  }
+  /**
+   * Qdrant vector store connection options
+   */
+  qdrant?: {
+    url?: string
+    apiKey?: string
+  }
+  /**
+   * LanceDB vector store options
+   */
+  lancedb?: {
+    directory?: string
+  }
+  /**
+   * Minimum similarity score for search results (default: 0.4)
+   */
+  searchMinScore?: number
+  /**
+   * Maximum number of search results (default: 50)
+   */
+  searchMaxResults?: number
+  /**
+   * Number of code segments per embedding batch (default: 60)
+   */
+  embeddingBatchSize?: number
+  /**
+   * Maximum retry attempts for failed embedding batches (default: 3)
+   */
+  scannerMaxBatchRetries?: number
 }
 
 export type PermissionActionConfig = "ask" | "allow" | "deny" | null
@@ -1716,6 +1855,7 @@ export type Config = {
    * Enable remote control of sessions via Kilo Cloud. Equivalent to running /remote on startup.
    */
   remote_control?: boolean
+  indexing?: IndexingConfig
   /**
    * Model to use in the format of provider/model, eg anthropic/claude-2
    */
@@ -1828,6 +1968,19 @@ export type Config = {
      */
     prompt?: string
   }
+  /**
+   * Thresholds for truncating tool output. When output exceeds either limit, the full text is written to the truncation directory and a preview is returned.
+   */
+  tool_output?: {
+    /**
+     * Maximum lines of tool output before it is truncated and saved to disk (default: 2000)
+     */
+    max_lines?: number
+    /**
+     * Maximum bytes of tool output before it is truncated and saved to disk (default: 51200)
+     */
+    max_bytes?: number
+  }
   compaction?: {
     /**
      * Enable automatic compaction when context is full (default: true)
@@ -1860,6 +2013,10 @@ export type Config = {
      * Enable AI-powered codebase search
      */
     codebase_search?: boolean
+    /**
+     * Enable semantic codebase indexing and the semantic_search tool
+     */
+    semantic_indexing?: boolean
     /**
      * Enable telemetry. Set to false to opt-out.
      */
@@ -2311,6 +2468,7 @@ export type Event =
   | EventSessionCreated
   | EventSessionUpdated
   | EventSessionDeleted
+  | EventIndexingStatus
 
 export type McpStatusConnected = {
   status: "connected"
@@ -2408,6 +2566,42 @@ export type FormatterStatus = {
   name: string
   extensions: Array<string>
   enabled: boolean
+}
+
+export type SuggestionAction = {
+  /**
+   * Button or option label (1-5 words)
+   */
+  label: string
+  /**
+   * Brief explanation of what this action does
+   */
+  description?: string
+  /**
+   * Synthetic user prompt to inject when this action is accepted
+   */
+  prompt: string
+}
+
+export type SuggestionRequest = {
+  id: string
+  sessionID: string
+  /**
+   * Suggestion text shown to the user
+   */
+  text: string
+  /**
+   * Available actions the user can take
+   */
+  actions: Array<SuggestionAction>
+  /**
+   * Whether this suggestion blocks prompt input. When unset, the TUI treats the suggestion as blocking for backwards compatibility; the built-in suggest tool always sets this to false.
+   */
+  blocking?: boolean
+  tool?: {
+    messageID: string
+    callID: string
+  }
 }
 
 export type GlobalHealthData = {
