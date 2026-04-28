@@ -97,7 +97,7 @@ async function runMergiraf(files: string[]): Promise<{ solved: number; partial: 
       logger.debug(`skipping ${file}: checkout --conflict=diff3 failed (exit ${co.exitCode})`)
       continue
     }
-    const mg = await $`mergiraf solve ${file}`.quiet().nothrow()
+    const mg = await $`mergiraf solve --keep-backup=false ${file}`.quiet().nothrow()
     const content = await Bun.file(file)
       .text()
       .catch(() => "")
