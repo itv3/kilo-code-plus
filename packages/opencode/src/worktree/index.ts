@@ -20,6 +20,7 @@ import { AppFileSystem } from "@opencode-ai/shared/filesystem"
 import { BootstrapRuntime } from "@/effect/bootstrap-runtime"
 import * as CrossSpawnSpawner from "@/effect/cross-spawn-spawner"
 import { InstanceState } from "@/effect"
+import { WorktreeCleanup } from "@/kilocode/worktree-cleanup" // kilocode_change
 
 const log = Log.create({ service: "worktree" })
 
@@ -353,33 +354,8 @@ export const layer: Layer.Layer<
       )
     }
 
-    // kilocode_change start - retry transient Windows worktree lock failures
-    function locked(error: unknown) {
-      return (
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        ["EBUSY", "EACCES", "EPERM"].includes(String(error.code))
-      )
-    }
-
     function cleanDirectory(target: string) {
-      const retries = process.platform === "win32" ? 60 : 5
-      const delay = process.platform === "win32" ? 500 : 100
-      return Effect.promise(async () => {
-        const fsp = await import("fs/promises")
-        const rm = async (left: number): Promise<void> =>
-          fsp
-            .rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
-            .catch(async (error) => {
-              if (!locked(error)) throw error
-              if (left <= 1) throw error
-              if (process.platform === "win32") Bun.gc(true)
-              await Bun.sleep(delay)
-              return rm(left - 1)
-            })
-        return rm(retries)
-      }).pipe(
+      return Effect.promise(() => WorktreeCleanup.removeDirectory(target)).pipe( // kilocode_change
         Effect.catch((error) =>
           Effect.sync(() => {
             const message = errorMessage(error)
@@ -388,36 +364,6 @@ export const layer: Layer.Layer<
         ),
       )
     }
-
-    function transient(result: GitResult) {
-      const text = `${result.stderr}\n${result.text}`.toLowerCase()
-      return [
-        "ebusy",
-        "eacces",
-        "eperm",
-        "directory not empty",
-        "resource busy",
-        "permission denied",
-        "access is denied",
-        "process cannot access",
-      ].some((item) => text.includes(item))
-    }
-
-    const removeWorktree = Effect.fnUntraced(function* (root: string, target: string) {
-      const retries = process.platform === "win32" ? 60 : 5
-      const delay = process.platform === "win32" ? 500 : 100
-      for (const attempt of Array.from({ length: retries }, (_, i) => i)) {
-        yield* stopFsmonitor(target)
-        const result = yield* git(["worktree", "remove", "--force", target], { cwd: root })
-        if (result.code === 0) return result
-        if (!transient(result)) return result
-        if (attempt === retries - 1) return result
-        if (process.platform === "win32") yield* Effect.sync(() => Bun.gc(true))
-        yield* Effect.sleep(`${delay} millis`)
-      }
-      return { code: 1, text: "", stderr: "Failed to remove git worktree" } satisfies GitResult
-    })
-    // kilocode_change end
 
     const remove = Effect.fn("Worktree.remove")(function* (input: RemoveInput) {
       const ctx = yield* InstanceState.context
@@ -444,7 +390,7 @@ export const layer: Layer.Layer<
         return true
       }
 
-      const removed = yield* removeWorktree(ctx.worktree, entry.path) // kilocode_change
+      const removed = yield* WorktreeCleanup.remove({ root: ctx.worktree, target: entry.path, git, stop: stopFsmonitor }) // kilocode_change
       if (removed.code !== 0) {
         const next = yield* git(["worktree", "list", "--porcelain"], { cwd: ctx.worktree })
         if (next.code !== 0) {
