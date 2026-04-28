@@ -45,7 +45,7 @@ import { resolveProjectDirectory } from "./project-directory"
 import { getBusySessionCount, seedSessionStatuses } from "./session-status"
 import { retry } from "./services/cli-backend/retry"
 import { slimPart, slimParts } from "./kilo-provider/slim-metadata"
-import { handleContinueInWorktree } from "./kilo-provider/continue-worktree"
+import { handleSidebarWorktreeMessage } from "./kilo-provider/sidebar-worktree"
 import { parseMessageFiles, type MessageFile } from "./kilo-provider/message-files"
 import { handleFileSearch } from "./kilo-provider/file-search"
 import { getTerminalContents } from "./services/terminal/context"
@@ -240,6 +240,9 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private continueInWorktreeHandler:
     | ((sessionId: string, progress: (status: string, detail?: string, error?: string) => void) => Promise<void>)
     | null = null
+
+  /** Handler for sidebar worktree creation — delegates to AgentManagerProvider. */
+  private createWorktreeHandler: ((baseBranch?: string, branchName?: string) => Promise<void>) | null = null
 
   private diffVirtualProvider: import("./DiffVirtualProvider").DiffVirtualProvider | undefined
   private remoteService: RemoteStatusService | null = null
@@ -555,6 +558,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.continueInWorktreeHandler = handler
   }
 
+  public setCreateWorktreeHandler(handler: (baseBranch?: string, branchName?: string) => Promise<void>): void {
+    this.createWorktreeHandler = handler
+  }
+
   public attachToWebview(
     webview: vscode.Webview,
     options?: { onBeforeMessage?: (msg: Record<string, unknown>) => Promise<Record<string, unknown> | null> },
@@ -583,6 +590,20 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       await routeSuggestionWebviewMessage(this.questionCtx, message)
       if (await ModelState.handleMessage(message.type, message, this.client, (msg) => this.postMessage(msg))) return
       if (await routeAutocompleteMessage(message, (msg) => this.postMessage(msg))) return
+      if (
+        await handleSidebarWorktreeMessage(message, {
+          post: (msg) => this.postMessage(msg),
+          openAgentManager: () => vscode.commands.executeCommand("kilo-code.new.agentManagerOpen"),
+          openAdvancedWorktree: () => vscode.commands.executeCommand("kilo-code.new.agentManager.advancedWorktree"),
+          openChanges: () => vscode.commands.executeCommand("kilo-code.new.showChanges"),
+          createWorktree: async (baseBranch, branchName) => {
+            await this.createWorktreeHandler?.(baseBranch, branchName)
+          },
+          continueInWorktree: this.continueInWorktreeHandler ?? undefined,
+        })
+      ) {
+        return
+      }
       switch (message.type) {
         case "webviewReady":
           console.log("[Kilo New] KiloProvider: ✅ webviewReady received")
@@ -707,18 +728,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "openMarketplacePanel":
           vscode.commands.executeCommand("kilo-code.new.marketplaceButtonClicked", this.projectDirectory)
           break
-        case "openChanges":
-          vscode.commands.executeCommand("kilo-code.new.showChanges")
-          break
         case "openDiffVirtual":
-          this.openDiffVirtual(message.diff)
-          break
-        case "continueInWorktree":
-          handleContinueInWorktree({
-            sessionId: message.sessionId,
-            handler: this.continueInWorktreeHandler ?? undefined,
-            post: (msg) => this.postMessage(msg),
-          })
+          this.openDiffVirtual(message.diff, message.initialDiffStyle)
           break
         case "forkSession":
           handleForkSession(this.forkCtx, message.sessionId, message.messageId).catch((e) =>
@@ -1062,9 +1073,11 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     void vscode.env.openExternal(vscode.Uri.parse(url))
   }
 
-  private openDiffVirtual(diff: unknown): void {
+  private openDiffVirtual(diff: unknown, initialDiffStyle?: unknown): void {
     if (!this.diffVirtualProvider || !diff) return
-    this.diffVirtualProvider.open(diff as import("./DiffVirtualProvider").DiffVirtualFile)
+    const d = diff as import("./DiffVirtualProvider").DiffVirtualFile
+    d.initialDiffStyle = initialDiffStyle === "split" ? "split" : "unified"
+    this.diffVirtualProvider.open(d)
   }
 
   /**

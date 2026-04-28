@@ -194,6 +194,14 @@ export interface OpenMarketplacePanelRequest {
   type: "openMarketplacePanel"
 }
 
+export interface OpenAgentManagerRequest {
+  type: "openAgentManager"
+}
+
+export interface OpenAdvancedWorktreeRequest {
+  type: "openAdvancedWorktree"
+}
+
 export interface RequestAgentsMessage {
   type: "requestAgents"
 }
@@ -723,6 +731,7 @@ export interface OpenChangesRequest {
 export interface OpenDiffVirtualRequest {
   type: "openDiffVirtual"
   diff: PermissionFileDiff
+  initialDiffStyle: "unified" | "split"
 }
 
 export interface RetryConnectionRequest {
@@ -939,6 +948,8 @@ export type WebviewMessage =
   | OpenVSCodeSettingsRequest
   | OpenConfigFileRequest
   | OpenMarketplacePanelRequest
+  | OpenAgentManagerRequest
+  | OpenAdvancedWorktreeRequest
   | OpenFileRequest
   | CancelLoginRequest
   | SetOrganizationRequest
