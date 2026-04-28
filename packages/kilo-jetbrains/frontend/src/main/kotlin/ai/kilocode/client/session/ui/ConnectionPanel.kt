@@ -37,7 +37,7 @@ class ConnectionPanel(
     }
 
     private val header = JPanel(BorderLayout()).apply {
-        border = JBUI.Borders.empty(4, 8)
+        border = JBUI.Borders.empty(4, 8, 0, 8)
         isOpaque = false
     }
 
@@ -74,7 +74,7 @@ class ConnectionPanel(
     }
 
     private val scroll = JBScrollPane(details).apply {
-        border = JBUI.Borders.empty(0, 8, 4, 24)
+        border = JBUI.Borders.empty(0, 8, 4, 0)
         isOpaque = false
         viewport.isOpaque = false
         horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -89,6 +89,7 @@ class ConnectionPanel(
         Disposer.register(parent, this)
         isOpaque = true
         background = UIUtil.getPanelBackground()
+        border = JBUI.Borders.customLine(UIUtil.getBoundsColor(), 1, 0, 0, 0)
         left.add(toggle, BorderLayout.WEST)
         left.add(label, BorderLayout.CENTER)
         header.add(left, BorderLayout.CENTER)
@@ -218,6 +219,8 @@ class ConnectionPanel(
 
     internal fun retryVisible() = retry.isVisible
 
+    internal fun retryText() = retry.text
+
     internal fun detailsVisible() = scroll.isVisible
 
     internal fun toggleVisible() = toggle.isVisible
@@ -240,6 +243,8 @@ class ConnectionPanel(
     internal fun retryFocusable() = retry.isFocusable
 
     internal fun clickRetry() = retry.doClick()
+
+    internal fun hasSeparator() = border != null
 
     internal fun maxExpandedHeight() =
         header.preferredSize.height + details.getFontMetrics(details.font).height * DETAILS_LINES + scrollChrome()

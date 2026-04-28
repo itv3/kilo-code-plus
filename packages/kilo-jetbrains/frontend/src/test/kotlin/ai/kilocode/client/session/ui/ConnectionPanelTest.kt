@@ -73,6 +73,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
         assertFalse(panel.detailsVisible())
         assertEquals("", panel.detailsText())
         assertTrue(panel.retryVisible())
+        assertEquals("Try again", panel.retryText())
     }
 
     fun `test retry click triggers app retry for app error`() {
@@ -148,6 +149,10 @@ class ConnectionPanelTest : SessionControllerTestBase() {
         }
 
         assertFalse(panel.isVisible)
+    }
+
+    fun `test panel has top separator`() {
+        assertTrue(panel.hasSeparator())
     }
 
     private fun lines(count: Int) = (1..count).joinToString("\n") { "line $it" }
