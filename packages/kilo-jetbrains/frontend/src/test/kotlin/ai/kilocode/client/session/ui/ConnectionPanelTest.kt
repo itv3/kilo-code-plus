@@ -6,6 +6,7 @@ import ai.kilocode.client.session.update.SessionControllerTestBase
 import ai.kilocode.rpc.dto.ConfigWarningDto
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
+import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 
 @Suppress("UnstableApiUsage")
@@ -44,6 +45,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
         assertTrue(panel.isVisible)
         assertEquals("CLI startup failed", panel.summaryText())
+        assertEquals(UIUtil.getErrorForeground(), panel.summaryColor())
         assertTrue(panel.toggleVisible())
         assertFalse(panel.toggleExpanded())
         assertFalse(panel.detailsVisible())
@@ -100,6 +102,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
         assertTrue(panel.isVisible)
         assertEquals("Configuration warnings", panel.summaryText())
+        assertNotSame(UIUtil.getContextHelpForeground(), panel.summaryColor())
         assertTrue(panel.toggleVisible())
         assertFalse(panel.toggleExpanded())
         assertFalse(panel.detailsVisible())

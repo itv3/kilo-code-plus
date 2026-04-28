@@ -7,6 +7,7 @@ import ai.kilocode.client.session.update.SessionControllerListener
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -20,6 +21,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
+import javax.swing.UIManager
 
 class ConnectionPanel(
     parent: Disposable,
@@ -28,6 +30,12 @@ class ConnectionPanel(
 
     companion object {
         private const val DETAILS_LINES = 10
+        private val ERROR = JBColor.namedColor("Label.errorForeground", UIUtil.getErrorForeground())
+        private val WARNING = JBColor.lazy {
+            UIManager.getColor("Component.warningFocusColor")
+                ?: UIManager.getColor("Label.warningForeground")
+                ?: UIUtil.getContextHelpForeground()
+        }
     }
 
     private val click = object : MouseAdapter() {
@@ -131,7 +139,7 @@ class ConnectionPanel(
     }
 
     private fun showError(text: String, detail: String?) {
-        label.foreground = UIUtil.getErrorForeground()
+        label.foreground = ERROR
         label.text = text
         retry.isVisible = true
         this.detail = detail?.takeIf { it.isNotBlank() }
@@ -141,7 +149,7 @@ class ConnectionPanel(
     }
 
     private fun showWarning(text: String, detail: String?) {
-        label.foreground = UIUtil.getContextHelpForeground()
+        label.foreground = WARNING
         label.text = text
         retry.isVisible = true
         this.detail = detail?.takeIf { it.isNotBlank() }
@@ -214,6 +222,8 @@ class ConnectionPanel(
     private fun scrollChrome() = scroll.insets.top + scroll.insets.bottom + JBUI.scale(2)
 
     internal fun summaryText() = label.text
+
+    internal fun summaryColor() = label.foreground
 
     internal fun detailsText() = details.text
 
