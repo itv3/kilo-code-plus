@@ -112,13 +112,15 @@ function check(file: string): Issue[] {
     if (isSep(line)) {
       const cells = split(line.trim())
       for (const cell of cells) {
-        const t = cell.trim()
-        if (!ok.has(t)) {
+        // Cells must be exactly ---, :---, ---: or :---: with no surrounding
+        // whitespace. Anything longer (or with space padding) is column-width
+        // alignment and re-pads on every content change.
+        if (!ok.has(cell)) {
           issues.push({
             file,
             line: i + 1,
             kind: "separator",
-            detail: `separator cell "${cell}" is padded or extended — use ---, :---, ---: or :---:`,
+            detail: `separator cell "${cell}" is padded or extended — use ---, :---, ---: or :---: with no surrounding spaces`,
           })
           break
         }
