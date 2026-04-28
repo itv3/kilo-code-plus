@@ -174,12 +174,24 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
         return events
     }
 
+    internal fun collectStates(m: SessionController): MutableList<Pair<SessionControllerEvent, ControllerStateSnapshot>> {
+        val events = mutableListOf<Pair<SessionControllerEvent, ControllerStateSnapshot>>()
+        val disposable = Disposer.newDisposable("state-listener")
+        Disposer.register(parent, disposable)
+        m.addListener(disposable) { event ->
+            assertTrue("Listener must be called on EDT", ApplicationManager.getApplication().isDispatchThread)
+            events.add(event to m.snapshotState())
+        }
+        return events
+    }
+
     /** Attach a listener that collects model events (messages, parts, phase). */
     protected fun collectModelEvents(m: SessionController): MutableList<SessionModelEvent> {
         val events = mutableListOf<SessionModelEvent>()
         val disposable = Disposer.newDisposable("model-listener")
         Disposer.register(parent, disposable)
         m.model.addListener(disposable) { event ->
+            assertTrue("Model listener must be called on EDT", ApplicationManager.getApplication().isDispatchThread)
             events.add(event)
         }
         return events
@@ -199,8 +211,10 @@ abstract class SessionControllerTestBase : BasePlatformTestCase() {
     protected fun flush() = runBlocking {
         repeat(5) {
             delay(100)
-            controllers.forEach { it.flushEvents() }
-            edt { UIUtil.dispatchAllInvocationEvents() }
+            edt {
+                controllers.forEach { it.flushEvents() }
+                UIUtil.dispatchAllInvocationEvents()
+            }
         }
     }
 

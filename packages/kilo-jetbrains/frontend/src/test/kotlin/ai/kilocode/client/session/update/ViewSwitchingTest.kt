@@ -22,6 +22,20 @@ class ViewSwitchingTest : SessionControllerTestBase() {
         )
     }
 
+    fun `test session event sees updated view state on EDT`() {
+        val m = controller()
+        val states = collectStates(m)
+        flush()
+        states.clear()
+
+        edt { m.prompt("hello") }
+        flush()
+
+        val state = states.single { it.first is SessionControllerEvent.ViewChanged.ShowSession }.second
+        assertTrue(state.showSession)
+        assertEquals(SessionControllerEvent.ViewChanged.ShowSession, state.viewState)
+    }
+
     fun `test ViewChanged not fired twice`() {
         val m = controller()
         val events = collect(m)
@@ -111,6 +125,24 @@ class ViewSwitchingTest : SessionControllerTestBase() {
         )
     }
 
+    fun `test recents progress event sees loading state on EDT`() {
+        projectRpc.state.value = workspaceReady()
+        rpc.recent.add(session("ses_1"))
+        val gate = CompletableDeferred<Unit>()
+        rpc.recentGate = gate
+        val m = controller(displayMs = 50)
+        val states = collectStates(m)
+
+        pause(80)
+
+        val state = states.single { it.first is SessionControllerEvent.ViewChanged.ShowProgress }.second
+        assertEquals(SessionControllerEvent.ViewChanged.ShowProgress, state.viewState)
+        assertTrue(state.recentsState.startsWith("Loading"))
+
+        gate.complete(Unit)
+        flush()
+    }
+
     fun `test fast recents suppress progress`() {
         projectRpc.state.value = workspaceReady()
         rpc.recent.add(session("ses_1"))
@@ -122,6 +154,19 @@ class ViewSwitchingTest : SessionControllerTestBase() {
         assertTrue(rpc.recentCalls.contains("/test" to SessionController.RECENT_LIMIT))
         assertFalse(events.any { it is SessionControllerEvent.ViewChanged.ShowProgress })
         assertTrue(events.any { it is SessionControllerEvent.ViewChanged.ShowRecents })
+    }
+
+    fun `test recents event sees loaded state on EDT`() {
+        projectRpc.state.value = workspaceReady()
+        rpc.recent.add(session("ses_1"))
+        val m = controller(displayMs = 1_000)
+        val states = collectStates(m)
+
+        flush()
+
+        val event = states.single { it.first is SessionControllerEvent.ViewChanged.ShowRecents }
+        assertEquals(event.first, event.second.viewState)
+        assertEquals("Loaded", event.second.recentsState)
     }
 
     fun `test failed fast recents suppress progress and show empty recents`() {

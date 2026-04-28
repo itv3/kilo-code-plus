@@ -35,7 +35,6 @@ class HistoryLoadingTest : SessionControllerTestBase() {
         assertControllerEvents("""
             AppChanged
             WorkspaceChanged
-            ViewChanged progress
             ViewChanged session
         """, events)
 

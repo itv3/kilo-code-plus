@@ -166,7 +166,9 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
 
         assertSame(empty, scroll.viewport.view)
 
-        controller().prompt("hello")
+        com.intellij.openapi.application.ApplicationManager.getApplication().invokeAndWait {
+            controller().prompt("hello")
+        }
         layout()
 
         assertSame(scroll, find<SessionMessageListPanel>(ui).parent.parent)

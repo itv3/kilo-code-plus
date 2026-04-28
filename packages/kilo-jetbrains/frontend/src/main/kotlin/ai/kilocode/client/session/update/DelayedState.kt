@@ -4,47 +4,56 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import javax.swing.Timer
 
-internal class DelayedState<T : Any>(
+internal class DelayedState(
     private val ms: Long,
-    private val current: () -> T,
 ) : Disposable {
-    private var timer: Timer? = null
-    private var state: T? = null
+    private val tick = when {
+        ms <= 0 -> 1
+        ms > Int.MAX_VALUE -> Int.MAX_VALUE
+        else -> ms.coerceAtMost(TICK_MS).toInt()
+    }
+    private val timer = Timer(tick) { flush() }
+    private val pending = mutableListOf<Pending<*>>()
     @Volatile private var alive = true
 
-    fun run(state: T, action: (T) -> Unit) {
+    fun <T : Any> run(state: T, current: () -> T, action: (T) -> Unit) {
         edt {
             if (!alive) return@edt
-            timer?.stop()
-            this.state = state
+            val next = Pending(state, due(), current, action)
+            pending.add(next)
             if (ms <= 0) {
-                apply(state, action)
+                apply(next)
                 return@edt
             }
-            timer = Timer(ms.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()) {
-                apply(state, action)
-            }.apply {
-                isRepeats = false
-                start()
-            }
+            timer.start()
         }
     }
 
     fun cancel() {
         edt {
-            timer?.stop()
-            timer = null
-            state = null
+            pending.clear()
         }
     }
 
-    private fun apply(state: T, action: (T) -> Unit) {
+    private fun <T : Any> apply(item: Pending<T>) {
         if (!alive) return
-        if (this.state != state) return
-        if (current() != state) return
-        this.state = null
-        timer = null
-        action(state)
+        if (!pending.remove(item)) return
+        if (item.current() != item.state) return
+        item.action(item.state)
+    }
+
+    private fun flush() {
+        if (!alive) return
+        val now = System.currentTimeMillis()
+        for (item in pending.toList()) {
+            if (item.due > now) continue
+            apply(item)
+        }
+    }
+
+    private fun due(): Long {
+        val now = System.currentTimeMillis()
+        return now + ms.coerceAtMost(Long.MAX_VALUE - now)
     }
 
     private fun edt(block: () -> Unit) {
@@ -59,5 +68,19 @@ internal class DelayedState<T : Any>(
     override fun dispose() {
         alive = false
         cancel()
+        edt {
+            timer.stop()
+        }
+    }
+
+    private data class Pending<T : Any>(
+        val state: T,
+        val due: Long,
+        val current: () -> T,
+        val action: (T) -> Unit,
+    )
+
+    private companion object {
+        const val TICK_MS = 25L
     }
 }

@@ -66,7 +66,9 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
 
         manager.newSession()
         val first = active(manager)
-        first.controller().prompt("hello")
+        com.intellij.openapi.application.ApplicationManager.getApplication().invokeAndWait {
+            first.controller().prompt("hello")
+        }
         settle()
         manager.newSession()
         val second = active(manager)

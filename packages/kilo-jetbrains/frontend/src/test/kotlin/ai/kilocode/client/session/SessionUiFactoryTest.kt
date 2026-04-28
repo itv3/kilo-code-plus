@@ -59,7 +59,9 @@ class SessionUiFactoryTest : BasePlatformTestCase() {
         val ui = SessionUi(project, workspace, sessions, app, scope, open = manager::openSession)
         val controller = controller(ui)
 
-        controller.openSession(rpc)
+        com.intellij.openapi.application.ApplicationManager.getApplication().invokeAndWait {
+            controller.openSession(rpc)
+        }
 
         assertEquals(listOf("ses_1"), manager.opened)
     }

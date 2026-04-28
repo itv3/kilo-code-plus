@@ -6,6 +6,7 @@ import ai.kilocode.rpc.dto.KiloAppStatusDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStateDto
 import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import ai.kilocode.rpc.dto.LoadErrorDto
+import com.intellij.openapi.util.Disposer
 
 class ConnectionDelayTest : SessionControllerTestBase() {
 
@@ -40,6 +41,21 @@ class ConnectionDelayTest : SessionControllerTestBase() {
         pause(80)
 
         assertEquals(1, events.count { it is SessionControllerEvent.ConnectionChanged.ShowConnecting })
+    }
+
+    fun `test connecting event sees updated connection state on EDT`() {
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
+        projectRpc.state.value = workspaceReady()
+        val m = controller(displayMs = 50)
+        val states = collectStates(m)
+        flush()
+        states.clear()
+
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.CONNECTING)
+        pause(80)
+
+        val state = states.single { it.first is SessionControllerEvent.ConnectionChanged.ShowConnecting }.second
+        assertEquals(SessionControllerEvent.ConnectionChanged.ShowConnecting, state.connectionState)
     }
 
     fun `test short app error is suppressed`() {
@@ -135,6 +151,25 @@ class ConnectionDelayTest : SessionControllerTestBase() {
         assertTrue(events.any { it is SessionControllerEvent.ConnectionChanged.Hide })
     }
 
+    fun `test hide event sees updated connection state on EDT`() {
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
+        projectRpc.state.value = workspaceReady()
+        val m = controller(displayMs = 50)
+        val states = collectStates(m)
+        flush()
+        states.clear()
+
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.CONNECTING)
+        pause(80)
+        states.clear()
+
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
+        pause(10)
+
+        val state = states.single { it.first is SessionControllerEvent.ConnectionChanged.Hide }.second
+        assertEquals(SessionControllerEvent.ConnectionChanged.Hide, state.connectionState)
+    }
+
     fun `test config warning remains immediate`() {
         appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
         projectRpc.state.value = workspaceReady()
@@ -152,5 +187,39 @@ class ConnectionDelayTest : SessionControllerTestBase() {
         val event = events.filterIsInstance<SessionControllerEvent.ConnectionChanged.ShowWarning>().single()
         assertEquals("Configuration warnings", event.summary)
         assertEquals(".kilo/kilo.json: Invalid JSON", event.detail)
+    }
+
+    fun `test warning event sees updated connection state on EDT`() {
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
+        projectRpc.state.value = workspaceReady()
+        val m = controller(displayMs = 1_000)
+        val states = collectStates(m)
+        flush()
+        states.clear()
+
+        appRpc.state.value = KiloAppStateDto(
+            status = KiloAppStatusDto.READY,
+            warnings = listOf(ConfigWarningDto(path = ".kilo/kilo.json", message = "Invalid JSON")),
+        )
+        pause(10)
+
+        val event = states.single { it.first is SessionControllerEvent.ConnectionChanged.ShowWarning }
+        assertEquals(event.first, event.second.connectionState)
+    }
+
+    fun `test dispose suppresses pending delayed connection event`() {
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.READY)
+        projectRpc.state.value = workspaceReady()
+        val m = controller(displayMs = 50)
+        val events = collect(m)
+        flush()
+        events.clear()
+
+        appRpc.state.value = KiloAppStateDto(KiloAppStatusDto.CONNECTING)
+        pause(20)
+        Disposer.dispose(m)
+        pause(100)
+
+        assertFalse(events.any { it is SessionControllerEvent.ConnectionChanged.ShowConnecting })
     }
 }
