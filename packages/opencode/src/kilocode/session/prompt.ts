@@ -91,6 +91,7 @@ export namespace KiloSessionPrompt {
           messageID: input.msgs[idx].info.id,
           type: "text",
           text: input.cache.block,
+          synthetic: true,
         } satisfies MessageV2.TextPart,
       ],
     }

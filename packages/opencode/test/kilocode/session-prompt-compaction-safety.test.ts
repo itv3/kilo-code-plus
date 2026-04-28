@@ -180,6 +180,7 @@ const cfg = {
           temperature: false,
           tool_call: true,
           release_date: "2025-01-01",
+          modalities: { input: ["text" as const, "image" as const, "pdf" as const], output: ["text" as const] },
           limit: { context: 100000, output: 10000 },
           cost: { input: 0, output: 0 },
           options: {},
@@ -209,7 +210,11 @@ function providerCfg(url: string) {
   }
 }
 
-const user = Effect.fn("prompt-safety.user")(function* (sessionID: SessionID, text: string) {
+const user = Effect.fn("prompt-safety.user")(function* (
+  sessionID: SessionID,
+  text: string,
+  input?: { synthetic?: boolean; editorContext?: MessageV2.User["editorContext"] },
+) {
   const sessions = yield* Session.Service
   const msg = yield* sessions.updateMessage({
     id: MessageID.ascending(),
@@ -219,6 +224,7 @@ const user = Effect.fn("prompt-safety.user")(function* (sessionID: SessionID, te
     model: ref,
     time: { created: Date.now() },
     tools: {},
+    editorContext: input?.editorContext,
   } satisfies MessageV2.User)
   yield* sessions.updatePart({
     id: PartID.ascending(),
@@ -226,6 +232,7 @@ const user = Effect.fn("prompt-safety.user")(function* (sessionID: SessionID, te
     sessionID,
     type: "text",
     text,
+    synthetic: input?.synthetic,
   } satisfies MessageV2.TextPart)
   return msg
 })
@@ -339,6 +346,43 @@ describe("SessionPrompt compaction safety", () => {
         expect(body).toContain("current prompt")
         expect(body).not.toContain("HISTIMAGE")
         expect(body).not.toContain("HISTPDF")
+      }),
+      { git: true, config: providerCfg },
+    ),
+  )
+
+  it.live("preserves current media before synthetic handoff with editor context", () =>
+    provideTmpdirServer(
+      Effect.fnUntraced(function* ({ llm }) {
+        const prompt = yield* SessionPrompt.Service
+        const sessions = yield* Session.Service
+        const chat = yield* sessions.create({
+          title: "Prompt handoff safety",
+          permission: [{ permission: "*", pattern: "*", action: "allow" }],
+        })
+
+        const status = yield* user(chat.id, "status?")
+        yield* assistant(chat.id, status.id, { text: "summary body", summary: true })
+        const hist = yield* user(chat.id, "older image")
+        yield* file(chat.id, hist.id, { mime: "image/png", name: "old.png", body: "OLDIMAGE" })
+        const current = yield* user(chat.id, "check this image")
+        yield* file(chat.id, current.id, { mime: "image/png", name: "current.png", body: "CURRENTIMAGE" })
+        yield* assistant(chat.id, current.id, { text: "handoff", summary: false })
+        yield* user(chat.id, "Summarize the task tool output above and continue with your task.", {
+          synthetic: true,
+          editorContext: { activeFile: "src/app.ts" },
+        })
+        yield* llm.text("final answer")
+
+        yield* prompt.loop({ sessionID: chat.id })
+
+        const inputs = yield* llm.inputs
+        const body = JSON.stringify(inputs.at(-1)?.messages)
+        expect(body).toContain("[Attached image/png: old.png]")
+        expect(body).toContain("CURRENTIMAGE")
+        expect(body).toContain("src/app.ts")
+        expect(body).not.toContain("OLDIMAGE")
+        expect(body).not.toContain("[Attached image/png: current.png]")
       }),
       { git: true, config: providerCfg },
     ),

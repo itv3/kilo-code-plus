@@ -416,6 +416,23 @@ describe("KiloSessionPrompt.stripHistoricalMedia", () => {
     // synthetic user preserved as-is
     expect(result[4]).toBe(msgs[4])
   })
+
+  test("skips synthetic user turns with injected context when picking the cutoff", () => {
+    const currentImage = filePart("msg_current", "image/png", "current.png")
+    const msgs = [
+      user("msg_hist", [textPart("msg_hist", "older"), filePart("msg_hist", "image/png", "old.png")]),
+      user("msg_current", [textPart("msg_current", "check this"), currentImage]),
+      user("msg_syn", [
+        syntheticTextPart("msg_syn", "Summarize the task tool output above and continue with your task."),
+        syntheticTextPart("msg_syn", "<environment_details>\nCurrent time: now\n</environment_details>", "p_env"),
+      ]),
+    ]
+    const result = KiloSessionPrompt.stripHistoricalMedia(msgs)
+    expect(result[1].parts[1]).toBe(currentImage)
+    const hist = result[0].parts[1]
+    expect(hist.type).toBe("text")
+    expect((hist as MessageV2.TextPart).text).toBe("[Attached image/png: old.png]")
+  })
 })
 
 describe("KiloSessionPrompt.maybeStripHistoricalMedia", () => {
