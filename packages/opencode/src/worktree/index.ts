@@ -354,8 +354,9 @@ export const layer: Layer.Layer<
       )
     }
 
+    // kilocode_change start - use Kilo cleanup helper for slow Windows handle release
     function cleanDirectory(target: string) {
-      return Effect.promise(() => WorktreeCleanup.removeDirectory(target)).pipe( // kilocode_change
+      return Effect.promise(() => WorktreeCleanup.removeDirectory(target)).pipe(
         Effect.catch((error) =>
           Effect.sync(() => {
             const message = errorMessage(error)
@@ -364,6 +365,7 @@ export const layer: Layer.Layer<
         ),
       )
     }
+    // kilocode_change end
 
     const remove = Effect.fn("Worktree.remove")(function* (input: RemoveInput) {
       const ctx = yield* InstanceState.context
