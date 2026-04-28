@@ -87,27 +87,44 @@ function filePart(
 
 function toolPart(
   messageID: string,
-  status: "completed" | "error",
+  status: "completed" | "error" | "pending" | "running",
   attachments?: MessageV2.FilePart[],
   partID = "p_tool_" + messageID,
 ): MessageV2.ToolPart {
-  const state =
-    status === "completed"
-      ? {
-          status: "completed" as const,
-          input: {},
-          output: "done",
-          title: "tool",
-          metadata: {},
-          time: { start: 0, end: 1 },
-          attachments,
-        }
-      : {
-          status: "error" as const,
-          input: {},
-          error: "boom",
-          time: { start: 0, end: 1 },
-        }
+  const state = (() => {
+    if (status === "completed") {
+      return {
+        status: "completed" as const,
+        input: {},
+        output: "done",
+        title: "tool",
+        metadata: {},
+        time: { start: 0, end: 1 },
+        attachments,
+      }
+    }
+    if (status === "error") {
+      return {
+        status: "error" as const,
+        input: {},
+        error: "boom",
+        time: { start: 0, end: 1 },
+      }
+    }
+    if (status === "running") {
+      return {
+        status: "running" as const,
+        input: {},
+        title: "tool",
+        time: { start: 0 },
+      }
+    }
+    return {
+      status: "pending" as const,
+      input: {},
+      raw: "{}",
+    }
+  })()
   return {
     id: PartID.make(partID),
     sessionID,
@@ -182,7 +199,10 @@ describe("KiloSessionPrompt.trimBeforeLastSummary", () => {
       }),
       user("msg_next", [textPart("msg_next", "next prompt")]),
     ]
-    const result = KiloSessionPrompt.trimBeforeLastSummary(msgs)
+    const filtered = MessageV2.filterCompacted([...msgs].reverse())
+    expect(filtered.map((m) => m.info.id)).toEqual(msgs.map((m) => m.info.id))
+
+    const result = KiloSessionPrompt.trimBeforeLastSummary(filtered)
     expect(result.map((m) => m.info.id)).toEqual([
       MessageID.make("msg_status"),
       MessageID.make("msg_summary"),
@@ -271,6 +291,16 @@ describe("KiloSessionPrompt.stripHistoricalMedia", () => {
     expect((result[0].parts[0] as MessageV2.TextPart).text).toBe("[Attached image/png: file]")
   })
 
+  test("replaces historical PDF file part with placeholder text", () => {
+    const msgs = [
+      user("msg_hist", [filePart("msg_hist", "application/pdf", "brief.pdf")]),
+      user("msg_last", [textPart("msg_last", "follow-up")]),
+    ]
+    const result = KiloSessionPrompt.stripHistoricalMedia(msgs)
+    expect(result[0].parts[0].type).toBe("text")
+    expect((result[0].parts[0] as MessageV2.TextPart).text).toBe("[Attached application/pdf: brief.pdf]")
+  })
+
   test("does NOT touch media in the last user message", () => {
     const lastImage = filePart("msg_last", "image/png", "last.png")
     const msgs = [user("msg_hist", [textPart("msg_hist", "older")]), user("msg_last", [lastImage])]
@@ -305,6 +335,23 @@ describe("KiloSessionPrompt.stripHistoricalMedia", () => {
     // other tool-state fields preserved
     expect(resultTool.state.output).toBe("done")
     expect(resultTool.state.title).toBe("tool")
+  })
+
+  test("does NOT touch non-completed tool parts", () => {
+    const err = toolPart("msg_error", "error")
+    const pending = toolPart("msg_pending", "pending")
+    const running = toolPart("msg_running", "running")
+    const msgs = [
+      user("msg_u1", [textPart("msg_u1", "question")]),
+      assistant("msg_error", "msg_u1", [err], { finish: "end_turn" }),
+      assistant("msg_pending", "msg_u1", [pending], { finish: "end_turn" }),
+      assistant("msg_running", "msg_u1", [running], { finish: "end_turn" }),
+      user("msg_last", [textPart("msg_last", "follow-up")]),
+    ]
+    const result = KiloSessionPrompt.stripHistoricalMedia(msgs)
+    expect(result[1].parts[0]).toBe(err)
+    expect(result[2].parts[0]).toBe(pending)
+    expect(result[3].parts[0]).toBe(running)
   })
 
   test("no-op when there are no user messages", () => {
@@ -379,6 +426,21 @@ describe("KiloSessionPrompt.maybeStripHistoricalMedia", () => {
     ]
     const result = KiloSessionPrompt.maybeStripHistoricalMedia(msgs)
     expect(result).toBe(msgs)
+  })
+
+  test("returns input unchanged when summaries are errored or unfinished", () => {
+    const image = filePart("msg_hist", "image/png", "hist.png")
+    const msgs = [
+      user("msg_u1", [textPart("msg_u1", "status?")]),
+      assistant("msg_error", "msg_u1", [], { summary: true, finish: "end_turn", error: apiError }),
+      user("msg_u2", [textPart("msg_u2", "again")]),
+      assistant("msg_unfinished", "msg_u2", [], { summary: true }),
+      user("msg_hist", [image]),
+      user("msg_last", [textPart("msg_last", "follow-up")]),
+    ]
+    const result = KiloSessionPrompt.maybeStripHistoricalMedia(msgs)
+    expect(result).toBe(msgs)
+    expect(result[4].parts[0]).toBe(image)
   })
 
   test("strips history when a completed summary exists", () => {
