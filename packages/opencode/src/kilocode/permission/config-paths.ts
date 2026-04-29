@@ -54,11 +54,21 @@ export namespace ConfigProtection {
   }
 
   function keys(p: string): string[] {
-    const resolved = path.resolve(p)
-    if (process.platform !== "win32") return [resolved]
+    if (process.platform !== "win32") return [path.resolve(p)]
 
-    const full = resolved.replaceAll("\\", "/").toLowerCase()
-    return Array.from(new Set([full, full.replace(/^[a-z]:/, "")]))
+    const expand = (value: string) => {
+      const full = path.posix.normalize(value.replaceAll("\\", "/")).toLowerCase()
+      const msys = full.replace(/^\/([a-z])(?=\/)/, "$1:")
+      return [full, full.replace(/^[a-z]:/, ""), msys, msys.replace(/^[a-z]:/, "")]
+    }
+
+    return Array.from(new Set([...expand(p), ...expand(path.resolve(p))]))
+  }
+
+  function configs(): string[] {
+    return Array.from(
+      new Set([Global.Path.config, process.env.XDG_CONFIG_HOME ? path.join(process.env.XDG_CONFIG_HOME, "kilo") : ""]),
+    ).filter(Boolean)
   }
 
   /** Check if `child` is equal to or nested inside `parent`. */
@@ -72,7 +82,9 @@ export namespace ConfigProtection {
   /** Check if an absolute path is inside a known CLI config directory. */
   export function isAbsolute(filepath: string): boolean {
     // ~/.config/kilo/ (XDG config)
-    if (within(filepath, Global.Path.config)) return true
+    for (const dir of configs()) {
+      if (within(filepath, dir)) return true
+    }
 
     // ~/.kilo/ and ~/.kilocode/ (legacy global dirs)
     for (const dir of KilocodePaths.globalDirs()) {
