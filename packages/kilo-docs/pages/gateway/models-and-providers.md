@@ -86,7 +86,7 @@ Highest performance and capability for any task. Frontier requests are sent with
 
 | Mode | Resolved Model |
 |---|---|
-| `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `anthropic/claude-opus-4.7` |
+| `claw`, `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `anthropic/claude-opus-4.7` |
 | `build`, `explore`, `code` | `anthropic/claude-sonnet-4.6` |
 | Default (no / unknown mode) | `anthropic/claude-sonnet-4.6` |
 
@@ -97,8 +97,8 @@ Great balance of price and capability. The resolved model depends on the API int
 | API interface | Resolved Model | Reasoning effort |
 |---|---|---|
 | Completions (default) | `qwen/qwen3.6-plus` | enabled |
-| Responses API | `openai/gpt-5.3-codex` | low |
-| Messages API | `anthropic/claude-haiku-4.5` | medium |
+| Responses API | `openai/gpt-5.5` | low |
+| Messages API | `anthropic/claude-sonnet-4.6` | low |
 
 ### `kilo-auto/free`
 
