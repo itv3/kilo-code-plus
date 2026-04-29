@@ -79,6 +79,7 @@ const styles = new Map<string, Style>([
   [".tsx", "slash"],
   [".js", "slash"],
   [".jsx", "slash"],
+  [".css", "block"],
   [".yml", "hash"],
   [".yaml", "hash"],
   [".toml", "hash"],
