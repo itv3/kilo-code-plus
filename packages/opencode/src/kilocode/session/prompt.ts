@@ -17,6 +17,8 @@ import PROMPT_PLAN from "@/session/prompt/plan.txt"
 import CODE_SWITCH from "@/session/prompt/code-switch.txt"
 
 export namespace KiloSessionPrompt {
+  const modes = ["ask", "plan"]
+
   /**
    * Determines whether the plan follow-up prompt should be shown.
    * Checks if the plan_exit tool was called in the last assistant turn.
@@ -60,12 +62,12 @@ export namespace KiloSessionPrompt {
     session: Pick<Session.Info, "permission">
   }) {
     const rules = input.session.permission ?? []
-    if (!["ask", "plan"].includes(input.agent.name)) return rules
+    if (!modes.includes(input.agent.name)) return rules
     return Permission.merge(rules, input.agent.permission, rules.filter((rule) => rule.action === "deny"))
   }
 
   export function hardPermissions(input: { agent: { name: string; permission: Permission.Ruleset } }) {
-    if (!["ask", "plan"].includes(input.agent.name)) return
+    if (!modes.includes(input.agent.name)) return
     return input.agent.permission
   }
 
