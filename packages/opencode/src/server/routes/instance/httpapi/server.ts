@@ -38,7 +38,7 @@ const Query = Schema.Struct({
 
 const Headers = Schema.Struct({
   authorization: Schema.optional(Schema.String),
-  "x-opencode-directory": Schema.optional(Schema.String),
+  "x-kilo-directory": Schema.optional(Schema.String),
 })
 
 export const context = Context.empty() as Context.Context<unknown>
@@ -57,7 +57,7 @@ const instance = HttpRouter.middleware()(
       Effect.gen(function* () {
         const query = yield* HttpServerRequest.schemaSearchParams(Query)
         const headers = yield* HttpServerRequest.schemaHeaders(Headers)
-        const raw = query.directory || headers["x-opencode-directory"] || process.cwd()
+        const raw = query.directory || headers["x-kilo-directory"] || process.cwd()
         const workspace = query.workspace || undefined
         const ctx = yield* Effect.promise(() =>
           Instance.provide({

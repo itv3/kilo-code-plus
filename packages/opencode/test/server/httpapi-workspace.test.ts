@@ -16,13 +16,13 @@ import { Instance } from "../../src/project/instance"
 
 void Log.init({ print: false })
 
-const originalWorkspaces = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
-const originalHttpApi = Flag.OPENCODE_EXPERIMENTAL_HTTPAPI
+const originalWorkspaces = Flag.KILO_EXPERIMENTAL_WORKSPACES
+const originalHttpApi = Flag.KILO_EXPERIMENTAL_HTTPAPI
 
 function request(path: string, directory: string, init: RequestInit = {}) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = true
   const headers = new Headers(init.headers)
-  headers.set("x-opencode-directory", directory)
+  headers.set("x-kilo-directory", directory)
   return Server.Default().app.request(path, { ...init, headers })
 }
 
@@ -55,8 +55,8 @@ function localAdaptor(directory: string): WorkspaceAdaptor {
 }
 
 afterEach(async () => {
-  Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = originalWorkspaces
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = originalHttpApi
+  Flag.KILO_EXPERIMENTAL_WORKSPACES = originalWorkspaces
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = originalHttpApi
   await Instance.disposeAll()
   await resetDatabase()
 })
@@ -88,7 +88,7 @@ describe("workspace HttpApi", () => {
   })
 
   test("serves mutation endpoints", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+    Flag.KILO_EXPERIMENTAL_WORKSPACES = true
     await using tmp = await tmpdir({ git: true })
     await Instance.provide({
       directory: tmp.path,

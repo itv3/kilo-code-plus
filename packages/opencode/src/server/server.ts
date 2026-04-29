@@ -39,10 +39,10 @@ type ServerApp = {
 
 const DefaultHono = lazy(() => createHono({}))
 const DefaultHttpApi = lazy(() => createHttpApi())
-export const Default = () => (Flag.OPENCODE_EXPERIMENTAL_HTTPAPI ? DefaultHttpApi() : DefaultHono())
+export const Default = () => (Flag.KILO_EXPERIMENTAL_HTTPAPI ? DefaultHttpApi() : DefaultHono())
 
 function create(opts: { cors?: string[] }) {
-  if (Flag.OPENCODE_EXPERIMENTAL_HTTPAPI) return createHttpApi()
+  if (Flag.KILO_EXPERIMENTAL_HTTPAPI) return createHttpApi()
   return createHono(opts)
 }
 
@@ -71,10 +71,10 @@ function createHono(opts: { cors?: string[] }) {
 
   const runtime = adapter.create(app)
 
-  if (Flag.OPENCODE_WORKSPACE_ID) {
+  if (Flag.KILO_WORKSPACE_ID) {
     return {
       app: app
-        .use(InstanceMiddleware(Flag.OPENCODE_WORKSPACE_ID ? WorkspaceID.make(Flag.OPENCODE_WORKSPACE_ID) : undefined))
+        .use(InstanceMiddleware(Flag.KILO_WORKSPACE_ID ? WorkspaceID.make(Flag.KILO_WORKSPACE_ID) : undefined))
         .use(FenceMiddleware)
         .route("/", InstanceRoutes(runtime.upgradeWebSocket)),
       runtime,
