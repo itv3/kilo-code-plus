@@ -96,7 +96,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: kilo-cli
-          path: packages/opencode/dist
+          path: |
+            packages/opencode/dist
+            !packages/opencode/dist/**/*.map
+          # Binaries don't compress meaningfully; skip the ~60s zstd pass and
+          # reduce the chance of partial-extract bugs on the download side.
+          compression-level: 0
 
     outputs:
       version: ${{ needs.version.outputs.version }}
