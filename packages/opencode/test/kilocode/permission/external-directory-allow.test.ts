@@ -52,6 +52,13 @@ const init = () => runtime.runPromise(BashTool.pipe(Effect.flatMap((info) => inf
 const quote = (text: string) => `"${text.replaceAll('"', '\\"')}"`
 const glob = (file: string) =>
   process.platform === "win32" ? AppFileSystem.normalizePathPattern(file) : file.replaceAll("\\", "/")
+const variants = (dir: string) => {
+  if (process.platform !== "win32") return [dir]
+  const full = AppFileSystem.normalizePath(dir)
+  const slash = full.replaceAll("\\", "/")
+  const root = slash.replace(/^[A-Za-z]:/, "")
+  return Array.from(new Set([full, slash, root, root.toLowerCase()]))
+}
 const config = path.resolve(Global.Path.config)
 const configFile = path.join(config, "hello.txt")
 const configGlob = glob(path.join(config, "*"))
@@ -159,33 +166,35 @@ describe("external_directory allow config protection", () => {
     })
   })
 
-  test("keeps unknown bash external_directory requests for global config paths protected", async () => {
-    await using tmp = await tmpdir({ git: true })
-    await Instance.provide({
-      directory: tmp.path,
-      fn: async () => {
-        const pending = Permission.ask({
-          id: PermissionID.make("permission_bash_external_write"),
-          sessionID: SessionID.make("session_bash_external_write"),
-          permission: "external_directory",
-          patterns: [configGlob],
-          metadata: { command: `rm ${quote(configFile)}` },
-          always: [configGlob],
-          ruleset,
-        })
+  for (const pattern of variants(configGlob)) {
+    test(`keeps unknown bash external_directory requests for global config paths protected [${pattern}]`, async () => {
+      await using tmp = await tmpdir({ git: true })
+      await Instance.provide({
+        directory: tmp.path,
+        fn: async () => {
+          const pending = Permission.ask({
+            id: PermissionID.make("permission_bash_external_write"),
+            sessionID: SessionID.make("session_bash_external_write"),
+            permission: "external_directory",
+            patterns: [pattern],
+            metadata: { command: `rm ${quote(configFile)}` },
+            always: [pattern],
+            ruleset,
+          })
 
-        const requests = await wait(1)
-        expect(requests[0]).toMatchObject({
-          id: PermissionID.make("permission_bash_external_write"),
-          permission: "external_directory",
-          metadata: { disableAlways: true },
-        })
+          const requests = await wait(1)
+          expect(requests[0]).toMatchObject({
+            id: PermissionID.make("permission_bash_external_write"),
+            permission: "external_directory",
+            metadata: { disableAlways: true },
+          })
 
-        await Permission.reply({ requestID: PermissionID.make("permission_bash_external_write"), reply: "reject" })
-        await expect(pending).rejects.toBeInstanceOf(Permission.RejectedError)
-      },
+          await Permission.reply({ requestID: PermissionID.make("permission_bash_external_write"), reply: "reject" })
+          await expect(pending).rejects.toBeInstanceOf(Permission.RejectedError)
+        },
+      })
     })
-  })
+  }
 })
 
 describe("bash external_directory access metadata", () => {

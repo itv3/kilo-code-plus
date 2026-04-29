@@ -389,9 +389,15 @@ export const BashTool = Tool.define(
         access: "read", // kilocode_change
       }
 
+      const nodes = commands(root) // kilocode_change
       if (root.descendantsOfType("file_redirect").length > 0) scan.access = "unknown" // kilocode_change
+      // kilocode_change start
+      if (nodes.some((node) => !READ.has((ps ? parts(node)[0]?.text.toLowerCase() : parts(node)[0]?.text) ?? ""))) {
+        scan.access = "unknown"
+      }
+      // kilocode_change end
 
-      for (const node of commands(root)) {
+      for (const node of nodes) {
         const command = parts(node)
         const tokens = command.map((item) => item.text)
         const cmd = ps ? tokens[0]?.toLowerCase() : tokens[0]
