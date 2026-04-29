@@ -841,4 +841,22 @@ module.exports = [
     basePath: false,
     permanent: true,
   },
+  {
+    source: "/docs/kiloclaw/control-ui",
+    destination: "/docs/kiloclaw/control-ui/overview",
+    basePath: false,
+    permanent: true,
+  },
+  {
+    source: "/docs/kiloclaw/pricing",
+    destination: "/docs/kiloclaw/faq/pricing",
+    basePath: false,
+    permanent: true,
+  },
+  {
+    source: "/docs/kiloclaw/troubleshooting",
+    destination: "/docs/kiloclaw/troubleshooting/common-questions",
+    basePath: false,
+    permanent: true,
+  },
 ]
