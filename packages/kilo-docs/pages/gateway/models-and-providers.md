@@ -86,7 +86,7 @@ Highest performance and capability for any task. Frontier requests are sent with
 
 | Mode | Resolved Model |
 |---|---|
-| `claw`, `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `anthropic/claude-opus-4.7` |
+| `plan`, `general`, `architect`, `orchestrator`, `ask`, `debug` | `anthropic/claude-opus-4.7` |
 | `build`, `explore`, `code` | `anthropic/claude-sonnet-4.6` |
 | Default (no / unknown mode) | `anthropic/claude-sonnet-4.6` |
 
