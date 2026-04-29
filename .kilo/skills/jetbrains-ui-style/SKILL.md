@@ -335,6 +335,19 @@ panel {
 - Left indent: `indent {}` for indented sub-content.
 - Vertical gaps: `.topGap(TopGap.MEDIUM)` / `.bottomGap(BottomGap.MEDIUM)` on rows to separate unrelated groups. Attach gaps to the related row so hiding rows does not break layout.
 
+Common Kotlin UI DSL spacing values from `IntelliJSpacingConfiguration`:
+
+| Constant | Unscaled px | Usage |
+|---|---|---|
+| `RightGap.SMALL` | 6 | Related inline components, such as field to button |
+| Default row/cell gap | 16 | Automatic gap between components in a row |
+| `RightGap.COLUMNS` | 60 | Logical column separation |
+| `TopGap.SMALL` / `BottomGap.SMALL` | 8 | Minor section separation |
+| `TopGap.MEDIUM` / `BottomGap.MEDIUM` | 20 | Major section or group separation |
+| `verticalComponentGap` | 6 | Automatic gap between rows |
+
+These are semantic IntelliJ spacing constants. They handle DPI scaling and the IntelliJ spacing model, but they are not theme keys and are not overridden by theme JSON.
+
 ```kotlin
 panel {
     group("Horizontal Gaps") {
@@ -544,6 +557,40 @@ Use semantic spacing APIs before inventing numbers. Do not copy fallback values 
 | Simple `BorderLayout` panels | `JBUI.Panels.simplePanel(...)`, `BorderLayoutPanel` |
 | Simple vertical custom Swing groups | `VerticalLayout` |
 | Fluent platform panels | `JBPanel.withBorder(...)`, `.andTransparent()`, `.andOpaque()`, `.withBackground(...)` |
+
+For themeable custom layouts, keep the `JBValue.UIInteger` object and call `.get()` during layout and size calculation. Do not cache the resolved `Int`, because that freezes the value from the current Look and Feel and scale context.
+
+```kotlin
+private val gap = JBValue.UIInteger("KiloComponent.gap", 16)
+
+override fun doLayout() {
+    val value = gap.get()
+    // layout using value
+}
+
+override fun getPreferredSize(): Dimension {
+    val value = gap.get()
+    // calculate using value
+}
+```
+
+Avoid resolving the value once in a constructor or property initializer:
+
+```kotlin
+private val gap = JBValue.UIInteger("KiloComponent.gap", 16).get()
+```
+
+When raw AWT layout constructors are unavoidable, legacy Swing defaults exist but must still be scaled before use:
+
+| Constant | Value |
+|---|---|
+| `UIUtil.DEFAULT_HGAP` | 10 |
+| `UIUtil.DEFAULT_VGAP` | 4 |
+| `UIUtil.LARGE_VGAP` | 12 |
+
+```kotlin
+val panel = JPanel(BorderLayout(JBUI.scale(UIUtil.DEFAULT_HGAP), 0))
+```
 
 Use `JBUI.CurrentTheme` for context-specific spacing and dimensions:
 
@@ -796,6 +843,71 @@ Avoid `Font("...")`, raw font sizes, and `deriveFont(14f)` style examples.
 - Prefer Kotlin UI DSL gaps and row layout semantics over manually assigning borders or insets.
 - Do not use `EmptyBorder`, raw `Insets`, or raw `Dimension` unless there is no platform alternative and the reason is obvious.
 
+Theme-dependent borders, insets, colors, and corner arcs must be re-evaluated when the Look and Feel changes. Do not assign a theme-derived border once in a constructor for a long-lived component.
+
+Prefer overriding `updateUI()` for component-local updates:
+
+```kotlin
+class KiloPanel : JPanel() {
+    override fun updateUI() {
+        super.updateUI()
+        border = JBUI.Borders.customLine(
+            JBColor.namedColor("KiloPanel.borderColor", JBColor.border()),
+            1,
+        )
+    }
+}
+```
+
+For long-lived tool-window panels or components that need explicit Look and Feel handling outside normal Swing updates, subscribe to `LafManagerListener.TOPIC` and reapply theme-dependent borders or cached UI state there.
+
+Use `JBValue.UIInteger` for themeable arc values, because defaults differ by theme:
+
+| Key | Use |
+|---|---|
+| `Component.arc` | General component corners |
+| `Button.arc` | Button corners |
+| `Popup.Selection.arc` | Popup selection background |
+| `TabbedPane.tabSelectionArc` | Tab selection indicator |
+| `Tree.Selection.arc` | Tree selection background |
+
+```kotlin
+val arc = JBValue.UIInteger("Component.arc", 5).get()
+val button = JBValue.UIInteger("Button.arc", 6).get()
+```
+
+Only define plugin-owned theme keys when a platform key is not enough. Themeable insets can use `JBUI.insets("KiloPanel.insets", JBUI.insets(4, 8))`; themeable colors should use `JBColor.namedColor("KiloPanel.borderColor", fallback)`.
+
+Themes can override plugin-owned UI keys through the `ui` section:
+
+```json
+{
+  "ui": {
+    "KiloPanel.insets": "6,12,6,12",
+    "KiloPanel.gap": 20,
+    "KiloPanel.borderColor": "#FF0000",
+    "KiloPanel.arc": 10
+  }
+}
+```
+
+Expose intentional custom UI keys to theme authors with the `themeMetadataProvider` extension point and a `*.themeMetadata.json` file.
+
+```xml
+<themeMetadataProvider path="/META-INF/Kilo.themeMetadata.json"/>
+```
+
+```json
+{
+  "name": "Kilo Code",
+  "fixed": false,
+  "ui": [
+    { "key": "KiloPanel.borderColor", "description": "Panel border color" },
+    { "key": "KiloPanel.gap", "description": "Gap between panel items" }
+  ]
+}
+```
+
 ## Validation and Error UI
 
 Prefer built-in validation mechanisms over custom error rendering.
@@ -838,6 +950,64 @@ override fun doValidate(): ValidationInfo? {
 - New UI support: place New UI icons in `expui/`, create `*IconMappings.json`, register via `com.intellij.iconMapper` extension point.
 - For SVG asset palette values, follow the IntelliJ icon asset guidelines. Do not copy guideline color literals into runtime Swing UI code.
 
+### SVG Assets
+
+IntelliJ does not theme SVG icons with `currentColor`, CSS classes, CSS variables, inherited styles, or `<style>` blocks. `SVGLoader` patches icon colors by matching literal hex values in `fill` and `stroke` attributes against the active theme palette.
+
+Use hardcoded palette hex values in SVG assets and provide dark variants. This exception applies to icon asset files only; runtime Swing UI code must still derive colors from theme APIs.
+
+| Do | Do not |
+|---|---|
+| `fill="#6E6E6E"` | `fill="currentColor"` |
+| `stroke="#3574F0"` | CSS variables or classes |
+| `icon.svg` plus `icon_dark.svg` | `<style>` blocks for theming |
+| `fill-opacity="0.5"` | Inherited styling |
+
+Classic icon palette examples:
+
+| Palette key | Light hex | Dark hex |
+|---|---|---|
+| `Actions.Grey` | `#6E6E6E` | `#AFB1B3` |
+| `Actions.Red` | `#DB5860` | `#C75450` |
+| `Actions.Green` | `#59A869` | `#499C54` |
+| `Actions.Blue` | `#389FD6` | `#3592C4` |
+| `Objects.Grey` | `#9AA7B0` |  |
+| `Objects.Blue` | `#40B6E0` |  |
+
+New UI palette examples:
+
+| Palette key | Light hex | Dark hex |
+|---|---|---|
+| `Gray.Stroke` | `#6C707E` | `#CED0D6` |
+| `Gray.Fill` | `#EBECF0` | `#43454A` |
+| `Gray.SecondaryStroke` | `#A8ADBD` | `#6F737A` |
+| `Blue.Stroke` | `#3574F0` | `#548AF7` |
+| `Blue.Fill` | `#EDF3FF` | `#25324D` |
+| `Blue.Solid` | `#4682FA` |  |
+| `Green.Stroke` | `#208A3C` | `#57965C` |
+| `Red.Stroke` | `#DB3B4B` | `#DB5C5C` |
+
+For checkbox, radio, or similar control SVGs that need independent fill and stroke theming, use an `id` in the `fillKey_strokeKey` format. The SVG patcher splits the ID on `_` and applies the keys independently.
+
+```xml
+<rect id="Checkbox.Background.Selected_Checkbox.Border.Selected"
+      x="4.5" y="4.5" width="15" height="15" rx="2.5"
+      fill="#3574F0" stroke="#3574F0"/>
+```
+
+Themes can override palette colors through `icons.ColorPalette`:
+
+```json
+{
+  "icons": {
+    "ColorPalette": {
+      "Actions.Grey": "#A8ADBD",
+      "Blue.Stroke": "#548AF7"
+    }
+  }
+}
+```
+
 ## Notifications
 
 - Declare in module XML: `<notificationGroup id="Kilo Code" displayType="BALLOON"/>`.
@@ -877,6 +1047,9 @@ Review generated UI code and remove:
 - Raw Swing components where IntelliJ replacements exist
 - Manual layout code that Kotlin UI DSL can express cleanly
 - Hardcoded spacing that should be a DSL gap, row gap, or `JBUI` value
+- Cached `JBValue.UIInteger(...).get()` values in custom layouts; call `.get()` during layout and sizing instead
+- Theme-derived borders, insets, colors, or arcs assigned once in constructors without `updateUI()` or Look and Feel handling
+- SVG assets using `currentColor`, CSS variables, CSS classes, `<style>` blocks, or inherited styling for IntelliJ icon theming
 - Extra helpers that do not make the UI clearer or more reusable
 
 ## References
