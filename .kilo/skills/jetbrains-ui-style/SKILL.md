@@ -38,7 +38,7 @@ This plugin is a split-mode JetBrains plugin. UI code belongs in `frontend` unle
 - Do not use JCEF.
 
 | Need | API |
-| --- | --- |
+|---|---|
 | Dialogs, settings pages, forms, any layout with components | Preferred: Kotlin UI DSL v2 (`com.intellij.ui.dsl.builder`) |
 | Tool window panels, action-driven UI, custom components | Standard Swing with IntelliJ Platform component replacements |
 | Menus and toolbars | Action System |
@@ -131,7 +131,7 @@ panel {
 Every row uses one of three layouts. Default is `LABEL_ALIGNED` when a label is provided for the row, `INDEPENDENT` otherwise.
 
 | Layout | Behavior |
-| --- | --- |
+|---|---|
 | `LABEL_ALIGNED` | Label column and content columns, aligned across rows |
 | `INDEPENDENT` | All cells are independent, no cross-row alignment |
 | `PARENT_GRID` | Cells align with the parent grid columns across rows |
@@ -164,7 +164,7 @@ panel {
 All cell factory methods available inside `row { }`:
 
 | Method | Description |
-| --- | --- |
+|---|---|
 | `checkBox("text")` | Checkbox |
 | `threeStateCheckBox("text")` | Three-state checkbox |
 | `radioButton("text", value)` | Radio button, must be inside `buttonsGroup {}` |
@@ -256,7 +256,7 @@ When a row contains a `checkBox` or `radioButton`, the DSL automatically increas
 Three types of comments, each with different placement and semantics:
 
 | Type | Method | Placement |
-| --- | --- | --- |
+|---|---|---|
 | Cell comment, bottom | `cell.comment("text")` | Below the cell |
 | Cell comment, right | `cell.commentRight("text")` | Right of the cell |
 | Cell context help | `cell.contextHelp("text", "title")` | Help icon with popup |
@@ -289,7 +289,7 @@ Comments support HTML with clickable links, bundled icons via `<icon src='...'>`
 ### Groups and Structure
 
 | Method | Grid | Description |
-| --- | --- | --- |
+|---|---|---|
 | `panel {}` | Own grid | Sub-panel occupying full width |
 | `rowsRange {}` | Parent grid | Grouped rows sharing parent grid, useful with `enabledIf` |
 | `group("Title") {}` | Own grid | Titled section with vertical spacing before/after |
@@ -406,7 +406,7 @@ panel {
 Bind component values to model properties. Values are applied on `DialogPanel.apply()`, checked with `.isModified()`, and reverted with `.reset()`.
 
 | Method | Component |
-| --- | --- |
+|---|---|
 | `bindSelected(model::prop)` | checkBox |
 | `bindText(model::prop)` | textField |
 | `bindIntText(model::prop)` | intTextField |
@@ -480,7 +480,7 @@ Activate validators by calling `dialogPanel.registerValidators(disposable)` afte
 ### Tips and Common Patterns
 
 | Pattern | Usage |
-| --- | --- |
+|---|---|
 | `.bold()` | Bold text on any cell |
 | `.columns(COLUMNS_MEDIUM)` | Set preferred width of textField / comboBox / textArea |
 | `.text("initial")` | Set initial text on text components |
@@ -533,7 +533,7 @@ Preferred manual Swing rules:
 Use semantic spacing APIs before inventing numbers. Do not copy fallback values from IntelliJ source into generated UI code; those values are defaults behind theme keys and may change by UI theme, New UI, OS, or IDE version.
 
 | Need | Preferred source |
-| --- | --- |
+|---|---|
 | Dialogs, forms, settings | Kotlin UI DSL row/group/indent/gap APIs |
 | Component gaps in Kotlin UI DSL | `RightGap.SMALL`, `RightGap.COLUMNS`, `TopGap.MEDIUM`, `BottomGap.MEDIUM`, `.customize(UnscaledGaps(...))` as a last resort |
 | Manual Swing empty padding | `JBUI.Borders.empty(...)` |
@@ -548,7 +548,7 @@ Use semantic spacing APIs before inventing numbers. Do not copy fallback values 
 Use `JBUI.CurrentTheme` for context-specific spacing and dimensions:
 
 | UI area | Preferred source |
-| --- | --- |
+|---|---|
 | Action list rows | `JBUI.CurrentTheme.ActionsList.cellPadding()` |
 | Action icon/text gaps | `JBUI.CurrentTheme.ActionsList.elementIconGap()` |
 | Action mnemonic gaps | `JBUI.CurrentTheme.ActionsList.mnemonicIconGap()` / `mnemonicInsets()` |
@@ -603,7 +603,7 @@ component.preferredSize = JBDimension(0, JBUI.CurrentTheme.Tree.rowHeight())
 Use existing platform utility classes instead of hand-rolled labels, renderers, borders, colors, fonts, and validation behavior.
 
 | Need | Preferred API |
-| --- | --- |
+|---|---|
 | Concise border layout | `BorderLayoutPanel`, `JBUI.Panels.simplePanel(...)` |
 | Platform panel helpers | `JBPanel.withBorder(...)`, `.andTransparent()`, `.andOpaque()` |
 | Platform label behavior | `JBLabel` |
@@ -651,7 +651,7 @@ append(link, SimpleTextAttributes.LINK_ATTRIBUTES)
 Always use IntelliJ platform components instead of raw Swing where an equivalent exists.
 
 | Instead of | Use | Package |
-| --- | --- | --- |
+|---|---|---|
 | `JLabel` | `JBLabel` | `com.intellij.ui.components` |
 | `JTextField` | `JBTextField` | `com.intellij.ui.components` |
 | `JTextArea` | `JBTextArea` | `com.intellij.ui.components` |
@@ -671,7 +671,7 @@ Inspection `Plugin DevKit | Code | Undesirable class usage` highlights raw Swing
 ## Multi-line and Rich Text
 
 | Need | Component |
-| --- | --- |
+|---|---|
 | Rich HTML with modern CSS, icons, shortcuts | `JBHtmlPane` (`com.intellij.ui.components.JBHtmlPane`) |
 | Simple multi-line label with HTML | `JBLabel` + `XmlStringUtil.wrapInHtml()` |
 | Scrollable / wrapping HTML panel | `SwingHelper.createHtmlViewer()` |
@@ -692,7 +692,7 @@ Do not hardcode runtime colors. IntelliJ UI colors must come from the current th
 Prefer semantic helpers for common UI roles:
 
 | Need | Preferred API |
-| --- | --- |
+|---|---|
 | Ordinary label text | `UIUtil.getLabelForeground()` |
 | Secondary/help text | `UIUtil.getContextHelpForeground()` |
 | Info label text | `UIUtil.getLabelInfoForeground()` |
@@ -711,7 +711,7 @@ Prefer semantic helpers for common UI roles:
 Prefer `JBUI.CurrentTheme` for component-area colors and borders:
 
 | Need | Preferred API |
-| --- | --- |
+|---|---|
 | Popup background | `JBUI.CurrentTheme.Popup.BACKGROUND` |
 | Complex popup header | `JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND` |
 | Separators | `JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()` |
