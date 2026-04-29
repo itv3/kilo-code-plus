@@ -1,23 +1,24 @@
 import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
-import { Provider } from "@/provider/provider"
+import { Provider } from "@/provider"
 import { Session } from "@/session"
 import { SessionSummary } from "@/session/summary"
 import { KiloSession } from "@/kilocode/session"
 import { SessionID } from "@/session/schema"
 import { ModelID, ProviderID } from "@/provider/schema"
 import { MessageV2 } from "@/session/message-v2"
-import { Storage } from "@/storage/storage"
-import { Log } from "@/util/log"
+import { Storage } from "@/storage"
+import { Log } from "@/util"
 import { Auth } from "@/auth"
 import { IngestQueue } from "@/kilo-sessions/ingest-queue"
 import { clearInFlightCache, withInFlightCache } from "@/kilo-sessions/inflight-cache"
 import type * as SDK from "@kilocode/sdk/v2"
 import z from "zod"
+import { Schema } from "effect"
 import { KILO_API_BASE } from "@kilocode/kilo-gateway"
-import { Config } from "@/config/config"
+import { Config } from "@/config"
 import { Instance } from "@/project/instance"
-import { Vcs } from "@/project/vcs"
+import { Vcs } from "@/project"
 import simpleGit from "simple-git"
 import { RemoteWS } from "@/kilo-sessions/remote-ws"
 import { RemoteSender } from "@/kilo-sessions/remote-sender"
@@ -31,9 +32,9 @@ export namespace KiloSessions {
   export const Event = {
     RemoteStatusChanged: BusEvent.define(
       "kilo-sessions.remote-status-changed",
-      z.object({
-        enabled: z.boolean(),
-        connected: z.boolean(),
+      Schema.Struct({
+        enabled: Schema.Boolean,
+        connected: Schema.Boolean,
       }),
     ),
   }
@@ -179,6 +180,11 @@ export namespace KiloSessions {
   export async function init() {
     if (ingestDisabled) return
 
+    // kilocode_change start - Same type-erasure upstream uses in share/share-next.ts:165-169.
+    const watch = <D extends { type: string }>(def: D, fn: (evt: { properties: any }) => unknown) =>
+      Bus.subscribe(def as never, fn as never)
+    // kilocode_change end
+
     Bus.subscribe(Session.Event.Created, (evt) => {
       const sessionId = evt.properties.info.id
       void create(sessionId).catch((error) => log.error("share init create failed", { sessionId, error }))
@@ -200,7 +206,7 @@ export namespace KiloSessions {
       ])
     })
 
-    Bus.subscribe(MessageV2.Event.Updated, async (evt) => {
+    watch(MessageV2.Event.Updated, async (evt) => {
       await ingest.sync(evt.properties.info.sessionID, [
         {
           type: "message",
@@ -222,7 +228,7 @@ export namespace KiloSessions {
       }
     })
 
-    Bus.subscribe(MessageV2.Event.PartUpdated, async (evt) => {
+    watch(MessageV2.Event.PartUpdated, async (evt) => {
       await ingest.sync(evt.properties.part.sessionID, [
         {
           type: "part",
@@ -231,7 +237,7 @@ export namespace KiloSessions {
       ])
     })
 
-    Bus.subscribe(Session.Event.Diff, async (evt) => {
+    watch(Session.Event.Diff, async (evt) => {
       await ingest.sync(evt.properties.sessionID, [
         {
           type: "session_diff",
