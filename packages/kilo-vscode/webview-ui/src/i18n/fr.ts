@@ -1432,6 +1432,9 @@ export const dict = {
   "settings.display.layout.description": "Mode de disposition pour l'interface de chat",
   "settings.display.layout.auto": "Automatique",
   "settings.display.layout.stretch": "Étiré",
+  "settings.display.reasoningAutoCollapse.title": "Réduire automatiquement le raisonnement",
+  "settings.display.reasoningAutoCollapse.description":
+    "Réduit les blocs de raisonnement une fois que l'agent a fini de les écrire. Laissez désactivé pour garder le raisonnement développé, sauf si vous le réduisez manuellement.",
   "settings.display.terminalCommand.title": "Terminal Command Blocks",
   "settings.display.terminalCommand.description": "Choose whether terminal command blocks start expanded or collapsed.",
   "settings.display.terminalCommand.expanded": "Expanded",
