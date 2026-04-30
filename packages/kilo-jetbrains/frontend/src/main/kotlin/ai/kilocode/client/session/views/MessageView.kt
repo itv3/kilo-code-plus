@@ -2,9 +2,9 @@ package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Message
-import com.intellij.ui.JBColor
-import com.intellij.util.ui.JBUI
-import javax.swing.border.MatteBorder
+import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionStyleTarget
+import ai.kilocode.client.ui.UiStyle
 
 /**
  * A single message container inside a [TurnView].
@@ -19,7 +19,12 @@ import javax.swing.border.MatteBorder
  *   visual turn boundary.
  * - Assistant messages: light padding only.
  */
-class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayoutPanel() {
+class MessageView(
+    val msg: Message,
+    private var style: SessionStyle = SessionStyle.current(),
+) : ai.kilocode.client.session.ui.SessionLayoutPanel(), SessionStyleTarget {
+
+    constructor(msg: Message) : this(msg, SessionStyle.current())
 
     val role: String get() = msg.info.role
 
@@ -28,17 +33,15 @@ class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayou
     init {
         isOpaque = false
         border = if (msg.info.role == "user") {
-            JBUI.Borders.compound(
-                MatteBorder(JBUI.scale(1), 0, 0, 0, JBColor.border()),
-                JBUI.Borders.empty(JBUI.scale(8), 0, JBUI.scale(4), 0),
-            )
+            UiStyle.Borders.user()
         } else {
-            JBUI.Borders.empty(JBUI.scale(4), 0)
+            UiStyle.Borders.assistant()
         }
 
         // Populate content that already exists (e.g. after loadHistory)
         for ((_, content) in msg.parts) {
             val view = ViewFactory.create(content)
+            view.applyStyle(style)
             parts[content.id] = view
             add(view)
         }
@@ -54,6 +57,7 @@ class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayou
             return
         }
         val view = ViewFactory.create(content)
+        view.applyStyle(style)
         parts[content.id] = view
         add(view)
         revalidate()
@@ -83,4 +87,11 @@ class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayou
 
     /** Compact dump for test assertions. */
     fun dump(): String = parts.values.joinToString(", ") { it.dumpLabel() }
+
+    override fun applyStyle(style: SessionStyle) {
+        this.style = style
+        for (view in parts.values) view.applyStyle(style)
+        revalidate()
+        repaint()
+    }
 }
