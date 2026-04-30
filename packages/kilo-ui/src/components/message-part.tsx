@@ -2039,23 +2039,33 @@ ToolRegistry.register({
     const canOpenDiff = () => !!data.openDiff && !!path() && (before() !== "" || after() !== "")
     const canOpenFile = () => !!data.openFile && !!path()
 
+    const openDiff = () => {
+      if (!canOpenDiff()) return
+      data.openDiff!({
+        file: path(),
+        before: before(),
+        after: after(),
+        additions: props.metadata?.filediff?.additions ?? 0,
+        deletions: props.metadata?.filediff?.deletions ?? 0,
+      })
+    }
+
     const handleFileClick = (e: MouseEvent) => {
       e.stopPropagation()
 
       if (canOpenDiff()) {
-        data.openDiff!({
-          file: path(),
-          before: before(),
-          after: after(),
-          additions: props.metadata?.filediff?.additions ?? 0,
-          deletions: props.metadata?.filediff?.deletions ?? 0,
-        })
+        openDiff()
         return
       }
 
       if (canOpenFile()) {
         data.openFile!(path())
       }
+    }
+
+    const handleOpenDiffClick = (e: MouseEvent) => {
+      e.stopPropagation()
+      openDiff()
     }
 
     return (
@@ -2084,6 +2094,20 @@ ToolRegistry.register({
                   </Show>
                 </div>
               </div>
+              <Show when={canOpenDiff()}>
+                <span data-slot="edit-trigger-actions">
+                  <Tooltip value={i18n.t("ui.messagePart.openInDiffViewer")} placement="top" gutter={4}>
+                    <IconButton
+                      icon="square-arrow-top-right"
+                      size="small"
+                      variant="ghost"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={handleOpenDiffClick}
+                      aria-label={i18n.t("ui.messagePart.openInDiffViewer")}
+                    />
+                  </Tooltip>
+                </span>
+              </Show>
             </div>
           }
         >
