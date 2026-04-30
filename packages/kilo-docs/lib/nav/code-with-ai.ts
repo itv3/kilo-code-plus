@@ -63,6 +63,19 @@ export const CodeWithAiNav: NavSection[] = [
     ],
   },
   {
+    title: "Gastown",
+    links: [
+      { href: "/code-with-ai/gastown", children: "Overview" },
+      { href: "/code-with-ai/gastown/quick-start", children: "Quick Start" },
+      { href: "/code-with-ai/gastown/concepts", children: "Concepts" },
+      { href: "/code-with-ai/gastown/mayor", children: "The Mayor" },
+      { href: "/code-with-ai/gastown/sling-work", children: "Sling Work" },
+      { href: "/code-with-ai/gastown/code-review", children: "Code Review" },
+      { href: "/code-with-ai/gastown/settings", children: "Settings" },
+      { href: "/code-with-ai/gastown/troubleshooting", children: "Troubleshooting" },
+    ],
+  },
+  {
     title: "Productivity Tools",
     links: [
       {
