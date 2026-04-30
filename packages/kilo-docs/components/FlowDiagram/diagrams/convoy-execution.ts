@@ -112,8 +112,6 @@ const edges: Edge[] = [
     source: "bead1",
     target: "review1",
     type: "smoothstep",
-    sourcePosition: "bottom" as Position,
-    targetPosition: "top" as Position,
     style: { strokeWidth: 2, stroke: "#8b5cf6" },
   },
   {
@@ -130,8 +128,6 @@ const edges: Edge[] = [
     source: "bead2",
     target: "review2",
     type: "smoothstep",
-    sourcePosition: "bottom" as Position,
-    targetPosition: "top" as Position,
     style: { strokeWidth: 2, stroke: "#8b5cf6" },
   },
   {
@@ -148,8 +144,6 @@ const edges: Edge[] = [
     source: "bead3",
     target: "review3",
     type: "smoothstep",
-    sourcePosition: "bottom" as Position,
-    targetPosition: "top" as Position,
     animated: true,
     style: { strokeWidth: 2, stroke: "#3b82f6" },
   },

@@ -135,8 +135,6 @@ const edges: Edge[] = [
     source: "revise",
     target: "refinery-review",
     type: "smoothstep",
-    sourcePosition: "right" as Position,
-    targetPosition: "bottom" as Position,
     animated: true,
     label: "re-submit",
     labelStyle: { fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fill: "#888" },
