@@ -6,7 +6,6 @@ import ai.kilocode.client.session.update.SessionControllerTestBase
 import ai.kilocode.rpc.dto.ConfigWarningDto
 import ai.kilocode.rpc.dto.KiloAppStateDto
 import ai.kilocode.rpc.dto.KiloAppStatusDto
-import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 
 @Suppress("UnstableApiUsage")
@@ -45,12 +44,12 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
         assertTrue(panel.isVisible)
         assertEquals("CLI startup failed", panel.summaryText())
-        assertEquals(UIUtil.getErrorForeground(), panel.summaryColor())
+        assertEquals(SessionStyle.Colors.error(), panel.summaryColor())
         assertTrue(panel.toggleVisible())
         assertFalse(panel.toggleExpanded())
         assertFalse(panel.detailsVisible())
         assertEquals("stderr line\nconfig: HTTP 500: broken", panel.detailsText())
-        assertEquals(UIUtil.getLabelForeground(), panel.detailsColor())
+        assertEquals(SessionStyle.Colors.fg(), panel.detailsColor())
         assertTrue(panel.retryVisible())
         assertFalse(panel.retryFocusable())
 
@@ -103,7 +102,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
         assertTrue(panel.isVisible)
         assertEquals("Configuration warnings", panel.summaryText())
-        assertNotSame(UIUtil.getContextHelpForeground(), panel.summaryColor())
+        assertEquals(SessionStyle.Colors.warning(), panel.summaryColor())
         assertTrue(panel.toggleVisible())
         assertFalse(panel.toggleExpanded())
         assertFalse(panel.detailsVisible())

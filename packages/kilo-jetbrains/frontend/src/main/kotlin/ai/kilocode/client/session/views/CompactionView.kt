@@ -2,13 +2,14 @@ package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Compaction
 import ai.kilocode.client.session.model.Content
-import com.intellij.ui.JBColor
+import ai.kilocode.client.plugin.KiloBundle
+import ai.kilocode.client.session.ui.SessionStyle
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
@@ -28,19 +29,19 @@ class CompactionView(@Suppress("UNUSED_PARAMETER") compaction: Compaction) : Par
     init {
         layout = BorderLayout()
         isOpaque = false
-        border = JBUI.Borders.empty(JBUI.scale(6), 0)
+        border = JBUI.Borders.empty(SessionStyle.Space.MD, 0)
 
-        val text = JBLabel("context compacted").apply {
-            foreground = UIUtil.getContextHelpForeground()
-            font = JBUI.Fonts.smallFont()
+        val text = JBLabel(KiloBundle.message("session.part.compaction")).apply {
+            foreground = SessionStyle.Colors.weak()
+            font = SessionStyle.Fonts.small()
             horizontalAlignment = SwingConstants.CENTER
-            border = JBUI.Borders.empty(0, JBUI.scale(8))
+            border = JBUI.Borders.empty(0, SessionStyle.Gap.regular())
         }
 
         val line = { JPanel().apply {
-            background = JBColor.border()
+            background = SessionStyle.Colors.line()
             isOpaque = true
-            preferredSize = java.awt.Dimension(0, JBUI.scale(1))
+            preferredSize = JBDimension(0, JBUI.scale(1))
         } }
 
         val row = JPanel(GridBagLayout()).apply {

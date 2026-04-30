@@ -43,10 +43,6 @@ class PromptPanel(
         private val LOG = KiloLog.create(PromptPanel::class.java)
         private val SEND_ICON: Icon = IconLoader.getIcon("/icons/send.svg", PromptPanel::class.java)
         private val STOP_ICON: Icon = IconLoader.getIcon("/icons/stop.svg", PromptPanel::class.java)
-        private const val EDITOR_LINES = 3
-        private const val BUTTON_WIDTH = 28
-        private const val BUTTON_HEIGHT = 24
-        private const val EDITOR_CHROME = 16
     }
 
     val mode = LabelPicker()
@@ -73,13 +69,12 @@ class PromptPanel(
     }
 
     private val button = JButton(SEND_ICON).apply {
-        isBorderPainted = false
-        isContentAreaFilled = false
+        SessionStyle.Buttons.icon(this)
         isFocusPainted = false
         toolTipText = KiloBundle.message("prompt.button.send")
         isEnabled = false
-        maximumSize = JBDimension(JBUI.scale(BUTTON_WIDTH), Short.MAX_VALUE.toInt())
-        preferredSize = JBUI.size(BUTTON_WIDTH, BUTTON_HEIGHT)
+        maximumSize = JBDimension(JBUI.scale(SessionStyle.Size.BUTTON_WIDTH), Short.MAX_VALUE.toInt())
+        preferredSize = JBUI.size(SessionStyle.Size.BUTTON, SessionStyle.Size.BUTTON)
         addActionListener {
             if (busy) onAbort()
             else submit("button")
@@ -90,18 +85,17 @@ class PromptPanel(
     private var busy = false
 
     init {
-        border = JBUI.Borders.empty(4, 8, 4, 8)
+        border = SessionStyle.Insets.prompt()
 
-        // Editor in center — constrain height to ~3 lines
-        val height = editor.font.size * EDITOR_LINES + JBUI.scale(EDITOR_CHROME)
+        val height = editor.font.size * SessionStyle.Size.LINES + JBUI.scale(SessionStyle.Size.CHROME)
         editor.preferredSize = JBDimension(0, height)
         editor.minimumSize = JBDimension(0, height)
         add(editor, BorderLayout.CENTER)
 
-        // Bottom bar: pickers + glue + send button, all same row & height
         val bar = BorderLayoutPanel().apply {
             layout = BoxLayout(this, BoxLayout.X_AXIS)
-            border = JBUI.Borders.emptyTop(4)
+            isOpaque = false
+            border = JBUI.Borders.emptyTop(SessionStyle.Space.SM)
         }
         bar.add(mode)
         bar.add(model)

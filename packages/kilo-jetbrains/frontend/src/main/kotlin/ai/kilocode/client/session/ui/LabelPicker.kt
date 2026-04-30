@@ -6,10 +6,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupShowOptions
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.ui.JBColor
-import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.JBUI
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -34,10 +31,7 @@ class LabelPicker : JBLabel() {
     private var selected: Item? = null
 
     init {
-        border = JBUI.Borders.compound(
-            RoundedLineBorder(JBColor.border(), JBUI.scale(6)),
-            JBUI.Borders.empty(2, 8),
-        )
+        border = SessionStyle.Borders.picker()
         isEnabled = false
         text = " "
 

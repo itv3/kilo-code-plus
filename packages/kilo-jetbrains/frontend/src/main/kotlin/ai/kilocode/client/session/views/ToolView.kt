@@ -4,38 +4,27 @@ import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
+import ai.kilocode.client.session.ui.SessionStyle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.Font
 import java.io.File
 import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
-import javax.swing.UIManager
-import javax.swing.border.MatteBorder
 
 /** Renders tool calls with VS Code-inspired rows/cards for read and bash. */
 class ToolView(tool: Tool) : PartView() {
 
     override val contentId: String = tool.id
-
-    private val weak = UIUtil.getContextHelpForeground()
-    private val fill = JBColor.lazy {
-        UIManager.getColor("TextField.background") ?: UIUtil.getPanelBackground()
-    }
-    private val line = JBColor.border()
-    private val error = JBColor.namedColor("Label.errorForeground", UIUtil.getErrorForeground())
 
     private var item = tool
     private var open = false
@@ -43,32 +32,27 @@ class ToolView(tool: Tool) : PartView() {
 
     private val root = JPanel(BorderLayout()).apply {
         isOpaque = true
-        background = fill
-        border = MatteBorder(JBUI.scale(1), JBUI.scale(1), JBUI.scale(1), JBUI.scale(1), line)
+        background = SessionStyle.Colors.surface()
+        border = SessionStyle.Borders.card()
     }
-    private val header = JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
+    private val header = JPanel(SessionStyle.Gap.layout()).apply {
         isOpaque = true
-        background = fill
-        border = JBUI.Borders.empty(8, 10)
+        background = SessionStyle.Colors.surface()
+        border = SessionStyle.Insets.header()
     }
     private val glyph = JBLabel()
-    private val title = JBLabel().apply { font = JBUI.Fonts.label().deriveFont(java.awt.Font.BOLD) }
+    private val title = JBLabel().apply { font = JBUI.Fonts.label().asBold() }
     private val sub = JBLabel().apply {
-        foreground = weak
-        font = JBUI.Fonts.smallFont()
+        foreground = SessionStyle.Colors.weak()
+        font = SessionStyle.Fonts.small()
     }
     private val state = JBLabel().apply {
-        foreground = weak
-        font = JBUI.Fonts.smallFont()
+        foreground = SessionStyle.Colors.weak()
+        font = SessionStyle.Fonts.small()
     }
     private val arrow = JBLabel()
     private val copy = JButton(AllIcons.Actions.Copy).apply {
-        isFocusable = false
-        setRequestFocusEnabled(false)
-        isContentAreaFilled = false
-        isBorderPainted = false
-        isOpaque = false
-        border = JBUI.Borders.empty()
+        SessionStyle.Buttons.icon(this)
         toolTipText = KiloBundle.message("session.part.tool.copy")
         addActionListener { copyShell() }
     }
@@ -76,32 +60,32 @@ class ToolView(tool: Tool) : PartView() {
         isEditable = false
         lineWrap = false
         wrapStyleWord = false
-        foreground = UIUtil.getLabelForeground()
-        background = fill
-        font = Font(Font.MONOSPACED, Font.PLAIN, JBUI.Fonts.label().size)
-        border = JBUI.Borders.empty(10, 10)
+        foreground = SessionStyle.Colors.fg()
+        background = SessionStyle.Colors.surface()
+        font = SessionStyle.Fonts.mono()
+        border = SessionStyle.Insets.body()
     }
     private val mini = JBTextArea().apply {
         isEditable = false
         lineWrap = false
         wrapStyleWord = false
-        foreground = weak
-        background = fill
-        font = Font(Font.MONOSPACED, Font.PLAIN, JBUI.Fonts.smallFont().size)
-        border = JBUI.Borders.empty(8, 10)
+        foreground = SessionStyle.Colors.weak()
+        background = SessionStyle.Colors.surface()
+        font = SessionStyle.Fonts.mono(small = true)
+        border = SessionStyle.Insets.body()
     }
     private val scroll = JBScrollPane(text).apply {
-        border = MatteBorder(JBUI.scale(1), 0, 0, 0, line)
+        border = SessionStyle.Borders.cardTop()
         isOpaque = true
-        background = fill
-        viewport.background = fill
+        background = SessionStyle.Colors.surface()
+        viewport.background = SessionStyle.Colors.surface()
         horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
         verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
     }
     private val preview = JPanel(BorderLayout()).apply {
         isOpaque = true
-        background = fill
-        border = MatteBorder(JBUI.scale(1), 0, 0, 0, line)
+        background = SessionStyle.Colors.surface()
+        border = SessionStyle.Borders.cardTop()
         add(mini, BorderLayout.CENTER)
     }
 
@@ -172,7 +156,7 @@ class ToolView(tool: Tool) : PartView() {
         header.cursor = if (expand) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
         glyph.icon = icon(item)
         glyph.foreground = color(item)
-        title.foreground = if (item.state == ToolExecState.ERROR) error else UIUtil.getLabelForeground()
+        title.foreground = if (item.state == ToolExecState.ERROR) SessionStyle.Colors.error() else SessionStyle.Colors.fg()
         state.text = stateText(item)
         state.foreground = color(item)
 
@@ -192,7 +176,7 @@ class ToolView(tool: Tool) : PartView() {
     private fun renderRead() {
         title.text = KiloBundle.message("session.part.tool.read")
         sub.text = readPath(item)
-        val main = JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
+        val main = JPanel(SessionStyle.Gap.layout()).apply {
             isOpaque = false
             add(title, BorderLayout.WEST)
             add(sub, BorderLayout.CENTER)
@@ -213,14 +197,14 @@ class ToolView(tool: Tool) : PartView() {
         title.cursor = cursor
         sub.cursor = cursor
         arrow.cursor = cursor
-        val main = JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
+        val main = JPanel(SessionStyle.Gap.layout()).apply {
             isOpaque = false
             add(title, BorderLayout.WEST)
             add(sub, BorderLayout.CENTER)
         }
-        val right = JPanel(BorderLayout(JBUI.scale(4), 0)).apply {
+        val right = JPanel(SessionStyle.Gap.layout(SessionStyle.Space.SM)).apply {
             isOpaque = false
-            val controls = JPanel(BorderLayout(JBUI.scale(4), 0)).apply {
+            val controls = JPanel(SessionStyle.Gap.layout(SessionStyle.Space.SM)).apply {
                 isOpaque = false
                 if (copyText().isNotBlank()) add(copy, BorderLayout.WEST)
                 add(arrow, BorderLayout.EAST)
@@ -229,7 +213,7 @@ class ToolView(tool: Tool) : PartView() {
         }
         text.text = shellBody(item)
         mini.text = preview(shellBody(item))
-        text.foreground = if (item.state == ToolExecState.ERROR) error else UIUtil.getLabelForeground()
+        text.foreground = if (item.state == ToolExecState.ERROR) SessionStyle.Colors.error() else SessionStyle.Colors.fg()
         header.add(glyph, BorderLayout.WEST)
         header.add(main, BorderLayout.CENTER)
         header.add(right, BorderLayout.EAST)
@@ -238,7 +222,7 @@ class ToolView(tool: Tool) : PartView() {
     private fun renderGeneric() {
         title.text = item.title?.takeIf { it.isNotBlank() } ?: item.name
         sub.text = item.name.takeIf { title.text != it } ?: ""
-        val main = JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
+        val main = JPanel(SessionStyle.Gap.layout()).apply {
             isOpaque = false
             add(title, BorderLayout.WEST)
             add(sub, BorderLayout.CENTER)
@@ -269,10 +253,10 @@ private fun icon(tool: Tool) = when (tool.name) {
 }
 
 private fun color(tool: Tool) = when (tool.state) {
-    ToolExecState.PENDING -> UIUtil.getContextHelpForeground()
-    ToolExecState.RUNNING -> JBColor.namedColor("ProgressBar.foreground", UIUtil.getLabelForeground())
-    ToolExecState.COMPLETED -> UIUtil.getContextHelpForeground()
-    ToolExecState.ERROR -> JBColor.namedColor("Label.errorForeground", UIUtil.getErrorForeground())
+    ToolExecState.PENDING -> SessionStyle.Colors.weak()
+    ToolExecState.RUNNING -> SessionStyle.Colors.running()
+    ToolExecState.COMPLETED -> SessionStyle.Colors.weak()
+    ToolExecState.ERROR -> SessionStyle.Colors.error()
 }
 
 private fun stateText(tool: Tool) = when (tool.state) {

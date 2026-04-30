@@ -1,6 +1,7 @@
 package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Message
+import ai.kilocode.client.session.ui.SessionStyle
 
 /**
  * Top-level transcript item representing one conversational turn.
@@ -11,7 +12,7 @@ import ai.kilocode.client.session.model.Message
  *
  * Children are stacked by [ai.kilocode.client.session.ui.SessionLayout].
  */
-class TurnView(val id: String) : ai.kilocode.client.session.ui.SessionLayoutPanel() {
+class TurnView(val id: String) : ai.kilocode.client.session.ui.SessionLayoutPanel(SessionStyle.Gap.turn()) {
 
     private val messages = LinkedHashMap<String, MessageView>()
 

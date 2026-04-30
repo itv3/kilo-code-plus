@@ -2,9 +2,7 @@ package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Message
-import com.intellij.ui.JBColor
-import com.intellij.util.ui.JBUI
-import javax.swing.border.MatteBorder
+import ai.kilocode.client.session.ui.SessionStyle
 
 /**
  * A single message container inside a [TurnView].
@@ -28,12 +26,9 @@ class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayou
     init {
         isOpaque = false
         border = if (msg.info.role == "user") {
-            JBUI.Borders.compound(
-                MatteBorder(JBUI.scale(1), 0, 0, 0, JBColor.border()),
-                JBUI.Borders.empty(JBUI.scale(8), 0, JBUI.scale(4), 0),
-            )
+            SessionStyle.Borders.user()
         } else {
-            JBUI.Borders.empty(JBUI.scale(4), 0)
+            SessionStyle.Borders.assistant()
         }
 
         // Populate content that already exists (e.g. after loadHistory)

@@ -11,7 +11,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.Centerizer
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -39,13 +38,8 @@ class EmptySessionPanel(
 ) : BorderLayoutPanel(), Disposable {
 
     companion object {
-        internal const val LIMIT = 5
-        internal const val MAX_WIDTH = 350
-        private const val PAD = 12
-        private const val SIDE_PAD = 12
-        private const val RECENT_PAD = 8
-        private const val LOGO_GAP = 14
-        private const val RECENT_GAP = 28
+        internal val LIMIT = SessionStyle.Size.LIMIT
+        internal val MAX_WIDTH = SessionStyle.Size.WIDTH
         private const val SECOND_MS_LIMIT = 10_000_000_000L
         private const val MINUTE = 60_000L
         private const val HOUR = 60 * MINUTE
@@ -96,7 +90,7 @@ class EmptySessionPanel(
         Disposer.register(parent, this)
         // The empty state floats on the tool-window background.
         isOpaque = false
-        border = JBUI.Borders.empty(PAD)
+        border = SessionStyle.Insets.empty()
         setSessions(recents)
         add(Centerizer(content, Centerizer.TYPE.BOTH), BorderLayout.CENTER)
     }
@@ -117,23 +111,23 @@ class EmptySessionPanel(
         val intro = BorderLayoutPanel().apply {
             alignmentX = CENTER_ALIGNMENT
             add(md.component, BorderLayout.CENTER)
-            border = JBUI.Borders.empty(0, SIDE_PAD, 0, SIDE_PAD)
+            border = JBUI.Borders.empty(0, SessionStyle.Space.PAD, 0, SessionStyle.Space.PAD)
         }
         val recent = BorderLayoutPanel().apply {
             alignmentX = CENTER_ALIGNMENT
             add(JBLabel(KiloBundle.message("session.empty.recent")).apply {
                 foreground = UIUtil.getContextHelpForeground()
-                font = JBFont.small()
-                border = JBUI.Borders.emptyLeft(RECENT_PAD)
+                font = SessionStyle.Fonts.small()
+                border = JBUI.Borders.emptyLeft(SessionStyle.Space.LG)
             }, BorderLayout.NORTH)
             add(list, BorderLayout.CENTER)
         }
         val stack = BorderLayoutPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(logo)
-            add(Box.createVerticalStrut(JBUI.scale(LOGO_GAP)))
+            add(Box.createVerticalStrut(JBUI.scale(SessionStyle.Space.LOGO)))
             add(intro)
-            add(Box.createVerticalStrut(JBUI.scale(RECENT_GAP)))
+            add(Box.createVerticalStrut(JBUI.scale(SessionStyle.Space.RECENT)))
             add(recent)
         }
         return object : BorderLayoutPanel() {
@@ -204,7 +198,7 @@ class EmptySessionPanel(
         private val time = JBLabel()
 
         init {
-            border = JBUI.Borders.empty(RECENT_PAD, RECENT_PAD, RECENT_PAD, RECENT_PAD)
+            border = JBUI.Borders.empty(SessionStyle.Space.LG, SessionStyle.Space.LG, SessionStyle.Space.LG, SessionStyle.Space.LG)
             add(title, BorderLayout.CENTER)
             add(time, BorderLayout.EAST)
         }

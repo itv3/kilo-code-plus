@@ -5,11 +5,9 @@ import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.session.model.Permission
 import ai.kilocode.rpc.dto.PermissionReplyDto
 import com.intellij.icons.AllIcons
-import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.BorderLayout
 
@@ -34,18 +32,10 @@ class PermissionPanel(
     private val controller: SessionController,
 ) : BorderLayoutPanel() {
 
-    companion object {
-        private const val PAD_TOP = 6
-        private const val PAD_SIDE = 8
-    }
-
     private lateinit var requestId: String
 
     init {
-        border = JBUI.Borders.compound(
-            JBUI.Borders.customLineTop(JBColor.border()),
-            JBUI.Borders.empty(JBUI.scale(PAD_TOP), JBUI.scale(PAD_SIDE)),
-        )
+        border = SessionStyle.Dock.warning()
         isVisible = false
     }
 

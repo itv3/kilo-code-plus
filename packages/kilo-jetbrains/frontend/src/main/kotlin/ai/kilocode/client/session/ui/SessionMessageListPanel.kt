@@ -5,7 +5,6 @@ import ai.kilocode.client.session.model.SessionModelEvent
 import ai.kilocode.client.session.views.MessageView
 import ai.kilocode.client.session.views.TurnView
 import com.intellij.openapi.Disposable
-import com.intellij.util.ui.JBUI
 
 /**
  * Scrollable transcript panel that maps the model's turn grouping to
@@ -42,7 +41,7 @@ class SessionMessageListPanel(
 
     init {
         isOpaque = false
-        border = JBUI.Borders.empty(JBUI.scale(4), JBUI.scale(8))
+        border = SessionStyle.Insets.transcript()
 
         model.addListener(parent) { event ->
             when (event) {

@@ -3,19 +3,16 @@ package ai.kilocode.client.session.views
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Reasoning
+import ai.kilocode.client.session.ui.SessionStyle
 import ai.kilocode.client.ui.md.MdView
 import com.intellij.icons.AllIcons
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
-import javax.swing.UIManager
-import javax.swing.border.MatteBorder
 
 /** Renders reasoning as a VS Code-style collapsible block. */
 class ReasoningView(reasoning: Reasoning) : PartView() {
@@ -25,35 +22,29 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
     val md: MdView = MdView.html()
     private val preview: MdView = MdView.html()
 
-    private val weak = UIUtil.getContextHelpForeground()
-    private val fill = JBColor.lazy {
-        UIManager.getColor("TextField.background") ?: UIUtil.getPanelBackground()
-    }
-    private val line = JBColor.border()
-
     private val arrow = JBLabel()
     private val body = JPanel(BorderLayout()).apply {
         isOpaque = true
-        background = fill
-        border = JBUI.Borders.empty(8, 10)
+        background = SessionStyle.Colors.surface()
+        border = SessionStyle.Insets.body()
     }
     private val previewBody = JPanel(BorderLayout()).apply {
         isOpaque = true
-        background = fill
-        border = JBUI.Borders.empty(8, 10)
+        background = SessionStyle.Colors.surface()
+        border = SessionStyle.Insets.body()
     }
-    private val header = JPanel(BorderLayout(JBUI.scale(6), 0)).apply {
+    private val header = JPanel(SessionStyle.Gap.layout(SessionStyle.Space.MD)).apply {
         isOpaque = true
-        background = fill
-        border = JBUI.Borders.empty(8, 8)
+        background = SessionStyle.Colors.surface()
+        border = JBUI.Borders.empty(SessionStyle.Space.LG, SessionStyle.Space.LG)
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     }
     private val title = JBLabel(KiloBundle.message("session.part.reasoning")).apply {
-        foreground = weak
-        font = JBUI.Fonts.smallFont()
+        foreground = SessionStyle.Colors.weak()
+        font = SessionStyle.Fonts.small()
     }
     private val icon = JBLabel(AllIcons.General.InspectionsEye).apply {
-        foreground = weak
+        foreground = SessionStyle.Colors.weak()
     }
 
     private var done = reasoning.done
@@ -73,11 +64,11 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         layout = BorderLayout()
         isOpaque = false
         border = JBUI.Borders.compound(
-            MatteBorder(0, JBUI.scale(2), 0, 0, line),
+            JBUI.Borders.customLine(SessionStyle.Colors.line(), 0, 2, 0, 0),
             JBUI.Borders.empty(0, 0, 0, 0),
         )
 
-        val left = JPanel(BorderLayout(JBUI.scale(6), 0)).apply {
+        val left = JPanel(SessionStyle.Gap.layout(SessionStyle.Space.MD)).apply {
             isOpaque = false
             add(icon, BorderLayout.WEST)
             add(title, BorderLayout.CENTER)
@@ -91,9 +82,9 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         icon.addMouseListener(click)
         arrow.addMouseListener(click)
 
-        md.foreground = weak
+        md.foreground = SessionStyle.Colors.weak()
         md.opaque = false
-        preview.foreground = weak
+        preview.foreground = SessionStyle.Colors.weak()
         preview.opaque = false
         body.add(md.component, BorderLayout.CENTER)
         previewBody.add(preview.component, BorderLayout.CENTER)

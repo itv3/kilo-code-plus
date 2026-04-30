@@ -6,8 +6,6 @@ import ai.kilocode.client.session.model.SessionState
 import com.intellij.openapi.Disposable
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.FlowLayout
 
 /**
@@ -27,15 +25,15 @@ class ProgressPanel(
 ) : SessionLayoutPanel() {
 
     private val label = JBLabel().apply {
-        foreground = UIUtil.getContextHelpForeground()
-        font = JBUI.Fonts.label()
+        foreground = SessionStyle.Colors.weak()
+        font = com.intellij.util.ui.JBUI.Fonts.label()
     }
 
     init {
         isOpaque = false
         isVisible = false
-        layout = FlowLayout(FlowLayout.LEFT, JBUI.scale(6), 0)
-        border = JBUI.Borders.empty(JBUI.scale(6), 0, JBUI.scale(4), 0)
+        layout = FlowLayout(FlowLayout.LEFT, SessionStyle.Gap.inline(), 0)
+        border = SessionStyle.Insets.progress()
 
         add(JBLabel(AnimatedIcon.Default()))
         add(label)
