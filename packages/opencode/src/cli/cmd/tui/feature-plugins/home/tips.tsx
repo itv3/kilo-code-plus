@@ -8,7 +8,7 @@ function View(props: { show: boolean; connected: boolean }) {
   return (
     <box height={4} minHeight={0} width="100%" maxWidth={75} alignItems="center" paddingTop={3} flexShrink={1}>
       <Show when={props.show}>
-        <Tips connected={props.connected} />
+        <Tips />
       </Show>
     </box>
   )

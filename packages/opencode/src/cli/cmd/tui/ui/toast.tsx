@@ -64,7 +64,7 @@ function init() {
       if (timeoutHandle) clearTimeout(timeoutHandle)
       // kilocode_change start
       timeoutHandle = null
-      if (duration && duration > 0) {
+      if (toastOptions.duration && toastOptions.duration > 0) {
         timeoutHandle = setTimeout(() => {
           setStore("currentToast", null)
           timeoutHandle = null

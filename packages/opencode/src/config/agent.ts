@@ -202,15 +202,15 @@ export async function loadMode(dir: string, warnings?: Warning[]) {
       ...md.data,
       prompt: md.content.trim(),
     }
-    const parsed = Schema.decodeUnknownExit(Info)(config, { errors: "all", propertyOrder: "original" })
-    if (Exit.isSuccess(parsed)) {
+    // kilocode_change start - non-fatal validation via KilocodeConfig.handleInvalid
+    const parsed = Info.zod.safeParse(config)
+    if (parsed.success) {
       result[config.name] = {
-        ...parsed.value,
+        ...(parsed.data as Info),
         mode: "primary" as const,
       }
       continue
     }
-    // kilocode_change start
     await KilocodeConfig.handleInvalid("agent", item, parsed.error.issues, parsed.error, warnings)
     // kilocode_change end
   }

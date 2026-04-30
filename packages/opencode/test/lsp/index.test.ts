@@ -9,7 +9,7 @@ import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { provideTmpdirInstance, tmpdir } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
 import { Instance, type InstanceContext } from "../../src/project/instance"
-import { Flag } from "../../src/flag/flag" // kilocode_change
+import { Flag } from "@opencode-ai/core/flag/flag" // kilocode_change
 import { TsCheck } from "../../src/kilocode/ts-check" // kilocode_change
 
 // kilocode_change - Typescript.spawn ignores ctx, so a cast is fine here.

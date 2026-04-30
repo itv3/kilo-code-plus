@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import path from "path"
-import { Flag } from "../../src/flag/flag" // kilocode_change
+import { Flag } from "@opencode-ai/core/flag/flag" // kilocode_change
 import { Global } from "@opencode-ai/core/global"
 import { InstallationChannel } from "@opencode-ai/core/installation/version"
 import { Database } from "@/storage/db"

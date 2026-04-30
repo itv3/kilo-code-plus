@@ -4,8 +4,8 @@ import os from "os"
 import path from "path" // kilocode_change
 import { Cause, Effect, Exit, Fiber, Layer } from "effect"
 import { Bus } from "../../src/bus"
-import { Config } from "../../src/config" // kilocode_change
-import { Global } from "../../src/global" // kilocode_change
+import { Config } from "../../src/config/config" // kilocode_change
+import { Global } from "@opencode-ai/core/global" // kilocode_change
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { Permission } from "../../src/permission"
 import { PermissionID } from "../../src/permission/schema"

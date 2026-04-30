@@ -2,6 +2,7 @@
 import path from "path"
 import { type ParseError, parse, printParseErrorCode } from "jsonc-parser"
 import { Schema } from "effect"
+import z from "zod"
 import { ConfigProtection } from "./permission/config-paths"
 import { ConfigMarkdown } from "@/config/markdown"
 import { Config } from "@/config/config"
@@ -79,9 +80,9 @@ export namespace ConfigValidation {
         return `\n\n<config_validation>\nWARNING: Configuration is invalid at ${label(filepath)}\n${issues}\n</config_validation>`
       }
     } else {
-      const result = ConfigAgent.Info.safeParse(config)
+      const result = ConfigAgent.Info.zod.safeParse(config)
       if (!result.success) {
-        const issues = result.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n")
+        const issues = result.error.issues.map((i: z.core.$ZodIssue) => `  ${i.path.join(".")}: ${i.message}`).join("\n")
         return `\n\n<config_validation>\nWARNING: Configuration is invalid at ${label(filepath)}\n${issues}\n</config_validation>`
       }
     }
