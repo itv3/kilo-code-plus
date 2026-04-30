@@ -1426,6 +1426,9 @@ export const dict = {
   "settings.display.layout.description": "Layout-Modus für die Chat-Oberfläche",
   "settings.display.layout.auto": "Automatisch",
   "settings.display.layout.stretch": "Gestreckt",
+  "settings.display.reasoningAutoCollapse.title": "Reasoning automatisch einklappen",
+  "settings.display.reasoningAutoCollapse.description":
+    "Klappt Reasoning-Blöcke ein, nachdem der Agent sie fertig geschrieben hat. Deaktiviert lassen, damit Reasoning erweitert bleibt, sofern du es nicht manuell einklappst.",
   "settings.display.terminalCommand.title": "Terminal Command Blocks",
   "settings.display.terminalCommand.description": "Choose whether terminal command blocks start expanded or collapsed.",
   "settings.display.terminalCommand.expanded": "Expanded",
