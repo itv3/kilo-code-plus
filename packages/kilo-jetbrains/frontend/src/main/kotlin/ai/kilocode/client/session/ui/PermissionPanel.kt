@@ -35,7 +35,7 @@ class PermissionPanel(
     private lateinit var requestId: String
 
     init {
-        border = SessionStyle.Dock.warning()
+        border = UiStyle.Dock.warning()
         isVisible = false
     }
 

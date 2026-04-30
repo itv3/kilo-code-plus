@@ -5,6 +5,7 @@ import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.UiStyle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.ui.components.JBLabel
@@ -31,27 +32,25 @@ class ToolView(tool: Tool) : PartView() {
 
     private val root = JPanel(BorderLayout()).apply {
         isOpaque = true
-        background = SessionStyle.Colors.surface()
-        border = SessionStyle.Borders.card()
+        background = UiStyle.Colors.surface()
+        border = UiStyle.Borders.card()
     }
-    private val header = JPanel(SessionStyle.Gap.layout()).apply {
+    private val header = JPanel(UiStyle.Gap.layout()).apply {
         isOpaque = true
-        background = SessionStyle.Colors.surface()
-        border = SessionStyle.Insets.header()
+        background = UiStyle.Colors.surface()
+        border = UiStyle.Insets.header()
     }
     private val glyph = JBLabel()
-    private val title = JBLabel().apply { font = SessionStyle.Fonts.boldEditorFont() }
+    private val title = JBLabel()
     private val sub = JBLabel().apply {
-        foreground = SessionStyle.Colors.weak()
-        font = SessionStyle.Fonts.smallEditorFont()
+        foreground = UiStyle.Colors.weak()
     }
     private val state = JBLabel().apply {
-        foreground = SessionStyle.Colors.weak()
-        font = SessionStyle.Fonts.smallEditorFont()
+        foreground = UiStyle.Colors.weak()
     }
     private val arrow = JBLabel()
     private val copy = JButton(AllIcons.Actions.Copy).apply {
-        SessionStyle.Buttons.icon(this)
+        UiStyle.Buttons.icon(this)
         toolTipText = KiloBundle.message("session.part.tool.copy")
         addActionListener { copyShell() }
     }
@@ -59,32 +58,30 @@ class ToolView(tool: Tool) : PartView() {
         isEditable = false
         lineWrap = false
         wrapStyleWord = false
-        foreground = SessionStyle.Colors.fg()
-        background = SessionStyle.Colors.surface()
-        font = SessionStyle.Fonts.transcriptFont()
-        border = SessionStyle.Insets.body()
+        foreground = UiStyle.Colors.fg()
+        background = UiStyle.Colors.surface()
+        border = UiStyle.Insets.body()
     }
     private val mini = JBTextArea().apply {
         isEditable = false
         lineWrap = false
         wrapStyleWord = false
-        foreground = SessionStyle.Colors.weak()
-        background = SessionStyle.Colors.surface()
-        font = SessionStyle.Fonts.transcriptFont()
-        border = SessionStyle.Insets.body()
+        foreground = UiStyle.Colors.weak()
+        background = UiStyle.Colors.surface()
+        border = UiStyle.Insets.body()
     }
     private val scroll = JBScrollPane(text).apply {
-        border = SessionStyle.Borders.cardTop()
+        border = UiStyle.Borders.cardTop()
         isOpaque = true
-        background = SessionStyle.Colors.surface()
-        viewport.background = SessionStyle.Colors.surface()
+        background = UiStyle.Colors.surface()
+        viewport.background = UiStyle.Colors.surface()
         horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
         verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
     }
     private val preview = JPanel(BorderLayout()).apply {
         isOpaque = true
-        background = SessionStyle.Colors.surface()
-        border = SessionStyle.Borders.cardTop()
+        background = UiStyle.Colors.surface()
+        border = UiStyle.Borders.cardTop()
         add(mini, BorderLayout.CENTER)
     }
 
@@ -105,6 +102,7 @@ class ToolView(tool: Tool) : PartView() {
         title.addMouseListener(click)
         sub.addMouseListener(click)
         arrow.addMouseListener(click)
+        applyStyle(SessionStyle.current())
         add(root, BorderLayout.CENTER)
         render()
     }
@@ -150,6 +148,16 @@ class ToolView(tool: Tool) : PartView() {
 
     internal fun stateFont() = state.font
 
+    override fun applyStyle(style: SessionStyle) {
+        title.font = style.boldEditorFont
+        sub.font = style.smallEditorFont
+        state.font = style.smallEditorFont
+        text.font = style.transcriptFont
+        mini.font = style.transcriptFont
+        revalidate()
+        repaint()
+    }
+
     fun toggle() {
         if (mode != "bash") return
         if (!canExpand(item)) return
@@ -165,7 +173,7 @@ class ToolView(tool: Tool) : PartView() {
         header.cursor = if (expand) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
         glyph.icon = icon(item)
         glyph.foreground = color(item)
-        title.foreground = if (item.state == ToolExecState.ERROR) SessionStyle.Colors.error() else SessionStyle.Colors.fg()
+        title.foreground = if (item.state == ToolExecState.ERROR) UiStyle.Colors.error() else UiStyle.Colors.fg()
         state.text = stateText(item)
         state.foreground = color(item)
 
@@ -185,7 +193,7 @@ class ToolView(tool: Tool) : PartView() {
     private fun renderRead() {
         title.text = KiloBundle.message("session.part.tool.read")
         sub.text = readPath(item)
-        val main = JPanel(SessionStyle.Gap.layout()).apply {
+        val main = JPanel(UiStyle.Gap.layout()).apply {
             isOpaque = false
             add(title, BorderLayout.WEST)
             add(sub, BorderLayout.CENTER)
@@ -206,14 +214,14 @@ class ToolView(tool: Tool) : PartView() {
         title.cursor = cursor
         sub.cursor = cursor
         arrow.cursor = cursor
-        val main = JPanel(SessionStyle.Gap.layout()).apply {
+        val main = JPanel(UiStyle.Gap.layout()).apply {
             isOpaque = false
             add(title, BorderLayout.WEST)
             add(sub, BorderLayout.CENTER)
         }
-        val right = JPanel(SessionStyle.Gap.layout(SessionStyle.Space.SM)).apply {
+        val right = JPanel(UiStyle.Gap.layout(UiStyle.Space.SM)).apply {
             isOpaque = false
-            val controls = JPanel(SessionStyle.Gap.layout(SessionStyle.Space.SM)).apply {
+            val controls = JPanel(UiStyle.Gap.layout(UiStyle.Space.SM)).apply {
                 isOpaque = false
                 if (copyText().isNotBlank()) add(copy, BorderLayout.WEST)
                 add(arrow, BorderLayout.EAST)
@@ -222,7 +230,7 @@ class ToolView(tool: Tool) : PartView() {
         }
         text.text = shellBody(item)
         mini.text = preview(shellBody(item))
-        text.foreground = if (item.state == ToolExecState.ERROR) SessionStyle.Colors.error() else SessionStyle.Colors.fg()
+        text.foreground = if (item.state == ToolExecState.ERROR) UiStyle.Colors.error() else UiStyle.Colors.fg()
         header.add(glyph, BorderLayout.WEST)
         header.add(main, BorderLayout.CENTER)
         header.add(right, BorderLayout.EAST)
@@ -231,7 +239,7 @@ class ToolView(tool: Tool) : PartView() {
     private fun renderGeneric() {
         title.text = item.title?.takeIf { it.isNotBlank() } ?: item.name
         sub.text = item.name.takeIf { title.text != it } ?: ""
-        val main = JPanel(SessionStyle.Gap.layout()).apply {
+        val main = JPanel(UiStyle.Gap.layout()).apply {
             isOpaque = false
             add(title, BorderLayout.WEST)
             add(sub, BorderLayout.CENTER)
@@ -262,10 +270,10 @@ private fun icon(tool: Tool) = when (tool.name) {
 }
 
 private fun color(tool: Tool) = when (tool.state) {
-    ToolExecState.PENDING -> SessionStyle.Colors.weak()
-    ToolExecState.RUNNING -> SessionStyle.Colors.running()
-    ToolExecState.COMPLETED -> SessionStyle.Colors.weak()
-    ToolExecState.ERROR -> SessionStyle.Colors.error()
+    ToolExecState.PENDING -> UiStyle.Colors.weak()
+    ToolExecState.RUNNING -> UiStyle.Colors.running()
+    ToolExecState.COMPLETED -> UiStyle.Colors.weak()
+    ToolExecState.ERROR -> UiStyle.Colors.error()
 }
 
 private fun stateText(tool: Tool) = when (tool.state) {

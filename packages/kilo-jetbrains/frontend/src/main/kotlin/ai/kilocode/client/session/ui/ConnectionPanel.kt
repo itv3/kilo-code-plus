@@ -38,11 +38,11 @@ class ConnectionPanel(
     }
 
     private val header = BorderLayoutPanel().apply {
-        border = JBUI.Borders.empty(SessionStyle.Space.SM, SessionStyle.Space.LG, 0, SessionStyle.Space.LG)
+        border = JBUI.Borders.empty(UiStyle.Space.SM, UiStyle.Space.LG, 0, UiStyle.Space.LG)
     }
 
     private val left = BorderLayoutPanel().apply {
-        layout = SessionStyle.Gap.layout(SessionStyle.Space.SM)
+        layout = UiStyle.Gap.layout(UiStyle.Space.SM)
         addMouseListener(click)
     }
 
@@ -52,7 +52,7 @@ class ConnectionPanel(
     }
 
     private val label = JBLabel().apply {
-        foreground = SessionStyle.Colors.weak()
+        foreground = UiStyle.Colors.weak()
         addMouseListener(click)
     }
 
@@ -71,11 +71,11 @@ class ConnectionPanel(
         isOpaque = false
         lineWrap = true
         wrapStyleWord = true
-        foreground = SessionStyle.Colors.fg()
+        foreground = UiStyle.Colors.fg()
     }
 
     private val scroll = JBScrollPane(details).apply {
-        border = JBUI.Borders.empty(0, SessionStyle.Space.LG, SessionStyle.Space.SM, 0)
+        border = JBUI.Borders.empty(0, UiStyle.Space.LG, UiStyle.Space.SM, 0)
         // Match the banner background while retaining platform scroll behavior.
         isOpaque = false
         viewport.isOpaque = false
@@ -91,8 +91,8 @@ class ConnectionPanel(
         Disposer.register(parent, this)
         // Keep the banner solid so expanded details cover transcript content beneath it.
         isOpaque = true
-        background = SessionStyle.Colors.bg()
-        border = JBUI.Borders.customLine(SessionStyle.Colors.line(), 1, 0, 0, 0)
+        background = UiStyle.Colors.bg()
+        border = JBUI.Borders.customLine(UiStyle.Colors.line(), 1, 0, 0, 0)
         left.add(toggle, BorderLayout.WEST)
         left.add(label, BorderLayout.CENTER)
         header.add(left, BorderLayout.CENTER)
@@ -123,7 +123,7 @@ class ConnectionPanel(
     }
 
     private fun showConnecting() {
-        label.foreground = SessionStyle.Colors.weak()
+        label.foreground = UiStyle.Colors.weak()
         label.text = KiloBundle.message("session.connection.connecting")
         detail = null
         expanded = false
@@ -134,7 +134,7 @@ class ConnectionPanel(
     }
 
     private fun showError(text: String, detail: String?) {
-        label.foreground = SessionStyle.Colors.error()
+        label.foreground = UiStyle.Colors.error()
         label.text = text
         retry.isVisible = true
         this.detail = detail?.takeIf { it.isNotBlank() }
@@ -144,7 +144,7 @@ class ConnectionPanel(
     }
 
     private fun showWarning(text: String, detail: String?) {
-        label.foreground = SessionStyle.Colors.warning()
+        label.foreground = UiStyle.Colors.warning()
         label.text = text
         retry.isVisible = true
         this.detail = detail?.takeIf { it.isNotBlank() }

@@ -3,6 +3,8 @@ package ai.kilocode.client.session.views
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Message
 import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionStyleTarget
+import ai.kilocode.client.session.ui.UiStyle
 
 /**
  * A single message container inside a [TurnView].
@@ -17,7 +19,12 @@ import ai.kilocode.client.session.ui.SessionStyle
  *   visual turn boundary.
  * - Assistant messages: light padding only.
  */
-class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayoutPanel() {
+class MessageView(
+    val msg: Message,
+    private var style: SessionStyle = SessionStyle.current(),
+) : ai.kilocode.client.session.ui.SessionLayoutPanel(), SessionStyleTarget {
+
+    constructor(msg: Message) : this(msg, SessionStyle.current())
 
     val role: String get() = msg.info.role
 
@@ -26,14 +33,15 @@ class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayou
     init {
         isOpaque = false
         border = if (msg.info.role == "user") {
-            SessionStyle.Borders.user()
+            UiStyle.Borders.user()
         } else {
-            SessionStyle.Borders.assistant()
+            UiStyle.Borders.assistant()
         }
 
         // Populate content that already exists (e.g. after loadHistory)
         for ((_, content) in msg.parts) {
             val view = ViewFactory.create(content)
+            view.applyStyle(style)
             parts[content.id] = view
             add(view)
         }
@@ -49,6 +57,7 @@ class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayou
             return
         }
         val view = ViewFactory.create(content)
+        view.applyStyle(style)
         parts[content.id] = view
         add(view)
         revalidate()
@@ -78,4 +87,11 @@ class MessageView(val msg: Message) : ai.kilocode.client.session.ui.SessionLayou
 
     /** Compact dump for test assertions. */
     fun dump(): String = parts.values.joinToString(", ") { it.dumpLabel() }
+
+    override fun applyStyle(style: SessionStyle) {
+        this.style = style
+        for (view in parts.values) view.applyStyle(style)
+        revalidate()
+        repaint()
+    }
 }

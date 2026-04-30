@@ -30,18 +30,19 @@ import com.intellij.openapi.Disposable
 class SessionMessageListPanel(
     private val model: SessionModel,
     parent: Disposable,
-) : SessionLayoutPanel() {
+) : SessionLayoutPanel(), SessionStyleTarget {
 
     private val turnViews = LinkedHashMap<String, TurnView>()
     private val msgToTurn = HashMap<String, TurnView>()
     private val msgToView = HashMap<String, MessageView>()
+    private var style = SessionStyle.current()
 
     /** Progress footer — always the last child inside the scroll. */
     val progress = ProgressPanel(model, parent)
 
     init {
         isOpaque = false
-        border = SessionStyle.Insets.transcript()
+        border = UiStyle.Insets.transcript()
 
         model.addListener(parent) { event ->
             when (event) {
@@ -135,7 +136,7 @@ class SessionMessageListPanel(
     // ------ private event handlers ------
 
     private fun onTurnAdded(turn: ai.kilocode.client.session.model.Turn) {
-        val tv = TurnView(turn.id)
+        val tv = TurnView(turn.id, style)
         turnViews[turn.id] = tv
         for (msgId in turn.messageIds) {
             val msg = model.message(msgId) ?: continue
@@ -186,7 +187,7 @@ class SessionMessageListPanel(
         removeAll()
 
         for (turn in model.turns()) {
-            val tv = TurnView(turn.id)
+            val tv = TurnView(turn.id, style)
             turnViews[turn.id] = tv
             for (msgId in turn.messageIds) {
                 val msg = model.message(msgId) ?: continue
@@ -228,5 +229,12 @@ class SessionMessageListPanel(
     private fun refresh() {
         revalidate()
         repaint()
+    }
+
+    override fun applyStyle(style: SessionStyle) {
+        this.style = style
+        for (view in turnViews.values) view.applyStyle(style)
+        progress.applyStyle(style)
+        refresh()
     }
 }

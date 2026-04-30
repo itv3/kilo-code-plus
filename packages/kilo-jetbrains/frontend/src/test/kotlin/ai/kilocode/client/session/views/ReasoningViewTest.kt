@@ -62,23 +62,39 @@ class ReasoningViewTest : BasePlatformTestCase() {
     }
 
     fun `test reasoning markdown uses editor font settings`() {
+        val style = SessionStyle.current()
         val view = ReasoningView(reasoning("p1", done = true, text = "one\ntwo\nthree\nfour"))
 
-        assertEditorSheet(view.md.overrideSheet())
-        assertEditorSheet(view.previewSheet())
+        assertEditorSheet(view.md.overrideSheet(), style)
+        assertEditorSheet(view.previewSheet(), style)
     }
 
     fun `test reasoning header uses smaller editor-derived font`() {
+        val style = SessionStyle.current()
         val view = ReasoningView(reasoning("p1", done = true, text = "one"))
         val font = view.headerFont()
 
-        assertEquals(SessionStyle.Fonts.editorFamily(), font.name)
-        assertTrue(font.size < SessionStyle.Fonts.editorSize())
+        assertEquals(style.editorFamily, font.name)
+        assertTrue(font.size < style.editorSize)
     }
 
-    private fun assertEditorSheet(sheet: String) {
-        assertTrue(sheet.contains(SessionStyle.Fonts.editorFamily()))
-        assertTrue(sheet.contains("${SessionStyle.Fonts.editorSize()}pt"))
+    fun `test applyStyle updates reasoning in place`() {
+        val view = ReasoningView(reasoning("p1", done = true, text = "one\ntwo\nthree\nfour"))
+        val component = view.md.component
+        val style = SessionStyle.create(family = "Courier New", size = 24)
+
+        view.applyStyle(style)
+
+        assertSame(component, view.md.component)
+        assertEditorSheet(view.md.overrideSheet(), style)
+        assertEditorSheet(view.previewSheet(), style)
+        assertEquals("Courier New", view.headerFont().name)
+        assertTrue(view.headerFont().size < style.editorSize)
+    }
+
+    private fun assertEditorSheet(sheet: String, style: SessionStyle) {
+        assertTrue(sheet.contains(style.editorFamily))
+        assertTrue(sheet.contains("${style.editorSize}pt"))
     }
 
     private fun reasoning(id: String, done: Boolean, text: String) = Reasoning(id).also {

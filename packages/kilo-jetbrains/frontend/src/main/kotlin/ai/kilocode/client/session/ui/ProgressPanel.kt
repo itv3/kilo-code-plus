@@ -22,18 +22,18 @@ import java.awt.FlowLayout
 class ProgressPanel(
     model: SessionModel,
     parent: Disposable,
-) : SessionLayoutPanel() {
+) : SessionLayoutPanel(), SessionStyleTarget {
 
     private val label = JBLabel().apply {
-        foreground = SessionStyle.Colors.weak()
-        font = SessionStyle.Fonts.uiFont()
+        foreground = UiStyle.Colors.weak()
     }
 
     init {
         isOpaque = false
         isVisible = false
-        layout = FlowLayout(FlowLayout.LEFT, SessionStyle.Gap.inline(), 0)
-        border = SessionStyle.Insets.progress()
+        layout = FlowLayout(FlowLayout.LEFT, UiStyle.Gap.inline(), 0)
+        border = UiStyle.Insets.progress()
+        applyStyle(SessionStyle.current())
 
         add(JBLabel(AnimatedIcon.Default()))
         add(label)
@@ -54,6 +54,12 @@ class ProgressPanel(
             }
             else -> isVisible = false
         }
+        revalidate()
+        repaint()
+    }
+
+    override fun applyStyle(style: SessionStyle) {
+        label.font = style.uiFont
         revalidate()
         repaint()
     }

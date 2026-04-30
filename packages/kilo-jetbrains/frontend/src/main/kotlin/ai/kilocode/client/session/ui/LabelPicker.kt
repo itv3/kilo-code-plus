@@ -31,7 +31,7 @@ class LabelPicker : JBLabel() {
     private var selected: Item? = null
 
     init {
-        border = SessionStyle.Borders.picker()
+        border = UiStyle.Borders.picker()
         isEnabled = false
         text = " "
 

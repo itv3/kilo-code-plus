@@ -34,7 +34,7 @@ class QuestionPanel(
     private var requestId: String? = null
 
     init {
-        border = SessionStyle.Dock.neutral()
+        border = UiStyle.Dock.neutral()
         isVisible = false
     }
 

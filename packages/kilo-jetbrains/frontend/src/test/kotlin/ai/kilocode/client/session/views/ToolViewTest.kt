@@ -122,19 +122,35 @@ class ToolViewTest : BasePlatformTestCase() {
     }
 
     fun `test bash output uses editor font settings`() {
+        val style = SessionStyle.current()
         val view = ToolView(tool("p1", "bash", ToolExecState.COMPLETED))
 
-        assertEditorFont(view.bodyFont())
-        assertEditorFont(view.previewFont())
+        assertEditorFont(view.bodyFont(), style)
+        assertEditorFont(view.previewFont(), style)
     }
 
     fun `test tool header uses editor-derived fonts`() {
+        val style = SessionStyle.current()
         val view = ToolView(tool("p1", "bash", ToolExecState.COMPLETED))
 
-        assertEditorFont(view.titleFont())
+        assertEditorFont(view.titleFont(), style)
         assertTrue(view.titleFont().isBold)
-        assertSmallEditorFont(view.subtitleFont())
-        assertSmallEditorFont(view.stateFont())
+        assertSmallEditorFont(view.subtitleFont(), style)
+        assertSmallEditorFont(view.stateFont(), style)
+    }
+
+    fun `test applyStyle updates tool fonts in place`() {
+        val view = ToolView(tool("p1", "bash", ToolExecState.COMPLETED))
+        val style = SessionStyle.create(family = "Courier New", size = 25)
+
+        view.applyStyle(style)
+
+        assertEditorFont(view.bodyFont(), style)
+        assertEditorFont(view.previewFont(), style)
+        assertEditorFont(view.titleFont(), style)
+        assertTrue(view.titleFont().isBold)
+        assertSmallEditorFont(view.subtitleFont(), style)
+        assertSmallEditorFont(view.stateFont(), style)
     }
 
     // ---- update ------
@@ -172,13 +188,13 @@ class ToolViewTest : BasePlatformTestCase() {
     private fun tool(id: String, name: String, state: ToolExecState, title: String? = null): Tool =
         Tool(id, name).also { it.state = state; it.title = title }
 
-    private fun assertEditorFont(font: java.awt.Font) {
-        assertEquals(SessionStyle.Fonts.editorFamily(), font.name)
-        assertEquals(SessionStyle.Fonts.editorSize(), font.size)
+    private fun assertEditorFont(font: java.awt.Font, style: SessionStyle) {
+        assertEquals(style.editorFamily, font.name)
+        assertEquals(style.editorSize, font.size)
     }
 
-    private fun assertSmallEditorFont(font: java.awt.Font) {
-        assertEquals(SessionStyle.Fonts.editorFamily(), font.name)
-        assertTrue(font.size < SessionStyle.Fonts.editorSize())
+    private fun assertSmallEditorFont(font: java.awt.Font, style: SessionStyle) {
+        assertEquals(style.editorFamily, font.name)
+        assertTrue(font.size < style.editorSize)
     }
 }

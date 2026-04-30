@@ -20,8 +20,7 @@ class TextView(text: Text) : PartView() {
     init {
         layout = BorderLayout()
         isOpaque = false
-        md.font = SessionStyle.Fonts.transcriptFont()
-        md.codeFont = SessionStyle.Fonts.editorFamily()
+        applyStyle(SessionStyle.current())
         add(md.component, BorderLayout.CENTER)
         if (text.content.isNotEmpty()) md.set(text.content.toString())
     }
@@ -37,6 +36,13 @@ class TextView(text: Text) : PartView() {
 
     /** Current markdown source — used by tests to assert rendered content. */
     fun markdown(): String = md.markdown()
+
+    override fun applyStyle(style: SessionStyle) {
+        md.font = style.transcriptFont
+        md.codeFont = style.editorFamily
+        revalidate()
+        repaint()
+    }
 
     override fun dumpLabel() = "TextView#$contentId"
 }

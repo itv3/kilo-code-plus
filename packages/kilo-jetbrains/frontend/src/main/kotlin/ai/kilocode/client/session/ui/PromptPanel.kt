@@ -37,7 +37,7 @@ class PromptPanel(
     private val project: Project,
     private val onSend: (String) -> Unit,
     private val onAbort: () -> Unit,
-) : BorderLayoutPanel() {
+) : BorderLayoutPanel(), SessionStyleTarget {
 
     companion object {
         private val LOG = KiloLog.create(PromptPanel::class.java)
@@ -47,15 +47,15 @@ class PromptPanel(
 
     val mode = LabelPicker()
     val model = LabelPicker()
+    private var style = SessionStyle.current()
 
     private val editor = EditorTextField(project, PlainTextFileType.INSTANCE).apply {
-        font = SessionStyle.Fonts.transcriptFont()
         setFontInheritedFromLAF(false)
         setPlaceholder(KiloBundle.message("prompt.placeholder"))
         setShowPlaceholderWhenFocused(true)
         setOneLineMode(false)
         addSettingsProvider { ed ->
-            SessionStyle.Fonts.applyToEditor(ed)
+            style.applyToEditor(ed)
             ed.settings.isUseSoftWraps = true
             ed.settings.isAdditionalPageAtBottom = false
             ed.scrollPane.horizontalScrollBarPolicy =
@@ -72,12 +72,12 @@ class PromptPanel(
     }
 
     private val button = JButton(SEND_ICON).apply {
-        SessionStyle.Buttons.icon(this)
+        UiStyle.Buttons.icon(this)
         isFocusPainted = false
         toolTipText = KiloBundle.message("prompt.button.send")
         isEnabled = false
-        maximumSize = JBDimension(JBUI.scale(SessionStyle.Size.BUTTON_WIDTH), Short.MAX_VALUE.toInt())
-        preferredSize = JBUI.size(SessionStyle.Size.BUTTON, SessionStyle.Size.BUTTON)
+        maximumSize = JBDimension(JBUI.scale(UiStyle.Size.BUTTON_WIDTH), Short.MAX_VALUE.toInt())
+        preferredSize = JBUI.size(UiStyle.Size.BUTTON, UiStyle.Size.BUTTON)
         addActionListener {
             if (busy) onAbort()
             else submit("button")
@@ -88,17 +88,15 @@ class PromptPanel(
     private var busy = false
 
     init {
-        border = SessionStyle.Insets.prompt()
+        border = UiStyle.Insets.prompt()
 
-        val height = editor.font.size * SessionStyle.Size.LINES + JBUI.scale(SessionStyle.Size.CHROME)
-        editor.preferredSize = JBDimension(0, height)
-        editor.minimumSize = JBDimension(0, height)
+        applyStyle(style)
         add(editor, BorderLayout.CENTER)
 
         val bar = BorderLayoutPanel().apply {
             layout = BoxLayout(this, BoxLayout.X_AXIS)
             isOpaque = false
-            border = JBUI.Borders.emptyTop(SessionStyle.Space.SM)
+            border = JBUI.Borders.emptyTop(UiStyle.Space.SM)
         }
         bar.add(mode)
         bar.add(model)
@@ -124,6 +122,17 @@ class PromptPanel(
     fun text(): String = editor.text.trim()
 
     internal fun inputFont() = editor.font
+
+    override fun applyStyle(style: SessionStyle) {
+        this.style = style
+        editor.font = style.transcriptFont
+        editor.getEditor(false)?.let(style::applyToEditor)
+        val height = style.transcriptFont.size * UiStyle.Size.LINES + JBUI.scale(UiStyle.Size.CHROME)
+        editor.preferredSize = JBDimension(0, height)
+        editor.minimumSize = JBDimension(0, height)
+        revalidate()
+        repaint()
+    }
 
     fun clear() {
         editor.text = ""

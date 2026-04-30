@@ -25,7 +25,7 @@ import java.awt.LayoutManager
  * with `getScrollableTracksViewportWidth = true`) so the viewport constrains
  * the panel width and the layout always has a valid width to work with.
  */
-class SessionLayout(private val gap: Int = SessionStyle.Gap.part()) : LayoutManager {
+class SessionLayout(private val gap: Int = UiStyle.Gap.part()) : LayoutManager {
 
     override fun addLayoutComponent(name: String, comp: Component) = Unit
     override fun removeLayoutComponent(comp: Component) = Unit
@@ -73,7 +73,7 @@ class SessionLayout(private val gap: Int = SessionStyle.Gap.part()) : LayoutMana
  * [JScrollPane] to force the panel's width to match the viewport, giving
  * [SessionLayout] a valid width to measure against.
  */
-open class SessionLayoutPanel(gap: Int = SessionStyle.Gap.part()) : BorderLayoutPanel(), javax.swing.Scrollable {
+open class SessionLayoutPanel(gap: Int = UiStyle.Gap.part()) : BorderLayoutPanel(), javax.swing.Scrollable {
     init {
         layout = SessionLayout(gap)
     }
@@ -85,7 +85,7 @@ open class SessionLayoutPanel(gap: Int = SessionStyle.Gap.part()) : BorderLayout
         visibleRect: java.awt.Rectangle,
         @Suppress("UNUSED_PARAMETER") orientation: Int,
         @Suppress("UNUSED_PARAMETER") direction: Int,
-    ): Int = SessionStyle.Gap.scroll()
+    ): Int = UiStyle.Gap.scroll()
     override fun getScrollableBlockIncrement(
         visibleRect: java.awt.Rectangle,
         @Suppress("UNUSED_PARAMETER") orientation: Int,

@@ -14,12 +14,17 @@ import ai.kilocode.client.session.ui.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel
 import ai.kilocode.client.session.ui.SessionRootPanel
 import ai.kilocode.client.session.ui.SessionMessageListPanel
+import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionStyleTarget
 import ai.kilocode.client.session.update.EVENT_FLUSH_MS
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.session.update.SessionControllerEvent
 import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.log.ChatLogSummary
 import ai.kilocode.log.KiloLog
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -49,7 +54,7 @@ class SessionUi private constructor(
     displayMs: Long,
     open: (SessionDto) -> Unit,
     private val loading: Boolean,
-) : JPanel(BorderLayout()), Disposable {
+) : JPanel(BorderLayout()), Disposable, SessionStyleTarget {
 
     constructor(
         project: Project,
@@ -111,16 +116,22 @@ class SessionUi private constructor(
     private lateinit var connection: ConnectionPanel
 
     private lateinit var prompt: PromptPanel
+    private lateinit var loadingLabel: JBLabel
+    private var style = SessionStyle.current()
 
     init {
         buildUi()
         bindUi()
+        bindStyle()
+        applyStyle(style)
         showBody(if (loading) progressBody else blankBody)
     }
 
     internal val blank: Boolean get() = controller.blank
 
     internal val id: String? get() = controller.id
+
+    internal fun currentStyle() = style
 
     private fun buildUi() {
         root = SessionRootPanel()
@@ -133,8 +144,9 @@ class SessionUi private constructor(
 
         progressBody = JPanel(BorderLayout()).apply {
             isOpaque = false
+            loadingLabel = JBLabel(KiloBundle.message("session.empty.loading"))
             add(Centerizer(
-                JBLabel(KiloBundle.message("session.empty.loading")),
+                loadingLabel,
                 Centerizer.TYPE.BOTH,
             ), BorderLayout.CENTER)
         }
@@ -246,6 +258,15 @@ class SessionUi private constructor(
         }
     }
 
+    private fun bindStyle() {
+        val bus = ApplicationManager.getApplication().messageBus.connect(this)
+        bus.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+            ApplicationManager.getApplication().invokeLater {
+                applyStyle(SessionStyle.current())
+            }
+        })
+    }
+
     private fun sendPrompt(text: String) {
         if (text.isBlank()) return
         LOG.debug {
@@ -289,9 +310,19 @@ class SessionUi private constructor(
 
     private fun showBody(panel: JPanel) {
         if (scroll.viewport.view === panel) return
+        (panel as? SessionStyleTarget)?.applyStyle(style)
         scroll.viewport.setView(panel)
         scroll.revalidate()
         scroll.repaint()
+    }
+
+    override fun applyStyle(style: SessionStyle) {
+        this.style = style
+        loadingLabel.font = style.uiFont
+        messageBody.applyStyle(style)
+        prompt.applyStyle(style)
+        (scroll.viewport.view as? SessionStyleTarget)?.applyStyle(style)
+        refresh()
     }
 
     override fun dispose() {}

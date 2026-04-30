@@ -35,11 +35,11 @@ class EmptySessionPanel(
     parent: Disposable,
     private val controller: SessionController,
     recents: List<SessionDto>,
-) : BorderLayoutPanel(), Disposable {
+) : BorderLayoutPanel(), Disposable, SessionStyleTarget {
 
     companion object {
-        internal val LIMIT = SessionStyle.Size.LIMIT
-        internal val MAX_WIDTH = SessionStyle.Size.WIDTH
+        internal val LIMIT = UiStyle.Size.LIMIT
+        internal val MAX_WIDTH = UiStyle.Size.WIDTH
         private const val SECOND_MS_LIMIT = 10_000_000_000L
         private const val MINUTE = 60_000L
         private const val HOUR = 60 * MINUTE
@@ -48,6 +48,11 @@ class EmptySessionPanel(
 
     private val model = DefaultListModel<SessionDto>()
     private var hover = -1
+    private var style = SessionStyle.current()
+    private val recentTitle = JBLabel(KiloBundle.message("session.empty.recent")).apply {
+        foreground = UIUtil.getContextHelpForeground()
+        border = JBUI.Borders.emptyLeft(UiStyle.Space.LG)
+    }
 
     private val list = JBList(model).apply {
         // Blend the recent-session list into the centered empty-state surface.
@@ -90,7 +95,8 @@ class EmptySessionPanel(
         Disposer.register(parent, this)
         // The empty state floats on the tool-window background.
         isOpaque = false
-        border = SessionStyle.Insets.empty()
+        border = UiStyle.Insets.empty()
+        applyStyle(SessionStyle.current())
         setSessions(recents)
         add(Centerizer(content, Centerizer.TYPE.BOTH), BorderLayout.CENTER)
     }
@@ -111,23 +117,19 @@ class EmptySessionPanel(
         val intro = BorderLayoutPanel().apply {
             alignmentX = CENTER_ALIGNMENT
             add(md.component, BorderLayout.CENTER)
-            border = JBUI.Borders.empty(0, SessionStyle.Space.PAD, 0, SessionStyle.Space.PAD)
+            border = JBUI.Borders.empty(0, UiStyle.Space.PAD, 0, UiStyle.Space.PAD)
         }
         val recent = BorderLayoutPanel().apply {
             alignmentX = CENTER_ALIGNMENT
-            add(JBLabel(KiloBundle.message("session.empty.recent")).apply {
-                foreground = UIUtil.getContextHelpForeground()
-                font = SessionStyle.Fonts.smallUiFont()
-                border = JBUI.Borders.emptyLeft(SessionStyle.Space.LG)
-            }, BorderLayout.NORTH)
+            add(recentTitle, BorderLayout.NORTH)
             add(list, BorderLayout.CENTER)
         }
         val stack = BorderLayoutPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(logo)
-            add(Box.createVerticalStrut(JBUI.scale(SessionStyle.Space.LOGO)))
+            add(Box.createVerticalStrut(JBUI.scale(UiStyle.Space.LOGO)))
             add(intro)
-            add(Box.createVerticalStrut(JBUI.scale(SessionStyle.Space.RECENT)))
+            add(Box.createVerticalStrut(JBUI.scale(UiStyle.Space.RECENT)))
             add(recent)
         }
         return object : BorderLayoutPanel() {
@@ -198,7 +200,7 @@ class EmptySessionPanel(
         private val time = JBLabel()
 
         init {
-            border = JBUI.Borders.empty(SessionStyle.Space.LG, SessionStyle.Space.LG, SessionStyle.Space.LG, SessionStyle.Space.LG)
+            border = JBUI.Borders.empty(UiStyle.Space.LG, UiStyle.Space.LG, UiStyle.Space.LG, UiStyle.Space.LG)
             add(title, BorderLayout.CENTER)
             add(time, BorderLayout.EAST)
         }
@@ -235,5 +237,13 @@ class EmptySessionPanel(
 
     override fun dispose() {
         // no-op
+    }
+
+    override fun applyStyle(style: SessionStyle) {
+        this.style = style
+        md.font = style.uiFont
+        recentTitle.font = style.smallUiFont
+        revalidate()
+        repaint()
     }
 }

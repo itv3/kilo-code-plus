@@ -44,12 +44,12 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
         assertTrue(panel.isVisible)
         assertEquals("CLI startup failed", panel.summaryText())
-        assertEquals(SessionStyle.Colors.error(), panel.summaryColor())
+        assertEquals(UiStyle.Colors.error(), panel.summaryColor())
         assertTrue(panel.toggleVisible())
         assertFalse(panel.toggleExpanded())
         assertFalse(panel.detailsVisible())
         assertEquals("stderr line\nconfig: HTTP 500: broken", panel.detailsText())
-        assertEquals(SessionStyle.Colors.fg(), panel.detailsColor())
+        assertEquals(UiStyle.Colors.fg(), panel.detailsColor())
         assertTrue(panel.retryVisible())
         assertFalse(panel.retryFocusable())
 
@@ -102,7 +102,7 @@ class ConnectionPanelTest : SessionControllerTestBase() {
 
         assertTrue(panel.isVisible)
         assertEquals("Configuration warnings", panel.summaryText())
-        assertEquals(SessionStyle.Colors.warning(), panel.summaryColor())
+        assertEquals(UiStyle.Colors.warning(), panel.summaryColor())
         assertTrue(panel.toggleVisible())
         assertFalse(panel.toggleExpanded())
         assertFalse(panel.detailsVisible())

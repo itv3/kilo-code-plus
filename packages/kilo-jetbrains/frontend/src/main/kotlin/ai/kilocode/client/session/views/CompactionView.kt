@@ -4,6 +4,7 @@ import ai.kilocode.client.session.model.Compaction
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.UiStyle
 import com.intellij.ui.components.JBLabel
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
@@ -25,21 +26,20 @@ import javax.swing.SwingConstants
 class CompactionView(@Suppress("UNUSED_PARAMETER") compaction: Compaction) : PartView() {
 
     override val contentId: String = compaction.id
+    private val text = JBLabel(KiloBundle.message("session.part.compaction")).apply {
+        foreground = UiStyle.Colors.weak()
+        horizontalAlignment = SwingConstants.CENTER
+        border = JBUI.Borders.empty(0, UiStyle.Gap.regular())
+    }
 
     init {
         layout = BorderLayout()
         isOpaque = false
-        border = JBUI.Borders.empty(SessionStyle.Space.MD, 0)
-
-        val text = JBLabel(KiloBundle.message("session.part.compaction")).apply {
-            foreground = SessionStyle.Colors.weak()
-            font = SessionStyle.Fonts.smallUiFont()
-            horizontalAlignment = SwingConstants.CENTER
-            border = JBUI.Borders.empty(0, SessionStyle.Gap.regular())
-        }
+        border = JBUI.Borders.empty(UiStyle.Space.MD, 0)
+        applyStyle(SessionStyle.current())
 
         val line = { JPanel().apply {
-            background = SessionStyle.Colors.line()
+            background = UiStyle.Colors.line()
             isOpaque = true
             preferredSize = JBDimension(0, JBUI.scale(1))
         } }
@@ -65,6 +65,12 @@ class CompactionView(@Suppress("UNUSED_PARAMETER") compaction: Compaction) : Par
     }
 
     override fun update(content: Content) {}  // compaction has no mutable state
+
+    override fun applyStyle(style: SessionStyle) {
+        text.font = style.smallUiFont
+        revalidate()
+        repaint()
+    }
 
     override fun dumpLabel() = "CompactionView#$contentId"
 }
