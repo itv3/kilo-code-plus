@@ -36,26 +36,7 @@ The refinery evaluates:
 
 The core insight behind Gas Town's review system is **adversarial iteration**. Rather than one agent producing a final answer, two agents with different objectives improve the output through tension:
 
-<!-- TODO: React Flow diagram — Adversarial Loop Detail
-  Circular/orbital layout showing the tension:
-  
-  Center: "The Code" (evolving artifact)
-  
-  Orbit 1 (Polecat, blue): 
-    Goal: "Ship the feature" → writes code → pushes
-    
-  Orbit 2 (Refinery, amber):
-    Goal: "Protect quality" → reviews → sends feedback OR approves
-    
-  Connection: feedback arrow from Refinery back to Polecat with example text:
-    "Missing error handling in the catch block. The API endpoint should return 
-     a structured error response, not swallow the exception."
-  
-  Polecat then: "Revises with feedback" → pushes again → Refinery re-reviews
-  
-  Style: animated orbital, showing the push-pull dynamic
-  Caption: "Adversarial tension between 'ship it' and 'make it better'"
--->
+{% flowDiagram name="adversarial-loop" height="340px" /%}
 
 This pattern is fundamentally different from having a single agent self-review:
 - Self-review has a **confirmation bias** — the same "mind" that wrote the code evaluates it

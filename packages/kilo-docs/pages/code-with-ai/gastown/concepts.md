@@ -24,12 +24,7 @@ A town can be personal (owned by you) or organizational (shared across a team).
 
 A **bead** is the fundamental unit of work. Every task, review, and coordination action is represented as a bead with a lifecycle:
 
-<!-- TODO: React Flow diagram — Bead Lifecycle
-  Nodes: open → in_progress → in_review → closed
-  With branch for: open → in_progress → failed
-  And loop: in_review → open (when review rejects)
-  Style: horizontal flow, status-colored nodes (green=closed, blue=in_progress, amber=in_review, red=failed)
--->
+{% flowDiagram name="bead-lifecycle" height="320px" /%}
 
 | Status | What's happening |
 |---|---|
@@ -53,14 +48,7 @@ A **bead** is the fundamental unit of work. Every task, review, and coordination
 
 A **convoy** is a multi-bead workflow where tasks can depend on each other. Instead of slinging isolated tasks, convoys let you express complex work as a directed graph.
 
-<!-- TODO: React Flow diagram — Convoy DAG Example
-  Nodes: 
-    "Explore codebase" (closed) → "Design schema" (closed) → "Implement API" (in_progress)
-    "Design schema" (closed) → "Write tests" (open)
-    "Implement API" → "Integration tests" (open)
-  Style: DAG layout, edges showing dependencies, node colors by status
-  Caption: "A convoy executing a 5-bead feature implementation"
--->
+{% flowDiagram name="convoy-execution" height="200px" /%}
 
 When you create a convoy, you define:
 - **Tasks** — what needs to be done (each becomes a bead)
@@ -111,14 +99,7 @@ The refinery is the quality gate. When a polecat finishes a bead:
 
 This creates a **micro-adversarial loop** — one agent writes, another critiques, forcing iterative improvement before code lands.
 
-<!-- TODO: React Flow diagram — Micro-Adversarial Loop
-  Circular flow: 
-    Polecat "writes code" → Refinery "reviews" → (approve) → "merge" 
-                                                → (reject) → Polecat "revises" → Refinery "reviews" (loop back)
-  Style: circular/orbital layout, animated edges showing the loop, 
-  highlight the adversarial tension between write and review
-  Caption: "The micro-adversarial loop — code is critiqued before it lands"
--->
+{% flowDiagram name="adversarial-loop" height="340px" /%}
 
 ### The Mayor (Coordination Agent)
 
