@@ -13,6 +13,31 @@ This skill covers Kotlin/Swing UI code for the Kilo JetBrains plugin, including 
 
 This plugin is a split-mode JetBrains plugin. UI code belongs in `frontend` unless there is a specific split-mode reason to place it elsewhere.
 
+## IntelliJ Platform Source Lookup
+
+When looking for IntelliJ Platform API usage, implementation examples, extension points, services, actions, inspections, PSI/VFS/editor behavior, or plugin patterns, prefer real IntelliJ source code over Gradle caches, downloaded jars, generated parser artifacts, or decompiled classes.
+
+Use this priority order:
+
+1. Check whether `$INTELLIJ_REPO` is set and points to a readable IntelliJ Community checkout.
+   - If `$INTELLIJ_REPO` is set, search source files under that directory first.
+   - Prefer implementation source files from directories such as `platform/`, `plugins/`, `java/`, `xml/`, `json/`, `jvm/`, and related modules.
+   - Do not assume the IntelliJ checkout is a sibling of the current repo or worktree.
+2. If `$INTELLIJ_REPO` is unset, empty, unreadable, or does not appear to contain an IntelliJ source checkout, tell the user to set it up.
+   - Suggested instruction: `Set INTELLIJ_REPO to the path of a local intellij-community checkout, for example: export INTELLIJ_REPO=/path/to/intellij-community`
+   - Do not invent or hardcode a machine-specific absolute path.
+3. If a local checkout is unavailable, use the public IntelliJ Community repository as the fallback source:
+   - https://github.com/JetBrains/intellij-community
+4. Only inspect Gradle caches, downloaded jars, generated parser jars, decompiled classes, or dependency internals as a last resort when neither a local IntelliJ source checkout nor the public GitHub repository provides the needed information.
+
+Avoid starting searches in:
+
+- `~/.gradle/caches`
+- `.gradle/`
+- downloaded dependency jars
+- generated parser artifacts
+- decompiled library sources
+
 ## Primary Rules
 
 - Prefer Kotlin UI DSL v2 whenever the UI is a dialog, settings page, form, options panel, or structured component layout.
