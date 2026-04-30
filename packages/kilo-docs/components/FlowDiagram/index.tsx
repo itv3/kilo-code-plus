@@ -87,9 +87,11 @@ export function FlowDiagram({ name, height = "400px" }: { name: string; height?:
         nodesConnectable={false}
         elementsSelectable={false}
         panOnDrag={false}
+        panOnScroll={false}
         zoomOnScroll={false}
         zoomOnPinch={false}
         zoomOnDoubleClick={false}
+        preventScrolling={false}
         proOptions={{ hideAttribution: true }}
         style={{ background: "#08080c" }}
       >

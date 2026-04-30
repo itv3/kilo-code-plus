@@ -1,4 +1,4 @@
-import type { Node, Edge } from "@xyflow/react"
+import type { Node, Edge, Position } from "@xyflow/react"
 import type { DiagramDefinition } from "./index"
 
 const nodeBase = {
@@ -19,6 +19,8 @@ const nodes: Node[] = [
     id: "open",
     position: { x: 0, y: 100 },
     data: { label: "open" },
+    sourcePosition: "right" as Position,
+    targetPosition: "left" as Position,
     style: {
       ...nodeBase.style,
       background: "rgba(34,197,94,0.1)",
@@ -30,6 +32,8 @@ const nodes: Node[] = [
     id: "in_progress",
     position: { x: 200, y: 100 },
     data: { label: "in_progress" },
+    sourcePosition: "right" as Position,
+    targetPosition: "left" as Position,
     style: {
       ...nodeBase.style,
       background: "rgba(59,130,246,0.1)",
@@ -41,6 +45,8 @@ const nodes: Node[] = [
     id: "in_review",
     position: { x: 420, y: 100 },
     data: { label: "in_review" },
+    sourcePosition: "right" as Position,
+    targetPosition: "left" as Position,
     style: {
       ...nodeBase.style,
       background: "rgba(251,191,36,0.1)",
@@ -52,6 +58,8 @@ const nodes: Node[] = [
     id: "closed",
     position: { x: 640, y: 100 },
     data: { label: "closed" },
+    sourcePosition: "right" as Position,
+    targetPosition: "left" as Position,
     style: {
       ...nodeBase.style,
       background: "rgba(139,92,246,0.1)",
@@ -61,8 +69,10 @@ const nodes: Node[] = [
   },
   {
     id: "failed",
-    position: { x: 200, y: 230 },
+    position: { x: 310, y: 240 },
     data: { label: "failed" },
+    sourcePosition: "right" as Position,
+    targetPosition: "top" as Position,
     style: {
       ...nodeBase.style,
       background: "rgba(239,68,68,0.1)",
@@ -109,17 +119,20 @@ const edges: Edge[] = [
     id: "review-open",
     source: "in_review",
     target: "open",
-    sourceHandle: "bottom",
-    targetHandle: "bottom",
+    type: "smoothstep",
+    sourcePosition: "bottom" as Position,
+    targetPosition: "bottom" as Position,
     label: "review rejected",
     labelStyle: { fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fill: "#888" },
-    type: "smoothstep",
     style: { strokeWidth: 2, stroke: "#f97316", strokeDasharray: "5 3" },
   },
   {
     id: "progress-failed",
     source: "in_progress",
     target: "failed",
+    type: "smoothstep",
+    sourcePosition: "bottom" as Position,
+    targetPosition: "top" as Position,
     label: "max retries",
     labelStyle: { fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fill: "#888" },
     style: { strokeWidth: 2, stroke: "#ef4444", strokeDasharray: "5 3" },
