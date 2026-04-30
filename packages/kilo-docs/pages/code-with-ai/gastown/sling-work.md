@@ -9,15 +9,13 @@ description: "Creating tasks and convoys for agents to work on"
 
 ## Single Tasks
 
-The simplest way to use Gas Town — describe what needs to be done, and an agent picks it up:
+The simplest way to use Gas Town — describe what needs to be done, and an agent picks it up.
 
-1. Click **Sling Work** in the town header
-2. Write a description: *"Fix the 404 error on the /settings page — the route is missing from the router config"*
-3. Click **Sling**
+Ask the Mayor:
 
-The reconciler assigns the bead to an available polecat. The agent reads the relevant code, makes the fix, runs any tests, and pushes a branch.
+> *"Fix the 404 error on the /settings page — the route is missing from the router config"*
 
-<!-- TODO: Screenshot — Sling Work dialog with a single task -->
+Or use the **Sling Work** action in the town header. Either way, the reconciler assigns the bead to an available polecat. The agent reads the relevant code, makes the fix, runs any tests, and pushes a branch.
 
 ### Writing Good Task Descriptions
 
@@ -48,54 +46,26 @@ Single-pass agent output has a quality ceiling. The longer an agent works on one
 3. **Reviewing** each chunk independently before it becomes the foundation for the next step
 4. **Containing failures** — if step 3 fails, steps 1 and 2 are already safely merged
 
-<!-- TODO: React Flow diagram — Convoy vs Single-Pass Comparison
-  Two parallel flows:
-  
-  Top (Single-Pass): 
-    "Big task" → Polecat works 30min → "Large PR (800 lines)" → Review struggles → Bugs land
-    
-  Bottom (Convoy):
-    "Explore" → review ✓ → "Design" → review ✓ → "Implement" → review ✓ → "Test" → review ✓ → Clean merged result
-    Each step: small PR, easy review, bugs caught early
-    
-  Caption: "Convoys produce higher quality output through iterative adversarial review"
--->
+{% flowDiagram name="convoy-execution" height="200px" /%}
 
 ### Creating a Convoy
-
-**Via the UI:**
-1. Click **Sling Work** → **Convoy**
-2. Add tasks in order
-3. Define dependencies (which tasks block others)
-4. Choose **staged** (review plan first) or **immediate** (start right away)
 
 **Via the Mayor:**
 > *"Create a convoy to migrate the database from PostgreSQL to MySQL. Steps: 1) audit current schema and queries, 2) design the new schema with migration plan, 3) implement the migration scripts, 4) update the application layer, 5) add integration tests"*
 
 The Mayor converts this into a convoy with proper dependencies.
 
-<!-- TODO: Screenshot — Convoy creation UI showing task list with dependency arrows -->
+{% browserFrame url="app.kilo.ai/gastown/town/rigs/main" caption="A staged convoy — review the task breakdown before agents begin" %}
+{% image src="/docs/img/gastown/gt-rig-page-staged-convoy-detail.png" alt="Gas Town staged convoy detail showing task dependencies" /%}
+{% /browserFrame %}
 
 ### Convoy Execution
 
 Once started, the reconciler manages the convoy:
 
-<!-- TODO: React Flow diagram — Convoy Execution Flow
-  Animated stage-by-stage flow:
-  
-  Stage 1: Bead "Audit schema" dispatched to Polecat-1
-    → Polecat works → pushes branch → Refinery reviews → MERGE to convoy branch
-  
-  Stage 2: Bead "Design migration" dispatched to Polecat-2 (starts from convoy branch)  
-    → Polecat works (has context from stage 1) → pushes → Refinery reviews → MERGE
-  
-  Stage 3: Bead "Implement scripts" dispatched (starts from convoy branch with stages 1+2)
-    → works → pushes → reviews → MERGE
-  
-  Final: "Landing Review" — full convoy branch reviewed as cohesive unit → MERGE to main
-  
-  Caption: "Each stage builds on merged, reviewed work from previous stages"
--->
+{% browserFrame url="app.kilo.ai/gastown/town/rigs/main" caption="Convoy in progress — review bead detail showing the refinery at work" %}
+{% image src="/docs/img/gastown/gt-rig-page-convoy-review-bead-detail.png" alt="Gas Town convoy review bead detail" /%}
+{% /browserFrame %}
 
 Key behaviors:
 - Each polecat starts from the **convoy feature branch**, which accumulates all previously merged work
@@ -135,14 +105,46 @@ Higher priority beads are dispatched first when multiple beads are waiting for a
 
 ## Watching Progress
 
+### Rig Page — Convoy Tracker
+
+The best place to observe your town in action is the **rig page**. At the top, active convoys show their progress as a visual tracker — each bead in the convoy displayed with its current status and dependency relationships. You can see exactly where in the DAG execution has reached and which beads are blocking downstream work.
+
+{% browserFrame url="app.kilo.ai/gastown/town/rigs/main" caption="Convoy tracker — see exactly where execution has reached" %}
+{% image src="/docs/img/gastown/gt-rig-page-convoy-in-progress.png" alt="Gas Town rig page convoy tracker with beads in various states" /%}
+{% /browserFrame %}
+
+### Rig Page — Kanban Board
+
+Below the convoy tracker, a kanban board shows beads organized by status — open, in progress, in review, and closed — updating in real-time as agents move work through the pipeline.
+
+{% browserFrame url="app.kilo.ai/gastown/town/rigs/main" caption="Kanban board — beads flow through columns as agents work" %}
+{% image src="/docs/img/gastown/gt-rig-page-convoy-bead-in-review.png" alt="Gas Town rig page kanban board with a bead in review" /%}
+{% /browserFrame %}
+
+You can see at a glance:
+- What's queued up (open column)
+- What agents are actively working on (in progress)
+- What's awaiting review (in review)
+- What's shipped (closed)
+
+Beads move through columns autonomously as the reconciler dispatches agents and work progresses.
+
 ### Beads Page
 
-The beads list shows all work in your town with real-time status updates. Filter by:
+For a more detailed, filterable view across all rigs, the beads page shows every bead in your town. Filter by:
 - Status (open, in progress, in review, closed, failed)
 - Type (issue, merge_request, convoy)
 - Rig (if you have multiple repos)
 
-<!-- TODO: Screenshot — Beads page with filter controls and mixed status beads -->
+{% browserFrame url="app.kilo.ai/gastown/town/beads" caption="Beads page — filterable list of all work items" %}
+{% image src="/docs/img/gastown/gt-beads-page.png" alt="Gas Town beads page" /%}
+{% /browserFrame %}
+
+Click any bead to see its full detail — description, event history, agent activity, and review feedback:
+
+{% browserFrame url="app.kilo.ai/gastown/town/beads/detail" caption="Bead detail — full history and status" %}
+{% image src="/docs/img/gastown/gt-beads-page-detail.png" alt="Gas Town bead detail view" /%}
+{% /browserFrame %}
 
 ### Town Overview
 
@@ -153,4 +155,4 @@ The town overview shows a high-level summary:
 
 ### Real-Time Events
 
-The event timeline shows every state transition as it happens — bead dispatched, review submitted, merge completed. Useful for understanding the flow in real-time.
+The event timeline shows every state transition as it happens — bead dispatched, review submitted, merge completed. Useful for understanding the flow when you want to see exactly what's happening under the hood.

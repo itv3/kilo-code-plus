@@ -11,20 +11,11 @@ Every piece of code produced by Gas Town agents goes through automated review be
 
 When a polecat finishes a bead and pushes its branch, the work enters the review pipeline:
 
-<!-- TODO: React Flow diagram — Review Pipeline
-  Linear flow with decision points:
-  
-  Polecat "pushes branch" 
-    → MR bead created (status: open)
-    → Refinery dispatched (status: in_progress)
-    → Refinery reviews diff
-    → Decision: "Quality check"
-      → PASS: "Merge" → bead closed ✓
-      → FAIL: "Send feedback" → Polecat revises → Re-submit → (loop back to Refinery)
-  
-  Show retry counter on the loop (max 3 attempts)
-  Caption: "The review pipeline — code must pass refinery review before merging"
--->
+{% flowDiagram name="adversarial-loop" height="340px" /%}
+
+{% browserFrame url="app.kilo.ai/gastown/town/rigs/main" caption="A bead in review — the refinery is evaluating the polecat's work" %}
+{% image src="/docs/img/gastown/gt-rig-page-convoy-bead-in-review.png" alt="Gas Town rig page showing a bead in review status" /%}
+{% /browserFrame %}
 
 The refinery evaluates:
 - **Correctness** — does the code do what the task asked?
@@ -82,23 +73,11 @@ You can configure whether PRs auto-merge after refinery approval or require huma
 
 Convoys add an additional review layer beyond per-bead review:
 
-<!-- TODO: React Flow diagram — Convoy Review Layers
-  Three columns showing review at different scopes:
-  
-  Column 1 "Per-Bead Review":
-    Bead 1 → Refinery ✓
-    Bead 2 → Refinery ✓  
-    Bead 3 → Refinery ✓ (with one revision cycle shown)
-    
-  Column 2 "Landing Review":
-    Combined diff (all 3 beads) → Refinery reviews holistically
-    "Does the combined work make sense as a feature?"
-    
-  Column 3 "Human Review" (optional):
-    Final PR to main → Your team reviews
-    
-  Caption: "Three layers of review — individual, combined, and human"
--->
+{% flowDiagram name="convoy-execution" height="200px" /%}
+
+{% browserFrame url="app.kilo.ai/gastown/town/merges" caption="The merge queue — review detail showing refinery feedback" %}
+{% image src="/docs/img/gastown/gt-merge-queue-page-review-detail.png" alt="Gas Town merge queue with review detail" /%}
+{% /browserFrame %}
 
 | Review Layer | What's checked | Who reviews |
 |---|---|---|
@@ -115,6 +94,14 @@ Gas Town's refinery works independently, but combining it with [Kilo Code Review
 3. **Human approves** → code ships
 
 This gives you automated adversarial review for speed **plus** AI-assisted human review for judgment — the best of both approaches.
+
+## The Merge Queue
+
+The merge queue page shows all active and completed reviews in your town:
+
+{% browserFrame url="app.kilo.ai/gastown/town/merges" caption="The merge queue — all reviews at a glance" %}
+{% image src="/docs/img/gastown/gt-merge-queue-page.png" alt="Gas Town merge queue page" /%}
+{% /browserFrame %}
 
 ## Review Configuration
 

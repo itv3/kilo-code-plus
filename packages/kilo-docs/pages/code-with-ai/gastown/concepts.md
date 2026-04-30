@@ -128,17 +128,7 @@ You don't interact with the reconciler directly — it's the autonomous engine t
 
 The most powerful concept in Gas Town is the **micro-adversarial loop**. Rather than trusting a single agent's output, every piece of work goes through an adversarial cycle:
 
-<!-- TODO: React Flow diagram — Full Adversarial Pipeline
-  Multi-lane flow showing:
-  Lane 1 (Polecat): "Read task" → "Write code" → "Run tests" → "Push branch"
-  Lane 2 (Refinery): "Review diff" → decision diamond "Quality?" 
-    → Yes: "Merge to target"
-    → No: "Send feedback" → (back to Polecat "Revise")
-  Lane 3 (Convoy level): Multiple beads flowing through the pipeline in sequence,
-    each one building on the merged output of the previous
-  
-  Caption: "Every bead goes through write → review → revise cycles before landing"
--->
+{% flowDiagram name="adversarial-loop" height="340px" /%}
 
 This pattern compounds when combined with **convoys**:
 
@@ -151,17 +141,9 @@ At every stage, work is critiqued and refined. Combined with Kilo's [Code Review
 
 ## How It All Fits Together
 
-<!-- TODO: React Flow diagram — Full Town Architecture
-  Shows the complete flow:
-  User → Mayor (chat) → creates Convoy/Beads
-  Reconciler (center, engine) → dispatches Polecats
-  Polecat → pushes branch → Refinery reviews → merges
-  Container (wrapping polecats) with git worktrees
-  Rig connecting to GitHub repo
-  
-  Style: similar to the Connect talk architecture diagram but simplified for docs
-  Caption: "The complete Gas Town architecture"
--->
+{% browserFrame url="app.kilo.ai/gastown/town" caption="The complete Gas Town experience — Mayor chat, convoy progress, and agent coordination" %}
+{% image src="/docs/img/gastown/gt-town-overview.png" alt="Gas Town overview showing the full architecture in action" /%}
+{% /browserFrame %}
 
 | Component | Responsibility |
 |---|---|

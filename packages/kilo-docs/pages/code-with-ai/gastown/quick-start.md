@@ -15,9 +15,11 @@ This guide walks you through creating your first town, connecting a repository, 
 
 ## 1. Create a Town
 
-From the Kilo dashboard, click **New Town**. Give it a name — this is just for your reference.
+When you first visit Gas Town with no existing towns, you'll be taken directly into the new town onboarding flow. Give your town a name — this is just for your reference.
 
-<!-- TODO: Screenshot — "New Town" button and creation dialog -->
+{% browserFrame url="app.kilo.ai/gastown" caption="The new town onboarding flow" %}
+{% image src="/docs/img/gastown/gt-new-town-onboarding.png" alt="Gas Town new town onboarding flow" /%}
+{% /browserFrame %}
 
 ## 2. Connect a Repository
 
@@ -30,7 +32,9 @@ Add a **rig** to your town. A rig is a connection to a specific repository.
 
 Gastown uses the [Kilo GitHub App](https://github.com/apps/kilo-code) to access your repository. You'll be prompted to install it if you haven't already.
 
-<!-- TODO: Screenshot — rig creation flow showing repo selection -->
+{% browserFrame url="app.kilo.ai/gastown/town/rigs/new" caption="Adding a new rig — connect your repository" %}
+{% image src="/docs/img/gastown/gt-new-rig.png" alt="Gas Town new rig creation flow" /%}
+{% /browserFrame %}
 
 ## 3. Add a GitHub Personal Access Token
 
@@ -46,26 +50,26 @@ Without a PAT, agents use the GitHub App installation token — functional but s
 
 ## 4. Sling Your First Task
 
-Now let's give the agents something to do:
+Now let's give the agents something to do. The easiest way is to ask the Mayor:
 
-1. Click **Sling Work** (or ask the Mayor)
-2. Describe a simple task, e.g.: *"Add a CONTRIBUTING.md file with basic setup instructions"*
-3. Click **Sling**
+> *"Add a CONTRIBUTING.md file with basic setup instructions"*
 
-<!-- TODO: Screenshot — Sling Work dialog with a sample task -->
+Or use the **Sling Work** action in the town header to describe the task directly.
 
 ## 5. Watch Agents Work
 
-The reconciler assigns your task to an available polecat agent. You'll see:
+The reconciler assigns your task to an available polecat agent. Head to the **rig page** to watch it in action:
 
-1. A **bead** appear in the beads list with status `open`
-2. The bead transitions to `in_progress` as a polecat picks it up
+1. A **bead** appears in the kanban board's open column
+2. It moves to `in_progress` as a polecat picks it up
 3. The agent reads your code, makes changes, and pushes a branch
 4. The bead moves to `in_review` as the refinery checks the work
 5. The refinery merges (or creates a PR depending on your settings)
-6. The bead reaches `closed`
+6. The bead lands in the `closed` column
 
-<!-- TODO: Screenshot — bead lifecycle showing the transitions in real-time -->
+{% browserFrame url="app.kilo.ai/gastown/town/rigs/main" caption="The rig page — convoy tracker and kanban board showing beads in various states" %}
+{% image src="/docs/img/gastown/gt-rig-page-convoy-in-progress.png" alt="Gas Town rig page with an active convoy and beads in progress" /%}
+{% /browserFrame %}
 
 The whole cycle typically takes 2-10 minutes depending on complexity and the model you're using.
 
@@ -79,7 +83,9 @@ Click the **Mayor** chat to interact with your town's coordinator. Try:
 
 The Mayor is always running — it's your primary interface for managing the town conversationally.
 
-<!-- TODO: Screenshot — Mayor chat with a greeting and status response -->
+{% browserFrame url="app.kilo.ai/gastown/town" caption="The Mayor — your conversational interface to the town" %}
+{% image src="/docs/img/gastown/gt-town-overview.png" alt="Gas Town overview with Mayor chat" /%}
+{% /browserFrame %}
 
 ## What's Next?
 
