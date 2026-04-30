@@ -9,6 +9,7 @@ import ai.kilocode.client.session.model.SessionState
 import ai.kilocode.client.session.ui.ConnectionPanel
 import ai.kilocode.client.session.ui.EmptySessionPanel
 import ai.kilocode.client.session.ui.LabelPicker
+import ai.kilocode.client.session.ui.ModePicker
 import ai.kilocode.client.session.ui.PermissionPanel
 import ai.kilocode.client.session.ui.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel
@@ -182,9 +183,11 @@ class SessionUi private constructor(
                 is SessionControllerEvent.WorkspaceReady -> {
                     val m = controller.model
                     prompt.mode.setItems(m.agents.map {
-                        LabelPicker.Item(
+                        ModePicker.Item(
                             it.name,
-                            it.display
+                            it.display,
+                            it.description,
+                            it.deprecated,
                         )
                     }, m.agent)
                     val items = m.models.map {

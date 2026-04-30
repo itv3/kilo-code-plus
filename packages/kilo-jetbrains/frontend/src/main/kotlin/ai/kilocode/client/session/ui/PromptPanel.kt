@@ -46,7 +46,7 @@ class PromptPanel(
         private const val EDITOR_LINES = 3
     }
 
-    val mode = LabelPicker()
+    val mode = ModePicker()
     val model = LabelPicker()
 
     private val editor = EditorTextField(project, PlainTextFileType.INSTANCE).apply {

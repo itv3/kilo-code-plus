@@ -299,7 +299,12 @@ class SessionController(
                     if (state.status != KiloWorkspaceStatusDto.READY) return@fire
 
                     model.agents = state.agents?.agents?.map {
-                        AgentItem(it.name, it.displayName ?: it.name)
+                        AgentItem(
+                            it.name,
+                            it.displayName ?: title(it.name),
+                            it.description,
+                            it.deprecated == true,
+                        )
                     } ?: emptyList()
 
                     model.models = state.providers?.let { providers ->
@@ -823,6 +828,12 @@ private fun summary(count: Int): String {
     if (count <= 1) return base
     return "$base ($count)"
 }
+
+private fun title(name: String): String = name
+    .split('-', '_')
+    .filter { it.isNotEmpty() }
+    .joinToString(" ") { it.replaceFirstChar { c -> c.titlecase() } }
+    .ifEmpty { name }
 
 private sealed interface RecentsState {
     data object Idle : RecentsState

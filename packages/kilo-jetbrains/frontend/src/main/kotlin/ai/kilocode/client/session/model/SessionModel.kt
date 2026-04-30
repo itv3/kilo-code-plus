@@ -404,7 +404,12 @@ private fun parseToolState(raw: String?): ToolExecState = when (raw) {
     else -> ToolExecState.PENDING
 }
 
-data class AgentItem(val name: String, val display: String)
+data class AgentItem(
+    val name: String,
+    val display: String,
+    val description: String?,
+    val deprecated: Boolean,
+)
 
 data class ModelItem(val id: String, val display: String, val provider: String)
 
