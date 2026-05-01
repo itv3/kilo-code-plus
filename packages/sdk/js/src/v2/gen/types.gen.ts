@@ -7306,6 +7306,7 @@ export type KiloClawStatusResponses = {
     channelCount?: number
     secretCount?: number
     userId?: string
+    botName?: string | null
   }
 }
 
@@ -7323,13 +7324,13 @@ export type KiloClawChatCredentialsData = {
 
 export type KiloClawChatCredentialsResponses = {
   /**
-   * Stream Chat credentials or null
+   * Kilo Chat credentials or null
    */
   200: {
-    apiKey: string
-    userId: string
-    userToken: string
-    channelId: string
+    token: string
+    expiresAt: string
+    kiloChatUrl: string
+    eventServiceUrl: string
   } | null
 }
 

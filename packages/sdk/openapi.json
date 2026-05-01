@@ -10651,6 +10651,16 @@
                     },
                     "userId": {
                       "type": "string"
+                    },
+                    "botName": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": ["status"]
@@ -10687,10 +10697,10 @@
           }
         ],
         "summary": "Get KiloClaw chat credentials",
-        "description": "Fetch Stream Chat credentials for the user's KiloClaw instance",
+        "description": "Returns the bearer token and endpoint URLs the client uses to talk to the Kilo Chat worker and the Event Service. The bearer is the user's existing long-lived Kilo JWT — kilo-chat and event-service both verify it directly with NEXTAUTH_SECRET, so no separate token mint is needed.",
         "responses": {
           "200": {
-            "description": "Stream Chat credentials or null",
+            "description": "Kilo Chat credentials or null",
             "content": {
               "application/json": {
                 "schema": {
@@ -10698,20 +10708,20 @@
                     {
                       "type": "object",
                       "properties": {
-                        "apiKey": {
+                        "token": {
                           "type": "string"
                         },
-                        "userId": {
+                        "expiresAt": {
                           "type": "string"
                         },
-                        "userToken": {
+                        "kiloChatUrl": {
                           "type": "string"
                         },
-                        "channelId": {
+                        "eventServiceUrl": {
                           "type": "string"
                         }
                       },
-                      "required": ["apiKey", "userId", "userToken", "channelId"]
+                      "required": ["token", "expiresAt", "kiloChatUrl", "eventServiceUrl"]
                     },
                     {
                       "type": "null"
