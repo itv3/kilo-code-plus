@@ -8,62 +8,61 @@ import javax.swing.ScrollPaneConstants
 @Suppress("UnstableApiUsage")
 class ReasoningViewTest : BasePlatformTestCase() {
 
-    fun `test completed reasoning is collapsed by default`() {
+    fun `test completed reasoning is expanded by default`() {
         val view = ReasoningView(reasoning("p1", done = true, text = "one\ntwo\nthree\nfour"))
 
-        assertFalse(view.isExpanded())
+        assertTrue(view.isExpanded())
         assertEquals("Reasoning", view.headerText())
         assertEquals("one\ntwo\nthree\nfour", view.markdown())
         assertTrue(view.hasToggle())
-        assertFalse(view.bodyVisible())
-        assertFalse(view.bodyCreated())
+        assertTrue(view.bodyVisible())
+        assertTrue(view.bodyCreated())
     }
 
     fun `test short completed reasoning is collapsible`() {
         val view = ReasoningView(reasoning("p1", done = true, text = "one\ntwo\nthree"))
 
-        assertFalse(view.isExpanded())
+        assertTrue(view.isExpanded())
         assertTrue(view.hasToggle())
         view.toggle()
-        assertTrue(view.isExpanded())
-        assertTrue(view.bodyVisible())
+        assertFalse(view.isExpanded())
+        assertFalse(view.bodyVisible())
         assertTrue(view.bodyCreated())
     }
 
-    fun `test streaming reasoning is collapsed by default`() {
+    fun `test streaming reasoning is expanded by default`() {
         val view = ReasoningView(reasoning("p1", done = false, text = "one\ntwo\nthree\nfour"))
 
-        assertFalse(view.isExpanded())
+        assertTrue(view.isExpanded())
         assertTrue(view.hasToggle())
     }
 
-    fun `test update to done collapses reasoning`() {
+    fun `test update to done preserves visible reasoning`() {
         val view = ReasoningView(reasoning("p1", done = false, text = "one\ntwo\nthree\nfour"))
-        view.toggle()
 
         view.update(reasoning("p1", done = true, text = "one\ntwo\nthree\nfour"))
 
-        assertFalse(view.isExpanded())
+        assertTrue(view.isExpanded())
         assertEquals("one\ntwo\nthree\nfour", view.markdown())
     }
 
     fun `test toggle opens and closes reasoning`() {
         val view = ReasoningView(reasoning("p1", done = true, text = "one\ntwo\nthree\nfour"))
 
-        assertFalse(view.isExpanded())
-        view.toggle()
         assertTrue(view.isExpanded())
         view.toggle()
         assertFalse(view.isExpanded())
+        view.toggle()
+        assertTrue(view.isExpanded())
     }
 
-    fun `test collapsed reasoning stays collapsed on update`() {
+    fun `test collapsed reasoning expands on update`() {
         val view = ReasoningView(reasoning("p1", done = false, text = "one\ntwo"))
 
         view.toggle()
         view.update(reasoning("p1", done = true, text = "one\ntwo\nthree"))
 
-        assertFalse(view.isExpanded())
+        assertTrue(view.isExpanded())
         assertEquals("one\ntwo\nthree", view.markdown())
     }
 
@@ -73,28 +72,42 @@ class ReasoningViewTest : BasePlatformTestCase() {
         view.appendDelta("b")
 
         assertEquals("ab", view.markdown())
-        assertFalse(view.isExpanded())
+        assertTrue(view.isExpanded())
     }
 
-    fun `test collapsed append does not create reasoning body`() {
+    fun `test blank reasoning expands when delta arrives`() {
+        val view = ReasoningView(reasoning("p1", done = false, text = ""))
+
+        view.appendDelta("b")
+
+        assertEquals("b", view.markdown())
+        assertTrue(view.bodyCreated())
+        assertTrue(view.bodyVisible())
+    }
+
+    fun `test collapsed append reattaches eager reasoning body`() {
         val view = ReasoningView(reasoning("p1", done = false, text = "a"))
+        view.toggle()
 
         view.appendDelta("b")
 
         assertEquals("ab", view.markdown())
-        assertFalse(view.bodyCreated())
+        assertTrue(view.bodyCreated())
+        assertTrue(view.bodyVisible())
     }
 
-    fun `test collapsed update does not create reasoning body`() {
+    fun `test collapsed update reattaches eager reasoning body`() {
         val view = ReasoningView(reasoning("p1", done = false, text = "a"))
+        view.toggle()
 
         view.update(reasoning("p1", done = false, text = "abc"))
 
         assertEquals("abc", view.markdown())
-        assertFalse(view.bodyCreated())
+        assertTrue(view.bodyCreated())
+        assertTrue(view.bodyVisible())
     }
 
-    fun `test reasoning reuses lazy markdown body`() {
+    fun `test reasoning reuses eager markdown body`() {
         val view = ReasoningView(reasoning("p1", done = false, text = "one"))
 
         view.toggle()
@@ -103,7 +116,7 @@ class ReasoningViewTest : BasePlatformTestCase() {
         view.toggle()
 
         assertSame(component, view.md.component)
-        assertTrue(view.bodyVisible())
+        assertFalse(view.bodyVisible())
     }
 
     fun `test blank reasoning has no toggle`() {
@@ -145,8 +158,6 @@ class ReasoningViewTest : BasePlatformTestCase() {
 
     fun `test expanded reasoning body is capped to five rows`() {
         val view = ReasoningView(reasoning("p1", done = false, text = (1..20).joinToString("\n") { "line $it" }))
-
-        view.toggle()
 
         assertEquals(5, view.bodyMaxRows())
         assertTrue(view.preferredSize.height > 0)

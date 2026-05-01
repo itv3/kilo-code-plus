@@ -80,7 +80,7 @@ class ToolViewTest : BasePlatformTestCase() {
         assertFalse(view.isExpanded())
         assertTrue(view.hasToggle())
         assertFalse(view.bodyVisible())
-        assertFalse(view.bodyCreated())
+        assertTrue(view.bodyCreated())
         view.toggle()
         assertTrue(view.bodyVisible())
         assertTrue(view.bodyCreated())
@@ -114,14 +114,14 @@ class ToolViewTest : BasePlatformTestCase() {
         assertTrue(view.bodyVisible())
     }
 
-    fun `test tool reuses lazy body after collapse and expand`() {
+    fun `test tool reuses eager body after collapse and expand`() {
         val t = tool("p1", "bash", ToolExecState.COMPLETED).also {
             it.input = mapOf("command" to "pwd")
             it.output = "/tmp"
         }
         val view = ToolView(t)
 
-        assertFalse(view.bodyCreated())
+        assertTrue(view.bodyCreated())
         view.toggle()
         val font = view.bodyFont()
         view.toggle()
@@ -131,7 +131,7 @@ class ToolViewTest : BasePlatformTestCase() {
         assertTrue(view.bodyVisible())
     }
 
-    fun `test collapsed update does not create tool body`() {
+    fun `test collapsed update keeps eager tool body detached`() {
         val view = ToolView(tool("p1", "bash", ToolExecState.RUNNING).also {
             it.input = mapOf("command" to "pwd")
             it.output = "/tmp"
@@ -142,7 +142,7 @@ class ToolViewTest : BasePlatformTestCase() {
             it.output = "/home"
         })
 
-        assertFalse(view.bodyCreated())
+        assertTrue(view.bodyCreated())
         assertEquals("$ pwd\n\n/home", view.bodyText())
     }
 

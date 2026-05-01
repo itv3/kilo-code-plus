@@ -34,8 +34,6 @@ class ToolView(tool: Tool) : PartView() {
 
     private var item = tool
     private var style = SessionStyle.current()
-    private var area: JBTextArea? = null
-    private var pane: JBScrollPane? = null
 
     private val root = JPanel(BorderLayout()).apply {
         isOpaque = true
@@ -62,6 +60,24 @@ class ToolView(tool: Tool) : PartView() {
     private val controls: JComponent = Box.createHorizontalBox().apply {
         add(state)
         add(arrow)
+    }
+    private val text = JBTextArea().apply {
+        isEditable = false
+        caret.isVisible = false
+        caret.isSelectionVisible = false
+        lineWrap = true
+        wrapStyleWord = true
+        foreground = bodyColor()
+        background = UiStyle.Colors.surface()
+        border = UiStyle.Card.bodyInsets()
+    }
+    private val scroll = JBScrollPane(text).apply {
+        border = UiStyle.Card.divider()
+        isOpaque = true
+        background = UiStyle.Colors.surface()
+        viewport.background = UiStyle.Colors.surface()
+        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
     }
 
     private val click = object : MouseAdapter() {
@@ -96,6 +112,7 @@ class ToolView(tool: Tool) : PartView() {
             bind(it)
             it.addMouseListener(click)
         }
+        text.text = body(item)
         applyStyle(SessionStyle.current())
         add(root, BorderLayout.CENTER)
         sync()
@@ -115,7 +132,7 @@ class ToolView(tool: Tool) : PartView() {
         var changed = false
         if (was != content.name || !canExpand(content)) changed = detach() || changed
         changed = sync() || changed
-        if (area != null) changed = syncBody() || changed
+        changed = syncBody() || changed
         if (changed) refresh()
     }
 
@@ -131,7 +148,7 @@ class ToolView(tool: Tool) : PartView() {
 
     fun hasToggle(): Boolean = arrow.isVisible
 
-    internal fun bodyFont() = body().font
+    internal fun bodyFont() = text.font
 
     internal fun titleFont() = title.font
 
@@ -139,21 +156,21 @@ class ToolView(tool: Tool) : PartView() {
 
     internal fun stateFont() = state.font
 
-    internal fun bodyEditable() = body().isEditable
+    internal fun bodyEditable() = text.isEditable
 
-    internal fun bodyCaretVisible() = body().caret.isVisible
+    internal fun bodyCaretVisible() = text.caret.isVisible
 
-    internal fun bodyVisible() = pane?.parent === root
+    internal fun bodyVisible() = scroll.parent === root
 
     internal fun controlCount() = if (arrow.isVisible) 1 else 0
 
-    internal fun horizontalPolicy() = pane?.horizontalScrollBarPolicy ?: ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    internal fun horizontalPolicy() = scroll.horizontalScrollBarPolicy
 
-    internal fun bodyWrap() = body().lineWrap
+    internal fun bodyWrap() = text.lineWrap
 
     internal fun bodyMaxRows() = UiStyle.Card.LINES
 
-    internal fun bodyCreated() = pane != null
+    internal fun bodyCreated() = true
 
     override fun applyStyle(style: SessionStyle) {
         this.style = style
@@ -161,7 +178,7 @@ class ToolView(tool: Tool) : PartView() {
         changed = setFont(title, style.boldEditorFont) || changed
         changed = setFont(sub, style.smallEditorFont) || changed
         changed = setFont(state, style.smallEditorFont) || changed
-        area?.let { changed = setFont(it, style.transcriptFont) || changed }
+        changed = setFont(text, style.transcriptFont) || changed
         if (changed) refresh()
     }
 
@@ -197,7 +214,7 @@ class ToolView(tool: Tool) : PartView() {
         changed = setVisible(state, !expand) || changed
         changed = syncArrow() || changed
         changed = syncLabels() || changed
-        area?.let { changed = setForeground(it, bodyColor()) || changed }
+        changed = setForeground(text, bodyColor()) || changed
         return changed
     }
 
@@ -219,62 +236,28 @@ class ToolView(tool: Tool) : PartView() {
     }
 
     private fun syncBody(): Boolean {
-        val view = body()
         var changed = false
         val value = body(item)
-        if (view.text != value) {
-            view.text = value
-            view.caretPosition = 0
+        if (text.text != value) {
+            text.text = value
+            text.caretPosition = 0
             changed = true
         }
-        changed = setForeground(view, bodyColor()) || changed
+        changed = setForeground(text, bodyColor()) || changed
         return changed
     }
 
     private fun attach(): Boolean {
         if (bodyVisible()) return false
         syncBody()
-        root.add(scroll(), BorderLayout.CENTER)
+        root.add(scroll, BorderLayout.CENTER)
         return true
     }
 
     private fun detach(): Boolean {
-        val view = pane
-        val attached = view?.parent === root
-        if (attached) root.remove(view)
+        val attached = scroll.parent === root
+        if (attached) root.remove(scroll)
         return attached
-    }
-
-    private fun body(): JBTextArea {
-        area?.let { return it }
-        val view = JBTextArea().apply {
-            isEditable = false
-            caret.isVisible = false
-            caret.isSelectionVisible = false
-            lineWrap = true
-            wrapStyleWord = true
-            foreground = bodyColor()
-            background = UiStyle.Colors.surface()
-            border = UiStyle.Card.bodyInsets()
-            font = style.transcriptFont
-            text = body(item)
-        }
-        area = view
-        return view
-    }
-
-    private fun scroll(): JBScrollPane {
-        pane?.let { return it }
-        val view = JBScrollPane(body()).apply {
-            border = UiStyle.Card.divider()
-            isOpaque = true
-            background = UiStyle.Colors.surface()
-            viewport.background = UiStyle.Colors.surface()
-            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-            verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-        }
-        pane = view
-        return view
     }
 
     private fun syncCursor(cursor: Cursor): Boolean {
@@ -296,8 +279,7 @@ class ToolView(tool: Tool) : PartView() {
     private fun bodyColor() = if (item.state == ToolExecState.ERROR) UiStyle.Colors.error() else UiStyle.Colors.fg()
 
     private fun bodyMaxHeight(): Int {
-        val view = body()
-        return view.getFontMetrics(view.font).height * bodyMaxRows() + UiStyle.Card.scrollChrome()
+        return text.getFontMetrics(text.font).height * bodyMaxRows() + UiStyle.Card.scrollChrome()
     }
 
     override fun dumpLabel() = "ToolView#$contentId(${labelText()})"

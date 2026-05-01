@@ -28,9 +28,22 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     override val contentId: String = reasoning.id
 
-    val md: MdView get() = body().md
+    val md: MdView = MdView.html()
 
     private val arrow = JBLabel()
+    private val body = TrackPanel().apply {
+        isOpaque = true
+        background = UiStyle.Colors.surface()
+        border = UiStyle.Card.bodyInsets()
+    }
+    private val scroll = JBScrollPane(body).apply {
+        border = UiStyle.Card.divider()
+        isOpaque = true
+        background = UiStyle.Colors.surface()
+        viewport.background = UiStyle.Colors.surface()
+        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+    }
     private val header = JPanel(UiStyle.Card.layout()).apply {
         isOpaque = true
         background = UiStyle.Colors.header()
@@ -45,7 +58,6 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     private var style = SessionStyle.current()
     private var source = reasoning.content.toString()
-    private var body: ReasoningBody? = null
 
     private val click = object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
@@ -84,7 +96,12 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         }
 
         applyStyle(SessionStyle.current())
+        md.opaque = false
+        md.set(source)
+        body.add(md.component, BorderLayout.CENTER)
+
         add(header, BorderLayout.NORTH)
+        if (canExpand()) add(scroll, BorderLayout.CENTER)
         sync()
     }
 
@@ -94,10 +111,10 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         val next = content.content.toString()
         if (source != next) {
             source = next
-            body?.md?.set(source)
+            md.set(source)
             changed = true
         }
-        if (content.done) changed = collapse() || changed
+        changed = syncBody() || changed
         changed = sync() || changed
         if (changed) refresh()
     }
@@ -105,8 +122,9 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
     override fun appendDelta(delta: String) {
         if (delta.isEmpty()) return
         source += delta
-        body?.md?.append(delta)
-        val changed = sync()
+        md.append(delta)
+        var changed = syncBody()
+        changed = sync() || changed
         if (changed || bodyVisible()) refresh()
     }
 
@@ -120,14 +138,13 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     internal fun headerFont() = title.font
 
-    internal fun bodyVisible() = body?.scroll?.parent === this
+    internal fun bodyVisible() = scroll.parent === this
 
-    internal fun horizontalPolicy() = body?.scroll?.horizontalScrollBarPolicy
-        ?: ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    internal fun horizontalPolicy() = scroll.horizontalScrollBarPolicy
 
     internal fun bodyMaxRows() = UiStyle.Card.REASONING_LINES
 
-    internal fun bodyCreated() = body != null
+    internal fun bodyCreated() = true
 
     override fun applyStyle(style: SessionStyle) {
         this.style = style
@@ -136,9 +153,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
             title.font = style.smallEditorFont
             changed = true
         }
-        body?.let {
-            changed = apply(it.md) || changed
-        }
+        changed = apply(md) || changed
         if (changed) refresh()
     }
 
@@ -186,6 +201,12 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         return changed
     }
 
+    private fun syncBody(): Boolean {
+        if (!canExpand()) return collapse()
+        if (bodyVisible()) return false
+        return expand()
+    }
+
     private fun setVisible(component: JBLabel, visible: Boolean): Boolean {
         if (component.isVisible == visible) return false
         component.isVisible = visible
@@ -205,41 +226,14 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     private fun expand(): Boolean {
         if (bodyVisible()) return false
-        val view = body()
-        add(view.scroll, BorderLayout.CENTER)
+        add(scroll, BorderLayout.CENTER)
         return true
     }
 
     private fun collapse(): Boolean {
-        val view = body
-        val attached = view?.scroll?.parent === this
-        if (attached) remove(view.scroll)
+        val attached = scroll.parent === this
+        if (attached) remove(scroll)
         return attached
-    }
-
-    private fun body(): ReasoningBody {
-        body?.let { return it }
-        val md = MdView.html()
-        md.opaque = false
-        apply(md)
-        md.set(source)
-        val panel = TrackPanel().apply {
-            isOpaque = true
-            background = UiStyle.Colors.surface()
-            border = UiStyle.Card.bodyInsets()
-            add(md.component, BorderLayout.CENTER)
-        }
-        val scroll = JBScrollPane(panel).apply {
-            border = UiStyle.Card.divider()
-            isOpaque = true
-            background = UiStyle.Colors.surface()
-            viewport.background = UiStyle.Colors.surface()
-            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-            verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-        }
-        val view = ReasoningBody(md, scroll)
-        body = view
-        return view
     }
 
     private fun apply(md: MdView): Boolean {
@@ -267,11 +261,6 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         return "ReasoningView#$contentId($state)"
     }
 }
-
-private data class ReasoningBody(
-    val md: MdView,
-    val scroll: JBScrollPane,
-)
 
 private class TrackPanel : JPanel(BorderLayout()), Scrollable {
     override fun getScrollableTracksViewportWidth() = true
