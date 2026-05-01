@@ -68,48 +68,49 @@ export function FlowDiagram({ name, height = "400px" }: { name: string; height?:
   const { ReactFlow, Background, BackgroundVariant } = mod
 
   return (
-    <div
-      style={{
-        height,
-        width: "100%",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: "12px",
-        overflow: "hidden",
-        margin: "24px 0",
-      }}
-    >
-      <ReactFlow
-        nodes={diagram.nodes}
-        edges={diagram.edges}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
-        panOnDrag={false}
-        panOnScroll={false}
-        zoomOnScroll={false}
-        zoomOnPinch={false}
-        zoomOnDoubleClick={false}
-        preventScrolling={false}
-        proOptions={{ hideAttribution: true }}
-        style={{ background: "#08080c" }}
+    <figure style={{ margin: "24px 0" }}>
+      <div
+        style={{
+          height,
+          width: "100%",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: "12px",
+          overflow: "hidden",
+        }}
       >
-        <Background variant={BackgroundVariant.Dots} color="rgba(248,160,32,0.15)" gap={20} size={1} />
-      </ReactFlow>
+        <ReactFlow
+          nodes={diagram.nodes}
+          edges={diagram.edges}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          panOnDrag={false}
+          panOnScroll={false}
+          zoomOnScroll={false}
+          zoomOnPinch={false}
+          zoomOnDoubleClick={false}
+          preventScrolling={false}
+          proOptions={{ hideAttribution: true }}
+          style={{ background: "#08080c" }}
+        >
+          <Background variant={BackgroundVariant.Dots} color="rgba(248,160,32,0.15)" gap={20} size={1} />
+        </ReactFlow>
+      </div>
       {diagram.caption && (
-        <p
+        <figcaption
           style={{
             textAlign: "center",
             fontSize: "13px",
             color: "var(--text-muted, #888)",
-            margin: "8px 0 0",
+            marginTop: "8px",
             fontStyle: "italic",
           }}
         >
           {diagram.caption}
-        </p>
+        </figcaption>
       )}
-    </div>
+    </figure>
   )
 }

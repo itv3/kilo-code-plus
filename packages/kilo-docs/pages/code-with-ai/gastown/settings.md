@@ -37,16 +37,20 @@ Adding a GitHub PAT ensures that all commits, branches, and PRs created by your 
 
 **To add a PAT:**
 1. Go to **Settings** → **Git & Authentication**
-2. Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens)
-3. Required scopes: `repo` (full repository access)
-4. Recommended: also add `workflow` (if your repo uses GitHub Actions)
+2. Generate a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) scoped to the connected repository
+3. Required permissions: **Contents** (read/write), **Pull requests** (read/write), **Metadata** (read)
+4. Optional: add **Actions** (read/write) if your repo uses GitHub Actions workflows
 5. Paste the token and save
+
+{% callout type="info" %}
+Use a fine-grained token limited to only the repository your town is connected to. Agents act autonomously on your behalf, so limiting scope is a best practice.
+{% /callout %}
 
 **What the PAT enables:**
 - Commits and PRs appear as you (your avatar, your username)
 - Agents can use `gh` CLI commands on your behalf
-- Full access to private repositories you own
-- Ability to trigger CI workflows
+- Access to the specific repository you scoped the token to
+- Ability to trigger CI workflows (if Actions permission is granted)
 
 **Without a PAT:**
 - The GitHub App installation token is used (functional but less personal)

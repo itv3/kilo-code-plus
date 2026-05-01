@@ -43,8 +43,14 @@ Adding a GitHub PAT means all commits, branches, and PRs created by your town's 
 {% /callout %}
 
 1. Go to **Town Settings** → **Git & Authentication**
-2. Paste your GitHub Personal Access Token
-3. The token needs `repo` scope (and `workflow` if your repo uses GitHub Actions)
+2. Generate a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) scoped to the repository your town is connected to
+3. Required permissions: **Contents** (read/write), **Pull requests** (read/write), **Metadata** (read)
+4. Optional: add **Actions** (read/write) if your repo uses GitHub Actions workflows
+5. Paste the token and save
+
+{% callout type="info" %}
+Use a fine-grained token scoped to only the repository your town works on. Since agents act autonomously on your behalf, limiting the token's scope reduces risk.
+{% /callout %}
 
 Without a PAT, agents use the GitHub App installation token — functional but shows up as a bot in your git history.
 
