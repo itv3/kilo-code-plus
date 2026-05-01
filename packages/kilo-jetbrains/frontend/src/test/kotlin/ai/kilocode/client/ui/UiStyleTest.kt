@@ -42,6 +42,5 @@ class UiStyleTest : BasePlatformTestCase() {
         assertNotNull(UiStyle.Card.headerInsets())
         assertNotNull(UiStyle.Card.bodyInsets())
         assertTrue(UiStyle.Card.groupGap() > 0)
-        assertTrue(UiStyle.Card.controlGap() > 0)
     }
 }

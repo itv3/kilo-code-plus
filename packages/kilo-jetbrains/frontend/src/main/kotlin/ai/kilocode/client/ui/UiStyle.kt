@@ -126,16 +126,19 @@ object UiStyle {
             JBUI.Borders.empty(Space.LG, 0, Space.SM, 0),
         )!!
 
-        fun assistant(empty: Boolean = false): Border = JBUI.Borders.empty(if (empty) Space.SM else 0, 0)
+        fun assistant(): Border = JBUI.Borders.empty()
     }
 
     /** Shared geometry for collapsible transcript cards such as tools and reasoning. */
     object Card {
-        fun layout(): BorderLayout = Gap.layout(Space.LG)
+        const val LINES = 15
+        const val REASONING_LINES = 5
+
+        fun layout(): BorderLayout = Gap.layout(Space.MD)
 
         fun groupGap(): Int = Gap.small()
 
-        fun headerInsets(): Border = JBUI.Borders.empty(Space.LG, Space.LG)
+        fun headerInsets(): Border = JBUI.Borders.empty(Space.LG, Space.PAD)
 
         fun bodyInsets(): Border = JBUI.Borders.empty(Space.LG, Space.PAD)
 
@@ -143,7 +146,7 @@ object UiStyle {
 
         fun divider(): Border = Borders.cardTop()
 
-        fun controlGap(): Int = Gap.regular()
+        fun scrollChrome(): Int = JBUI.scale(Size.CHROME)
     }
 
     object Dock {

@@ -10,11 +10,17 @@ import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.client.ui.md.MdView
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
 import java.awt.BorderLayout
 import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants
+import javax.swing.Scrollable
 import javax.swing.SwingUtilities
 
 /** Renders reasoning as a VS Code-style collapsible block. */
@@ -22,14 +28,9 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     override val contentId: String = reasoning.id
 
-    val md: MdView = MdView.html()
+    val md: MdView get() = body().md
 
     private val arrow = JBLabel()
-    private val body = JPanel(BorderLayout()).apply {
-        isOpaque = true
-        background = UiStyle.Colors.surface()
-        border = UiStyle.Card.bodyInsets()
-    }
     private val header = JPanel(UiStyle.Card.layout()).apply {
         isOpaque = true
         background = UiStyle.Colors.header()
@@ -42,16 +43,14 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         foreground = UiStyle.Colors.weak()
     }
 
-    private var open = reasoning.content.isNotBlank()
-    private var touched = false
-    private var hover = false
+    private var style = SessionStyle.current()
     private var source = reasoning.content.toString()
+    private var body: ReasoningBody? = null
 
     private val click = object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
             if (!canExpand()) return
-            touched = true
-            setOpen(!open)
+            toggle()
         }
     }
 
@@ -85,32 +84,35 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         }
 
         applyStyle(SessionStyle.current())
-        md.opaque = false
-        body.add(md.component, BorderLayout.CENTER)
-
         add(header, BorderLayout.NORTH)
-        setText(source)
-        render()
+        sync()
     }
 
     override fun update(content: Content) {
         if (content !is Reasoning) return
-        source = content.content.toString()
-        setText(source)
-        if (!touched) open = source.isNotBlank()
-        render()
+        var changed = false
+        val next = content.content.toString()
+        if (source != next) {
+            source = next
+            body?.md?.set(source)
+            changed = true
+        }
+        if (content.done) changed = collapse() || changed
+        changed = sync() || changed
+        if (changed) refresh()
     }
 
     override fun appendDelta(delta: String) {
+        if (delta.isEmpty()) return
         source += delta
-        md.append(delta)
-        if (!touched) open = source.isNotBlank()
-        render()
+        body?.md?.append(delta)
+        val changed = sync()
+        if (changed || bodyVisible()) refresh()
     }
 
     fun markdown(): String = source
 
-    fun isExpanded(): Boolean = open
+    fun isExpanded(): Boolean = bodyVisible()
 
     fun hasToggle(): Boolean = arrow.isVisible
 
@@ -118,48 +120,46 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     internal fun headerFont() = title.font
 
-    internal fun bodyVisible() = body.parent === this
+    internal fun bodyVisible() = body?.scroll?.parent === this
+
+    internal fun horizontalPolicy() = body?.scroll?.horizontalScrollBarPolicy
+        ?: ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+
+    internal fun bodyMaxRows() = UiStyle.Card.REASONING_LINES
+
+    internal fun bodyCreated() = body != null
 
     override fun applyStyle(style: SessionStyle) {
-        title.font = style.smallEditorFont
-        md.font = style.transcriptFont
-        md.codeFont = style.editorFamily
-        md.foreground = UiStyle.Colors.weak()
-        revalidate()
-        repaint()
+        this.style = style
+        var changed = false
+        if (title.font != style.smallEditorFont) {
+            title.font = style.smallEditorFont
+            changed = true
+        }
+        body?.let {
+            changed = apply(it.md) || changed
+        }
+        if (changed) refresh()
     }
 
     fun toggle() {
         if (!canExpand()) return
-        touched = true
-        setOpen(!open)
+        var changed = if (bodyVisible()) collapse() else expand()
+        changed = sync() || changed
+        if (changed) refresh()
     }
 
-    private fun setOpen(value: Boolean) {
-        open = value
-        render()
-    }
-
-    private fun render() {
-        val expand = canExpand()
-        if (!expand) {
-            touched = false
-            open = false
-        }
-        arrow.isVisible = expand
-        arrow.icon = if (open) AllIcons.General.ArrowDown else AllIcons.General.ArrowRight
-        val cursor = if (expand) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
-        listOf(header, title, icon, arrow).forEach { it.cursor = cursor }
-        remove(body)
-        if (open && expand) add(body, BorderLayout.CENTER)
-        revalidate()
-        repaint()
+    override fun getPreferredSize(): Dimension {
+        val size = super.getPreferredSize()
+        if (!bodyVisible()) return size
+        val height = header.preferredSize.height + bodyMaxHeight()
+        return Dimension(size.width, minOf(size.height, height))
     }
 
     private fun setHover(value: Boolean) {
-        if (hover == value) return
-        hover = value
-        header.background = if (hover) UiStyle.Colors.headerHover() else UiStyle.Colors.header()
+        val color = if (value) UiStyle.Colors.headerHover() else UiStyle.Colors.header()
+        if (header.background?.rgb == color.rgb) return
+        header.background = color
         header.repaint()
     }
 
@@ -168,11 +168,123 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         return header.contains(point)
     }
 
-    private fun setText(text: String) {
-        md.set(text)
-    }
-
     private fun canExpand(): Boolean = source.isNotBlank()
 
-    override fun dumpLabel() = "ReasoningView#$contentId(${if (open) "open" else "closed"})"
+    private fun sync(): Boolean {
+        val expand = canExpand()
+        if (!expand) collapse()
+        var changed = false
+        changed = setVisible(arrow, expand) || changed
+        changed = syncArrow() || changed
+        val cursor = if (expand) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+        listOf(header, title, icon, arrow).forEach {
+            if (it.cursor?.type != cursor.type) {
+                it.cursor = cursor
+                changed = true
+            }
+        }
+        return changed
+    }
+
+    private fun setVisible(component: JBLabel, visible: Boolean): Boolean {
+        if (component.isVisible == visible) return false
+        component.isVisible = visible
+        return true
+    }
+
+    private fun setIcon(label: JBLabel, icon: javax.swing.Icon): Boolean {
+        if (label.icon === icon) return false
+        label.icon = icon
+        return true
+    }
+
+    private fun syncArrow(): Boolean {
+        val icon = if (bodyVisible()) AllIcons.General.ArrowDown else AllIcons.General.ArrowRight
+        return setIcon(arrow, icon)
+    }
+
+    private fun expand(): Boolean {
+        if (bodyVisible()) return false
+        val view = body()
+        add(view.scroll, BorderLayout.CENTER)
+        return true
+    }
+
+    private fun collapse(): Boolean {
+        val view = body
+        val attached = view?.scroll?.parent === this
+        if (attached) remove(view.scroll)
+        return attached
+    }
+
+    private fun body(): ReasoningBody {
+        body?.let { return it }
+        val md = MdView.html()
+        md.opaque = false
+        apply(md)
+        md.set(source)
+        val panel = TrackPanel().apply {
+            isOpaque = true
+            background = UiStyle.Colors.surface()
+            border = UiStyle.Card.bodyInsets()
+            add(md.component, BorderLayout.CENTER)
+        }
+        val scroll = JBScrollPane(panel).apply {
+            border = UiStyle.Card.divider()
+            isOpaque = true
+            background = UiStyle.Colors.surface()
+            viewport.background = UiStyle.Colors.surface()
+            horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+            verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+        }
+        val view = ReasoningBody(md, scroll)
+        body = view
+        return view
+    }
+
+    private fun apply(md: MdView): Boolean {
+        var changed = false
+        val font = style.smallEditorFont.deriveFont(Font.ITALIC)
+        changed = md.font != font || changed
+        md.font = font
+        changed = md.codeFont != style.editorFamily || changed
+        md.codeFont = style.editorFamily
+        changed = md.foreground.rgb != UiStyle.Colors.weak().rgb || changed
+        md.foreground = UiStyle.Colors.weak()
+        return changed
+    }
+
+    private fun refresh() {
+        revalidate()
+        repaint()
+    }
+
+    private fun bodyMaxHeight(): Int = md.component.getFontMetrics(md.font).height * bodyMaxRows() +
+        UiStyle.Card.scrollChrome()
+
+    override fun dumpLabel(): String {
+        val state = if (bodyVisible()) "open" else "closed"
+        return "ReasoningView#$contentId($state)"
+    }
+}
+
+private data class ReasoningBody(
+    val md: MdView,
+    val scroll: JBScrollPane,
+)
+
+private class TrackPanel : JPanel(BorderLayout()), Scrollable {
+    override fun getScrollableTracksViewportWidth() = true
+    override fun getScrollableTracksViewportHeight() = false
+    override fun getPreferredScrollableViewportSize(): Dimension = preferredSize
+    override fun getScrollableUnitIncrement(
+        visibleRect: Rectangle,
+        orientation: Int,
+        direction: Int,
+    ) = UiStyle.Gap.scroll()
+    override fun getScrollableBlockIncrement(
+        visibleRect: Rectangle,
+        orientation: Int,
+        direction: Int,
+    ) = visibleRect.height
 }

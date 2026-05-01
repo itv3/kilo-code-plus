@@ -35,7 +35,7 @@ class MessageView(
         border = if (msg.info.role == "user") {
             UiStyle.Borders.user()
         } else {
-            UiStyle.Borders.assistant(msg.parts.isEmpty())
+            UiStyle.Borders.assistant()
         }
 
         // Populate content that already exists (e.g. after loadHistory)
@@ -52,8 +52,6 @@ class MessageView(
         val existing = parts[content.id]
         if (existing != null) {
             existing.update(content)
-            revalidate()
-            repaint()
             return
         }
         val view = ViewFactory.create(content)
@@ -76,14 +74,12 @@ class MessageView(
 
     private fun syncBorder() {
         if (msg.info.role != "assistant") return
-        border = UiStyle.Borders.assistant(parts.isEmpty())
+        border = UiStyle.Borders.assistant()
     }
 
     /** Append a streaming delta to the renderer for [contentId]. */
     fun appendDelta(contentId: String, delta: String) {
         parts[contentId]?.appendDelta(delta)
-        revalidate()
-        repaint()
     }
 
     /** Look up a renderer by part id. */

@@ -5,6 +5,7 @@ import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.ui.SessionStyle
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import javax.swing.ScrollPaneConstants
 
 /**
  * Tests for [ToolView].
@@ -75,11 +76,14 @@ class ToolViewTest : BasePlatformTestCase() {
         assertTrue(view.labelText().contains("View remotes"))
         assertEquals("git remote -v", view.commandText())
         assertEquals("origin git@example.com:repo.git", view.outputText())
-        assertEquals("git remote -v\n\norigin git@example.com:repo.git", view.copyText())
         assertEquals("$ git remote -v\n\norigin git@example.com:repo.git", view.bodyText())
-        assertTrue(view.isExpanded())
+        assertFalse(view.isExpanded())
         assertTrue(view.hasToggle())
+        assertFalse(view.bodyVisible())
+        assertFalse(view.bodyCreated())
+        view.toggle()
         assertTrue(view.bodyVisible())
+        assertTrue(view.bodyCreated())
     }
 
     fun `test bash toggle collapses and expands`() {
@@ -89,11 +93,11 @@ class ToolViewTest : BasePlatformTestCase() {
         }
         val view = ToolView(t)
 
-        assertTrue(view.isExpanded())
-        view.toggle()
         assertFalse(view.isExpanded())
         view.toggle()
         assertTrue(view.isExpanded())
+        view.toggle()
+        assertFalse(view.isExpanded())
     }
 
     fun `test collapsed bash hides body`() {
@@ -105,9 +109,59 @@ class ToolViewTest : BasePlatformTestCase() {
 
         assertEquals("$ git log\n\none\ntwo\nthree\nfour", view.bodyText())
         assertTrue(view.hasToggle())
-        assertTrue(view.bodyVisible())
-        view.toggle()
         assertFalse(view.bodyVisible())
+        view.toggle()
+        assertTrue(view.bodyVisible())
+    }
+
+    fun `test tool reuses lazy body after collapse and expand`() {
+        val t = tool("p1", "bash", ToolExecState.COMPLETED).also {
+            it.input = mapOf("command" to "pwd")
+            it.output = "/tmp"
+        }
+        val view = ToolView(t)
+
+        assertFalse(view.bodyCreated())
+        view.toggle()
+        val font = view.bodyFont()
+        view.toggle()
+        view.toggle()
+
+        assertSame(font, view.bodyFont())
+        assertTrue(view.bodyVisible())
+    }
+
+    fun `test collapsed update does not create tool body`() {
+        val view = ToolView(tool("p1", "bash", ToolExecState.RUNNING).also {
+            it.input = mapOf("command" to "pwd")
+            it.output = "/tmp"
+        })
+
+        view.update(tool("p1", "bash", ToolExecState.COMPLETED).also {
+            it.input = mapOf("command" to "pwd")
+            it.output = "/home"
+        })
+
+        assertFalse(view.bodyCreated())
+        assertEquals("$ pwd\n\n/home", view.bodyText())
+    }
+
+    fun `test collapsed update after first expand reuses tool body text`() {
+        val view = ToolView(tool("p1", "bash", ToolExecState.RUNNING).also {
+            it.input = mapOf("command" to "pwd")
+            it.output = "/tmp"
+        })
+
+        view.toggle()
+        view.toggle()
+        view.update(tool("p1", "bash", ToolExecState.COMPLETED).also {
+            it.input = mapOf("command" to "pwd")
+            it.output = "/home"
+        })
+
+        assertTrue(view.bodyCreated())
+        assertFalse(view.bodyVisible())
+        assertEquals("$ pwd\n\n/home", view.bodyText())
     }
 
     fun `test short bash is still collapsible`() {
@@ -117,11 +171,11 @@ class ToolViewTest : BasePlatformTestCase() {
         }
         val view = ToolView(t)
 
-        assertTrue(view.isExpanded())
+        assertFalse(view.isExpanded())
         assertTrue(view.hasToggle())
         assertEquals("$ pwd\n\n/tmp", view.bodyText())
         view.toggle()
-        assertFalse(view.isExpanded())
+        assertTrue(view.isExpanded())
     }
 
     fun `test generic tool with output is collapsible`() {
@@ -157,6 +211,9 @@ class ToolViewTest : BasePlatformTestCase() {
 
         assertEditorFont(view.bodyFont(), style)
         assertFalse(view.bodyEditable())
+        assertFalse(view.bodyCaretVisible())
+        assertTrue(view.bodyWrap())
+        assertEquals(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, view.horizontalPolicy())
     }
 
     fun `test tool header uses editor-derived fonts`() {
@@ -182,7 +239,7 @@ class ToolViewTest : BasePlatformTestCase() {
         assertSmallEditorFont(view.stateFont(), style)
     }
 
-    fun `test copy and arrow controls share one container`() {
+    fun `test tool controls only include expand arrow`() {
         val t = tool("p1", "bash", ToolExecState.COMPLETED).also {
             it.input = mapOf("command" to "pwd")
             it.output = "/tmp"
@@ -190,7 +247,20 @@ class ToolViewTest : BasePlatformTestCase() {
 
         val view = ToolView(t)
 
-        assertEquals(2, view.controlCount())
+        assertEquals(1, view.controlCount())
+    }
+
+    fun `test expanded body is capped to fifteen rows`() {
+        val t = tool("p1", "bash", ToolExecState.COMPLETED).also {
+            it.input = mapOf("command" to "log")
+            it.output = (1..40).joinToString("\n") { line -> "line $line" }
+        }
+        val view = ToolView(t)
+
+        view.toggle()
+
+        assertEquals(15, view.bodyMaxRows())
+        assertTrue(view.preferredSize.height > 0)
     }
 
     // ---- update ------

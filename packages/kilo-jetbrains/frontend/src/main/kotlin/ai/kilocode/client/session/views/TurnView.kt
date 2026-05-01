@@ -106,8 +106,6 @@ private class TurnLayout : LayoutManager {
     }
 
     private fun gap(prev: MessageView?, comp: Component): Int {
-        val next = comp as? MessageView ?: return UiStyle.Gap.turn()
-        if (prev?.role == "assistant" && next.role == "assistant") return UiStyle.Card.groupGap()
-        return UiStyle.Gap.turn()
+        return UiStyle.Card.groupGap()
     }
 }
