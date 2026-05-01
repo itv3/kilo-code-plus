@@ -71,7 +71,7 @@ Monitor progress from the town dashboard. Chat with the mayor. Review PRs. Adjus
 | **Polecat** | A coding agent. Works on individual beads — reads code, makes changes, runs tests, pushes branches. |
 | **Refinery** | The review agent. Checks polecat output for quality, performs merges, and gates what lands in your codebase. |
 
-For a deeper dive, see [Concepts](/code-with-ai/gastown/concepts).
+For a deeper dive, see [Concepts](/docs/code-with-ai/gastown/concepts).
 
 ## The Mayor — Your Interface to the Town
 
@@ -101,13 +101,13 @@ The mayor runs persistently in your town — it's always available, even when no
 
 ## Getting Started
 
-- [Quick Start](/code-with-ai/gastown/quick-start) — Create your first town and see agents work in under 5 minutes
-- [Concepts](/code-with-ai/gastown/concepts) — Detailed explanation of towns, beads, convoys, and the agent lifecycle
-- [The Mayor](/code-with-ai/gastown/mayor) — How to interact with the coordination agent effectively
+- [Quick Start](/docs/code-with-ai/gastown/quick-start) — Create your first town and see agents work in under 5 minutes
+- [Concepts](/docs/code-with-ai/gastown/concepts) — Detailed explanation of towns, beads, convoys, and the agent lifecycle
+- [The Mayor](/docs/code-with-ai/gastown/mayor) — How to interact with the coordination agent effectively
 
 ## Guides
 
-- [Sling Work](/code-with-ai/gastown/sling-work) — Creating tasks, convoys, and staged workflows
-- [Code Review](/code-with-ai/gastown/code-review) — Merge strategies, review gates, and the refinery pipeline
-- [Settings](/code-with-ai/gastown/settings) — Model configuration, agent limits, custom instructions, and environment variables
-- [Troubleshooting](/code-with-ai/gastown/troubleshooting) — Common issues and how to resolve them
+- [Sling Work](/docs/code-with-ai/gastown/sling-work) — Creating tasks, convoys, and staged workflows
+- [Code Review](/docs/code-with-ai/gastown/code-review) — Merge strategies, review gates, and the refinery pipeline
+- [Settings](/docs/code-with-ai/gastown/settings) — Model configuration, agent limits, custom instructions, and environment variables
+- [Troubleshooting](/docs/code-with-ai/gastown/troubleshooting) — Common issues and how to resolve them

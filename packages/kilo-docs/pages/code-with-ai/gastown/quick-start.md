@@ -89,6 +89,6 @@ The Mayor is always running — it's your primary interface for managing the tow
 
 ## What's Next?
 
-- [Concepts](/code-with-ai/gastown/concepts) — Understand the building blocks in depth
-- [Sling Work](/code-with-ai/gastown/sling-work) — Learn about convoys and multi-step workflows
-- [Settings](/code-with-ai/gastown/settings) — Configure models, merge strategies, and agent behavior
+- [Concepts](/docs/code-with-ai/gastown/concepts) — Understand the building blocks in depth
+- [Sling Work](/docs/code-with-ai/gastown/sling-work) — Learn about convoys and multi-step workflows
+- [Settings](/docs/code-with-ai/gastown/settings) — Configure models, merge strategies, and agent behavior

@@ -137,7 +137,7 @@ This pattern compounds when combined with **convoys**:
 3. Bead 3: Implement the feature (builds on beads 1+2) → reviewed → merged
 4. **Landing review**: The full convoy branch is reviewed as a cohesive unit before merging to main
 
-At every stage, work is critiqued and refined. Combined with Kilo's [Code Review](/code-with-ai/gastown/code-review) product, this creates a pipeline where code is reviewed multiple times by different agents with different perspectives before it ever reaches your main branch.
+At every stage, work is critiqued and refined. Combined with Kilo's [Code Review](/docs/code-with-ai/gastown/code-review) product, this creates a pipeline where code is reviewed multiple times by different agents with different perspectives before it ever reaches your main branch.
 
 ## How It All Fits Together
 
