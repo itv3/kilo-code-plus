@@ -3,37 +3,27 @@ package ai.kilocode.client.session.ui
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupShowOptions
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ListUtil
 import com.intellij.ui.RoundedLineBorder
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBList
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Cursor
 import java.awt.FlowLayout
-import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
-import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 import javax.swing.SwingConstants
-import javax.swing.SwingUtilities
 
 class ModePicker : JBLabel() {
 
@@ -91,54 +81,26 @@ class ModePicker : JBLabel() {
     }
 
     private fun showPopup() {
-        val model = CollectionListModel(items)
-        val list = JBList(model).apply {
-            selectionMode = ListSelectionModel.SINGLE_SELECTION
-            visibleRowCount = minOf(ModePickerRenderer.MAX_ROWS, items.size.coerceAtLeast(1))
-            cellRenderer = ModePickerRenderer { selected?.id }
-        }
-        val idx = items.indexOfFirst { it.id == selected?.id }.takeIf { it >= 0 } ?: 0
-        list.selectedIndex = idx
-        ListUtil.installAutoSelectOnMouseMove(list)
-        ScrollingUtil.installActions(list)
-        TreeUIHelper.getInstance().installListSpeedSearch(list) { it.toString() }
-
-        lateinit var popup: JBPopup
-
-        fun activate(item: Item) {
-            selected = item
-            refresh()
-            onSelect(item)
-            popup.closeOk(null)
-        }
-
-        list.registerKeyboardAction(
-            { list.selectedValue?.let(::activate) },
-            KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-            JComponent.WHEN_FOCUSED,
-        )
-        list.addMouseListener(object : MouseAdapter() {
-            override fun mouseReleased(e: MouseEvent) {
-                val row = list.locationToIndex(e.point)
-                val bounds = row.takeIf { it >= 0 }?.let { list.getCellBounds(it, it) }
-                if (SwingUtilities.isLeftMouseButton(e) && bounds?.contains(e.point) == true) {
-                    activate(list.model.getElementAt(row))
-                }
-            }
-        })
-
-        val content = JBUI.Panels.simplePanel(ScrollPaneFactory.createScrollPane(list))
-        popup = JBPopupFactory.getInstance()
-            .createComponentPopupBuilder(content, list)
+        val item = selected ?: items.first()
+        val popup = JBPopupFactory.getInstance()
+            .createPopupChooserBuilder(items)
+            .setRenderer(ModePickerRenderer { selected?.id })
+            .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+            .setSelectedValue(item, true)
+            .setVisibleRowCount(minOf(ModePickerRenderer.MAX_ROWS, items.size.coerceAtLeast(1)))
             .setRequestFocus(true)
             .setCancelOnClickOutside(true)
             .setCancelKeyEnabled(true)
             .setResizable(false)
             .setMovable(false)
+            .setItemChosenCallback { value ->
+                selected = value
+                refresh()
+                onSelect(value)
+            }
             .createPopup()
 
         popup.show(PopupShowOptions.aboveComponent(this))
-        list.ensureIndexIsVisible(idx)
     }
 }
 
@@ -153,6 +115,8 @@ internal class ModePickerRenderer(
     }
 
     private val icon = JBLabel().apply {
+        horizontalAlignment = SwingConstants.CENTER
+        verticalAlignment = SwingConstants.CENTER
         UiStyle.Components.transparent(this)
     }
     private val title = SimpleColoredComponent().apply {
@@ -172,17 +136,23 @@ internal class ModePickerRenderer(
     private val body = JPanel(BorderLayout()).apply {
         UiStyle.Components.transparent(this)
     }
+    private val row = JPanel(BorderLayout())
 
     init {
         isOpaque = true
-        (layout as BorderLayout).hgap = UiStyle.Gap.inline()
-        border = JBUI.Borders.empty(UiStyle.Space.MD, UiStyle.Space.LG)
-        icon.horizontalAlignment = SwingConstants.CENTER
-        icon.verticalAlignment = SwingConstants.CENTER
+        row.isOpaque = true
+        (row.layout as BorderLayout).hgap = UiStyle.Gap.inline()
+        row.border = JBUI.Borders.empty(
+            UiStyle.Space.MD,
+            UiStyle.Space.LG,
+            UiStyle.Space.MD,
+            UiStyle.Space.LG,
+        )
         body.add(head, BorderLayout.NORTH)
         body.add(desc, BorderLayout.CENTER)
-        add(icon, BorderLayout.WEST)
-        add(body, BorderLayout.CENTER)
+        row.add(icon, BorderLayout.WEST)
+        row.add(body, BorderLayout.CENTER)
+        add(row, BorderLayout.CENTER)
     }
 
     override fun getListCellRendererComponent(
@@ -191,14 +161,15 @@ internal class ModePickerRenderer(
         index: Int,
         selected: Boolean,
         focused: Boolean,
-    ): java.awt.Component {
-        val focus = list.hasFocus() || focused
+    ): Component {
+        val focus = selected || list.hasFocus() || focused
         val fg = UIUtil.getListForeground(selected, focus)
-        val bg = UIUtil.getListBackground(selected, focus)
+        val bg = if (selected) UIUtil.getListBackground(true, focus) else list.background
         val weak = if (selected) fg else UiStyle.Colors.weak()
         val warn = if (selected) fg else UiStyle.Colors.warning()
 
-        background = bg
+        background = list.background
+        row.background = bg
         title.clear()
         title.append(value.display, SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, fg))
         desc.clear()
@@ -227,4 +198,6 @@ internal class ModePickerRenderer(
     internal fun badgeVisible(): Boolean = badge.isVisible
 
     internal fun badgeText(): String = badge.text
+
+    internal fun detailsVisible(): Boolean = desc.isVisible
 }

@@ -1,6 +1,7 @@
 package ai.kilocode.client.session.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ui.components.JBList
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 @Suppress("UnstableApiUsage")
@@ -41,11 +42,21 @@ class ModePickerTest : BasePlatformTestCase() {
     fun `test deprecated item renders badge`() {
         val item = ModePicker.Item("old", "Old", "Deprecated mode", deprecated = true)
         val renderer = ModePickerRenderer { "code" }
-        val list = com.intellij.ui.components.JBList(listOf(item))
+        val list = JBList(listOf(item))
 
         renderer.getListCellRendererComponent(list, item, 0, false, false)
 
         assertTrue(renderer.badgeVisible())
         assertEquals("deprecated", renderer.badgeText())
+    }
+
+    fun `test item without details hides details row`() {
+        val item = ModePicker.Item("code", "Code")
+        val renderer = ModePickerRenderer { "code" }
+        val list = JBList(listOf(item))
+
+        renderer.getListCellRendererComponent(list, item, 0, false, false)
+
+        assertFalse(renderer.detailsVisible())
     }
 }
