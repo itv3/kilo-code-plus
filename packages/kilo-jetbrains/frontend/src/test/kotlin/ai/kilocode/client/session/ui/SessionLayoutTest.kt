@@ -115,6 +115,50 @@ class SessionLayoutTest : BasePlatformTestCase() {
         assertEquals(300 - 10 - 11, c2.width)
     }
 
+    fun `test user prompt is inset from left when enough width remains`() {
+        val p = panel(width = 300)
+        val child = view(height = 20, kind = SessionView.Kind.UserPrompt)
+        p.add(child)
+        p.doLayout()
+
+        assertEquals(100, child.x)
+        assertEquals(200, child.width)
+        assertEquals(20, child.height)
+    }
+
+    fun `test user prompt is not inset when it would be too narrow`() {
+        val p = panel(width = 199)
+        val child = view(height = 20, kind = SessionView.Kind.UserPrompt)
+        p.add(child)
+        p.doLayout()
+
+        assertEquals(0, child.x)
+        assertEquals(199, child.width)
+        assertEquals(20, child.height)
+    }
+
+    fun `test user prompt inset composes with layout padding`() {
+        val p = panel(width = 350, pad = JBUI.insets(0, 12, 0, 18))
+        val child = view(height = 20, kind = SessionView.Kind.UserPrompt)
+        p.add(child)
+        p.doLayout()
+
+        assertEquals(12 + 100, child.x)
+        assertEquals(350 - 12 - 18 - 100, child.width)
+        assertEquals(20, child.height)
+    }
+
+    fun `test default session view is not inset`() {
+        val p = panel(width = 300)
+        val child = view(height = 20, kind = SessionView.Kind.Default)
+        p.add(child)
+        p.doLayout()
+
+        assertEquals(0, child.x)
+        assertEquals(300, child.width)
+        assertEquals(20, child.height)
+    }
+
     // ---- invisible children ------
 
     fun `test invisible child is skipped in layout`() {
@@ -176,6 +220,12 @@ class SessionLayoutTest : BasePlatformTestCase() {
 
     /** A fixed-height JLabel. The width is reported as 0 until layout sets it. */
     private fun label(height: Int) = object : JLabel("test") {
+        override fun getPreferredSize(): Dimension = Dimension(0, height)
+    }
+
+    private fun view(height: Int, kind: SessionView.Kind) = object : JLabel("test"), SessionView {
+        override val sessionViewKind = kind
+
         override fun getPreferredSize(): Dimension = Dimension(0, height)
     }
 }

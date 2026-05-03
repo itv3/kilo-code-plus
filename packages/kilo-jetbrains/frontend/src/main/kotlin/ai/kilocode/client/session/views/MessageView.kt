@@ -2,6 +2,7 @@ package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Message
+import ai.kilocode.client.session.ui.SessionView
 import ai.kilocode.client.session.ui.SessionStyle
 import ai.kilocode.client.session.ui.SessionStyleTarget
 import ai.kilocode.client.ui.UiStyle
@@ -14,17 +15,20 @@ import ai.kilocode.client.ui.UiStyle
  * part view gets the full available width and height is computed correctly
  * for HTML-backed views.
  *
- * Styling: user messages keep a 1 px top separator. Spacing around
- * messages and parts is owned by [ai.kilocode.client.session.ui.SessionLayout].
+ * Styling: user messages render as rounded prompt bubbles. Spacing around
+ * messages is owned by [ai.kilocode.client.session.ui.SessionLayout].
  */
 class MessageView(
     val msg: Message,
     private var style: SessionStyle = SessionStyle.current(),
-) : ai.kilocode.client.session.ui.SessionLayoutPanel(UiStyle.Card.groupGap()), SessionStyleTarget {
+) : ai.kilocode.client.session.ui.SessionLayoutPanel(UiStyle.Card.groupGap()), SessionStyleTarget, SessionView {
 
     constructor(msg: Message) : this(msg, SessionStyle.current())
 
     val role: String get() = msg.info.role
+
+    override val sessionViewKind: SessionView.Kind
+        get() = if (role == "user") SessionView.Kind.UserPrompt else SessionView.Kind.Default
 
     private val parts = LinkedHashMap<String, PartView>()
 

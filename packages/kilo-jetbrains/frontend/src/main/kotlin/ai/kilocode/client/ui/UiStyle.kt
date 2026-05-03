@@ -22,6 +22,9 @@ object UiStyle {
         const val BUTTON_WIDTH = 28
         const val BUTTON = 24
         const val SCROLL = 16
+        const val USER_PROMPT = 100
+
+        fun userPromptMin(): Int = JBUI.scale(USER_PROMPT)
     }
 
     object Space {
@@ -98,6 +101,8 @@ object UiStyle {
 
         fun transcript(): java.awt.Insets = JBUI.insets(Space.PAD, Space.PAD, Space.PAD, Space.PAD)
 
+        fun userPrompt(): Int = Size.userPromptMin()
+
         fun empty(): Border = JBUI.Borders.empty(Space.PAD)
 
         fun prompt(): Border = JBUI.Borders.empty(Space.LG, Space.PAD, Space.LG, Space.PAD)
@@ -121,7 +126,10 @@ object UiStyle {
             JBUI.Borders.empty(Space.XS, Space.LG),
         )!!
 
-        fun user(): Border = JBUI.Borders.customLineTop(Colors.line())
+        fun user(): Border = JBUI.Borders.compound(
+            RoundedLineBorder(Colors.line(), JBUI.scale(Space.LG)),
+            JBUI.Borders.empty(Space.LG, Space.PAD),
+        )!!
 
         fun assistant(): Border = JBUI.Borders.empty()
     }

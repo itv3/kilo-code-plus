@@ -45,8 +45,9 @@ class SessionLayout(
             if (!comp.isVisible) continue
             if (!first) h += gap
             first = false
+            val child = bounds(ins, w, comp)
             // Pre-size to available width so HTML panes reflow before we measure
-            comp.setSize(w, comp.height.coerceAtLeast(1))
+            comp.setSize(child.width, comp.height.coerceAtLeast(1))
             h += comp.preferredSize.height
         }
         return JBDimension(w + ins.left + ins.right, h)
@@ -63,12 +64,22 @@ class SessionLayout(
             if (!comp.isVisible) continue
             if (!first) y += gap
             first = false
+            val child = bounds(ins, w, comp)
             // Fix width first so HTML reflows, then read the resulting height
-            comp.setSize(w, comp.height.coerceAtLeast(1))
+            comp.setSize(child.width, comp.height.coerceAtLeast(1))
             val h = comp.preferredSize.height
-            comp.setBounds(ins.left, y, w, h)
+            comp.setBounds(child.left, y, child.width, h)
             y += h
         }
+    }
+
+    private fun bounds(ins: Insets, width: Int, comp: Component): Bounds {
+        val view = comp as? SessionView ?: return Bounds(ins.left, width)
+        if (view.sessionViewKind != SessionView.Kind.UserPrompt) return Bounds(ins.left, width)
+        val shift = UiStyle.Insets.userPrompt()
+        val next = width - shift
+        if (next < UiStyle.Size.userPromptMin()) return Bounds(ins.left, width)
+        return Bounds(ins.left + shift, next)
     }
 
     private fun insets(parent: Container): Insets {
@@ -80,6 +91,8 @@ class SessionLayout(
             base.right + pad.right,
         )
     }
+
+    private data class Bounds(val left: Int, val width: Int)
 }
 
 /**
