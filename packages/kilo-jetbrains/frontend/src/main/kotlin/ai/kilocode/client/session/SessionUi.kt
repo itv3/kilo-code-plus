@@ -9,8 +9,8 @@ import ai.kilocode.client.session.model.SessionState
 import ai.kilocode.client.session.ui.ConnectionPanel
 import ai.kilocode.client.session.ui.EmptySessionPanel
 import ai.kilocode.client.session.ui.LabelPicker
-import ai.kilocode.client.session.ui.ModePicker
-import ai.kilocode.client.session.ui.ModelPicker
+import ai.kilocode.client.session.ui.mode.ModePicker
+import ai.kilocode.client.session.ui.model.ModelPicker
 import ai.kilocode.client.session.ui.PermissionPanel
 import ai.kilocode.client.session.ui.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel

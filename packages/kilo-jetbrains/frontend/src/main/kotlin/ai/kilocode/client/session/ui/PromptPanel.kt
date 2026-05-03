@@ -1,6 +1,8 @@
 package ai.kilocode.client.session.ui
 
 import ai.kilocode.client.plugin.KiloBundle
+import ai.kilocode.client.session.ui.mode.ModePicker
+import ai.kilocode.client.session.ui.model.ModelPicker
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.log.ChatLogSummary
 import ai.kilocode.log.KiloLog

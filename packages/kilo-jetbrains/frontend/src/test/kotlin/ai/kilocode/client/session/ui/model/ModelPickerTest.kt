@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.model
 
 import ai.kilocode.rpc.dto.ModelSelectionDto
 import com.intellij.icons.AllIcons
@@ -6,6 +6,9 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.EmptyIcon
+import java.awt.ComponentOrientation
+import java.awt.Point
+import java.awt.Rectangle
 
 @Suppress("UnstableApiUsage")
 class ModelPickerTest : BasePlatformTestCase() {
@@ -47,6 +50,39 @@ class ModelPickerTest : BasePlatformTestCase() {
         assertEquals("openai/gpt-4o", rows.single().item.key)
     }
 
+    fun `test favorites match provider qualified key when model ids collide`() {
+        val rows = modelPickerRows(listOf(
+            item("gpt", "OpenAI GPT", "openai", "OpenAI"),
+            item("gpt", "Azure GPT", "azure", "Azure"),
+        ), listOf(ModelSelectionDto("azure", "gpt")), "")
+
+        assertEquals("azure/gpt", rows[0].item.key)
+        assertEquals("Favorites", modelPickerSectionTitle(rows, 0))
+    }
+
+    fun `test favorites preserve order and skip unavailable models`() {
+        val rows = modelPickerRows(listOf(
+            item("a", "A", "openai", "OpenAI"),
+            item("b", "B", "openai", "OpenAI"),
+        ), listOf(
+            ModelSelectionDto("openai", "b"),
+            ModelSelectionDto("missing", "model"),
+            ModelSelectionDto("openai", "a"),
+        ), "")
+
+        assertEquals(listOf("openai/b", "openai/a"), rows.take(2).map { it.item.key })
+        assertTrue(rows.take(2).all { it.favorite })
+    }
+
+    fun `test filter matches model id and provider name`() {
+        val rows = modelPickerRows(listOf(
+            item("claude-sonnet", "Sonnet", "anthropic", "Anthropic"),
+            item("gpt", "GPT", "openai", "OpenAI"),
+        ), emptyList(), "anth")
+
+        assertEquals(listOf("anthropic/claude-sonnet"), rows.map { it.item.key })
+    }
+
     fun `test kilo provider group is first and other providers keep source order`() {
         val rows = modelPickerRows(listOf(
             item("gpt", "GPT", "openai", "OpenAI"),
@@ -83,6 +119,30 @@ class ModelPickerTest : BasePlatformTestCase() {
 
         assertEquals(0, modelPickerIndex(rows, 1))
         assertEquals(-1, modelPickerIndex(emptyList(), 1))
+    }
+
+    fun `test setItems preserves selected model when refreshed without default`() {
+        val picker = ModelPicker()
+        val rows = listOf(
+            item("a", "A", "openai", "OpenAI"),
+            item("b", "B", "openai", "OpenAI"),
+        )
+
+        picker.setItems(rows, "openai/b")
+        picker.setItems(rows)
+
+        assertEquals("openai/b", picker.selectedForTest()?.key)
+    }
+
+    fun `test provider qualified default selects duplicate model id from correct provider`() {
+        val picker = ModelPicker()
+
+        picker.setItems(listOf(
+            item("gpt", "OpenAI GPT", "openai", "OpenAI"),
+            item("gpt", "Azure GPT", "azure", "Azure"),
+        ), "azure/gpt")
+
+        assertEquals("azure/gpt", picker.selectedForTest()?.key)
     }
 
     fun `test item keeps reasoning variants`() {
@@ -148,6 +208,33 @@ class ModelPickerTest : BasePlatformTestCase() {
         renderer.getListCellRendererComponent(list, row, 0, false, false)
 
         assertSame(AllIcons.Nodes.Favorite, renderer.starIcon())
+    }
+
+    fun `test renderer updates favorite star after favorites change`() {
+        val row = ModelPickerRow(item("auto", "Auto", "kilo", "Kilo"), "Kilo", false)
+        val model = CollectionListModel(listOf(row))
+        val fav = mutableSetOf<String>()
+        val renderer = ModelPickerRenderer(model, { null }, { fav })
+        val list = JBList(model)
+
+        renderer.getListCellRendererComponent(list, row, 0, false, false)
+        assertSame(EmptyIcon.ICON_16, renderer.starIcon())
+
+        fav += "kilo/auto"
+        renderer.getListCellRendererComponent(list, row, 0, false, false)
+        assertSame(AllIcons.Nodes.Favorite, renderer.starIcon())
+    }
+
+    fun `test favorite click area uses trailing edge in both orientations`() {
+        val list = JBList(listOf<ModelPickerRow>())
+        val bounds = Rectangle(10, 0, 100, 20)
+
+        assertTrue(ModelPickerRenderer.isFavoriteClick(list, bounds, Point(100, 10)))
+        assertFalse(ModelPickerRenderer.isFavoriteClick(list, bounds, Point(20, 10)))
+
+        list.componentOrientation = ComponentOrientation.RIGHT_TO_LEFT
+        assertTrue(ModelPickerRenderer.isFavoriteClick(list, bounds, Point(20, 10)))
+        assertFalse(ModelPickerRenderer.isFavoriteClick(list, bounds, Point(100, 10)))
     }
 
     fun `test renderer shows free badge for free model`() {

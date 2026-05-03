@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.model
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.ui.UiStyle
@@ -94,6 +94,8 @@ class ModelPicker : JBLabel() {
         selected = items.firstOrNull { it.key == key || it.id == key }
         refresh()
     }
+
+    internal fun selectedForTest(): Item? = selected
 
     private fun refresh() {
         if (items.isEmpty()) {

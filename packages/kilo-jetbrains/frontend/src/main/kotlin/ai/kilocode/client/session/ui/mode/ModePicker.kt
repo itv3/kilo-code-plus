@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.mode
 
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -40,7 +40,7 @@ class ModePicker : JBLabel() {
 
     fun setItems(values: List<Item>, default: String? = null) {
         items = values.sortedWith(compareBy<Item> { it.display.lowercase() }.thenBy { it.id })
-        selected = if (default != null) items.firstOrNull { it.id == default } else items.firstOrNull()
+        selected = default?.let { id -> items.firstOrNull { it.id == id } } ?: items.firstOrNull()
         refresh()
     }
 
@@ -50,6 +50,8 @@ class ModePicker : JBLabel() {
     }
 
     internal fun itemsForTest(): List<Item> = items
+
+    internal fun selectedForTest(): Item? = selected
 
     private fun refresh() {
         if (items.isEmpty()) {

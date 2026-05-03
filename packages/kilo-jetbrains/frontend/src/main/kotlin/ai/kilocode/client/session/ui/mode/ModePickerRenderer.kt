@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.mode
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.ui.UiStyle

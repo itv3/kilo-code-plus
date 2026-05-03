@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.model
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.ModelSelectionDto

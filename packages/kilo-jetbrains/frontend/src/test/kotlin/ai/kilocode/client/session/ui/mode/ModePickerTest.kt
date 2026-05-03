@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.mode
 
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBList
@@ -40,6 +40,24 @@ class ModePickerTest : BasePlatformTestCase() {
         assertEquals(first, second)
     }
 
+    fun `test missing default falls back to first sorted mode`() {
+        val picker = ModePicker()
+
+        picker.setItems(listOf(
+            ModePicker.Item("plan", "Plan"),
+            ModePicker.Item("ask", "Ask"),
+        ), "missing")
+
+        assertEquals("Ask ▴", picker.text)
+        assertEquals("ask", picker.selectedForTest()?.id)
+    }
+
+    fun `test item string includes description for chooser search`() {
+        val item = ModePicker.Item("code", "Code", "Build and edit files")
+
+        assertEquals("Code Build and edit files", item.toString())
+    }
+
     fun `test deprecated item renders badge`() {
         val item = ModePicker.Item("old", "Old", "Deprecated mode", deprecated = true)
         val renderer = ModePickerRenderer { "code" }
@@ -61,5 +79,30 @@ class ModePickerTest : BasePlatformTestCase() {
         cell.getListCellRendererComponent(list, item, 0, false, false)
 
         assertFalse(renderer.detailsVisible())
+    }
+
+    fun `test blank description hides details row`() {
+        val item = ModePicker.Item("code", "Code", " ")
+        val renderer = ModePickerRenderer { "code" }
+        val cell: ListCellRenderer<ModePicker.Item> = renderer
+        val list = JBList(listOf(item))
+
+        cell.getListCellRendererComponent(list, item, 0, false, false)
+
+        assertFalse(renderer.detailsVisible())
+    }
+
+    fun `test renderer hides deprecated badge after reused for normal item`() {
+        val old = ModePicker.Item("old", "Old", deprecated = true)
+        val code = ModePicker.Item("code", "Code")
+        val renderer = ModePickerRenderer { "code" }
+        val cell: ListCellRenderer<ModePicker.Item> = renderer
+        val list = JBList(listOf(old, code))
+
+        cell.getListCellRendererComponent(list, old, 0, false, false)
+        assertTrue(renderer.badgeVisible())
+
+        cell.getListCellRendererComponent(list, code, 1, false, false)
+        assertFalse(renderer.badgeVisible())
     }
 }
