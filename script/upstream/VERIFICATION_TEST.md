@@ -4,6 +4,8 @@ Use this checklist to verify CLI and VS Code extension behavior after upstream m
 
 ## CLI
 
+Start the CLI from this branch with `bun install` if dependencies are missing, then `bun run dev` from the repository root. Pass CLI arguments after the script, for example `bun run dev -- help`.
+
 - Ask which model it is using.
 - Ask it to use two subagents:
   - One subagent runs `git status`.
@@ -16,6 +18,8 @@ Use this checklist to verify CLI and VS Code extension behavior after upstream m
 - Change from Code mode to Ask mode and ask it what it can do.
 
 ## VS Code Extension
+
+Start the VS Code extension from this branch with `bun install` if dependencies are missing, then `bun run extension` from the repository root. Use `bun run extension -- --no-build` only when a current build already exists.
 
 Run all CLI verification steps in the VS Code extension, then verify the extension-specific flows:
 
