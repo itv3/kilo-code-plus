@@ -79,8 +79,7 @@ export const dict = {
 
   // Slow-repo snapshot prompt
   "snapshot.slowRepo.header": "快照速度较慢",
-  "snapshot.slowRepo.question":
-    "初始化快照系统耗时较长，可能是由于仓库的大小。\n\n是否要为此仓库禁用快照？",
+  "snapshot.slowRepo.question": "初始化快照系统耗时较长，可能是由于仓库的大小。\n\n是否要为此仓库禁用快照？",
   "snapshot.slowRepo.answer.continue": "继续使用快照",
   "snapshot.slowRepo.answer.continue.description": "等待快照完成。初始快照构建好之后，后续回合会很快。",
   "snapshot.slowRepo.answer.disable": "为此项目禁用",

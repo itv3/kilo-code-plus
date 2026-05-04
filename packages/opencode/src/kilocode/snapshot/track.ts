@@ -40,14 +40,14 @@
 
 import { Duration, Effect, Fiber } from "effect"
 import { applyEdits, modify } from "jsonc-parser"
-import { AppFileSystem } from "@opencode-ai/shared/filesystem"
+import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { Question } from "@/question"
 import type { MessageID, PartID, SessionID } from "@/session/schema"
 import { PartID as PartIDSchema } from "@/session/schema"
 import type { MessageV2 } from "@/session/message-v2"
 import { KilocodeConfig } from "@/kilocode/config/config"
 import { ConfigParse } from "@/config/parse"
-import { Log } from "@/util"
+import * as Log from "@opencode-ai/core/util/log"
 import { iife } from "@/util/iife"
 import { makeRuntime } from "@/effect/run-service"
 import type { Config } from "@/config"
@@ -71,11 +71,7 @@ import type { Config } from "@/config"
  */
 interface SessionPartAPI {
   readonly updatePart: <T extends MessageV2.Part>(part: T) => Effect.Effect<T>
-  readonly removePart: (input: {
-    sessionID: SessionID
-    messageID: MessageID
-    partID: PartID
-  }) => Effect.Effect<PartID>
+  readonly removePart: (input: { sessionID: SessionID; messageID: MessageID; partID: PartID }) => Effect.Effect<PartID>
 }
 
 type SessionRuntime = {
