@@ -150,6 +150,86 @@ class KiloCliDataParserTest {
     }
 
     @Test
+    fun `parseChatEvent - read tool part preserves input metadata and time`() {
+        val data = globalEvent("""
+            "type": "message.part.updated",
+            "properties": {
+                "sessionID": "ses_1",
+                "part": {
+                    "id": "part_read",
+                    "sessionID": "ses_1",
+                    "messageID": "msg_1",
+                    "type": "tool",
+                    "tool": "read",
+                    "callID": "call_read",
+                    "metadata": { "loaded": ["README.MD"] },
+                    "state": {
+                        "status": "completed",
+                        "input": { "filePath": "README.MD", "limit": 200 },
+                        "metadata": { "source": "workspace" },
+                        "title": "Read README.MD",
+                        "time": { "start": 10, "end": 12 }
+                    }
+                }
+            }
+        """)
+
+        val result = KiloCliDataParser.parseChatEvent("message.part.updated", data)
+        assertNotNull(result)
+        assertTrue(result is ChatEventDto.PartUpdated)
+        assertEquals("read", result.part.tool)
+        assertEquals("completed", result.part.state)
+        assertEquals("Read README.MD", result.part.title)
+        assertEquals("README.MD", result.part.input["filePath"])
+        assertEquals("200", result.part.input["limit"])
+        assertEquals("workspace", result.part.metadata["source"])
+        assertEquals("[\"README.MD\"]", result.part.metadata["loaded"])
+        assertEquals(10.0, result.part.time?.start)
+        assertEquals(12.0, result.part.time?.end)
+    }
+
+    @Test
+    fun `parseChatEvent - bash tool part preserves command output and error`() {
+        val data = globalEvent("""
+            "type": "message.part.updated",
+            "properties": {
+                "sessionID": "ses_1",
+                "part": {
+                    "id": "part_bash",
+                    "sessionID": "ses_1",
+                    "messageID": "msg_1",
+                    "type": "tool",
+                    "tool": "bash",
+                    "callID": "call_bash",
+                    "state": {
+                        "status": "error",
+                        "input": {
+                            "command": "git remote -v",
+                            "description": "View git remote URLs"
+                        },
+                        "metadata": { "command": "git remote -v" },
+                        "output": "origin git@example.com:repo.git",
+                        "error": "exit code 1",
+                        "time": { "start": 20, "end": 25 }
+                    }
+                }
+            }
+        """)
+
+        val result = KiloCliDataParser.parseChatEvent("message.part.updated", data)
+        assertNotNull(result)
+        assertTrue(result is ChatEventDto.PartUpdated)
+        assertEquals("bash", result.part.tool)
+        assertEquals("error", result.part.state)
+        assertEquals("git remote -v", result.part.input["command"])
+        assertEquals("View git remote URLs", result.part.input["description"])
+        assertEquals("origin git@example.com:repo.git", result.part.output)
+        assertEquals("exit code 1", result.part.error)
+        assertEquals(20.0, result.part.time?.start)
+        assertEquals(25.0, result.part.time?.end)
+    }
+
+    @Test
     fun `parseChatEvent - turn open`() {
         val data = globalEvent("""
             "type": "session.turn.open",
