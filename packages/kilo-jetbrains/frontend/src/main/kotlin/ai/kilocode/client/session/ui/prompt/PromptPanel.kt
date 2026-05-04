@@ -27,6 +27,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
+import com.intellij.xml.util.XmlStringUtil
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -108,8 +109,8 @@ class PromptPanel(
     private val button: SendButton = SendButton().apply {
         icon = SEND_ICON
         isFocusPainted = false
-        toolTipText = KeymapUtil.createTooltipText(KiloBundle.message("prompt.button.send"), SendPromptAction.ID)
         addActionListener {
+            syncTooltip()
             val id = if (busy) StopSessionAction.ID else SendPromptAction.ID
             val action = ActionManager.getInstance().getAction(id)
                 ?: return@addActionListener
@@ -163,6 +164,7 @@ class PromptPanel(
         bar.add(button)
         shell.add(bar, BorderLayout.SOUTH)
         add(shell, BorderLayout.CENTER)
+        syncTooltip()
     }
 
     fun setReady(value: Boolean) {
@@ -266,16 +268,25 @@ class PromptPanel(
     }
 
     private fun syncTooltip() {
+        button.toolTipText = tooltip()
+    }
+
+    private fun tooltip(): String {
         val id = if (busy) StopSessionAction.ID else SendPromptAction.ID
         val text = if (busy) {
             KiloBundle.message("prompt.button.stop")
         } else {
             KiloBundle.message("prompt.button.send")
         }
-        button.toolTipText = tooltip(id, text)
+        val tip = KeymapUtil.createTooltipText(text, id)
+        if (busy) return tip
+        val stop = KeymapUtil.getFirstKeyboardShortcutText(StopSessionAction.ID)
+        if (stop.isEmpty()) return tip
+        return XmlStringUtil.wrapInHtml(
+            XmlStringUtil.escapeString(tip) + "<br>" +
+                XmlStringUtil.escapeString(KiloBundle.message("prompt.button.send.tooltip.stop", stop))
+        )
     }
-
-    private fun tooltip(id: String, text: String): String = KeymapUtil.createTooltipText(text, id)
 
     private fun placeholder(): String {
         val send = KeymapUtil.getFirstKeyboardShortcutText(SendPromptAction.ID)
