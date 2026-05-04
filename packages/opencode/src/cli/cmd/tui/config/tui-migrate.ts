@@ -1,5 +1,5 @@
 import path from "path"
-import { access, constants } from "fs/promises"
+import { access, constants } from "fs/promises" // kilocode_change
 import { type ParseError as JsoncParseError, applyEdits, modify, parse as parseJsonc } from "jsonc-parser"
 import { unique } from "remeda"
 import z from "zod"
@@ -99,6 +99,7 @@ function normalizeTui(data: Record<string, unknown>) {
 }
 
 async function backupAndStripLegacy(file: string, source: string) {
+  // kilocode_change start
   // On POSIX, `rename()` can overwrite a read-only file when the parent directory is
   // writable, bypassing file-level write permissions. Check write access explicitly so
   // that callers can distinguish "strip succeeded" from "strip skipped" correctly.
@@ -106,6 +107,7 @@ async function backupAndStripLegacy(file: string, source: string) {
     .then(() => true)
     .catch(() => false)
   if (!writable) return false
+  // kilocode_change end
 
   const backup = file + ".tui-migration.bak"
   const hasBackup = await Filesystem.exists(backup)
