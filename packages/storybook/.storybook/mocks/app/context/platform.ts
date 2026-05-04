@@ -1,4 +1,13 @@
-import type { Platform } from "../../../../../app/src/context/platform"
+type Platform = {
+  platform: "web"
+  openLink(url: string): void
+  restart(): Promise<void>
+  back(): void
+  forward(): void
+  notify(message: string): Promise<void>
+  fetch: typeof fetch
+  parseMarkdown(markdown: string): Promise<string>
+}
 
 const value: Platform = {
   platform: "web",
