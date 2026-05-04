@@ -57,7 +57,7 @@ export default defineMain({
       },
       server: {
         fs: {
-          allow: [searchForWorkspaceRoot(process.cwd()), ui, mocks],
+          allow: [searchForWorkspaceRoot(process.cwd()), ui, mocks], // kilocode_change
         },
       },
     })
