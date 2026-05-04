@@ -81,7 +81,6 @@ export interface AutocompleteStatusBarStateProps {
   snoozed?: boolean
   model?: string
   provider?: string
-  profileName?: string | null
   hasNoUsableProvider?: boolean
   totalSessionCost: number
   completionCount: number

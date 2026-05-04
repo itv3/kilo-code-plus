@@ -25,14 +25,6 @@ describe("AutocompleteModel", () => {
     mockClient.kilo.fim.mockReset()
   })
 
-  describe("constructor", () => {
-    it("defaults profileName and profileType to null", () => {
-      const model = new AutocompleteModel()
-      expect(model.profileName).toBeNull()
-      expect(model.profileType).toBeNull()
-    })
-  })
-
   describe("setConnectionService", () => {
     it("sets the connection service after construction", () => {
       const model = new AutocompleteModel()

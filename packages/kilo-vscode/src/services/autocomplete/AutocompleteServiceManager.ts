@@ -368,7 +368,6 @@ export class AutocompleteServiceManager {
       snoozed: this.isSnoozed(),
       model: this.getCurrentModelName(),
       provider: this.getCurrentProviderName(),
-      profileName: this.model.profileName,
       hasNoUsableProvider: this.hasNoUsableProvider(),
       totalSessionCost: this.sessionCost,
       completionCount: this.completionCount,

@@ -5,8 +5,6 @@ import { DEFAULT_AUTOCOMPLETE_MODEL, getAutocompleteModel } from "../../shared/a
 export class AutocompleteModel {
   private connectionService: KiloConnectionService | null = null
   private currentModel: string = DEFAULT_AUTOCOMPLETE_MODEL.id
-  public profileName: string | null = null
-  public profileType: string | null = null
 
   constructor(connectionService?: KiloConnectionService) {
     if (connectionService) {
