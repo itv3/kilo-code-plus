@@ -67,6 +67,9 @@ class PromptPanel(
             ed.setBorder(JBUI.Borders.empty())
             ed.scrollPane.border = JBUI.Borders.empty()
             ed.scrollPane.viewportBorder = JBUI.Borders.empty()
+            ed.backgroundColor = style.editorScheme.defaultBackground
+            ed.scrollPane.background = style.editorScheme.defaultBackground
+            ed.scrollPane.viewport.background = style.editorScheme.defaultBackground
             ed.settings.isUseSoftWraps = true
             ed.settings.isAdditionalPageAtBottom = false
             ed.scrollPane.horizontalScrollBarPolicy =
@@ -178,6 +181,7 @@ class PromptPanel(
         this.style = style
         editor.font = style.transcriptFont
         editor.getEditor(false)?.let(style::applyToEditor)
+        editor.background = style.editorScheme.defaultBackground
         val height = style.transcriptFont.size * UiStyle.Size.LINES + JBUI.scale(
             UiStyle.Size.CHROME)
         editor.preferredSize = JBDimension(0, height)
@@ -224,7 +228,7 @@ class PromptPanel(
                     RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON,
                 )
-                g2.color = UiStyle.Colors.panel()
+                g2.color = style.editorScheme.defaultBackground
                 val size = arc.get()
                 g2.fillRoundRect(0, 0, width, height, size, size)
                 val active = UIUtil.isFocusAncestor(editor)

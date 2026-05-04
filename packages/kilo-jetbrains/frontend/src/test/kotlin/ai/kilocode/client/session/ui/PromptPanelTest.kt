@@ -17,6 +17,13 @@ class PromptPanelTest : BasePlatformTestCase() {
         assertEquals(style.editorSize, font.size)
     }
 
+    fun `test prompt input uses editor background`() {
+        val style = SessionStyle.current()
+        val panel = PromptPanel(project, {}, {})
+
+        assertEquals(style.editorScheme.defaultBackground, panel.defaultFocusedComponent.background)
+    }
+
     fun `test applyStyle updates prompt input and height`() {
         val panel = PromptPanel(project, {}, {})
         val style = SessionStyle.create(family = "Courier New", size = 26)
