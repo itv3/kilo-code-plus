@@ -1,16 +1,22 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.prompt
 
+import ai.kilocode.client.actions.SendPromptAction
 import ai.kilocode.client.plugin.KiloBundle
+import ai.kilocode.client.session.ui.ReasoningPicker
+import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionStyleTarget
 import ai.kilocode.client.session.ui.mode.ModePicker
 import ai.kilocode.client.session.ui.model.ModelPicker
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.log.ChatLogSummary
 import ai.kilocode.log.KiloLog
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
-import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -22,8 +28,6 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.Icon
@@ -39,7 +43,7 @@ class PromptPanel(
     private val project: Project,
     private val onSend: (String) -> Unit,
     private val onAbort: () -> Unit,
-) : BorderLayoutPanel(), SessionStyleTarget {
+) : BorderLayoutPanel(), SessionStyleTarget, SendPromptContext {
 
     companion object {
         private val LOG = KiloLog.create(PromptPanel::class.java)
@@ -56,12 +60,17 @@ class PromptPanel(
     private var style = SessionStyle.current()
     private val shell = PromptShell()
 
-    private val editor = EditorTextField(project, PlainTextFileType.INSTANCE).apply {
+    private val editor = PromptEditorTextField(project, this).apply {
         border = JBUI.Borders.empty()
         setFontInheritedFromLAF(false)
         setPlaceholder(KiloBundle.message("prompt.placeholder"))
         setShowPlaceholderWhenFocused(true)
         setOneLineMode(false)
+        addDocumentListener(object : DocumentListener {
+            override fun documentChanged(event: DocumentEvent) {
+                syncButton()
+            }
+        })
         addSettingsProvider { ed ->
             style.applyToEditor(ed)
             ed.setBorder(JBUI.Borders.empty())
@@ -83,14 +92,6 @@ class PromptPanel(
                     shell.repaint()
                 }
             })
-            ed.contentComponent.addKeyListener(object : KeyAdapter() {
-                override fun keyPressed(e: KeyEvent) {
-                    if (e.keyCode == KeyEvent.VK_ENTER && !e.isShiftDown) {
-                        e.consume()
-                        submit("enter")
-                    }
-                }
-            })
         }
     }
 
@@ -102,8 +103,19 @@ class PromptPanel(
         maximumSize = JBDimension(JBUI.scale(UiStyle.Size.BUTTON_WIDTH), Short.MAX_VALUE.toInt())
         preferredSize = JBUI.size(UiStyle.Size.BUTTON, UiStyle.Size.BUTTON)
         addActionListener {
-            if (busy) onAbort()
-            else submit("button")
+            if (busy) {
+                onAbort()
+                return@addActionListener
+            }
+            val action = ActionManager.getInstance().getAction(SendPromptAction.ID)
+                ?: return@addActionListener
+            ActionManager.getInstance().tryToExecute(
+                action,
+                null,
+                editor,
+                ActionPlaces.UNKNOWN,
+                true,
+            )
         }
     }
 
@@ -117,6 +129,10 @@ class PromptPanel(
 
     @Volatile
     private var busy = false
+    private var ready = false
+
+    override val isSendEnabled: Boolean
+        get() = ready && !busy && text().isNotEmpty()
 
     init {
         border = JBUI.Borders.compound(
@@ -146,7 +162,8 @@ class PromptPanel(
     }
 
     fun setReady(value: Boolean) {
-        button.isEnabled = value
+        ready = value
+        syncButton()
     }
 
     fun setBusy(value: Boolean) {
@@ -157,6 +174,7 @@ class PromptPanel(
         } else {
             KiloBundle.message("prompt.button.send")
         }
+        syncButton()
     }
 
     fun setResetVisible(value: Boolean) {
@@ -166,6 +184,10 @@ class PromptPanel(
     }
 
     fun text(): String = editor.text.trim()
+
+    override fun send() {
+        submit("action")
+    }
 
     internal fun inputFont() = editor.font
 
@@ -192,6 +214,7 @@ class PromptPanel(
 
     fun clear() {
         editor.text = ""
+        syncButton()
     }
 
     fun focus() {
@@ -199,12 +222,16 @@ class PromptPanel(
     }
 
     private fun submit(src: String) {
-        if (busy) return
+        if (!isSendEnabled) return
         val txt = text()
         LOG.debug { "${ChatLogSummary.prompt(txt)} src=$src busy=$busy" }
         if (txt.isNotEmpty()) {
             onSend(txt)
         }
+    }
+
+    private fun syncButton() {
+        button.isEnabled = busy || isSendEnabled
     }
 
     private inner class PromptShell : BorderLayoutPanel() {

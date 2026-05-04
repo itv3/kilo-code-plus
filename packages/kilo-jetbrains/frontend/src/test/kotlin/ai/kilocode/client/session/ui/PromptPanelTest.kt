@@ -1,6 +1,10 @@
 package ai.kilocode.client.session.ui
 
+import ai.kilocode.client.session.ui.prompt.PromptDataKeys
+import ai.kilocode.client.session.ui.prompt.PromptPanel
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.SwingUtilities
@@ -74,6 +78,15 @@ class PromptPanelTest : BasePlatformTestCase() {
         assertTrue(panel.resetVisibleForTest())
     }
 
+    fun `test prompt editor exposes send context`() {
+        val panel = PromptPanel(project, {}, {})
+        val sink = TestSink()
+
+        (panel.defaultFocusedComponent as UiDataProvider).uiDataSnapshot(sink)
+
+        assertSame(panel, sink.send)
+    }
+
     fun `test pickers belong to rounded shell`() {
         val panel = PromptPanel(project, {}, {})
         val shell = panel.shellForTest()
@@ -82,5 +95,36 @@ class PromptPanelTest : BasePlatformTestCase() {
         assertTrue(SwingUtilities.isDescendingFrom(panel.model, shell))
         assertTrue(SwingUtilities.isDescendingFrom(panel.reasoning, shell))
         assertSame(shell, panel.mode.parent.parent)
+    }
+
+    private class TestSink : DataSink {
+        var send: Any? = null
+
+        override fun <T : Any> set(key: com.intellij.openapi.actionSystem.DataKey<T>, data: T?) {
+            if (key == PromptDataKeys.SEND) send = data
+        }
+
+        override fun <T : Any> setNull(key: com.intellij.openapi.actionSystem.DataKey<T>) {
+        }
+
+        override fun <T : Any> lazyNull(key: com.intellij.openapi.actionSystem.DataKey<T>) {
+        }
+
+        override fun <T : Any> lazyValue(
+            key: com.intellij.openapi.actionSystem.DataKey<T>,
+            data: (com.intellij.openapi.actionSystem.DataMap) -> T?,
+        ) {
+        }
+
+        override fun uiDataSnapshot(provider: com.intellij.openapi.actionSystem.UiDataProvider) {
+            provider.uiDataSnapshot(this)
+        }
+
+        override fun dataSnapshot(provider: com.intellij.openapi.actionSystem.DataSnapshotProvider) {
+            provider.dataSnapshot(this)
+        }
+
+        override fun uiDataSnapshot(provider: com.intellij.openapi.actionSystem.DataProvider) {
+        }
     }
 }
