@@ -21,6 +21,7 @@ import ai.kilocode.client.session.ui.SessionStyleTarget
 import ai.kilocode.client.session.update.EVENT_FLUSH_MS
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.session.update.SessionControllerEvent
+import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.log.ChatLogSummary
 import ai.kilocode.log.KiloLog
@@ -42,11 +43,13 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Cursor
 import java.awt.Rectangle
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.BoxLayout
 import javax.swing.BoxLayout.Y_AXIS
 import javax.swing.Icon
-import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -127,7 +130,7 @@ class SessionUi private constructor(
 
     private lateinit var scroll: JBScrollPane
 
-    private lateinit var jump: JButton
+    private lateinit var jump: JBLabel
 
     private lateinit var question: QuestionPanel
     private lateinit var permission: PermissionPanel
@@ -177,16 +180,15 @@ class SessionUi private constructor(
             verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
             horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
         }
-        jump = JButton(patchedIcon(SCROLL_ICON)).apply {
-            border = JBUI.Borders.empty()
-            isContentAreaFilled = false
-            isBorderPainted = false
-            isFocusPainted = false
-            isFocusable = false
-            isOpaque = false
+        jump = JBLabel(patchedIcon(SCROLL_ICON)).apply {
+            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
             toolTipText = KiloBundle.message("session.scroll.bottom")
             isVisible = false
-            addActionListener { jumpBottom() }
+            addMouseListener(object : MouseAdapter() {
+                override fun mouseClicked(e: MouseEvent) {
+                    jumpBottom()
+                }
+            })
         }
         question = QuestionPanel(controller)
         permission = PermissionPanel(controller)
@@ -211,7 +213,7 @@ class SessionUi private constructor(
         }, BorderLayout.SOUTH)
         root.addOverlay(jump) { _, child ->
             val size = child.preferredSize
-            val gap = JBUI.scale(12)
+            val gap = JBUI.scale(UiStyle.Space.PAD)
             Rectangle(
                 sessionContent.x + sessionContent.width - size.width - gap,
                 sessionContent.y + sessionContent.height - size.height - gap,

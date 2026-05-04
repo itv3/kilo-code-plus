@@ -41,7 +41,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import javax.swing.JButton
+import java.awt.event.MouseEvent
+import javax.swing.JLabel
 import javax.swing.JScrollBar
 import javax.swing.JLayeredPane
 
@@ -407,7 +408,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         drainScroll()
         assertTrue(button.isVisible)
 
-        button.doClick()
+        click(button)
         drainScroll()
 
         assertBottom(bar)
@@ -518,8 +519,13 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
 
     private fun scrollBar(): JScrollBar = find<JBScrollPane>(ui).verticalScrollBar
 
-    private fun jumpButton(): JButton {
-        return find<SessionRootPanel>(ui).overlay.components.single() as JButton
+    private fun jumpButton(): JLabel {
+        return find<SessionRootPanel>(ui).overlay.components.single() as JLabel
+    }
+
+    private fun click(label: JLabel) {
+        val event = MouseEvent(label, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 1, 1, 1, false)
+        for (listener in label.mouseListeners) listener.mouseClicked(event)
     }
 
     private fun bottom(bar: JScrollBar): Int = (bar.maximum - bar.visibleAmount).coerceAtLeast(0)
