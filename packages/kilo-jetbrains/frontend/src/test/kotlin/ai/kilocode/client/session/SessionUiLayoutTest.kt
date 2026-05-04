@@ -41,6 +41,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import javax.swing.JButton
 import javax.swing.JScrollBar
 import javax.swing.JLayeredPane
 
@@ -106,7 +107,7 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
 
         assertSame(root.content, stack.parent)
         assertSame(stack, connection.parent)
-        assertEquals(0, root.overlay.componentCount)
+        assertEquals(1, root.overlay.componentCount)
         assertEquals(listOf(question, permission, connection, prompt), stack.components.toList())
     }
 
@@ -372,6 +373,50 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         assertEquals(value, bar.value)
     }
 
+    fun `test scroll button appears only when transcript is away from bottom`() {
+        showMessages()
+        fillTranscript(24)
+        val button = jumpButton()
+        val bar = scrollBar()
+
+        setBottom(bar)
+        drainScroll()
+        assertFalse(button.isVisible)
+
+        setValue(bar, bottom(bar) / 2)
+        drainScroll()
+        assertTrue(button.isVisible)
+
+        setBottom(bar)
+        drainScroll()
+        assertFalse(button.isVisible)
+    }
+
+    fun `test scroll button scrolls transcript to bottom`() {
+        showMessages()
+        fillTranscript(24)
+        val button = jumpButton()
+        val bar = scrollBar()
+        setValue(bar, bottom(bar) / 2)
+        drainScroll()
+        assertTrue(button.isVisible)
+
+        button.doClick()
+        drainScroll()
+
+        assertBottom(bar)
+        assertFalse(button.isVisible)
+    }
+
+    fun `test scroll button remains hidden outside transcript body`() {
+        val button = jumpButton()
+
+        settle()
+        layout()
+
+        assertFalse(button.isVisible)
+    }
+
     fun `test history load follows initially empty transcript`() {
         rpc.history.addAll(history(24))
         ui = SessionUi(project, workspace, sessions, app, scope, id = "ses_test", displayMs = 0).apply {
@@ -466,6 +511,10 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
     }
 
     private fun scrollBar(): JScrollBar = find<JBScrollPane>(ui).verticalScrollBar
+
+    private fun jumpButton(): JButton {
+        return find<SessionRootPanel>(ui).overlay.components.single() as JButton
+    }
 
     private fun bottom(bar: JScrollBar): Int = (bar.maximum - bar.visibleAmount).coerceAtLeast(0)
 
