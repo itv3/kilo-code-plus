@@ -13,7 +13,7 @@ import ai.kilocode.client.session.model.SessionState
 import ai.kilocode.client.session.ui.ConnectionPanel
 import ai.kilocode.client.session.ui.EmptySessionPanel
 import ai.kilocode.client.session.ui.PermissionPanel
-import ai.kilocode.client.session.ui.PromptPanel
+import ai.kilocode.client.session.ui.prompt.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel
 import ai.kilocode.client.session.ui.SessionMessageListPanel
 import ai.kilocode.client.session.ui.SessionRootPanel
@@ -109,6 +109,12 @@ class SessionUiLayoutTest : BasePlatformTestCase() {
         assertSame(stack, connection.parent)
         assertEquals(1, root.overlay.componentCount)
         assertEquals(listOf(question, permission, connection, prompt), stack.components.toList())
+    }
+
+    fun `test default focused component is prompt editor`() {
+        val prompt = find<PromptPanel>(ui)
+
+        assertSame(prompt.defaultFocusedComponent, ui.defaultFocusedComponent)
     }
 
     fun `test connection panel uses stack width and sits above prompt`() {

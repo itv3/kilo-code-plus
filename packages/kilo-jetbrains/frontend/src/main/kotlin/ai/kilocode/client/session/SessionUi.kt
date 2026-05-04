@@ -12,7 +12,7 @@ import ai.kilocode.client.session.ui.ReasoningPicker
 import ai.kilocode.client.session.ui.mode.ModePicker
 import ai.kilocode.client.session.ui.model.ModelPicker
 import ai.kilocode.client.session.ui.PermissionPanel
-import ai.kilocode.client.session.ui.PromptPanel
+import ai.kilocode.client.session.ui.prompt.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel
 import ai.kilocode.client.session.ui.SessionRootPanel
 import ai.kilocode.client.session.ui.SessionMessageListPanel
@@ -47,6 +47,7 @@ import javax.swing.BoxLayout
 import javax.swing.BoxLayout.Y_AXIS
 import javax.swing.Icon
 import javax.swing.JButton
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
@@ -149,6 +150,8 @@ class SessionUi private constructor(
     internal val id: String? get() = controller.id
 
     internal fun currentStyle() = style
+
+    val defaultFocusedComponent: JComponent get() = prompt.defaultFocusedComponent
 
     private fun buildUi() {
         root = SessionRootPanel()
