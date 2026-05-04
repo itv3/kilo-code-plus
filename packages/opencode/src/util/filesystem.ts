@@ -1,4 +1,4 @@
-import { chmod, mkdir, readFile, rename, stat as statFile, writeFile } from "fs/promises"
+import { chmod, mkdir, readFile, rename, stat as statFile, writeFile } from "fs/promises" // kilocode_change
 import { createWriteStream, existsSync, statSync } from "fs"
 import { realpathSync } from "fs"
 // kilocode_change start - harden containment checks
