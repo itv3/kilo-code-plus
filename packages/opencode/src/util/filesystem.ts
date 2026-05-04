@@ -60,7 +60,9 @@ function isEnoent(e: unknown): e is { code: "ENOENT" } {
 
 export async function write(p: string, content: string | Buffer | Uint8Array, mode?: number): Promise<void> {
   // kilocode_change start - atomic write via temp-file + rename to avoid partial reads on concurrent saves
-  const tmp = `${p}.${process.pid}.${Date.now()}.tmp`
+  // Include a random suffix so that concurrent writes to the same path never share a temp file,
+  // even on platforms where Date.now() has low resolution (e.g. Windows ~100ms).
+  const tmp = `${p}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`
   async function doWrite() {
     if (mode) {
       await writeFile(tmp, content, { mode })
