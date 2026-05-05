@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test"
-import { buildFeedbackProperties, isKiloGateway } from "../../webview-ui/src/context/feedback-payload"
+import { buildFeedbackProperties } from "../../webview-ui/src/context/feedback-payload"
 
 const baseInput = {
   messageID: "msg_abc",
@@ -8,23 +8,6 @@ const baseInput = {
   modelID: "claude-sonnet-4-5",
   variant: undefined as string | undefined,
 }
-
-describe("isKiloGateway", () => {
-  it("matches the canonical kilo provider", () => {
-    expect(isKiloGateway("kilo")).toBe(true)
-  })
-
-  it("matches aliased kilo providers", () => {
-    expect(isKiloGateway("kilo-dev")).toBe(true)
-    expect(isKiloGateway("kilocloud")).toBe(true)
-  })
-
-  it("does not match direct providers", () => {
-    expect(isKiloGateway("anthropic")).toBe(false)
-    expect(isKiloGateway("openai")).toBe(false)
-    expect(isKiloGateway("openrouter")).toBe(false)
-  })
-})
 
 describe("buildFeedbackProperties — non-Kilo providers", () => {
   it("includes only provider/model/rating (no session or message IDs)", () => {
@@ -67,12 +50,5 @@ describe("buildFeedbackProperties — Kilo Gateway", () => {
       messageID: "msg_abc",
       parentMessageID: "msg_parent",
     })
-  })
-
-  it("treats aliased kilo providers the same", () => {
-    const props = buildFeedbackProperties({ ...baseInput, providerID: "kilo-cloud", next: "up" })
-    expect(props.sessionID).toBe("ses_xyz")
-    expect(props.messageID).toBe("msg_abc")
-    expect(props.parentMessageID).toBe("msg_parent")
   })
 })

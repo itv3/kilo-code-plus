@@ -21,7 +21,7 @@ export interface RateInput {
 }
 
 export function isKiloGateway(providerID: string): boolean {
-  return providerID.startsWith("kilo")
+  return providerID === "kilo"
 }
 
 export function buildFeedbackProperties(input: RateInput, previousRating?: Rating): Record<string, unknown> {
