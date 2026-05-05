@@ -274,7 +274,13 @@ Options:
   --concurrency <n>        Parallel classifications (default: 8).
 ```
 
-The command pre-filters with `git diff --name-only <last-merged-upstream>..HEAD`, excluding kilo-only paths (anything under `packages/kilo-*/`, any `**/kilocode/**` subdir, `script/upstream/`) and non-code assets (SVG, PNG, fonts, archives, lock files, etc. — see `SKIP_EXTENSIONS` / `SKIP_FILENAMES` in the script). The remaining text files are classified against the transformed upstream baseline:
+The command pre-filters with `git diff --name-only <last-merged-upstream>..HEAD` and drops:
+
+- Kilo-only paths: anything under `packages/kilo-*/`, any `**/kilocode/**` subdir, `script/upstream/`.
+- Non-code assets: SVG, PNG, fonts, archives, lock files, etc. (see `SKIP_EXTENSIONS` / `SKIP_FILENAMES` in the script).
+- Files covered by the merge config's `keepOurs` or `skipFiles` lists in `utils/config.ts` — these are intentionally preserved or removed in Kilo and must not be bulk-reset.
+
+It then issues one `git cat-file --batch-check` for all remaining paths to grab upstream blob sizes in a single subprocess. Files absent upstream land in `upstream-missing` immediately; files above 256 KB land in `too-large` (generated manifests, giant snapshots). Only the survivors get fetched via `git show` and classified:
 
 | Bucket | Meaning | Action |
 |---|---|---|
@@ -287,6 +293,7 @@ The command pre-filters with `git diff --name-only <last-merged-upstream>..HEAD`
 | `local-missing` | File tracked but missing locally (deleted in Kilo) | skipped |
 | `binary-diff` | Binary file differs | skipped (use `reset-to-upstream.ts` per file) |
 | `binary-identical` | Binary file already matches | none |
+| `too-large` | Upstream blob > 256 KB | skipped (use `reset-to-upstream.ts` per file) |
 
 Line counting uses an in-process multiset diff (pure JS, no subprocess) for speed and robustness against concurrent git output stalls on big files. Moved/reordered lines therefore count as zero drift, which is usually what you want for "is this file meaningfully different from upstream".
 

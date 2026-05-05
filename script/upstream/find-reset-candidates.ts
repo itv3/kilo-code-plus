@@ -29,9 +29,11 @@
  */
 
 import { $ } from "bun"
+import { defaultConfig } from "./utils/config"
 import { error, header, info, success, warn } from "./utils/logger"
+import { matches } from "./utils/match"
 import { classifyDrift, resetFile, type Bucket, type ClassifyResult } from "./utils/reset"
-import { last, normalize, root } from "./utils/upstream"
+import { last, normalize, root, upstreamSizes } from "./utils/upstream"
 
 interface Args {
   scope?: string
@@ -87,6 +89,12 @@ const SKIP_EXTENSIONS = new Set([
 
 const SKIP_FILENAMES = new Set(["bun.lock", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "Cargo.lock"])
 
+// Cap the blob size we'll classify. Generated manifests (models-snapshot.ts,
+// openapi.json), media bundled in upstream-only packages (MP4s, PNGs), etc.
+// are not meaningful reset candidates and big git show outputs can stall Bun
+// subprocesses under concurrency.
+const MAX_SIZE = 256 * 1024
+
 const RESET_BUCKETS = new Set<Bucket>(["markers-only", "cosmetic-only", "small-diff"])
 
 const BUCKET_ORDER: Bucket[] = [
@@ -97,6 +105,7 @@ const BUCKET_ORDER: Bucket[] = [
   "identical",
   "binary-diff",
   "binary-identical",
+  "too-large",
   "upstream-missing",
   "local-missing",
 ]
@@ -154,11 +163,13 @@ function args(): Args {
   }
 }
 
-async function candidates(
-  commit: string,
-  scope: string | undefined,
-  top: string,
-): Promise<{ files: string[]; skippedAssets: string[] }> {
+interface CandidateSet {
+  files: string[]
+  skippedAssets: string[]
+  skippedPolicy: string[]
+}
+
+async function candidates(commit: string, scope: string | undefined, top: string): Promise<CandidateSet> {
   const pathspecs = [scope ?? ".", ...KILO_ONLY_PATHSPECS]
   const result = await $`git diff --name-only ${commit}..HEAD -- ${pathspecs}`.cwd(top).quiet().nothrow()
   if (result.exitCode !== 0) {
@@ -172,11 +183,31 @@ async function candidates(
 
   const files: string[] = []
   const skippedAssets: string[] = []
+  const skippedPolicy: string[] = []
   for (const file of all) {
-    if (asset(file)) skippedAssets.push(file)
-    else files.push(file)
+    if (asset(file)) {
+      skippedAssets.push(file)
+      continue
+    }
+    if (policyExempt(file)) {
+      skippedPolicy.push(file)
+      continue
+    }
+    files.push(file)
   }
-  return { files, skippedAssets }
+  return { files, skippedAssets, skippedPolicy }
+}
+
+/**
+ * Files the upstream merge config marks as "keep ours" (Kilo-specific preserved
+ * versions) or "skip" (upstream-only, removed in Kilo) should never be touched
+ * by the bulk resetter. They show up in `git diff` against raw upstream but
+ * resetting them would undo deliberate Kilo decisions.
+ */
+function policyExempt(file: string): boolean {
+  if (matches(file, defaultConfig.keepOurs)) return true
+  if (matches(file, defaultConfig.skipFiles)) return true
+  return false
 }
 
 function asset(file: string): boolean {
@@ -212,6 +243,12 @@ function group(entries: Entry[]): Map<Bucket, Entry[]> {
   return out
 }
 
+function detail(entry: Entry): string {
+  if (entry.lines === undefined) return ""
+  if (entry.bucket === "too-large") return ` (${Math.round(entry.lines / 1024)} KB)`
+  return ` (${entry.lines} line${entry.lines === 1 ? "" : "s"})`
+}
+
 function describe(bucket: Bucket, count: number, dryRun: boolean): { label: string; action: string } {
   if (bucket === "markers-only") return { label: `markers-only (${count})`, action: dryRun ? "would reset" : "reset" }
   if (bucket === "cosmetic-only")
@@ -222,12 +259,14 @@ function describe(bucket: Bucket, count: number, dryRun: boolean): { label: stri
   if (bucket === "binary-diff") return { label: `binary-diff (${count})`, action: "skipped" }
   if (bucket === "binary-identical") return { label: `binary-identical (${count})`, action: "nothing to do" }
   if (bucket === "upstream-missing") return { label: `upstream-missing (${count})`, action: "skipped" }
+  if (bucket === "too-large") return { label: `too-large (${count})`, action: "skipped" }
   return { label: `local-missing (${count})`, action: "skipped" }
 }
 
 function report(
   entries: Entry[],
   skippedAssets: string[],
+  skippedPolicy: string[],
   dryRun: boolean,
   tag: string,
   commit: string,
@@ -245,6 +284,7 @@ function report(
   lines.push(`- Mode: ${dryRun ? "dry-run (no writes)" : "auto-apply"}`)
   lines.push(`- Total candidates: ${entries.length}`)
   if (skippedAssets.length > 0) lines.push(`- Non-code assets skipped: ${skippedAssets.length}`)
+  if (skippedPolicy.length > 0) lines.push(`- Config-protected files skipped: ${skippedPolicy.length}`)
   lines.push("")
 
   lines.push(`## Summary`)
@@ -258,6 +298,7 @@ function report(
     lines.push(`| ${bucket} | ${items.length} | ${info.action} |`)
   }
   if (skippedAssets.length > 0) lines.push(`| non-code-asset | ${skippedAssets.length} | skipped |`)
+  if (skippedPolicy.length > 0) lines.push(`| config-protected | ${skippedPolicy.length} | skipped |`)
   lines.push("")
 
   for (const bucket of BUCKET_ORDER) {
@@ -267,7 +308,7 @@ function report(
     lines.push(`## ${info.label} — ${info.action}`)
     lines.push("")
     for (const entry of items) {
-      const suffix = entry.lines !== undefined ? ` (${entry.lines} line${entry.lines === 1 ? "" : "s"})` : ""
+      const suffix = detail(entry)
       const note = entry.reset === false ? " [reset failed]" : ""
       lines.push(`- \`${entry.file}\`${suffix}${note}`)
     }
@@ -298,26 +339,50 @@ async function main() {
   info(`Review limit: ${opts.reviewLimit} non-marker diff line(s)`)
   info(`Mode: ${opts.dryRun ? "dry-run" : "auto-apply"}`)
 
-  const { files, skippedAssets } = await candidates(version.commit, scope, top)
+  const { files, skippedAssets, skippedPolicy } = await candidates(version.commit, scope, top)
   if (skippedAssets.length > 0) info(`Skipping ${skippedAssets.length} non-code asset(s)`)
+  if (skippedPolicy.length > 0) info(`Skipping ${skippedPolicy.length} file(s) protected by keepOurs/skipFiles config`)
   if (files.length === 0) {
     success("No code files differ from upstream in scope. Nothing to do.")
     return
   }
   info(`Candidate files: ${files.length}`)
 
-  const entries = await concurrent(files, opts.concurrency, async (file, i) => {
+  // Batch-check upstream sizes in one subprocess. Pre-bucket absent and oversized
+  // files so we don't spawn `git show` for a 16 MB .mp4 that would stall under
+  // concurrency anyway.
+  info(`Checking upstream blob sizes...`)
+  const sizes = await upstreamSizes(version.commit, files)
+  const classifyQueue: string[] = []
+  const preBucketed: Entry[] = []
+  for (const file of files) {
+    const size = sizes.get(file)
+    if (size === null || size === undefined) {
+      preBucketed.push({ file, bucket: "upstream-missing" })
+      continue
+    }
+    if (size > MAX_SIZE) {
+      preBucketed.push({ file, bucket: "too-large", lines: size })
+      continue
+    }
+    classifyQueue.push(file)
+  }
+  if (preBucketed.length > 0) info(`Pre-bucketed ${preBucketed.length} (missing or too-large)`)
+  info(`Classifying ${classifyQueue.length} file(s)...`)
+
+  const classified = await concurrent(classifyQueue, opts.concurrency, async (file, i) => {
     const result = await classifyDrift({
       root: top,
       file,
       commit: version.commit,
       reviewLimit: opts.reviewLimit,
     })
-    if ((i + 1) % 25 === 0 || i === files.length - 1) {
-      info(`Classified ${i + 1}/${files.length}`)
+    if ((i + 1) % 50 === 0 || i === classifyQueue.length - 1) {
+      info(`Classified ${i + 1}/${classifyQueue.length}`)
     }
     return { file, ...result } as Entry
   })
+  const entries = [...preBucketed, ...classified]
 
   if (!opts.dryRun) {
     const resets = entries.filter((e) => RESET_BUCKETS.has(e.bucket))
@@ -334,6 +399,7 @@ async function main() {
     report(
       entries,
       skippedAssets,
+      skippedPolicy,
       opts.dryRun,
       version.tag,
       version.commit,

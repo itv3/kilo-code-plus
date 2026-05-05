@@ -79,6 +79,7 @@ export type Bucket =
   | "binary-diff"
   | "binary-identical"
   | "local-missing"
+  | "too-large"
 
 export interface ClassifyResult {
   bucket: Bucket
