@@ -3,7 +3,7 @@
 // by exercising detect/decode/encode/read/write/readSync directly, without
 // going through the Effect runtime, agent harness, or tool pipeline. They are
 // cheap, fast, and cover the internal branches (BOM handling, ASCII/UTF-8
-// normalization, jschardet fallback, unsupported encoding rejection) that the
+// normalization, chardet fallback, unsupported encoding rejection) that the
 // integration tests cannot hit deterministically.
 
 import { describe, expect, test } from "bun:test"
@@ -36,7 +36,7 @@ describe("Encoding.detect", () => {
   })
 
   test("plain ASCII is normalized to utf-8 (not 'ascii')", () => {
-    // jschardet reports "ascii" for pure-ASCII input; the namespace treats
+    // chardet may report "ASCII" or similar for pure-ASCII input; the namespace treats
     // that as UTF-8 because UTF-8 is an ASCII superset and iconv-lite doesn't
     // expose an "ascii" label that round-trips identically.
     expect(Encoding.detect(Buffer.from("plain ascii text\n"))).toBe("utf-8")
@@ -52,8 +52,8 @@ describe("Encoding.detect", () => {
   })
 
   test("BOM-less UTF-8 containing multi-byte chars is not misdetected", () => {
-    // Regression guard: bytes that are valid UTF-8 must skip the jschardet
-    // branch. jschardet has been known to misfire on short CJK samples.
+    // Regression guard: bytes that are valid UTF-8 must skip the chardet
+    // branch. Encoding detectors have been known to misfire on short CJK samples.
     expect(Encoding.detect(Buffer.from("한글 テスト 中文", "utf-8"))).toBe("utf-8")
   })
 

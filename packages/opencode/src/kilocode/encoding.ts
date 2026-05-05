@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "fs/promises"
 import { readFileSync } from "fs"
 import { dirname } from "path"
-import jschardet from "jschardet"
+import chardet from "chardet"
 import iconv from "iconv-lite"
 
 /**
@@ -9,9 +9,9 @@ import iconv from "iconv-lite"
  *
  * Supported:
  *  - UTF-8 (with or without BOM)
- *  - UTF-16 LE/BE with BOM (detected by jschardet)
- *  - UTF-32 LE/BE with BOM (detected by jschardet)
- *  - Legacy Latin and CJK encodings (detected by jschardet)
+ *  - UTF-16 LE/BE with BOM (detected by chardet)
+ *  - UTF-32 LE/BE with BOM (detected by chardet)
+ *  - Legacy Latin and CJK encodings (detected by chardet)
  *
  * Not supported:
  *  - UTF-16 or UTF-32 without BOM (ambiguous, rare)
@@ -19,7 +19,7 @@ import iconv from "iconv-lite"
  * Detection strategy:
  *  1. If the bytes are valid UTF-8, treat as UTF-8 (tracking the presence of a
  *     BOM so it can be written back).
- *  2. Otherwise, trust jschardet. jschardet only reports the wide UTF variants
+ *  2. Otherwise, trust chardet. chardet only reports the wide UTF variants
  *     when a BOM is present, which aligns with the contract above.
  *
  * iconv-lite's UTF codecs strip BOMs on decode and do not emit them on encode,
@@ -55,7 +55,7 @@ export namespace Encoding {
     return le || be
   }
 
-  /** Remap jschardet labels to iconv-lite compatible names. */
+  /** Remap chardet labels to iconv-lite compatible names. */
   function normalize(name: string): string {
     const lower = name.toLowerCase().replace(/[^a-z0-9]/g, "")
     const map: Record<string, string> = {
@@ -105,9 +105,9 @@ export namespace Encoding {
   export function detect(bytes: Buffer): string {
     if (bytes.length === 0) return DEFAULT
     if (isUtf8(bytes)) return hasUtf8Bom(bytes) ? UTF8_BOM : DEFAULT
-    const result = jschardet.detect(bytes)
-    if (!result.encoding) return DEFAULT
-    const enc = normalize(result.encoding)
+    const result = chardet.detect(bytes)
+    if (!result) return DEFAULT
+    const enc = normalize(result)
     if (!iconv.encodingExists(enc)) return DEFAULT
     return enc
   }
