@@ -15,6 +15,7 @@ import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBUI
 import java.awt.Color
+import java.awt.Container
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.Rectangle
@@ -37,6 +38,7 @@ internal class SessionScroll(
     companion object {
         private val ICON = IconLoader.getIcon("/icons/scroll-bottom.svg", SessionScroll::class.java)
         private const val THRESHOLD = 32
+        private const val OPEN_PASSES = 12
     }
 
     val component = JBScrollPane(body).apply {
@@ -52,6 +54,8 @@ internal class SessionScroll(
     private var style = SessionStyle.current()
     private var tail = true
     private var auto = false
+    private var opening = false
+    private var stable = -1
     private var seq = 0
 
     init {
@@ -109,6 +113,20 @@ internal class SessionScroll(
         followPass(++seq, 2)
     }
 
+    fun openBottom(done: () -> Unit) {
+        opening = true
+        stable = -1
+        tail = true
+        auto = true
+        show(messages)
+        auto = false
+        val id = ++seq
+        revalidateScroll()
+        ApplicationManager.getApplication().invokeLater {
+            openPass(id, OPEN_PASSES, done)
+        }
+    }
+
     fun refresh() {
         updateJump()
     }
@@ -122,6 +140,8 @@ internal class SessionScroll(
     }
 
     private fun jumpBottom() {
+        opening = false
+        stable = -1
         tail = true
         auto = true
         show(messages)
@@ -133,10 +153,7 @@ internal class SessionScroll(
         if (id != seq || !tail) return
         auto = true
         try {
-            component.viewport.view?.revalidate()
-            component.viewport.view?.doLayout()
-            component.revalidate()
-            component.doLayout()
+            layoutScroll()
             scrollToBottom()
             updateJump()
         } finally {
@@ -148,17 +165,81 @@ internal class SessionScroll(
         }
     }
 
+    private fun openPass(id: Int, remaining: Int, done: () -> Unit) {
+        if (id != seq) {
+            opening = false
+            stable = -1
+            return
+        }
+        auto = true
+        val prev = bottom()
+        try {
+            tail = true
+            layoutScroll()
+            scrollToBottom()
+            updateJump()
+        } finally {
+            auto = false
+        }
+        if (remaining <= 0) {
+            opening = false
+            stable = -1
+            done()
+            return
+        }
+        val next = bottom()
+        val left = if (next == prev && next == stable) remaining - 1 else OPEN_PASSES
+        stable = next
+        ApplicationManager.getApplication().invokeLater {
+            openPass(id, left, done)
+        }
+    }
+
+    private fun layoutScroll() {
+        revalidateScroll()
+        layoutTree(root)
+        host.doLayout()
+        component.validate()
+        component.doLayout()
+        component.viewport.validate()
+        component.viewport.doLayout()
+        layoutTree(component.viewport.view)
+        component.validate()
+        component.doLayout()
+        component.viewport.validate()
+        component.viewport.doLayout()
+    }
+
+    private fun revalidateScroll() {
+        root.revalidate()
+        host.revalidate()
+        component.viewport.view?.revalidate()
+        component.viewport.revalidate()
+        component.revalidate()
+    }
+
+    private fun layoutTree(comp: java.awt.Component?) {
+        if (comp !is Container) return
+        comp.doLayout()
+        for (child in comp.components) layoutTree(child)
+    }
+
     private fun scrollToBottom() {
         val view = component.viewport.view ?: return
         val y = (view.height - component.viewport.extentSize.height).coerceAtLeast(0)
         component.viewport.viewPosition = Point(0, y)
         (view as? JComponent)?.scrollRectToVisible(Rectangle(0, view.height.coerceAtLeast(1) - 1, 1, 1))
         val bar = component.verticalScrollBar
-        bar.value = (bar.maximum - bar.visibleAmount).coerceAtLeast(bar.minimum)
+        bar.value = bottom()
+    }
+
+    private fun bottom(): Int {
+        val bar = component.verticalScrollBar
+        return (bar.maximum - bar.visibleAmount).coerceAtLeast(bar.minimum)
     }
 
     private fun onScroll() {
-        if (auto) {
+        if (auto || opening) {
             updateJump()
             return
         }

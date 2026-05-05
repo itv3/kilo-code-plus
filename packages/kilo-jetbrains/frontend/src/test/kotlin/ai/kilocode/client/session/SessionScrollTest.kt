@@ -2,8 +2,10 @@ package ai.kilocode.client.session
 
 import ai.kilocode.client.session.ui.SessionMessageListPanel
 import ai.kilocode.rpc.dto.ChatEventDto
+import ai.kilocode.rpc.dto.PermissionRequestDto
 import ai.kilocode.rpc.dto.SessionStatusDto
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CompletableDeferred
 
 @Suppress("UnstableApiUsage")
 class SessionScrollTest : SessionUiTestBase() {
@@ -258,6 +260,7 @@ class SessionScrollTest : SessionUiTestBase() {
         settle()
         drainScroll()
         val bar = scrollBar()
+        assertBottom(bar)
         setValue(bar, bottom(bar) / 2)
         val value = bar.value
 
@@ -265,6 +268,58 @@ class SessionScrollTest : SessionUiTestBase() {
         drainScroll()
 
         assertEquals(value, bar.value)
+    }
+
+    fun `test existing session scrolls after recovered dock layout`() {
+        rpc.history.addAll(history(24))
+        rpc.pendingPermissionList.add(PermissionRequestDto("perm_pending", "ses_test", "edit", listOf("*.kt")))
+
+        ui = newUi(id = "ses_test")
+        settle()
+        drainScroll()
+
+        assertBottom(scrollBar())
+    }
+
+    fun `test replayed event during existing session open cannot cancel initial bottom`() {
+        val gate = CompletableDeferred<Unit>()
+        rpc.historyGate = gate
+        rpc.history.addAll(history(24))
+
+        ui = newUi(id = "ses_test")
+        emit(ChatEventDto.MessageUpdated("ses_test", message("replay")), flush = false)
+        gate.complete(Unit)
+        settle()
+        drainScroll()
+
+        assertBottom(scrollBar())
+    }
+
+    fun `test existing session waits for panel layout before initial bottom scroll`() {
+        rpc.history.addAll(history(24))
+
+        ui = newUi(id = "ses_test")
+        ui.setSize(0, 0)
+        settle()
+
+        ui.setSize(800, 600)
+        drainScroll()
+
+        assertBottom(scrollBar())
+    }
+
+    fun `test existing session scroll waits through deferred transcript revalidation`() {
+        rpc.history.addAll(history(24))
+
+        ui = newUi(id = "ses_test")
+        settle()
+        scrollView()?.preferredSize
+        com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
+            scrollView()?.revalidate()
+        }
+        drainScroll()
+
+        assertBottom(scrollBar())
     }
 
     fun `test scroll owns the session viewport`() {

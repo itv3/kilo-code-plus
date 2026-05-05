@@ -87,6 +87,9 @@ class SessionUi private constructor(
 
     private val project = project
     private val app = app
+    private var opening = id != null
+    private var pending = false
+    private var loaded: Boolean? = null
     private val flushMs =
         Registry.intValue("kilo.session.flushMs", EVENT_FLUSH_MS.toInt())
             .takeIf { it > 0 }
@@ -99,8 +102,9 @@ class SessionUi private constructor(
         condense = Registry.`is`("kilo.session.condense", true),
         displayMs = displayMs,
         open = open,
-        beforeUpdate = { scroll.atBottom() },
-        afterUpdate = { scroll.followBottom(it) },
+        beforeUpdate = { if (opening) false else scroll.atBottom() },
+        afterUpdate = { if (!opening) scroll.followBottom(it) },
+        loaded = ::onHistoryLoaded,
     )
 
 
@@ -129,7 +133,19 @@ class SessionUi private constructor(
         bindUi()
         bindStyle()
         applyStyle(style)
-        scroll.show(if (loading) progressBody else blankBody)
+        onStateChanged(controller.model.state)
+        scroll.show(startBody())
+        loaded?.let(::finishOpen)
+    }
+
+    override fun addNotify() {
+        super.addNotify()
+        resumeOpen()
+    }
+
+    override fun doLayout() {
+        super.doLayout()
+        resumeOpen()
     }
 
     internal val blank: Boolean get() = controller.blank
@@ -280,6 +296,39 @@ class SessionUi private constructor(
                 applyStyle(SessionStyle.current())
             }
         })
+    }
+
+    private fun startBody(): JPanel {
+        if (controller.model.showSession) return messageBody
+        if (loading) return progressBody
+        return blankBody
+    }
+
+    private fun onHistoryLoaded(show: Boolean) {
+        loaded = show
+        if (!this::scroll.isInitialized) return
+        finishOpen(show)
+    }
+
+    private fun finishOpen(show: Boolean) {
+        loaded = show
+        if (!opening) return
+        if (!show) {
+            pending = false
+            opening = false
+            return
+        }
+        pending = true
+        resumeOpen()
+    }
+
+    private fun resumeOpen() {
+        if (!pending || !opening || !this::scroll.isInitialized) return
+        if (width <= 0 || height <= 0) return
+        pending = false
+        scroll.openBottom {
+            opening = false
+        }
     }
 
     private fun sendPrompt(text: String) {
