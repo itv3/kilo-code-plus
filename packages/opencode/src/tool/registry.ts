@@ -104,7 +104,7 @@ export const layer: Layer.Layer<
     const invalid = yield* InvalidTool
     const task = yield* TaskTool
     const read = yield* ReadTool
-    const question = yield* QuestionTool
+    const questiontool = yield* QuestionTool // kilocode_change: renamed to free `question` for the boolean below
     const todo = yield* TodoWriteTool
     const lsptool = yield* LspTool
     const plan = yield* PlanExitTool
@@ -188,6 +188,10 @@ export const layer: Layer.Layer<
         }
 
         const cfg = yield* config.get()
+        // kilocode_change start
+        const question =
+          ["app", "cli", "desktop", "vscode"].includes(Flag.KILO_CLIENT) || Flag.KILO_ENABLE_QUESTION_TOOL
+        // kilocode_change end
 
         const tool = yield* Effect.all({
           invalid: Tool.init(invalid),
@@ -204,7 +208,7 @@ export const layer: Layer.Layer<
           code: Tool.init(codesearch),
           skill: Tool.init(skilltool),
           patch: Tool.init(patchtool),
-          question: Tool.init(question),
+          question: Tool.init(questiontool), // kilocode_change: renamed binding
           lsp: Tool.init(lsptool),
           plan: Tool.init(plan),
           suggest: Tool.init(suggesttool), // kilocode_change
@@ -212,15 +216,11 @@ export const layer: Layer.Layer<
 
         const kilo = yield* KiloToolRegistry.build(kiloToolInfos, { agent: agents, truncate }) // kilocode_change
 
-        // kilocode_change start
-        const questionEnabled =
-          ["app", "cli", "desktop", "vscode"].includes(Flag.KILO_CLIENT) || Flag.KILO_ENABLE_QUESTION_TOOL
-        // kilocode_change end
         return {
           custom,
           builtin: [
             tool.invalid,
-            ...(questionEnabled ? [tool.question] : []),
+            ...(question ? [tool.question] : []),
             tool.bash,
             tool.read,
             tool.glob,
