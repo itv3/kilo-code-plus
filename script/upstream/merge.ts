@@ -253,6 +253,9 @@ async function main() {
     await git.ensureRerere()
     logger.info("git rerere enabled (resolutions will be recorded and reused automatically)")
 
+    await git.ensureConflictStyle()
+    logger.info("merge.conflictStyle set to zdiff3 (conflicts will include the merge base)")
+
     // Train rerere from past upstream merge commits so the cache is populated
     // even on a fresh clone. This replays past merges to learn their resolutions.
     // The grep covers both the current convention ("merge: upstream vX.Y.Z") and the
@@ -741,7 +744,7 @@ async function main() {
 
       logger.divider()
       logger.info("Next steps:")
-      logger.info("  1. Resolve remaining conflicts manually")
+      logger.info("  1. Resolve remaining conflicts manually or with /upstream-manual-merge")
       logger.info("  2. git add -A && git commit -m 'resolve merge conflicts'")
       logger.info(`  3. git push ${config.originRemote} ${kiloBranch}`)
       logger.info("  4. Create PR from " + kiloBranch + " to " + config.baseBranch)
