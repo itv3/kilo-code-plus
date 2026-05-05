@@ -64,7 +64,6 @@ export namespace Encoding {
       utf16be: "utf-16be",
       utf32le: "utf-32le",
       utf32be: "utf-32be",
-      ascii: "utf-8",
       iso88591: "iso-8859-1",
       iso88592: "iso-8859-2",
       iso88595: "iso-8859-5",
@@ -82,13 +81,8 @@ export namespace Encoding {
       euckr: "euc-kr",
       iso2022kr: "iso-2022-kr",
       big5: "big5",
-      gb2312: "gb2312",
       gb18030: "gb18030",
       koi8r: "koi8-r",
-      maccyrillic: "x-mac-cyrillic",
-      ibm855: "cp855",
-      ibm866: "cp866",
-      tis620: "tis-620",
     }
     return map[lower] ?? name
   }

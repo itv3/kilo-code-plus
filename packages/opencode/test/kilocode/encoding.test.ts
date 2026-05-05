@@ -35,10 +35,10 @@ describe("Encoding.detect", () => {
     expect(Encoding.detect(Buffer.alloc(0))).toBe(Encoding.DEFAULT)
   })
 
-  test("plain ASCII is normalized to utf-8 (not 'ascii')", () => {
-    // chardet may report "ASCII" or similar for pure-ASCII input; the namespace treats
-    // that as UTF-8 because UTF-8 is an ASCII superset and iconv-lite doesn't
-    // expose an "ascii" label that round-trips identically.
+  test("plain ASCII is reported as utf-8", () => {
+    // Plain ASCII is valid UTF-8, so the detector short-circuits on the
+    // isUtf8 check and never reaches chardet. UTF-8 is an ASCII superset,
+    // so this label round-trips identically through iconv-lite.
     expect(Encoding.detect(Buffer.from("plain ascii text\n"))).toBe("utf-8")
   })
 
