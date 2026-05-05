@@ -31,6 +31,12 @@
       width: 20px;
       height: 20px;
     }
+
+    /* Thumbs up/down: fill the outline on hover to preview the rated state. */
+    [data-component="icon-button"][data-icon="thumbs-up"]:hover [data-slot="icon-svg"] path,
+    [data-component="icon-button"][data-icon="thumbs-down"]:hover [data-slot="icon-svg"] path {
+      fill: currentColor;
+    }
   }
 }
 
