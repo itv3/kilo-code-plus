@@ -231,8 +231,15 @@ describe("Encoding.hasUtf32Bom", () => {
 })
 
 describe("Encoding.read / Encoding.readSync / Encoding.write", () => {
-  // chardet needs enough characteristic bytes to confidently identify
-  // Shift_JIS; very short samples collide with the windows-1252 profile.
+  // chardet is noticeably more conservative than other detectors (jschardet,
+  // ICU) on tiny samples: a 12-byte Shift_JIS phrase collides with the
+  // windows-1252 profile and is misclassified. In practice this is fine,
+  // because the tool pipeline only runs detection on files the agent is about
+  // to read or patch — real source files and documents carry far more than 12
+  // bytes of characteristic content, which is plenty for chardet to lock
+  // onto the right encoding. The short-sample cliff only matters for
+  // synthetic fixtures like this one, so we pad the sample to the same body
+  // of Japanese text the rest of the suite already relies on.
   const shiftJisSample = "こんにちは、世界！日本語のテストです。"
 
   test("read detects and decodes Shift_JIS asynchronously", async () => {
