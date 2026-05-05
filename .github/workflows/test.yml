@@ -39,12 +39,12 @@ jobs:
         shell: bash
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
@@ -57,7 +57,7 @@ jobs:
           git config --global user.name "kilo-maintainer[bot]"
 
       - name: Cache Turbo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules/.cache/turbo
           key: turbo-${{ runner.os }}-${{ hashFiles('turbo.json', '**/package.json')
@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload unit artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-${{ matrix.settings.name }}-${{ github.run_attempt }}
           include-hidden-files: true

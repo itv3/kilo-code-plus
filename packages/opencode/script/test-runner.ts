@@ -280,11 +280,40 @@ console.log(
 )
 
 if (flaky.length > 0) {
+  const sorted = flaky.slice().sort((a, b) => a.file.localeCompare(b.file))
+
   console.log(`${bold(yellow("--- FLAKY (passed on retry) ---"))}\n`)
-  for (const r of flaky.slice().sort((a, b) => a.file.localeCompare(b.file))) {
+  for (const r of sorted) {
     console.log(`  ${yellow(r.file)} ${dim(`(passed on attempt ${r.attempts}/${retries + 1})`)}`)
   }
   console.log()
+
+  // Surface flakies to the GitHub Actions UI so reviewers don't have to scan
+  // the raw log. Annotations show up on the PR; the step summary is visible at
+  // the bottom of the job page and in the workflow summary email.
+  if (process.env.GITHUB_ACTIONS === "true") {
+    for (const r of sorted) {
+      const repo = `packages/opencode/test/${r.file}`
+      console.log(
+        `::warning file=${repo},title=Flaky test file::passed on attempt ${r.attempts} of ${retries + 1}`,
+      )
+    }
+
+    const summary = process.env.GITHUB_STEP_SUMMARY
+    if (summary) {
+      const md = [
+        "### ⚠️ Flaky test files (passed on retry)",
+        "",
+        `${sorted.length} file${sorted.length === 1 ? "" : "s"} needed more than one attempt to pass.`,
+        "",
+        "| File | Attempts |",
+        "|---|---|",
+        ...sorted.map((r) => `| \`${r.file}\` | ${r.attempts}/${retries + 1} |`),
+        "",
+      ].join("\n")
+      await fs.appendFile(summary, md + "\n")
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
