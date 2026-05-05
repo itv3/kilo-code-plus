@@ -7,7 +7,6 @@
 import os from "os"
 import path from "path"
 import fs from "fs/promises"
-import { skipped } from "./kilocode-test-skips" // kilocode_change
 
 const root = path.resolve(import.meta.dir, "..")
 const argv = process.argv.slice(2)
@@ -86,6 +85,12 @@ const bold = (s: string) => (tty ? `\x1b[1m${s}\x1b[0m` : s)
 
 const glob = new Bun.Glob("**/*.test.{ts,tsx}")
 const all = (await Array.fromAsync(glob.scan({ cwd: path.join(root, "test") }))).sort()
+
+export const skipped = new Set([
+  // Upstream browser OAuth integration tests bind the fixed callback port and
+  // race with other parallel OAuth tests in CI.
+  "mcp/oauth-browser.test.ts",
+])
 
 const matched =
   patterns.length > 0 ? all.filter((f) => patterns.some((p) => f.includes(p) || path.join("test", f).includes(p))) : all
