@@ -237,7 +237,8 @@ export function Prompt(props: PromptProps) {
     const sessionID = props.sessionID
     const msg = lastUserMessage()
     if (!sessionID || !msg) return
-    if (!KiloSessionTuiSync.model(msg)) return // kilocode_change
+    const parts = sync.data.part[msg.id] ?? [] // kilocode_change
+    if (!KiloSessionTuiSync.model({ role: msg.role, parts })) return // kilocode_change
 
     const key = [sessionID, msg.id].join(":")
     if (key === syncedKey) return
