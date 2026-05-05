@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+// kilocode_change - new file
 // Sync every Kilo version string across the monorepo to a single target.
 //
 // Why this exists: upstream opencode stamps its own version into shared files
