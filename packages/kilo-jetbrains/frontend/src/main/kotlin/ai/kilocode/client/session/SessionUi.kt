@@ -16,6 +16,7 @@ import ai.kilocode.client.session.ui.prompt.PromptPanel
 import ai.kilocode.client.session.ui.QuestionPanel
 import ai.kilocode.client.session.ui.SessionRootPanel
 import ai.kilocode.client.session.ui.SessionMessageListPanel
+import ai.kilocode.client.session.ui.SessionHeaderPanel
 import ai.kilocode.client.session.ui.SessionStyle
 import ai.kilocode.client.session.ui.SessionStyleTarget
 import ai.kilocode.client.session.update.EVENT_FLUSH_MS
@@ -129,6 +130,8 @@ class SessionUi private constructor(
 
     private lateinit var messageBody: SessionMessageListPanel
 
+    private lateinit var header: SessionHeaderPanel
+
     private lateinit var scroll: JBScrollPane
 
     private lateinit var jump: JButton
@@ -175,6 +178,7 @@ class SessionUi private constructor(
             ), BorderLayout.CENTER)
         }
         messageBody = SessionMessageListPanel(controller.model, this)
+        header = SessionHeaderPanel(controller, this)
 
         scroll = JBScrollPane(blankBody).apply {
             border = JBUI.Borders.empty()
@@ -202,6 +206,7 @@ class SessionUi private constructor(
             onAbort = { controller.abort() },
         )
 
+        sessionContent.add(header, BorderLayout.NORTH)
         sessionContent.add(scroll, BorderLayout.CENTER)
         root.content.add(sessionContent, BorderLayout.CENTER)
         // Dock panels stay in normal flow so each visible state takes layout space
@@ -425,6 +430,7 @@ class SessionUi private constructor(
         this.style = style
         jump.icon = patchedIcon(SCROLL_ICON)
         loadingLabel.font = style.uiFont
+        header.applyStyle(style)
         messageBody.applyStyle(style)
         prompt.applyStyle(style)
         (scroll.viewport.view as? SessionStyleTarget)?.applyStyle(style)
