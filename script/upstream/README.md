@@ -254,7 +254,7 @@ Options:
   --dry-run              Show what would change without writing the file
 ```
 
-The command finds the newest upstream tag already merged into `HEAD`, reads that upstream version of the file, applies the same branding transforms used by upstream merge automation, and writes the result to the working tree. If the file does not exist upstream, the local file is deleted.
+The command finds the newest upstream tag already merged into `HEAD`, reads that upstream version of the file, applies the same branding transforms used by upstream merge automation for text files, and writes the result to the working tree. Binary files are restored as raw upstream bytes without text transforms. If the file does not exist upstream, the local file is deleted.
 
 ## Using Custom Base Branches
 

@@ -77,9 +77,14 @@ export async function versions(source: string): Promise<VersionInfo[]> {
 }
 
 export async function upstream(ref: string, file: string) {
+  const data = await upstreamData(ref, file)
+  return data === null ? null : data.toString()
+}
+
+export async function upstreamData(ref: string, file: string) {
   const spec = `${ref}:${file}`
   const result = await $`git show ${spec}`.quiet().nothrow()
-  if (result.exitCode === 0) return result.stdout.toString()
+  if (result.exitCode === 0) return result.stdout
 
   const stderr = result.stderr.toString()
   if (stderr.includes("exists on disk") || stderr.includes("does not exist") || stderr.includes("Path")) return null
