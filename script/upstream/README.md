@@ -328,18 +328,16 @@ through before starting:
 1. **Auto-merged code outside the conflict can depend on declarations inside
    it.** When picking between ours / theirs / hybrid, scan the non-conflicting
    parts of the same file for references whose declaration lives in the
-   conflict block. Example from v1.14.30: `sync.tsx` had an auto-merged call to
-   `sessionListQuery()` that used `kv.get(...)`, while `const kv = useKV()` sat
-   inside the conflict block on the upstream side. A naive `take-ours`
-   resolution would leave `kv` undeclared. Always run typecheck after each
-   decision batch to catch these.
+   conflict block. A naive resolution can leave callers pointing at removed or
+   renamed symbols. Always run typecheck after each decision batch to catch
+   these.
 
 2. **Related files can need edits even when they are not listed as unmerged.**
-   Upstream refactors sometimes split a file into siblings (e.g. v1.14.30 split
-   `httpapi/permission.ts` into `groups/permission.ts` + `handlers/permission.ts`).
-   Kilo behavior may need to be ported into the new sibling even though git only
-   reports the original file as conflicted. Mention every touched sibling in the
-   final summary so reviewers can find the diff.
+   Upstream refactors sometimes split logic across sibling files or move the
+   relevant behavior to a new location. Kilo behavior may need to be ported into
+   the new shape even though git only reports the original file as conflicted.
+   Mention every touched sibling in the final summary so reviewers can find the
+   diff.
 
 3. **`renamed` is stricter than it sounds.** Treat a resolution as `renamed`
    only when the Kilo behavior moves from the conflicted file to a different
@@ -348,20 +346,14 @@ through before starting:
 
 4. **Function signatures can drift across a conflict boundary.** Automerge can
    pick one side of a paired change without noticing that a non-conflicting
-   consumer relied on the other side's shape. Example from v1.14.30: our
-   `parse()` returned `tree.rootNode`, upstream's returns the full `tree` and
-   accesses `tree.rootNode` at the call site inside the conflict block.
-   Auto-merge kept the new return type, so the old call site would have been
-   broken if we had taken ours. Re-read call sites after resolving, not only
-   the conflict block itself.
+   consumer relied on the other side's shape. Re-read call sites and exported
+   contracts after resolving, not only the conflict block itself.
 
 5. **Always run full turbo typecheck before declaring done.** Visually clean
-   resolutions can still break typing at an unrelated call site (e.g. taking
-   upstream's `Msg = string | ArrayBuffer | Uint8Array` broke `ws.send()`
-   because Uint8Array is not assignable to `BufferSource` on the queue replay
-   path). `bun run typecheck` from the repo root is the cheapest catch-all.
-   Targeted per-package typechecks are not enough -- the failing call site can
-   live in a non-conflicted file.
+   resolutions can still break typing at an unrelated call site. `bun run
+   typecheck` from the repo root is the cheapest catch-all. Targeted per-package
+   typechecks are not enough -- the failing call site can live in a
+   non-conflicted file.
 
 ## Rollback
 
