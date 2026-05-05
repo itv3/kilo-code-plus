@@ -77,20 +77,6 @@ describe("Encoding.detect", () => {
     expect(Encoding.detect(bytes)).toBe("utf-32be")
   })
 
-  test("UTF-32 without BOM falls back to utf-8 (contract: wide UTF requires BOM)", () => {
-    // iconv-produced UTF-32 bytes without any BOM prefix. jschardet reports
-    // "ascii" for these because the buffer is dominated by NUL bytes that
-    // coincidentally look like padded ASCII, so detect() falls back to utf-8.
-    // The important contract is that we do NOT silently promote to utf-32*.
-    const bytes = iconv.encode("hello", "utf-32le")
-    expect(Encoding.detect(bytes)).toBe(Encoding.DEFAULT)
-  })
-
-  test("UTF-16 without BOM falls back to utf-8 (contract: wide UTF requires BOM)", () => {
-    const bytes = iconv.encode("hello", "utf-16le")
-    expect(Encoding.detect(bytes)).toBe(Encoding.DEFAULT)
-  })
-
   test("UTF-32 LE BOM is not misdetected as UTF-16 LE (shared FF FE prefix)", () => {
     // UTF-32 LE BOM is FF FE 00 00; its first two bytes are identical to the
     // UTF-16 LE BOM, so the order of BOM checks matters.

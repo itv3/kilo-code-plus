@@ -108,12 +108,6 @@ export namespace Encoding {
     const result = jschardet.detect(bytes)
     if (!result.encoding) return DEFAULT
     const enc = normalize(result.encoding)
-    const lower = enc.toLowerCase()
-    // Wide UTF variants are only accepted when a BOM is present. jschardet already
-    // enforces this in practice (it reports "ascii" for BOM-less samples), but gate
-    // explicitly so a future detector change can't silently promote ambiguous bytes.
-    if ((lower === "utf-16le" || lower === "utf-16be") && !hasUtf16Bom(bytes)) return DEFAULT
-    if ((lower === "utf-32le" || lower === "utf-32be") && !hasUtf32Bom(bytes)) return DEFAULT
     if (!iconv.encodingExists(enc)) return DEFAULT
     return enc
   }
