@@ -231,13 +231,16 @@ describe("Encoding.hasUtf32Bom", () => {
 })
 
 describe("Encoding.read / Encoding.readSync / Encoding.write", () => {
+  // chardet needs enough characteristic bytes to confidently identify
+  // Shift_JIS; very short samples collide with the windows-1252 profile.
+  const shiftJisSample = "こんにちは、世界！日本語のテストです。"
+
   test("read detects and decodes Shift_JIS asynchronously", async () => {
     await tmp(async (dir) => {
       const filepath = path.join(dir, "sj.txt")
-      const text = "日本語テスト"
-      await fs.writeFile(filepath, iconv.encode(text, "Shift_JIS"))
+      await fs.writeFile(filepath, iconv.encode(shiftJisSample, "Shift_JIS"))
       const result = await Encoding.read(filepath)
-      expect(result.text).toBe(text)
+      expect(result.text).toBe(shiftJisSample)
       expect(result.encoding.toLowerCase()).toBe("shift_jis")
     })
   })
@@ -245,8 +248,7 @@ describe("Encoding.read / Encoding.readSync / Encoding.write", () => {
   test("readSync mirrors read for the same input", async () => {
     await tmp(async (dir) => {
       const filepath = path.join(dir, "sj.txt")
-      const text = "日本語テスト"
-      await fs.writeFile(filepath, iconv.encode(text, "Shift_JIS"))
+      await fs.writeFile(filepath, iconv.encode(shiftJisSample, "Shift_JIS"))
       const sync = Encoding.readSync(filepath)
       const async_ = await Encoding.read(filepath)
       expect(sync).toEqual(async_)
