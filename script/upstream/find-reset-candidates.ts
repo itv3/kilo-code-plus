@@ -46,25 +46,52 @@ interface Entry extends ClassifyResult {
   reset?: boolean
 }
 
-const KILO_ONLY_PATHS = [
-  "packages/kilo-docs",
-  "packages/kilo-gateway",
-  "packages/kilo-i18n",
-  "packages/kilo-indexing",
-  "packages/kilo-jetbrains",
-  "packages/kilo-telemetry",
-  "packages/kilo-ui",
-  "packages/kilo-vscode",
-  "packages/opencode/src/kilocode",
-  "packages/opencode/test/kilocode",
-  "script/upstream",
+const KILO_ONLY_PATHSPECS = [
+  ":(exclude,glob)packages/kilo-*/**",
+  ":(exclude,glob)**/kilocode/**",
+  ":(exclude)script/upstream",
 ]
 
-const RESET_BUCKETS = new Set<Bucket>(["markers-only", "whitespace-only", "small-diff"])
+// Non-code assets never make sense to bulk-reset. Big binary-ish files (large
+// SVG sprites, icons, fonts, archives) also stress concurrent git subprocesses
+// and hide real drift in the report. Use reset-to-upstream.ts per file if you
+// really want to restore one of these.
+const SKIP_EXTENSIONS = new Set([
+  ".svg",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".avif",
+  ".ico",
+  ".bmp",
+  ".woff",
+  ".woff2",
+  ".ttf",
+  ".otf",
+  ".eot",
+  ".zip",
+  ".tar",
+  ".gz",
+  ".br",
+  ".wasm",
+  ".bin",
+  ".db",
+  ".sqlite",
+  ".mp3",
+  ".mp4",
+  ".mov",
+  ".pdf",
+])
+
+const SKIP_FILENAMES = new Set(["bun.lock", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "Cargo.lock"])
+
+const RESET_BUCKETS = new Set<Bucket>(["markers-only", "cosmetic-only", "small-diff"])
 
 const BUCKET_ORDER: Bucket[] = [
   "markers-only",
-  "whitespace-only",
+  "cosmetic-only",
   "small-diff",
   "large-diff",
   "identical",
@@ -127,17 +154,37 @@ function args(): Args {
   }
 }
 
-async function candidates(commit: string, scope: string | undefined, top: string): Promise<string[]> {
-  const pathspecs = [scope ?? ".", ...KILO_ONLY_PATHS.map((p) => `:(exclude)${p}`)]
+async function candidates(
+  commit: string,
+  scope: string | undefined,
+  top: string,
+): Promise<{ files: string[]; skippedAssets: string[] }> {
+  const pathspecs = [scope ?? ".", ...KILO_ONLY_PATHSPECS]
   const result = await $`git diff --name-only ${commit}..HEAD -- ${pathspecs}`.cwd(top).quiet().nothrow()
   if (result.exitCode !== 0) {
     throw new Error(`Failed to list candidate files: ${result.stderr.toString()}`)
   }
-  return result.stdout
+  const all = result.stdout
     .toString()
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
+
+  const files: string[] = []
+  const skippedAssets: string[] = []
+  for (const file of all) {
+    if (asset(file)) skippedAssets.push(file)
+    else files.push(file)
+  }
+  return { files, skippedAssets }
+}
+
+function asset(file: string): boolean {
+  const base = file.slice(file.lastIndexOf("/") + 1)
+  if (SKIP_FILENAMES.has(base)) return true
+  const dot = base.lastIndexOf(".")
+  if (dot === -1) return false
+  return SKIP_EXTENSIONS.has(base.slice(dot).toLowerCase())
 }
 
 async function concurrent<T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
@@ -167,8 +214,8 @@ function group(entries: Entry[]): Map<Bucket, Entry[]> {
 
 function describe(bucket: Bucket, count: number, dryRun: boolean): { label: string; action: string } {
   if (bucket === "markers-only") return { label: `markers-only (${count})`, action: dryRun ? "would reset" : "reset" }
-  if (bucket === "whitespace-only")
-    return { label: `whitespace-only (${count})`, action: dryRun ? "would reset" : "reset" }
+  if (bucket === "cosmetic-only")
+    return { label: `cosmetic-only (${count})`, action: dryRun ? "would reset" : "reset" }
   if (bucket === "small-diff") return { label: `small-diff (${count})`, action: dryRun ? "would reset" : "reset" }
   if (bucket === "large-diff") return { label: `large-diff (${count})`, action: "skipped" }
   if (bucket === "identical") return { label: `identical (${count})`, action: "nothing to do" }
@@ -178,7 +225,15 @@ function describe(bucket: Bucket, count: number, dryRun: boolean): { label: stri
   return { label: `local-missing (${count})`, action: "skipped" }
 }
 
-function report(entries: Entry[], dryRun: boolean, tag: string, commit: string, scope: string, limit: number) {
+function report(
+  entries: Entry[],
+  skippedAssets: string[],
+  dryRun: boolean,
+  tag: string,
+  commit: string,
+  scope: string,
+  limit: number,
+) {
   const grouped = group(entries)
   const lines: string[] = []
 
@@ -189,6 +244,7 @@ function report(entries: Entry[], dryRun: boolean, tag: string, commit: string, 
   lines.push(`- Review limit: ${limit} non-marker diff line(s)`)
   lines.push(`- Mode: ${dryRun ? "dry-run (no writes)" : "auto-apply"}`)
   lines.push(`- Total candidates: ${entries.length}`)
+  if (skippedAssets.length > 0) lines.push(`- Non-code assets skipped: ${skippedAssets.length}`)
   lines.push("")
 
   lines.push(`## Summary`)
@@ -201,6 +257,7 @@ function report(entries: Entry[], dryRun: boolean, tag: string, commit: string, 
     const info = describe(bucket, items.length, dryRun)
     lines.push(`| ${bucket} | ${items.length} | ${info.action} |`)
   }
+  if (skippedAssets.length > 0) lines.push(`| non-code-asset | ${skippedAssets.length} | skipped |`)
   lines.push("")
 
   for (const bucket of BUCKET_ORDER) {
@@ -241,9 +298,10 @@ async function main() {
   info(`Review limit: ${opts.reviewLimit} non-marker diff line(s)`)
   info(`Mode: ${opts.dryRun ? "dry-run" : "auto-apply"}`)
 
-  const files = await candidates(version.commit, scope, top)
+  const { files, skippedAssets } = await candidates(version.commit, scope, top)
+  if (skippedAssets.length > 0) info(`Skipping ${skippedAssets.length} non-code asset(s)`)
   if (files.length === 0) {
-    success("No files differ from upstream in scope. Nothing to do.")
+    success("No code files differ from upstream in scope. Nothing to do.")
     return
   }
   info(`Candidate files: ${files.length}`)
@@ -272,7 +330,17 @@ async function main() {
   }
 
   console.log("")
-  console.log(report(entries, opts.dryRun, version.tag, version.commit, scope ?? "(all shared paths)", opts.reviewLimit))
+  console.log(
+    report(
+      entries,
+      skippedAssets,
+      opts.dryRun,
+      version.tag,
+      version.commit,
+      scope ?? "(all shared paths)",
+      opts.reviewLimit,
+    ),
+  )
 }
 
 main().catch((err) => {

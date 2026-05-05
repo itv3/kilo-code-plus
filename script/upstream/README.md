@@ -274,23 +274,25 @@ Options:
   --concurrency <n>        Parallel classifications (default: 8).
 ```
 
-The command pre-filters with `git diff --name-only <last-merged-upstream>..HEAD`, excluding kilo-only paths (`packages/kilo-*`, `packages/opencode/src/kilocode/`, `packages/opencode/test/kilocode/`, `script/upstream/`), then classifies each file against the transformed upstream baseline:
+The command pre-filters with `git diff --name-only <last-merged-upstream>..HEAD`, excluding kilo-only paths (anything under `packages/kilo-*/`, any `**/kilocode/**` subdir, `script/upstream/`) and non-code assets (SVG, PNG, fonts, archives, lock files, etc. — see `SKIP_EXTENSIONS` / `SKIP_FILENAMES` in the script). The remaining text files are classified against the transformed upstream baseline:
 
 | Bucket | Meaning | Action |
 |---|---|---|
 | `identical` | Local bytes already match transformed upstream (branding-only drift in raw git diff) | none |
 | `markers-only` | Stripping `kilocode_change` markers makes local match upstream | reset |
-| `whitespace-only` | Only non-marker diff is whitespace | reset |
-| `small-diff` | ≤ `--review-limit` non-marker, non-whitespace diff lines | reset |
-| `large-diff` | > `--review-limit` non-marker, non-whitespace diff lines | skipped |
+| `cosmetic-only` | Non-marker diff is only whitespace or reordered lines (the line multiset is identical) | reset |
+| `small-diff` | ≤ `--review-limit` non-marker, non-cosmetic diff lines | reset |
+| `large-diff` | > `--review-limit` non-marker, non-cosmetic diff lines | skipped |
 | `upstream-missing` | File does not exist upstream (kilo-only, intentional) | skipped |
 | `local-missing` | File tracked but missing locally (deleted in Kilo) | skipped |
 | `binary-diff` | Binary file differs | skipped (use `reset-to-upstream.ts` per file) |
 | `binary-identical` | Binary file already matches | none |
 
-`markers-only`, `whitespace-only`, and `small-diff` buckets are auto-reset unless `--dry-run` is passed. A markdown summary is printed to stdout so you can review what happened and spot-check the resulting `git diff`. All resets land as uncommitted working-tree changes; `git diff` / `git checkout` is your safety net.
+Line counting uses an in-process multiset diff (pure JS, no subprocess) for speed and robustness against concurrent git output stalls on big files. Moved/reordered lines therefore count as zero drift, which is usually what you want for "is this file meaningfully different from upstream".
 
-Tighten the blast radius with `--review-limit 0` (only `markers-only` and `whitespace-only`) or by scoping with a `path` argument (e.g. `packages/opencode/src/mcp`).
+`markers-only`, `cosmetic-only`, and `small-diff` buckets are auto-reset unless `--dry-run` is passed. A markdown summary is printed to stdout so you can review what happened and spot-check the resulting `git diff`. All resets land as uncommitted working-tree changes; `git diff` / `git checkout` is your safety net.
+
+Tighten the blast radius with `--review-limit 0` (only `markers-only` and `cosmetic-only`) or by scoping with a `path` argument (e.g. `packages/opencode/src/mcp`).
 
 ## Using Custom Base Branches
 

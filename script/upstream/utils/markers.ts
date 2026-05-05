@@ -421,3 +421,28 @@ export async function changed(base: Text, head: Text, opts?: { ignoreWhitespace?
     await rm(dir, { recursive: true, force: true })
   }
 }
+
+/**
+ * Pure in-process line-diff used by bulk classifiers. Returns the number of
+ * non-matching lines between two texts using a multiset approach (moving a line
+ * around doesn't count as drift). Whitespace can optionally be ignored.
+ *
+ * Unlike `changed()`, this spawns no subprocesses so it is safe to run
+ * concurrently without risking pipe-buffer deadlocks on large inputs.
+ */
+export function approxDiff(base: string, head: string, opts?: { ignoreWhitespace?: boolean }): number {
+  if (base === head) return 0
+  const norm = opts?.ignoreWhitespace ? (line: string) => line.replace(/\s+/g, " ").trim() : (line: string) => line
+  const counts = new Map<string, number>()
+  for (const line of base.split(/\r?\n/)) {
+    const key = norm(line)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  for (const line of head.split(/\r?\n/)) {
+    const key = norm(line)
+    counts.set(key, (counts.get(key) ?? 0) - 1)
+  }
+  let total = 0
+  for (const v of counts.values()) total += Math.abs(v)
+  return total
+}

@@ -9,7 +9,7 @@
 
 import { rm } from "node:fs/promises"
 import path from "node:path"
-import { binary, changed, clean, join } from "./markers"
+import { approxDiff, binary, clean, join } from "./markers"
 import { translate, upstreamData } from "./upstream"
 
 export type ResetAction = "identical" | "deleted" | "written" | "skipped"
@@ -72,7 +72,7 @@ export async function resetFile(opts: ResetOptions): Promise<ResetResult> {
 export type Bucket =
   | "identical"
   | "markers-only"
-  | "whitespace-only"
+  | "cosmetic-only"
   | "small-diff"
   | "large-diff"
   | "upstream-missing"
@@ -120,14 +120,12 @@ export async function classifyDrift(opts: ClassifyOptions): Promise<ClassifyResu
   if (local === null) return { bucket: "local-missing" }
   if (local === translated) return { bucket: "identical" }
 
-  const cleanedLocal = clean(opts.file, local)
-  const cleanedUpstream = clean(opts.file, translated)
-  if (join(cleanedLocal.text) === join(cleanedUpstream.text)) return { bucket: "markers-only" }
+  const cleanedLocal = join(clean(opts.file, local).text)
+  const cleanedUpstream = join(clean(opts.file, translated).text)
+  if (cleanedLocal === cleanedUpstream) return { bucket: "markers-only" }
 
-  const wsDiff = await changed(cleanedUpstream.text, cleanedLocal.text, { ignoreWhitespace: true })
-  if (wsDiff.lines.size === 0 && wsDiff.deleted === 0) return { bucket: "whitespace-only" }
-
-  const count = wsDiff.lines.size + wsDiff.deleted
+  const count = approxDiff(cleanedUpstream, cleanedLocal, { ignoreWhitespace: true })
+  if (count === 0) return { bucket: "cosmetic-only" }
   if (count <= opts.reviewLimit) return { bucket: "small-diff", lines: count }
   return { bucket: "large-diff", lines: count }
 }
