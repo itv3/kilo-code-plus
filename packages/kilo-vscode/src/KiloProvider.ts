@@ -15,7 +15,7 @@ import { type KiloConnectionService, ServerStartupError } from "./services/cli-b
 import type { EditorContext, IndexingStatus } from "./services/cli-backend/types"
 import { FileIgnoreController } from "./services/autocomplete/shims/FileIgnoreController"
 import { ChatTextAreaAutocomplete } from "./services/autocomplete/chat-autocomplete/ChatTextAreaAutocomplete"
-import { buildWebviewHtml } from "./utils"
+import { buildWebviewHtml, getWebviewFontSize } from "./utils"
 import { TelemetryProxy, type TelemetryPropertiesProvider } from "./services/telemetry"
 import {
   sessionToWebview,
@@ -49,6 +49,7 @@ import { slimPart, slimParts } from "./kilo-provider/slim-metadata"
 import { handleSidebarWorktreeMessage } from "./kilo-provider/sidebar-worktree"
 import { parseMessageFiles, type MessageFile } from "./kilo-provider/message-files"
 import { handleFileSearch } from "./kilo-provider/file-search"
+import { watchFontSizeConfig } from "./kilo-provider/font-size"
 import { getTerminalContents } from "./services/terminal/context"
 import { disposeGitChangesTarget } from "./kilo-provider/git-changes-target"
 import { interceptMessage } from "./kilo-provider/git-changes-request"
@@ -1091,6 +1092,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         }
       }
     })
+    this.webviewMessageDisposable = watchFontSizeConfig((msg) => this.postMessage(msg), this.webviewMessageDisposable)
   }
 
   private openExternal(url: unknown): void {
@@ -1246,10 +1248,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           extensionVersion: this.extensionVersion,
           vscodeLanguage: vscode.env.language,
           languageOverride: langConfig.get<string>("language"),
+          fontSize: getWebviewFontSize(),
           workspaceDirectory: this.getProjectDirectory(this.currentSession?.id),
         })
       }
-
       this.postMessage({ type: "connectionState", state: this.connectionState })
 
       // connect() can resolve after SSE reaches "connected" but before this

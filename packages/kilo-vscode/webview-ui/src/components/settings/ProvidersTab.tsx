@@ -175,7 +175,13 @@ const ProvidersTab: Component = () => {
             }}
           >
             <ProviderIcon id="synthetic" width={20} height={20} />
-            <span style={{ "font-size": "14px", "font-weight": "500", color: "var(--vscode-foreground)" }}>
+            <span
+              style={{
+                "font-size": "var(--kilo-font-size-14)",
+                "font-weight": "500",
+                color: "var(--vscode-foreground)",
+              }}
+            >
               Kilo Gateway
             </span>
             <Show
@@ -203,7 +209,7 @@ const ProvidersTab: Component = () => {
             <div
               style={{
                 padding: "16px 0",
-                "font-size": "14px",
+                "font-size": "var(--kilo-font-size-14)",
                 color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
               }}
             >
@@ -229,7 +235,7 @@ const ProvidersTab: Component = () => {
                   <ProviderIcon id={providerIcon(item.id)} width={20} height={20} />
                   <span
                     style={{
-                      "font-size": "14px",
+                      "font-size": "var(--kilo-font-size-14)",
                       "font-weight": "500",
                       color: "var(--vscode-foreground)",
                       overflow: "hidden",
@@ -245,7 +251,7 @@ const ProvidersTab: Component = () => {
                   <Show when={!canDisconnect(item)}>
                     <span
                       style={{
-                        "font-size": "14px",
+                        "font-size": "var(--kilo-font-size-14)",
                         color: "var(--text-base, var(--vscode-descriptionForeground))",
                         "padding-right": "12px",
                       }}
@@ -299,7 +305,13 @@ const ProvidersTab: Component = () => {
                 <div style={{ display: "flex", "flex-direction": "column", "min-width": 0 }}>
                   <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
                     <ProviderIcon id={providerIcon(item.id)} width={20} height={20} />
-                    <span style={{ "font-size": "14px", "font-weight": "500", color: "var(--vscode-foreground)" }}>
+                    <span
+                      style={{
+                        "font-size": "var(--kilo-font-size-14)",
+                        "font-weight": "500",
+                        color: "var(--vscode-foreground)",
+                      }}
+                    >
                       {item.name}
                     </span>
                   </div>
@@ -307,7 +319,7 @@ const ProvidersTab: Component = () => {
                     {(key) => (
                       <span
                         style={{
-                          "font-size": "12px",
+                          "font-size": "var(--kilo-font-size-12)",
                           color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
                           "padding-left": "32px",
                         }}
@@ -340,14 +352,20 @@ const ProvidersTab: Component = () => {
           <div style={{ display: "flex", "flex-direction": "column", "min-width": 0 }}>
             <div style={{ display: "flex", "flex-wrap": "wrap", "align-items": "center", gap: "12px" }}>
               <ProviderIcon id="synthetic" width={20} height={20} />
-              <span style={{ "font-size": "14px", "font-weight": "500", color: "var(--vscode-foreground)" }}>
+              <span
+                style={{
+                  "font-size": "var(--kilo-font-size-14)",
+                  "font-weight": "500",
+                  color: "var(--vscode-foreground)",
+                }}
+              >
                 {language.t("provider.custom.title")}
               </span>
               <Tag>{language.t("settings.providers.tag.custom")}</Tag>
             </div>
             <span
               style={{
-                "font-size": "12px",
+                "font-size": "var(--kilo-font-size-12)",
                 color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
                 "padding-left": "32px",
               }}
@@ -378,7 +396,7 @@ const ProvidersTab: Component = () => {
       <Card>
         <div
           style={{
-            "font-size": "12px",
+            "font-size": "var(--kilo-font-size-12)",
             color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
             "padding-bottom": "8px",
             "border-bottom": "1px solid var(--border-weak-base)",
@@ -439,7 +457,7 @@ const ProvidersTab: Component = () => {
                 <ProviderIcon id={providerIcon(id)} width={20} height={20} />
                 <span
                   style={{
-                    "font-size": "14px",
+                    "font-size": "var(--kilo-font-size-14)",
                     "font-weight": "500",
                     color: "var(--vscode-foreground)",
                     overflow: "hidden",
