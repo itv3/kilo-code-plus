@@ -2,6 +2,7 @@ package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Message
+import ai.kilocode.client.session.ui.SessionView
 import ai.kilocode.client.session.ui.SessionStyle
 import ai.kilocode.client.session.ui.SessionStyleTarget
 import ai.kilocode.client.ui.UiStyle
@@ -14,19 +15,20 @@ import ai.kilocode.client.ui.UiStyle
  * part view gets the full available width and height is computed correctly
  * for HTML-backed views.
  *
- * Styling:
- * - User messages: 1 px top separator + extra top padding to create a
- *   visual turn boundary.
- * - Assistant messages: light padding only.
+ * Styling: user messages render as rounded prompt bubbles. Spacing around
+ * messages is owned by [ai.kilocode.client.session.ui.SessionLayout].
  */
 class MessageView(
     val msg: Message,
     private var style: SessionStyle = SessionStyle.current(),
-) : ai.kilocode.client.session.ui.SessionLayoutPanel(UiStyle.Card.groupGap()), SessionStyleTarget {
+) : ai.kilocode.client.session.ui.SessionLayoutPanel(UiStyle.Card.groupGap()), SessionStyleTarget, SessionView {
 
     constructor(msg: Message) : this(msg, SessionStyle.current())
 
     val role: String get() = msg.info.role
+
+    override val sessionViewKind: SessionView.Kind
+        get() = if (role == "user") SessionView.Kind.UserPrompt else SessionView.Kind.Default
 
     private val parts = LinkedHashMap<String, PartView>()
 
@@ -52,6 +54,7 @@ class MessageView(
         val existing = parts[content.id]
         if (existing != null) {
             existing.update(content)
+            refresh()
             return
         }
         val view = ViewFactory.create(content)
@@ -59,8 +62,7 @@ class MessageView(
         parts[content.id] = view
         add(view)
         syncBorder()
-        revalidate()
-        repaint()
+        refresh()
     }
 
     /** Remove the renderer for [contentId] if present. */
@@ -68,8 +70,7 @@ class MessageView(
         val view = parts.remove(contentId) ?: return
         remove(view)
         syncBorder()
-        revalidate()
-        repaint()
+        refresh()
     }
 
     private fun syncBorder() {
@@ -79,7 +80,9 @@ class MessageView(
 
     /** Append a streaming delta to the renderer for [contentId]. */
     fun appendDelta(contentId: String, delta: String) {
-        parts[contentId]?.appendDelta(delta)
+        val part = parts[contentId] ?: return
+        part.appendDelta(delta)
+        refresh()
     }
 
     /** Look up a renderer by part id. */
@@ -94,6 +97,10 @@ class MessageView(
     override fun applyStyle(style: SessionStyle) {
         this.style = style
         for (view in parts.values) view.applyStyle(style)
+        refresh()
+    }
+
+    private fun refresh() {
         revalidate()
         repaint()
     }

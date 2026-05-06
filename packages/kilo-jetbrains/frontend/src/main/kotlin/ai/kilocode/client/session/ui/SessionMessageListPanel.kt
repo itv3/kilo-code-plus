@@ -31,7 +31,7 @@ import com.intellij.openapi.Disposable
 class SessionMessageListPanel(
     private val model: SessionModel,
     parent: Disposable,
-) : SessionLayoutPanel(UiStyle.Card.groupGap()), SessionStyleTarget {
+) : SessionLayoutPanel(UiStyle.Card.groupGap(), UiStyle.Insets.transcript()), SessionStyleTarget {
 
     private val turnViews = LinkedHashMap<String, TurnView>()
     private val msgToTurn = HashMap<String, TurnView>()
@@ -43,7 +43,6 @@ class SessionMessageListPanel(
 
     init {
         isOpaque = false
-        border = UiStyle.Insets.transcript()
 
         model.addListener(parent) { event ->
             when (event) {
@@ -51,14 +50,20 @@ class SessionMessageListPanel(
                 is SessionModelEvent.TurnUpdated -> onTurnUpdated(event.turn)
                 is SessionModelEvent.TurnRemoved -> onTurnRemoved(event.id)
 
-                is SessionModelEvent.ContentAdded ->
+                is SessionModelEvent.ContentAdded -> {
                     msgToView[event.messageId]?.upsertPart(event.content)
+                    refresh()
+                }
 
-                is SessionModelEvent.ContentUpdated ->
+                is SessionModelEvent.ContentUpdated -> {
                     msgToView[event.messageId]?.upsertPart(event.content)
+                    refresh()
+                }
 
-                is SessionModelEvent.ContentRemoved ->
+                is SessionModelEvent.ContentRemoved -> {
                     msgToView[event.messageId]?.removePart(event.contentId)
+                    refresh()
+                }
 
                 is SessionModelEvent.ContentDelta -> {
                     // Use the full current content from the model rather than
@@ -68,6 +73,7 @@ class SessionMessageListPanel(
                     // on first appendDelta and fires both events in sequence).
                     val content = model.content(event.messageId, event.contentId)
                     if (content != null) msgToView[event.messageId]?.upsertPart(content)
+                    refresh()
                 }
 
                 is SessionModelEvent.HistoryLoaded -> rebuild()

@@ -1380,6 +1380,8 @@ export const dict = {
   "settings.display.layout.description": "โหมดเค้าโครงสำหรับอินเทอร์เฟซแชท",
   "settings.display.layout.auto": "อัตโนมัติ",
   "settings.display.layout.stretch": "ยืด",
+  "settings.display.fontSize.title": "ขนาดฟอนต์",
+  "settings.display.fontSize.description": "ปรับขนาดฟอนต์ webview UI ของ Kilo แยกเป็นอิสระจาก VS Code.",
   "settings.display.reasoningAutoCollapse.title": "ยุบเหตุผลอัตโนมัติ",
   "settings.display.reasoningAutoCollapse.description":
     "ยุบ block เหตุผลหลังจากเอเจนต์เขียนเสร็จ ปิดไว้เพื่อให้เหตุผลยังคงขยายอยู่ เว้นแต่คุณจะยุบเอง",
@@ -1394,6 +1396,7 @@ export const dict = {
     "โมเดลน้ำหนักเบาสำหรับสร้างชื่อ สร้างข้อความคอมมิต ปรับปรุงพรอมต์ และงานด่วนอื่นๆ",
   "settings.providers.disabled": "ผู้ให้บริการที่ปิดใช้งาน",
   "settings.providers.disabled.description": "ผู้ให้บริการที่จะซ่อนจากรายการ",
+  "settings.providers.disabled.enable": "เปิดใช้งาน",
   "settings.providers.enabled": "ผู้ให้บริการที่เปิดใช้งาน (รายการที่อนุญาต)",
   "settings.providers.enabled.description": "หากตั้งค่า เฉพาะผู้ให้บริการเหล่านี้เท่านั้นที่จะพร้อมใช้งาน",
   "settings.providers.notSet": "ไม่ได้ตั้งค่า (ใช้ค่าเริ่มต้นของเซิร์ฟเวอร์)",
@@ -1512,4 +1515,14 @@ export const dict = {
   "notifications.action.close": "ปิด",
   "notifications.action.tryModel": "ลองใช้ {{model}}",
   "notifications.action.tryModelGeneric": "ลองใช้โมเดล",
+  "diffViewer.source.workspace.label": "การเปลี่ยนแปลงในเครื่อง",
+  "diffViewer.source.workspace.tooltip":
+    "การเปลี่ยนแปลงทั้งหมดบนสาขานี้เมื่อเทียบกับสาขาเบส รวมถึงไฟล์ที่ยังไม่ได้คอมมิต (staged, unstaged, untracked) และคอมมิตในเครื่องที่ยังไม่มีในเบส",
+  "diffViewer.source.session.label": "เซสชัน",
+  "diffViewer.source.session.tooltip":
+    "ไฟล์ที่ Kilo แก้ไขในช่วงเซสชันปัจจุบัน โดยอิงจากสแน็ปช็อตต่อเทิร์น จะรีเซ็ตเมื่อเริ่มเซสชันใหม่",
+  "diffViewer.group.session": "เซสชัน",
+  "diffViewer.group.git": "Git",
+  "diffViewer.notice.snapshotsDisabled":
+    "ปิดใช้งานสแนปช็อตสำหรับที่เก็บนี้ กรุณาแก้ไขไฟล์การกำหนดค่าเพื่อแสดงการเปลี่ยนแปลงของเซสชัน",
 }
