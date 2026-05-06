@@ -28,6 +28,11 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      # kilocode_change start - check workflow allowlist drift
+      - name: Check workflow allowlist
+        run: bun run script/check-workflows.ts
+      # kilocode_change end
+
       - name: Check kilocode_change annotations in shared upstream files
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
