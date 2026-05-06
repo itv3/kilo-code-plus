@@ -29,11 +29,18 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         val panel = SessionHeaderPanel(c, parent)
 
         assertTrue(panel.isVisible)
+        assertFalse(panel.isExpanded())
         assertEquals("Generated title", panel.titleText())
         assertEquals("$0.07", panel.costText())
         assertEquals("1%", panel.contextText())
-        assertEquals("Tokens in 13.7K out 2.5K 100 cache", panel.tokenText())
+        assertEquals("Tokens 13.7K 2.5K cache write 25 cache read 75", panel.tokenText())
+        assertEquals("13.7K", panel.inputTokenText())
+        assertEquals("2.5K", panel.outputTokenText())
+        assertEquals("cache read 75", panel.cacheReadText())
+        assertEquals("cache write 25", panel.cacheWriteText())
         assertEquals("1/2 todos complete", panel.todoText())
+        assertTrue(panel.todoVisible())
+        assertNotNull(panel.expandButton().icon)
     }
 
     fun `test compact button follows eligibility and invokes controller`() {
@@ -63,18 +70,44 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertSame(button, panel.compactButton())
         assertEquals("New title", panel.titleText())
         assertEquals("$0.20", panel.costText())
-        assertEquals("Tokens in 1.0K out 500", panel.tokenText())
+        assertEquals("Tokens 1.0K 500", panel.tokenText())
+        assertEquals("1.0K", panel.inputTokenText())
+        assertEquals("500", panel.outputTokenText())
     }
 
-    fun `test timeline bars reflect count order and active state`() {
+    fun `test expanded body shows timeline context and token metrics`() {
         val c = promptedHeader()
         val panel = SessionHeaderPanel(c, parent)
+        val body = panel.bodyPanel()
+        val timeline = panel.timelinePanel()
+        val bar = panel.contextBar()
 
+        assertFalse(panel.isExpanded())
+
+        panel.expandButton().doClick()
+
+        assertTrue(panel.isExpanded())
+        assertSame(body, panel.bodyPanel())
+        assertSame(timeline, panel.timelinePanel())
+        assertSame(bar, panel.contextBar())
         assertEquals(3, panel.timelineCount())
         assertEquals(listOf("reasoning", "tool", "error"), panel.timelineKinds())
         assertTrue(panel.timelineActive(0))
         assertTrue(panel.timelineActive(1))
         assertFalse(panel.timelineActive(2))
+        assertTrue(panel.contextBarVisible())
+        assertEquals(16_300L, panel.contextBarUsed())
+        assertEquals(200_000L, panel.contextBarReserved())
+        assertEquals(1_783_700L, panel.contextBarAvailable())
+        assertEquals(2_000_000L, panel.contextBarLimit())
+
+        panel.expandButton().doClick()
+
+        assertFalse(panel.isExpanded())
+        assertSame(body, panel.bodyPanel())
+        assertSame(timeline, panel.timelinePanel())
+        assertSame(bar, panel.contextBar())
+        assertEquals(3, panel.timelineCount())
     }
 
     private fun promptedHeader(): ai.kilocode.client.session.update.SessionController {

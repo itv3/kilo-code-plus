@@ -2,4 +2,4 @@
 "@kilocode/kilo-jetbrains": patch
 ---
 
-Show session metadata, token usage, and compaction controls in the JetBrains session header.
+Show collapsible session metadata, context usage, token usage, and compaction controls in the JetBrains session header.
