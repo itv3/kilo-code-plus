@@ -11,18 +11,21 @@ import ai.kilocode.rpc.dto.TokensDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
+import java.awt.Point
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
+import javax.swing.JViewport
 import javax.swing.SwingUtilities
 
 class SessionHeaderPanel(
@@ -55,17 +58,12 @@ class SessionHeaderPanel(
         addActionListener { toggle() }
     }
     private val timeline = TimelinePanel()
-    private val scroll = JBScrollPane(timeline).apply {
-        border = JBUI.Borders.empty()
-        viewportBorder = JBUI.Borders.empty()
+    private val viewport = JViewport().apply {
         isOpaque = false
-        viewport.isOpaque = false
-        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-        verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER
-        preferredSize = JBUI.size(0, TimelinePanel.HEIGHT)
-        minimumSize = preferredSize
-        maximumSize = Dimension(Int.MAX_VALUE, preferredSize.height)
+        view = timeline
     }
+    private var press: Point? = null
+    private var origin = Point()
     private val bar = ContextBar()
     private val tokenTitle = JBLabel(KiloBundle.message("session.header.tokens"))
     private val input = JBLabel().apply {
@@ -108,7 +106,7 @@ class SessionHeaderPanel(
         isOpaque = false
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         border = JBUI.Borders.empty(UiStyle.Space.SM, 0, 0, 0)
-        add(scroll)
+        add(viewport)
         add(tokens)
         add(bar)
         add(todoRow)
@@ -122,6 +120,21 @@ class SessionHeaderPanel(
         top.add(title, BorderLayout.CENTER)
         top.add(right, BorderLayout.EAST)
         add(top, BorderLayout.NORTH)
+        timeline.addMouseListener(object : MouseAdapter() {
+            override fun mousePressed(event: MouseEvent) {
+                press = event.point
+                origin = viewport.viewPosition
+            }
+
+            override fun mouseReleased(event: MouseEvent) {
+                press = null
+            }
+        })
+        timeline.addMouseMotionListener(object : MouseMotionAdapter() {
+            override fun mouseDragged(event: MouseEvent) {
+                drag(event)
+            }
+        })
 
         controller.model.addListener(parent) { event ->
             when (event) {
@@ -180,8 +193,9 @@ class SessionHeaderPanel(
 
         compact.isEnabled = header.canCompact
         val appended = timeline.setItems(header.timeline)
-        if (scroll.isVisible != timeline.isVisible) scroll.isVisible = timeline.isVisible
-        if (appended) SwingUtilities.invokeLater { scroll.horizontalScrollBar.value = scroll.horizontalScrollBar.maximum }
+        sizeTimeline()
+        if (viewport.isVisible != timeline.isVisible) viewport.isVisible = timeline.isVisible
+        if (appended) SwingUtilities.invokeLater { endTimeline() }
         bar.setUsage(header.context)
         refresh()
     }
@@ -195,8 +209,7 @@ class SessionHeaderPanel(
         tokens.background = style.editorBackground
         todoRow.background = style.editorBackground
         body.background = style.editorBackground
-        scroll.background = style.editorBackground
-        scroll.viewport.background = style.editorBackground
+        viewport.background = style.editorBackground
         title.font = style.boldUiFont
         title.foreground = style.editorForeground
         cost.font = style.uiFont
@@ -252,7 +265,7 @@ class SessionHeaderPanel(
 
     internal fun bodyComponents() = body.components.toList()
 
-    internal fun timelineScroll() = scroll
+    internal fun timelineViewport(): JViewport = viewport
 
     internal fun tokenPanel() = tokens
 
@@ -296,7 +309,7 @@ class SessionHeaderPanel(
 
     internal fun timelineBarWidth() = timeline.barWidth()
 
-    internal fun timelineScrollPreferredSize() = scroll.preferredSize
+    internal fun timelineViewportPreferredSize() = viewport.preferredSize
 
     internal fun expandTip() = expand.toolTipText
 
@@ -341,6 +354,27 @@ class SessionHeaderPanel(
         expand.icon = if (expanded) CHEVRON_UP_ICON else CHEVRON_ICON
         expand.toolTipText = KiloBundle.message(key)
         expand.accessibleContext.accessibleName = KiloBundle.message(key)
+    }
+
+    private fun sizeTimeline() {
+        val size = timeline.preferredSize
+        viewport.preferredSize = Dimension(0, size.height)
+        viewport.minimumSize = viewport.preferredSize
+        viewport.maximumSize = Dimension(Int.MAX_VALUE, viewport.preferredSize.height)
+    }
+
+    private fun drag(event: MouseEvent) {
+        val start = press ?: return
+        val max = (timeline.width - viewport.extentSize.width).coerceAtLeast(0)
+        val x = (origin.x - (event.x - start.x)).coerceIn(0, max)
+        if (viewport.viewPosition.x == x) return
+        viewport.setViewPosition(Point(x, 0))
+    }
+
+    private fun endTimeline() {
+        val wide = timeline.preferredSize.width.coerceAtLeast(timeline.width)
+        val max = (wide - viewport.extentSize.width).coerceAtLeast(0)
+        viewport.setViewPosition(Point(max, 0))
     }
 
     private fun refresh() {

@@ -23,7 +23,6 @@ import javax.swing.JPanel
 
 internal class TimelinePanel : JPanel() {
     companion object {
-        const val HEIGHT = 26
         private const val WIDTH = 12
         private const val MIN = 8
         private const val PAD = 4
@@ -104,11 +103,11 @@ internal class TimelinePanel : JPanel() {
         return -1
     }
 
-    override fun getPreferredSize(): Dimension = JBUI.size(width(), HEIGHT)
+    override fun getPreferredSize(): Dimension = Dimension(width(), height())
 
-    override fun getMinimumSize(): Dimension = JBUI.size(0, HEIGHT)
+    override fun getMinimumSize(): Dimension = Dimension(0, height())
 
-    override fun getMaximumSize(): Dimension = Dimension(Int.MAX_VALUE, JBUI.scale(HEIGHT))
+    override fun getMaximumSize(): Dimension = Dimension(Int.MAX_VALUE, height())
 
     fun count() = items.size
 
@@ -123,13 +122,18 @@ internal class TimelinePanel : JPanel() {
     fun hovered() = hover
 
     private fun height(weight: Int, max: Int): Int {
-        val fill = MIN + (weight.toDouble() / max.toDouble()) * (HEIGHT - MIN - PAD)
+        val fill = MIN + (weight.toDouble() / max.toDouble()) * (MIN * 3 - MIN - PAD)
         return JBUI.scale(fill.roundToInt())
+    }
+
+    private fun height(): Int {
+        val max = heights.maxOrNull() ?: return 0
+        return max + JBUI.scale(PAD)
     }
 
     private fun width(): Int {
         if (items.isEmpty()) return 0
-        return items.size * WIDTH + (items.size - 1) * GAP + 2
+        return items.size * JBUI.scale(WIDTH) + (items.size - 1) * JBUI.scale(GAP) + JBUI.scale(2)
     }
 
     private fun color(item: TimelineItem): Color {

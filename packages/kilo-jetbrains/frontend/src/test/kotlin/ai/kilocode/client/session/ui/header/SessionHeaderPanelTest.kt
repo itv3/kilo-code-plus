@@ -17,6 +17,7 @@ import ai.kilocode.rpc.dto.ProviderDto
 import ai.kilocode.rpc.dto.TodoDto
 import ai.kilocode.rpc.dto.TokensDto
 import java.awt.Color
+import java.awt.Point
 import java.awt.event.MouseEvent
 
 class SessionHeaderPanelTest : SessionControllerTestBase() {
@@ -127,7 +128,9 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertSame(body, panel.bodyPanel())
         assertSame(timeline, panel.timelinePanel())
         assertSame(bar, panel.contextBar())
-        assertEquals(listOf(panel.timelineScroll(), panel.tokenPanel(), bar), panel.bodyComponents().take(3))
+        assertEquals(listOf(panel.timelineViewport(), panel.tokenPanel(), bar), panel.bodyComponents().take(3))
+        assertSame(timeline, panel.timelineViewport().view)
+        assertFalse(panel.timelineViewport().isOpaque)
         assertEquals(4, panel.timelineCount())
         val parts = panel.timelineParts()
         assertTrue(parts[0] is Reasoning)
@@ -151,9 +154,10 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertEquals("16.3K / 2.0M tokens used\n200.0K reserved for output\n1.8M available", panel.contextBarTip())
         assertNotSame(panel.contextBarTrackColor(), panel.contextBarReservedColor())
         assertNotSame(panel.contextBarUsedColor(), panel.contextBarReservedColor())
-        assertEquals(panel.timelineScrollPreferredSize().height, panel.timelinePreferredSize().height)
+        assertEquals(panel.timelinePreferredSize().height, panel.timelineViewportPreferredSize().height)
+        assertEquals(0, panel.timelineViewportPreferredSize().width)
         assertTrue(panel.timelinePreferredSize().height >= panel.contextBar().preferredSize.height)
-        assertTrue(panel.timelineBarHeight(1) < panel.timelineScrollPreferredSize().height)
+        assertTrue(panel.timelineBarHeight(1) < panel.timelineViewportPreferredSize().height)
         assertTrue(panel.timelineBarHeight(0) < panel.timelineBarHeight(1))
         assertEquals(panel.timelineBarHeight(1), panel.timelineBarHeight(2))
         assertTrue(panel.timelineBarHeight(3) > panel.timelineBarHeight(1))
@@ -164,7 +168,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
             System.currentTimeMillis(),
             0,
             panel.timelineBarWidth() + 1,
-            panel.timelineScrollPreferredSize().height - 1,
+            panel.timelinePreferredSize().height - 1,
             0,
             false,
         ))
@@ -176,7 +180,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
             System.currentTimeMillis(),
             0,
             panel.timelineBarWidth() * 3 + 1,
-            panel.timelineScrollPreferredSize().height - 1,
+            panel.timelinePreferredSize().height - 1,
             0,
             false,
         ))
@@ -248,6 +252,66 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertTrue(first > 0)
         assertEquals(5, panel.timelineCount())
         assertEquals(panel.timelineBarWidth(), next - first)
+    }
+
+    fun `test timeline drags horizontally inside viewport`() {
+        val c = promptedHeader()
+        val panel = SessionHeaderPanel(c, parent)
+        repeat(12) { idx ->
+            emit(ChatEventDto.PartUpdated("ses_test", tool("tool_more_$idx", "bash", "running", "More $idx")))
+        }
+        panel.expandButton().doClick()
+        panel.timelineViewport().setSize(panel.timelineBarWidth() * 4, panel.timelineViewportPreferredSize().height)
+        panel.timelineViewport().doLayout()
+        panel.timelineViewport().viewPosition = Point(0, 0)
+
+        val x = panel.timelineViewport().viewPosition.x
+        val y = panel.timelineViewport().viewPosition.y
+        val timeline = panel.timelinePanel()
+        timeline.dispatchEvent(MouseEvent(
+            timeline,
+            MouseEvent.MOUSE_PRESSED,
+            System.currentTimeMillis(),
+            0,
+            panel.timelineBarWidth() * 3,
+            1,
+            1,
+            false,
+        ))
+        timeline.dispatchEvent(MouseEvent(
+            timeline,
+            MouseEvent.MOUSE_DRAGGED,
+            System.currentTimeMillis(),
+            0,
+            panel.timelineBarWidth(),
+            1,
+            0,
+            false,
+        ))
+
+        assertTrue(panel.timelineViewport().viewPosition.x > x)
+        assertEquals(y, panel.timelineViewport().viewPosition.y)
+    }
+
+    fun `test timeline append scrolls viewport to end`() {
+        val c = promptedHeader()
+        val panel = SessionHeaderPanel(c, parent)
+        repeat(12) { idx ->
+            emit(ChatEventDto.PartUpdated("ses_test", tool("tool_more_$idx", "bash", "running", "More $idx")))
+        }
+        panel.expandButton().doClick()
+        panel.timelineViewport().setSize(panel.timelineBarWidth() * 4, panel.timelineViewportPreferredSize().height)
+        panel.timelineViewport().doLayout()
+        panel.timelineViewport().viewPosition = Point(0, 0)
+
+        emit(ChatEventDto.PartUpdated("ses_test", tool("tool_more_final", "bash", "running", "Final")))
+        panel.timelineViewport().doLayout()
+        flush()
+
+        val max = panel.timelinePreferredSize().width - panel.timelineViewport().extentSize.width
+        assertTrue(max > 0)
+        assertEquals(max, panel.timelineViewport().viewPosition.x)
+        assertEquals(0, panel.timelineViewport().viewPosition.y)
     }
 
     private fun promptedHeader(): ai.kilocode.client.session.update.SessionController {
