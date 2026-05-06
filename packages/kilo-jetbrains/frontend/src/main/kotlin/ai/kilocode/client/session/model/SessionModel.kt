@@ -35,7 +35,7 @@ class SessionModel {
 
     companion object {
         /** Part types that are internal server markers and must never be stored or rendered. */
-        val SILENT_PART_TYPES = setOf("step-start", "step-finish")
+        val SILENT_PART_TYPES = setOf("step-start")
     }
 
     private val entries = LinkedHashMap<String, Message>()
@@ -359,6 +359,11 @@ class SessionModel {
                 existing.time = dto.time
             }
             is Compaction -> return
+            is StepFinish -> {
+                existing.reason = dto.reason
+                existing.cost = dto.cost
+                existing.tokens = dto.tokens
+            }
             is Generic -> return
         }
         fire(SessionModelEvent.ContentUpdated(messageId, existing))
@@ -385,6 +390,11 @@ class SessionModel {
                 time = dto.time
             }
             "compaction" -> Compaction(dto.id)
+            "step-finish" -> StepFinish(dto.id).apply {
+                reason = dto.reason
+                cost = dto.cost
+                tokens = dto.tokens
+            }
             else -> Generic(dto.id, dto.type)
         }
     }
@@ -555,6 +565,7 @@ private fun Content.title(): String = when (this) {
     is Reasoning -> "Reasoning"
     is Tool -> title?.takeIf { it.isNotBlank() } ?: name
     is Compaction -> "Compaction"
+    is StepFinish -> "Step finish"
     is Generic -> type
 }
 
@@ -563,6 +574,7 @@ private fun Content.weight(): Int = when (this) {
     is Reasoning -> content.length / 200 + 1
     is Tool -> listOf(input.size, output?.length?.div(400) ?: 0, error?.length?.div(200) ?: 0).sum() + 1
     is Compaction -> 2
+    is StepFinish -> tokens?.let { (it.input + it.output + it.reasoning).toInt() } ?: 1
     is Generic -> 1
 }
 
@@ -588,6 +600,7 @@ private fun renderMessage(msg: Message): List<String> {
             }
             is Tool -> out.add(renderTool(part))
             is Compaction -> out.add("compaction#${part.id}")
+            is StepFinish -> out.add("step-finish#${part.id}")
             is Generic -> out.add("${part.type}#${part.id}")
         }
     }

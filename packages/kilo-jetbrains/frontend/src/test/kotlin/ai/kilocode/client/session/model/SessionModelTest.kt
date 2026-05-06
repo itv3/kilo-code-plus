@@ -240,14 +240,25 @@ class SessionModelTest : UsefulTestCase() {
         assertTrue(events.isEmpty())
     }
 
-    fun `test updateContent silently drops step-finish parts`() {
+    fun `test updateContent stores step-finish parts`() {
         model.addMessage(msg("m1", "assistant"))
         events.clear()
 
-        model.updateContent("m1", part("p1", "m1", "step-finish"))
+        model.updateContent("m1", part(
+            "p1",
+            "m1",
+            "step-finish",
+            reason = "stop",
+            cost = 0.005,
+            tokens = TokensDto(100, 50, 10, 20, 5),
+        ))
 
-        assertNull(model.message("m1")!!.parts["p1"])
-        assertTrue(events.isEmpty())
+        val part = model.message("m1")!!.parts["p1"]
+        assertTrue(part is StepFinish)
+        assertEquals("stop", (part as StepFinish).reason)
+        assertEquals(0.005, part.cost)
+        assertEquals(100L, part.tokens?.input)
+        assertTrue(events.single() is SessionModelEvent.ContentAdded)
     }
 
     fun `test updateContent unknown type stored as Generic`() {
@@ -467,7 +478,7 @@ class SessionModelTest : UsefulTestCase() {
         assertEquals("snapshot", (entry.parts["p2"] as Generic).type)
     }
 
-    fun `test loadHistory silently drops step-start and step-finish parts`() {
+    fun `test loadHistory drops step-start and preserves step-finish parts`() {
         val text = PartDto(id = "p1", sessionID = "s1", messageID = "m1", type = "text", text = "visible")
         val stepStart = PartDto(id = "p2", sessionID = "s1", messageID = "m1", type = "step-start")
         val stepFinish = PartDto(id = "p3", sessionID = "s1", messageID = "m1", type = "step-finish")
@@ -475,7 +486,8 @@ class SessionModelTest : UsefulTestCase() {
         model.loadHistory(listOf(MessageWithPartsDto(msg("m1", "assistant"), listOf(text, stepStart, stepFinish))))
 
         val entry = model.message("m1")!!
-        assertEquals(listOf("p1"), entry.parts.keys.toList())
+        assertEquals(listOf("p1", "p3"), entry.parts.keys.toList())
+        assertTrue(entry.parts["p3"] is StepFinish)
     }
 
     fun `test upsertMessage adds new message and returns true`() {
@@ -710,14 +722,20 @@ class SessionModelTest : UsefulTestCase() {
         model.setSession(session("Updated title"))
         model.upsertMessage(msg("a1", "assistant"))
         model.updateContent("a1", part("t1", "a1", "tool", tool = "bash", state = "running", title = "Run tests", time = PartTimeDto(1.0, 3.0)))
+        model.updateContent("a1", part("s1", "a1", "step-finish", tokens = TokensDto(200, 100, 25, 0, 0)))
 
-        val item = model.header.timeline.single()
+        val item = model.header.timeline[0]
+        val step = model.header.timeline[1]
         assertEquals("Updated title", model.header.title)
         assertTrue(item.part is Tool)
         assertEquals("bash", (item.part as Tool).name)
         assertEquals("Run tests", item.title)
         assertEquals(2000L, item.durationMs)
         assertTrue(item.active)
+        assertTrue(step.part is StepFinish)
+        assertEquals("Step finish", step.title)
+        assertEquals(10, step.weight)
+        assertFalse(step.active)
     }
 
     fun `test loadHistory and clear reset header state`() {
@@ -765,6 +783,9 @@ class SessionModelTest : UsefulTestCase() {
         output: String? = null,
         error: String? = null,
         time: PartTimeDto? = null,
+        reason: String? = null,
+        cost: Double? = null,
+        tokens: TokensDto? = null,
     ) = PartDto(
         id = id,
         sessionID = "ses",
@@ -779,6 +800,9 @@ class SessionModelTest : UsefulTestCase() {
         output = output,
         error = error,
         time = time,
+        reason = reason,
+        cost = cost,
+        tokens = tokens,
     )
 
     private fun question(id: String) = Question(

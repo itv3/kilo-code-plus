@@ -1,6 +1,7 @@
 package ai.kilocode.client.session.ui.header
 
 import ai.kilocode.client.session.model.Reasoning
+import ai.kilocode.client.session.model.StepFinish
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.model.ToolKind
@@ -127,15 +128,17 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertSame(timeline, panel.timelinePanel())
         assertSame(bar, panel.contextBar())
         assertEquals(listOf(panel.timelineScroll(), panel.tokenPanel(), bar), panel.bodyComponents().take(3))
-        assertEquals(3, panel.timelineCount())
+        assertEquals(4, panel.timelineCount())
         val parts = panel.timelineParts()
         assertTrue(parts[0] is Reasoning)
         assertEquals("bash", (parts[1] as Tool).name)
         assertEquals(ToolKind.GENERIC, (parts[1] as Tool).kind)
         assertEquals(ToolExecState.ERROR, (parts[2] as Tool).state)
+        assertTrue(parts[3] is StepFinish)
         assertTrue(panel.timelineActive(0))
         assertTrue(panel.timelineActive(1))
         assertFalse(panel.timelineActive(2))
+        assertFalse(panel.timelineActive(3))
         assertTrue(panel.contextBarVisible())
         assertEquals(16_300L, panel.contextBarUsed())
         assertEquals(200_000L, panel.contextBarReserved())
@@ -153,6 +156,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertTrue(panel.timelineBarHeight(1) < panel.timelineScrollPreferredSize().height)
         assertTrue(panel.timelineBarHeight(0) < panel.timelineBarHeight(1))
         assertEquals(panel.timelineBarHeight(1), panel.timelineBarHeight(2))
+        assertTrue(panel.timelineBarHeight(3) > panel.timelineBarHeight(1))
 
         timeline.dispatchEvent(MouseEvent(
             timeline,
@@ -166,6 +170,18 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         ))
         assertEquals("Run tests", panel.timelineToolTip())
         assertEquals(1, panel.timelineHover())
+        timeline.dispatchEvent(MouseEvent(
+            timeline,
+            MouseEvent.MOUSE_MOVED,
+            System.currentTimeMillis(),
+            0,
+            panel.timelineBarWidth() * 3 + 1,
+            panel.timelineScrollPreferredSize().height - 1,
+            0,
+            false,
+        ))
+        assertEquals("Step finish", panel.timelineToolTip())
+        assertEquals(3, panel.timelineHover())
         timeline.dispatchEvent(MouseEvent(
             timeline,
             MouseEvent.MOUSE_MOVED,
@@ -185,7 +201,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertSame(body, panel.bodyPanel())
         assertSame(timeline, panel.timelinePanel())
         assertSame(bar, panel.contextBar())
-        assertEquals(3, panel.timelineCount())
+        assertEquals(4, panel.timelineCount())
     }
 
     fun `test expand button owns expanded state across updates`() {
@@ -230,7 +246,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
 
         val next = panel.timelinePreferredSize().width
         assertTrue(first > 0)
-        assertEquals(4, panel.timelineCount())
+        assertEquals(5, panel.timelineCount())
         assertEquals(panel.timelineBarWidth(), next - first)
     }
 
@@ -264,6 +280,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         emit(ChatEventDto.PartUpdated("ses_test", reasoning(done = false, text = "Thinking")))
         emit(ChatEventDto.PartUpdated("ses_test", tool("tool_1", "bash", "running", "Run tests", input = mapOf("cmd" to "test", "files" to "src"))))
         emit(ChatEventDto.PartUpdated("ses_test", tool("tool_2", "edit", "error", "Edit file", input = mapOf("cmd" to "test", "files" to "src"))))
+        emit(ChatEventDto.PartUpdated("ses_test", stepFinish()))
         emit(ChatEventDto.TodoUpdated("ses_test", listOf(
             TodoDto("Write tests", "completed", "high"),
             TodoDto("Ship it", "pending", "medium"),
@@ -308,5 +325,15 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         title = title,
         input = input,
         time = PartTimeDto(1.0, 3.0),
+    )
+
+    private fun stepFinish() = PartDto(
+        id = "step_finish_1",
+        sessionID = "ses_test",
+        messageID = "msg1",
+        type = "step-finish",
+        reason = "stop",
+        cost = 0.07,
+        tokens = TokensDto(13_700, 2_000, 500, 75, 25),
     )
 }

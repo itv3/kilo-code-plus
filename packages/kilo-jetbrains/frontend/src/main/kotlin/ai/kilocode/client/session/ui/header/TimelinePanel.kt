@@ -3,6 +3,7 @@ package ai.kilocode.client.session.ui.header
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Compaction
 import ai.kilocode.client.session.model.Reasoning
+import ai.kilocode.client.session.model.StepFinish
 import ai.kilocode.client.session.model.Text
 import ai.kilocode.client.session.model.TimelineItem
 import ai.kilocode.client.session.model.Tool
@@ -137,6 +138,7 @@ internal class TimelinePanel : JPanel() {
         if (part is Text) return UiStyle.Colors.timelineText
         if (part is Reasoning) return UiStyle.Colors.timelineText
         if (part is Compaction) return UiStyle.Colors.timelineStep
+        if (part is StepFinish) return UiStyle.Colors.timelineSuccess
         if (part !is Tool) return UiStyle.Colors.timelineStep
         if (part.kind == ToolKind.READ) return UiStyle.Colors.timelineRead
         if (part.kind == ToolKind.WRITE) return UiStyle.Colors.timelineWrite

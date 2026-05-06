@@ -452,6 +452,32 @@ class KiloCliDataParserTest {
     }
 
     @Test
+    fun `parseMessages - step finish part with tokens`() {
+        val raw = """[{
+            "info": { "id": "m1", "sessionID": "s1", "role": "assistant", "time": { "created": 1.0 } },
+            "parts": [{
+                "id": "p1",
+                "sessionID": "s1",
+                "messageID": "m1",
+                "type": "step-finish",
+                "reason": "stop",
+                "cost": 0.005,
+                "tokens": { "input": 100, "output": 50, "reasoning": 10, "cache": { "read": 20, "write": 5 } }
+            }]
+        }]"""
+
+        val part = KiloCliDataParser.parseMessages(raw)[0].parts[0]
+        assertEquals("step-finish", part.type)
+        assertEquals("stop", part.reason)
+        assertEquals(0.005, part.cost)
+        assertEquals(100L, part.tokens?.input)
+        assertEquals(50L, part.tokens?.output)
+        assertEquals(10L, part.tokens?.reasoning)
+        assertEquals(20L, part.tokens?.cacheRead)
+        assertEquals(5L, part.tokens?.cacheWrite)
+    }
+
+    @Test
     fun `parseMessages - malformed JSON returns empty`() {
         assertEquals(emptyList(), KiloCliDataParser.parseMessages("not json"))
     }

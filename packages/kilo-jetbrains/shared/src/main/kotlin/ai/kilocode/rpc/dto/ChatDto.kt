@@ -65,6 +65,9 @@ data class PartDto(
     val output: String? = null,
     val error: String? = null,
     val time: PartTimeDto? = null,
+    val reason: String? = null,
+    val cost: Double? = null,
+    val tokens: TokensDto? = null,
 )
 
 @Serializable

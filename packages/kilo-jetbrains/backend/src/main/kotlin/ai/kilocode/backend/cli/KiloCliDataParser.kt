@@ -376,22 +376,14 @@ object KiloCliDataParser {
             modelID = obj.str("modelID"),
             parentID = obj.str("parentID"),
             cost = obj.num("cost"),
-            tokens = tokens?.let {
-                val cache = it["cache"]?.jsonObject
-                TokensDto(
-                    input = it.long("input") ?: 0,
-                    output = it.long("output") ?: 0,
-                    reasoning = it.long("reasoning") ?: 0,
-                    cacheRead = cache?.long("read") ?: 0,
-                    cacheWrite = cache?.long("write") ?: 0,
-                )
-            },
+            tokens = tokens?.let(::parseTokens),
             error = error?.let { parseError(it) },
         )
     }
 
     internal fun parsePart(obj: JsonObject): PartDto {
         val state = obj["state"]?.jsonObject
+        val tokens = obj["tokens"]?.jsonObject
         val top = obj.map("metadata")
         val meta = state.map("metadata") + top
         return PartDto(
@@ -409,6 +401,20 @@ object KiloCliDataParser {
             output = state?.str("output"),
             error = state?.str("error"),
             time = obj.time("time") ?: state.time("time"),
+            reason = obj.str("reason"),
+            cost = obj.num("cost"),
+            tokens = tokens?.let(::parseTokens),
+        )
+    }
+
+    private fun parseTokens(obj: JsonObject): TokensDto {
+        val cache = obj["cache"]?.jsonObject
+        return TokensDto(
+            input = obj.long("input") ?: 0,
+            output = obj.long("output") ?: 0,
+            reasoning = obj.long("reasoning") ?: 0,
+            cacheRead = cache?.long("read") ?: 0,
+            cacheWrite = cache?.long("write") ?: 0,
         )
     }
 

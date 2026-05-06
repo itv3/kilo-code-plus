@@ -79,6 +79,13 @@ class Tool(id: String, val name: String, var kind: ToolKind) : Content(id) {
 /** Context compaction marker. */
 class Compaction(id: String) : Content(id)
 
+/** Assistant step completion marker used by the session header timeline. */
+class StepFinish(id: String) : Content(id) {
+    var reason: String? = null
+    var cost: Double? = null
+    var tokens: TokensDto? = null
+}
+
 /**
  * Generic fallback for part types not yet given a dedicated class.
  * Preserves the [type] string so unknown content is not silently dropped.
