@@ -259,10 +259,8 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       return HttpServerResponse.stream(
         Stream.fromEffect(
           promptSvc
-            .prompt({
-              ...ctx.payload,
-              sessionID: ctx.params.sessionID,
-            } as SessionPrompt.PromptInput)
+            // kilocode_change - cast to bridge schema-readonly→PromptInput-mutable; matches legacy Hono session.ts
+            .prompt({ ...ctx.payload, sessionID: ctx.params.sessionID } as unknown as SessionPrompt.PromptInput)
             .pipe(Effect.provideService(InstanceRef, instance), Effect.provideService(WorkspaceRef, workspace)),
         ).pipe(
           Stream.map((message) => JSON.stringify(message)),
@@ -276,7 +274,8 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       params: { sessionID: SessionID }
       payload: typeof PromptPayload.Type
     }) {
-      yield* promptSvc.prompt({ ...ctx.payload, sessionID: ctx.params.sessionID } as SessionPrompt.PromptInput).pipe(
+      // kilocode_change - cast to bridge schema-readonly→PromptInput-mutable; matches legacy Hono session.ts
+      yield* promptSvc.prompt({ ...ctx.payload, sessionID: ctx.params.sessionID } as unknown as SessionPrompt.PromptInput).pipe(
         Effect.catchCause((cause) =>
           Effect.gen(function* () {
             yield* Effect.logError("prompt_async failed", { sessionID: ctx.params.sessionID, cause })
