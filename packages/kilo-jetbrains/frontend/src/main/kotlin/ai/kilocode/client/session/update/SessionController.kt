@@ -73,6 +73,7 @@ class SessionController(
   private val open: (SessionDto) -> Unit = {},
   private val beforeUpdate: () -> Boolean = { false },
   private val afterUpdate: (Boolean) -> Unit = {},
+  private val loaded: (Boolean) -> Unit = {},
 ) : Disposable {
 
     companion object {
@@ -429,16 +430,18 @@ class SessionController(
                     }
                 }
                 recoverPending(id)
-                edt {
-                    if (!model.isEmpty()) {
-                        showMessages()
-                        return@edt
-                    }
-                    refreshRecents(force = true)
+                runEdt {
+                    val show = !model.isEmpty()
+                    if (show) showMessages()
+                    if (!show) refreshRecents(force = true)
+                    loaded(show)
                 }
             } catch (e: Exception) {
                 LOG.warn("${ChatLogSummary.sid(id)} kind=history dir=${ChatLogSummary.dir(directory)} failed message=${e.message}", e)
-                edt { refreshRecents(force = true) }
+                edt {
+                    refreshRecents(force = true)
+                    loaded(false)
+                }
             } finally {
                 edt {
                     if (historyState != state) return@edt

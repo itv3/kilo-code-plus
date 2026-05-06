@@ -43,6 +43,7 @@ class FakeSessionRpcApi : KiloSessionRpcApi {
 
     /** Message history returned by [messages]. */
     val history = mutableListOf<MessageWithPartsDto>()
+    var historyGate: CompletableDeferred<Unit>? = null
 
     /** Recent sessions returned by [recent]. */
     val recent = mutableListOf<SessionDto>()
@@ -142,6 +143,7 @@ class FakeSessionRpcApi : KiloSessionRpcApi {
 
     override suspend fun messages(id: String, directory: String): List<MessageWithPartsDto> {
         assertNotEdt("messages")
+        historyGate?.await()
         return history.toList()
     }
 
