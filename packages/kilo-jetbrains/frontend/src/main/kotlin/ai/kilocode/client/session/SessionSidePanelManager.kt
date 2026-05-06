@@ -19,8 +19,8 @@ import javax.swing.JPanel
 class SessionSidePanelManager(
     private val project: Project,
     private val root: Workspace,
-    private val create: (Project, Workspace, SessionManager, String?, Boolean) -> SessionUi = { project, workspace, manager, id, loading ->
-        service<SessionUiFactory>().create(project, workspace, manager, id, loading)
+    private val create: (Project, Workspace, SessionManager, String?, Boolean, SessionDto?) -> SessionUi = { project, workspace, manager, id, loading, session ->
+        service<SessionUiFactory>().create(project, workspace, manager, id, loading, session)
     },
     private val resolve: (String) -> Workspace = { dir -> service<KiloWorkspaceService>().workspace(dir) },
     private val history: ((Disposable, (SessionDto) -> Unit, (String) -> Unit) -> JComponent)? = null,
@@ -43,13 +43,13 @@ class SessionSidePanelManager(
         val active = current
         if (active?.blank == true) return
         register(active)
-        show(create(project, root, this, null, active == null))
+        show(create(project, root, this, null, active == null, null))
     }
 
     override fun openSession(session: SessionDto) {
         register(current)
         val ui = opened.getOrPut(session.id) {
-            create(project, resolve(session.directory), this, session.id, false).also {
+            create(project, resolve(session.directory), this, session.id, false, session).also {
                 all.add(it)
             }
         }
