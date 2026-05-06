@@ -21,17 +21,12 @@ jobs:
     if: github.repository == 'Kilo-Org/kilocode'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6 # kilocode_change
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       - uses: oven-sh/setup-bun@v2
-
-      # kilocode_change start - check workflow allowlist drift
-      - name: Check workflow allowlist
-        run: bun run script/check-workflows.ts
-      # kilocode_change end
 
       - name: Check kilocode_change annotations in shared upstream files
         env:
@@ -42,3 +37,8 @@ jobs:
           else
             echo "No PR base SHA available (workflow_dispatch without PR context) — skipping."
           fi
+
+      # kilocode_change start
+      - name: Check workflow allowlist
+        run: bun run script/check-workflows.ts
+      # kilocode_change end
