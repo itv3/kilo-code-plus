@@ -29,7 +29,6 @@ permission:
     "wc *": allow
     "ls *": allow
     "pwd *": allow
-    "echo *": allow
     "diff *": allow
     "gh pr view *": allow
     "gh run view *": allow
