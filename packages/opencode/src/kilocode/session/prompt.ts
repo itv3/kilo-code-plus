@@ -6,6 +6,7 @@ import { Cause, Effect, Exit } from "effect"
 import { SessionID, PartID } from "@/session/schema"
 import { MessageV2 } from "@/session/message-v2"
 import { Session } from "@/session/session"
+import { Instance } from "@/project/instance"
 import type { SessionStatus } from "@/session/status"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { PlanFollowup } from "@/kilocode/plan-followup"
@@ -168,7 +169,7 @@ export namespace KiloSessionPrompt {
     userMessage: MessageV2.WithParts
   }) {
     if (input.agent.name !== "plan") return
-    const plan = Session.plan(input.session)
+    const plan = Session.plan(input.session, Instance.current)
     const exists = await Filesystem.exists(plan)
     if (!exists) await fs.mkdir(path.dirname(plan), { recursive: true })
     const info = exists

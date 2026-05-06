@@ -1,13 +1,10 @@
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
-import { Effect, Stream } from "effect"
-import { HttpBody, HttpClient, HttpClientRequest, HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
+import { Effect } from "effect"
+import { HttpClient, HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
 import { Hono } from "hono"
-// import { proxy } from "hono/proxy" // kilocode_change - proxy import removed
 import { getMimeType } from "hono/utils/mime"
-// import { createHash } from "node:crypto" // kilocode_change
 import fs from "node:fs/promises"
-import { ProxyUtil } from "../proxy-util"
 
 const embeddedUIPromise = Flag.KILO_DISABLE_EMBEDDED_WEB_UI
   ? Promise.resolve(null)
@@ -16,36 +13,8 @@ const embeddedUIPromise = Flag.KILO_DISABLE_EMBEDDED_WEB_UI
 
 const DEFAULT_CSP =
   "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:"
-const UI_UPSTREAM = new URL("https://app.opencode.ai")
 
-// kilocode_change start - csp function removed, used by proxy fallback to app.opencode.ai
-// const csp = (hash = "") =>
-//   `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'${hash ? ` 'sha256-${hash}'` : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:`
-// kilocode_change end
-
-function themePreloadHash(body: string) {
-  return body.match(/<script\b(?![^>]*\bsrc\s*=)[^>]*\bid=(['"])oc-theme-preload-script\1[^>]*>([\s\S]*?)<\/script>/i)
-}
-
-function requestBody(request: HttpServerRequest.HttpServerRequest) {
-  if (request.method === "GET" || request.method === "HEAD") return HttpBody.empty
-  const len = request.headers["content-length"]
-  return HttpBody.stream(request.stream, request.headers["content-type"], len === undefined ? undefined : Number(len))
-}
-
-function proxyResponseHeaders(headers: Record<string, string>) {
-  const result = new Headers(headers)
-  // FetchHttpClient exposes decoded response bodies, so forwarding upstream
-  // transfer metadata makes browsers decode already-decoded assets again.
-  result.delete("content-encoding")
-  result.delete("content-length")
-  return result
-}
-
-function upstreamURL(path: string) {
-  return new URL(path, UI_UPSTREAM).toString()
-}
-
+// kilocode_change - upstream's proxy-to-app.opencode.ai fallback was removed; Kilo serves the embedded UI only
 function embeddedUI() {
   if (Flag.KILO_DISABLE_EMBEDDED_WEB_UI) return Promise.resolve(null)
   return embeddedUIPromise
@@ -69,16 +38,8 @@ export async function serveUI(request: Request) {
     return Response.json({ error: "Not Found" }, { status: 404 })
   }
 
-  const response = await proxy(upstreamURL(path), {
-    raw: request,
-    headers: ProxyUtil.headers(request, { host: UI_UPSTREAM.host }),
-  })
-  const match = response.headers.get("content-type")?.includes("text/html")
-    ? themePreloadHash(await response.clone().text())
-    : undefined
-  const hash = match ? createHash("sha256").update(match[2]).digest("base64") : ""
-  response.headers.set("Content-Security-Policy", csp(hash))
-  return response
+  // kilocode_change - no proxy fallback to app.opencode.ai; embedded UI only
+  return Response.json({ error: "Not Found" }, { status: 404 })
 }
 
 export function serveUIEffect(
@@ -102,26 +63,8 @@ export function serveUIEffect(
       return HttpServerResponse.jsonUnsafe({ error: "Not Found" }, { status: 404 })
     }
 
-    const response = yield* services.client.execute(
-      HttpClientRequest.make(request.method)(upstreamURL(path), {
-        headers: ProxyUtil.headers(request.headers, { host: UI_UPSTREAM.host }),
-        body: requestBody(request),
-      }),
-    )
-    const headers = proxyResponseHeaders(response.headers)
-
-    if (response.headers["content-type"]?.includes("text/html")) {
-      const body = yield* response.text
-      const match = themePreloadHash(body)
-      headers.set("Content-Security-Policy", csp(match ? createHash("sha256").update(match[2]).digest("base64") : ""))
-      return HttpServerResponse.text(body, { status: response.status, headers })
-    }
-
-    headers.set("Content-Security-Policy", csp())
-    return HttpServerResponse.stream(response.stream.pipe(Stream.catchCause(() => Stream.empty)), {
-      status: response.status,
-      headers,
-    })
+    // kilocode_change - no proxy fallback to app.opencode.ai; embedded UI only
+    return HttpServerResponse.jsonUnsafe({ error: "Not Found" }, { status: 404 })
   })
 }
 

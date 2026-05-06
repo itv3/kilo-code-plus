@@ -201,7 +201,6 @@ for (const item of targets) {
     external: ["node-gyp", ...LanceDBRuntime.external], // kilocode_change
     format: "esm",
     minify: true,
-    sourcemap: sourcemapsFlag ? "linked" : "none",
     splitting: true,
     compile: {
       autoloadBunfig: false,
