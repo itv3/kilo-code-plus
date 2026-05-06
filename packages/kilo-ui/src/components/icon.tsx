@@ -36,8 +36,7 @@ export interface IconProps extends Omit<Props, "name"> {
 
 export function Icon(props: IconProps) {
   const [local, others] = splitProps(props, ["name", "size", "class", "classList"])
-  const name = local.name as Name
-  if (!(name in icons)) {
+  if (!((local.name as Name) in icons)) {
     return (
       <Upstream
         {...others}
@@ -48,7 +47,6 @@ export function Icon(props: IconProps) {
       />
     )
   }
-  const def = icons[name]
   return (
     <div data-component="icon" data-size={local.size || "normal"}>
       <svg
@@ -58,8 +56,8 @@ export function Icon(props: IconProps) {
         }}
         data-slot="icon-svg"
         fill="none"
-        viewBox={def.viewBox}
-        innerHTML={def.path}
+        viewBox={icons[local.name as Name].viewBox}
+        innerHTML={icons[local.name as Name].path}
         aria-hidden="true"
         {...others}
       />
