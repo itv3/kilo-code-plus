@@ -372,10 +372,10 @@ const live: Layer.Layer<
         headers: {
           ...(input.model.providerID.startsWith("opencode")
             ? {
-                "x-opencode-project": opencodeProjectID,
-                "x-opencode-session": input.sessionID,
-                "x-opencode-request": input.user.id,
-                "x-opencode-client": Flag.OPENCODE_CLIENT,
+                "x-kilo-project": opencodeProjectID,
+                "x-kilo-session": input.sessionID,
+                "x-kilo-request": input.user.id,
+                "x-kilo-client": Flag.KILO_CLIENT,
                 "User-Agent": `opencode/${InstallationVersion}`,
               }
             : {

@@ -16,12 +16,12 @@ import { testEffect } from "../lib/effect"
 // already calls disposeAllInstances(), so we don't repeat it.
 const testStateLayer = Layer.effectDiscard(
   Effect.gen(function* () {
-    const originalHttpApi = Flag.OPENCODE_EXPERIMENTAL_HTTPAPI
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
+    const originalHttpApi = Flag.KILO_EXPERIMENTAL_HTTPAPI
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
     yield* Effect.promise(() => resetDatabase())
     yield* Effect.addFinalizer(() =>
       Effect.promise(async () => {
-        Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = originalHttpApi
+        Flag.KILO_EXPERIMENTAL_HTTPAPI = originalHttpApi
         await resetDatabase()
       }),
     )
@@ -45,7 +45,7 @@ const httpApiServerLayer = servedRoutes.pipe(
 
 const it = testEffect(Layer.mergeAll(testStateLayer, httpApiServerLayer))
 
-const directoryHeader = (dir: string) => HttpClientRequest.setHeader("x-opencode-directory", dir)
+const directoryHeader = (dir: string) => HttpClientRequest.setHeader("x-kilo-directory", dir)
 
 describe("instance HttpApi", () => {
   it.live("serves path and VCS read endpoints", () =>

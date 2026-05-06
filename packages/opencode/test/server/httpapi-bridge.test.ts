@@ -17,9 +17,9 @@ import { disposeAllInstances, tmpdir } from "../fixture/fixture"
 void Log.init({ print: false })
 
 const original = {
-  OPENCODE_EXPERIMENTAL_HTTPAPI: Flag.OPENCODE_EXPERIMENTAL_HTTPAPI,
-  OPENCODE_SERVER_PASSWORD: Flag.OPENCODE_SERVER_PASSWORD,
-  OPENCODE_SERVER_USERNAME: Flag.OPENCODE_SERVER_USERNAME,
+  KILO_EXPERIMENTAL_HTTPAPI: Flag.KILO_EXPERIMENTAL_HTTPAPI,
+  KILO_SERVER_PASSWORD: Flag.KILO_SERVER_PASSWORD,
+  KILO_SERVER_USERNAME: Flag.KILO_SERVER_USERNAME,
 }
 
 const methods = ["get", "post", "put", "delete", "patch"] as const
@@ -30,17 +30,17 @@ function effectOpenApi() {
 }
 
 function app(input?: { password?: string; username?: string }) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
-  Flag.OPENCODE_SERVER_PASSWORD = input?.password
-  Flag.OPENCODE_SERVER_USERNAME = input?.username
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = true
+  Flag.KILO_SERVER_PASSWORD = input?.password
+  Flag.KILO_SERVER_USERNAME = input?.username
 
   const handler = HttpRouter.toWebHandler(
     ExperimentalHttpApiServer.routes.pipe(
       Layer.provide(
         ConfigProvider.layer(
           ConfigProvider.fromUnknown({
-            OPENCODE_SERVER_PASSWORD: input?.password,
-            OPENCODE_SERVER_USERNAME: input?.username,
+            KILO_SERVER_PASSWORD: input?.password,
+            KILO_SERVER_USERNAME: input?.username,
           }),
         ),
       ),
@@ -205,19 +205,19 @@ function fileUrl(input?: { directory?: string; token?: string }) {
 }
 
 afterEach(async () => {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = original.OPENCODE_EXPERIMENTAL_HTTPAPI
-  Flag.OPENCODE_SERVER_PASSWORD = original.OPENCODE_SERVER_PASSWORD
-  Flag.OPENCODE_SERVER_USERNAME = original.OPENCODE_SERVER_USERNAME
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = original.KILO_EXPERIMENTAL_HTTPAPI
+  Flag.KILO_SERVER_PASSWORD = original.KILO_SERVER_PASSWORD
+  Flag.KILO_SERVER_USERNAME = original.KILO_SERVER_USERNAME
   await disposeAllInstances()
   await resetDatabase()
 })
 
 describe("HttpApi server", () => {
   test("keeps Effect HttpApi behind the feature flag", () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = false
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = false
     expect(Server.backend()).toEqual({ backend: "hono", reason: "stable" })
 
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
     expect(Server.backend()).toEqual({ backend: "effect-httpapi", reason: "env" })
   })
 
@@ -303,7 +303,7 @@ describe("HttpApi server", () => {
 
     const response = await app().request(fileUrl(), {
       headers: {
-        "x-opencode-directory": tmp.path,
+        "x-kilo-directory": tmp.path,
       },
     })
 
@@ -316,7 +316,7 @@ describe("HttpApi server", () => {
 
     const response = await app().request("/project/current", {
       headers: {
-        "x-opencode-directory": tmp.path,
+        "x-kilo-directory": tmp.path,
       },
     })
 
@@ -330,18 +330,18 @@ describe("HttpApi server", () => {
 
     const [missing, bad, good] = await Promise.all([
       app({ password: "secret" }).request(fileUrl(), {
-        headers: { "x-opencode-directory": tmp.path },
+        headers: { "x-kilo-directory": tmp.path },
       }),
       app({ password: "secret" }).request(fileUrl(), {
         headers: {
           authorization: authorization("opencode", "wrong"),
-          "x-opencode-directory": tmp.path,
+          "x-kilo-directory": tmp.path,
         },
       }),
       app({ password: "secret" }).request(fileUrl(), {
         headers: {
           authorization: authorization("opencode", "secret"),
-          "x-opencode-directory": tmp.path,
+          "x-kilo-directory": tmp.path,
         },
       }),
     ])
@@ -359,7 +359,7 @@ describe("HttpApi server", () => {
       fileUrl({ token: Buffer.from("opencode:secret").toString("base64") }),
       {
         headers: {
-          "x-opencode-directory": tmp.path,
+          "x-kilo-directory": tmp.path,
         },
       },
     )
@@ -375,7 +375,7 @@ describe("HttpApi server", () => {
 
     const response = await app().request(fileUrl({ directory: query.path }), {
       headers: {
-        "x-opencode-directory": header.path,
+        "x-kilo-directory": header.path,
       },
     })
 

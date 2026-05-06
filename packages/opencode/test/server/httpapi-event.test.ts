@@ -9,10 +9,10 @@ import { disposeAllInstances, tmpdir } from "../fixture/fixture"
 
 void Log.init({ print: false })
 
-const original = Flag.OPENCODE_EXPERIMENTAL_HTTPAPI
+const original = Flag.KILO_EXPERIMENTAL_HTTPAPI
 
 function app(experimental = true) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = experimental
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = experimental
   return experimental ? Server.Default().app : Server.Legacy().app
 }
 
@@ -28,7 +28,7 @@ async function readFirstChunk(response: Response) {
 }
 
 afterEach(async () => {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = original
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = original
   await disposeAllInstances()
   await resetDatabase()
 })
@@ -36,7 +36,7 @@ afterEach(async () => {
 describe("event HttpApi bridge", () => {
   test("serves event stream through experimental Effect route", async () => {
     await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
-    const response = await app().request(EventPaths.event, { headers: { "x-opencode-directory": tmp.path } })
+    const response = await app().request(EventPaths.event, { headers: { "x-kilo-directory": tmp.path } })
 
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("text/event-stream")
@@ -48,7 +48,7 @@ describe("event HttpApi bridge", () => {
 
   test("matches legacy first event frame", async () => {
     await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
-    const headers = { "x-opencode-directory": tmp.path }
+    const headers = { "x-kilo-directory": tmp.path }
     const legacy = await app(false).request(EventPaths.event, { headers })
     const effect = await app(true).request(EventPaths.event, { headers })
 

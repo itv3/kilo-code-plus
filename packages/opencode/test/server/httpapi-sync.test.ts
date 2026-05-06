@@ -11,11 +11,11 @@ import { disposeAllInstances, tmpdir } from "../fixture/fixture"
 
 void Log.init({ print: false })
 
-const originalHttpApi = Flag.OPENCODE_EXPERIMENTAL_HTTPAPI
-const originalWorkspaces = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
+const originalHttpApi = Flag.KILO_EXPERIMENTAL_HTTPAPI
+const originalWorkspaces = Flag.KILO_EXPERIMENTAL_WORKSPACES
 
 function app(httpapi = true) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = httpapi
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = httpapi
   return httpapi ? Server.Default().app : Server.Legacy().app
 }
 
@@ -25,17 +25,17 @@ function runSession<A, E>(fx: Effect.Effect<A, E, Session.Service>) {
 
 afterEach(async () => {
   mock.restore()
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = originalHttpApi
-  Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = originalWorkspaces
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = originalHttpApi
+  Flag.KILO_EXPERIMENTAL_WORKSPACES = originalWorkspaces
   await disposeAllInstances()
   await resetDatabase()
 })
 
 describe("sync HttpApi", () => {
   test("serves sync routes through Hono bridge", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+    Flag.KILO_EXPERIMENTAL_WORKSPACES = true
     await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
-    const headers = { "x-opencode-directory": tmp.path, "content-type": "application/json" }
+    const headers = { "x-kilo-directory": tmp.path, "content-type": "application/json" }
     const info = spyOn(Log.create({ service: "server.sync" }), "info")
 
     const session = await Instance.provide({
@@ -86,7 +86,7 @@ describe("sync HttpApi", () => {
 
   test("matches legacy seq validation", async () => {
     await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
-    const headers = { "x-opencode-directory": tmp.path, "content-type": "application/json" }
+    const headers = { "x-kilo-directory": tmp.path, "content-type": "application/json" }
     const cases = [
       {
         path: SyncPaths.history,

@@ -6,8 +6,8 @@ import { pathToFileURL } from "url"
 import { disposeAllInstances, provideTmpdirInstance } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
 
-const disableDefault = process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS
-process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS = "1"
+const disableDefault = process.env.KILO_DISABLE_DEFAULT_PLUGINS
+process.env.KILO_DISABLE_DEFAULT_PLUGINS = "1"
 
 const { Flag } = await import("@opencode-ai/core/flag/flag")
 const { Plugin } = await import("../../src/plugin/index")
@@ -15,9 +15,9 @@ const { Workspace } = await import("../../src/control-plane/workspace")
 const { Instance } = await import("../../src/project/instance")
 const it = testEffect(Layer.mergeAll(Plugin.defaultLayer, Workspace.defaultLayer, CrossSpawnSpawner.defaultLayer))
 
-const experimental = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
+const experimental = Flag.KILO_EXPERIMENTAL_WORKSPACES
 
-Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+Flag.KILO_EXPERIMENTAL_WORKSPACES = true
 
 afterEach(async () => {
   await disposeAllInstances()
@@ -25,12 +25,12 @@ afterEach(async () => {
 
 afterAll(() => {
   if (disableDefault === undefined) {
-    delete process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS
+    delete process.env.KILO_DISABLE_DEFAULT_PLUGINS
   } else {
-    process.env.OPENCODE_DISABLE_DEFAULT_PLUGINS = disableDefault
+    process.env.KILO_DISABLE_DEFAULT_PLUGINS = disableDefault
   }
 
-  Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = experimental
+  Flag.KILO_EXPERIMENTAL_WORKSPACES = experimental
 })
 
 describe("plugin.workspace", () => {

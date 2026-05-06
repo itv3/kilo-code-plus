@@ -25,11 +25,11 @@ import { it } from "../lib/effect"
 
 void Log.init({ print: false })
 
-const original = Flag.OPENCODE_EXPERIMENTAL_HTTPAPI
-const originalWorkspaces = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
+const original = Flag.KILO_EXPERIMENTAL_HTTPAPI
+const originalWorkspaces = Flag.KILO_EXPERIMENTAL_WORKSPACES
 
 function app(experimental = true) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = experimental
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = experimental
   return experimental ? Server.Default().app : Server.Legacy().app
 }
 
@@ -136,8 +136,8 @@ function withTmp<A, E, R>(
 }
 
 afterEach(async () => {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = original
-  Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = originalWorkspaces
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = original
+  Flag.KILO_EXPERIMENTAL_WORKSPACES = originalWorkspaces
   await disposeAllInstances()
   await resetDatabase()
 })
@@ -147,7 +147,7 @@ describe("session HttpApi", () => {
     "serves read routes through Hono bridge",
     withTmp({ git: true, config: { formatter: false, lsp: false } }, (tmp) =>
       Effect.gen(function* () {
-        const headers = { "x-opencode-directory": tmp.path }
+        const headers = { "x-kilo-directory": tmp.path }
         const parent = yield* createSession(tmp.path, { title: "parent" })
         const child = yield* createSession(tmp.path, { title: "child", parentID: parent.id })
         const message = yield* createTextMessage(tmp.path, parent.id, "hello")
@@ -210,7 +210,7 @@ describe("session HttpApi", () => {
     "serves lifecycle mutation routes through Hono bridge",
     withTmp({ git: true, config: { formatter: false, lsp: false, share: "disabled" } }, (tmp) =>
       Effect.gen(function* () {
-        const headers = { "x-opencode-directory": tmp.path, "content-type": "application/json" }
+        const headers = { "x-kilo-directory": tmp.path, "content-type": "application/json" }
 
         const createdEmpty = yield* requestJson<Session.Info>(SessionPaths.create, {
           method: "POST",
@@ -260,7 +260,7 @@ describe("session HttpApi", () => {
     "persists selected workspace id when creating a session",
     withTmp({ git: true, config: { formatter: false, lsp: false, share: "disabled" } }, (tmp) =>
       Effect.gen(function* () {
-        Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+        Flag.KILO_EXPERIMENTAL_WORKSPACES = true
         const project = yield* Project.use.fromDirectory(tmp.path).pipe(Effect.provide(Project.defaultLayer))
         const workspace = yield* createLocalWorkspace({
           projectID: project.project.id,
@@ -270,7 +270,7 @@ describe("session HttpApi", () => {
 
         const created = yield* requestJson<Session.Info>(`${SessionPaths.create}?workspace=${workspace.id}`, {
           method: "POST",
-          headers: { "x-opencode-directory": tmp.path, "content-type": "application/json" },
+          headers: { "x-kilo-directory": tmp.path, "content-type": "application/json" },
           body: JSON.stringify({ title: "workspace session" }),
         })
 
@@ -294,7 +294,7 @@ describe("session HttpApi", () => {
     "matches legacy archived timestamp validation",
     withTmp({ git: true, config: { formatter: false, lsp: false } }, (tmp) =>
       Effect.gen(function* () {
-        const headers = { "x-opencode-directory": tmp.path, "content-type": "application/json" }
+        const headers = { "x-kilo-directory": tmp.path, "content-type": "application/json" }
         const legacy = yield* createSession(tmp.path, { title: "legacy" })
         const effect = yield* createSession(tmp.path, { title: "effect" })
         const body = JSON.stringify({ time: { archived: -1 } })
@@ -342,7 +342,7 @@ describe("session HttpApi", () => {
           path: "packages/opencode/src",
           directory: currentDir,
         })
-        const headers = { "x-opencode-directory": tmp.path }
+        const headers = { "x-kilo-directory": tmp.path }
         const legacy = (yield* json<Session.Info[]>(
           yield* requestWithBackend(false, `${SessionPaths.list}?${query}`, { headers }),
         )).map((item) => item.id)
@@ -361,7 +361,7 @@ describe("session HttpApi", () => {
     "matches legacy paginated message link headers",
     withTmp({ git: true, config: { formatter: false, lsp: false } }, (tmp) =>
       Effect.gen(function* () {
-        const headers = { "x-opencode-directory": tmp.path }
+        const headers = { "x-kilo-directory": tmp.path }
         const session = yield* createSession(tmp.path, { title: "messages" })
         yield* createTextMessage(tmp.path, session.id, "first")
         yield* createTextMessage(tmp.path, session.id, "second")
@@ -383,7 +383,7 @@ describe("session HttpApi", () => {
     "serves message mutation routes through Hono bridge",
     withTmp({ git: true, config: { formatter: false, lsp: false } }, (tmp) =>
       Effect.gen(function* () {
-        const headers = { "x-opencode-directory": tmp.path, "content-type": "application/json" }
+        const headers = { "x-kilo-directory": tmp.path, "content-type": "application/json" }
         const session = yield* createSession(tmp.path, { title: "messages" })
         const first = yield* createTextMessage(tmp.path, session.id, "first")
         const second = yield* createTextMessage(tmp.path, session.id, "second")
@@ -427,7 +427,7 @@ describe("session HttpApi", () => {
     "serves remaining non-LLM session mutation routes through Hono bridge",
     withTmp({ git: true, config: { formatter: false, lsp: false } }, (tmp) =>
       Effect.gen(function* () {
-        const headers = { "x-opencode-directory": tmp.path, "content-type": "application/json" }
+        const headers = { "x-kilo-directory": tmp.path, "content-type": "application/json" }
         const session = yield* createSession(tmp.path, { title: "remaining" })
 
         expect(

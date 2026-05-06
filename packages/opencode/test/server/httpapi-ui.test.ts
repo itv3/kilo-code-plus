@@ -23,21 +23,21 @@ import { Server } from "../../src/server/server"
 void Log.init({ print: false })
 
 const original = {
-  OPENCODE_EXPERIMENTAL_HTTPAPI: Flag.OPENCODE_EXPERIMENTAL_HTTPAPI,
-  OPENCODE_DISABLE_EMBEDDED_WEB_UI: Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI,
-  OPENCODE_SERVER_PASSWORD: Flag.OPENCODE_SERVER_PASSWORD,
-  OPENCODE_SERVER_USERNAME: Flag.OPENCODE_SERVER_USERNAME,
-  envPassword: process.env.OPENCODE_SERVER_PASSWORD,
-  envUsername: process.env.OPENCODE_SERVER_USERNAME,
+  KILO_EXPERIMENTAL_HTTPAPI: Flag.KILO_EXPERIMENTAL_HTTPAPI,
+  KILO_DISABLE_EMBEDDED_WEB_UI: Flag.KILO_DISABLE_EMBEDDED_WEB_UI,
+  KILO_SERVER_PASSWORD: Flag.KILO_SERVER_PASSWORD,
+  KILO_SERVER_USERNAME: Flag.KILO_SERVER_USERNAME,
+  envPassword: process.env.KILO_SERVER_PASSWORD,
+  envUsername: process.env.KILO_SERVER_USERNAME,
 }
 
 afterEach(() => {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = original.OPENCODE_EXPERIMENTAL_HTTPAPI
-  Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI = original.OPENCODE_DISABLE_EMBEDDED_WEB_UI
-  Flag.OPENCODE_SERVER_PASSWORD = original.OPENCODE_SERVER_PASSWORD
-  Flag.OPENCODE_SERVER_USERNAME = original.OPENCODE_SERVER_USERNAME
-  restoreEnv("OPENCODE_SERVER_PASSWORD", original.envPassword)
-  restoreEnv("OPENCODE_SERVER_USERNAME", original.envUsername)
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = original.KILO_EXPERIMENTAL_HTTPAPI
+  Flag.KILO_DISABLE_EMBEDDED_WEB_UI = original.KILO_DISABLE_EMBEDDED_WEB_UI
+  Flag.KILO_SERVER_PASSWORD = original.KILO_SERVER_PASSWORD
+  Flag.KILO_SERVER_USERNAME = original.KILO_SERVER_USERNAME
+  restoreEnv("KILO_SERVER_PASSWORD", original.envPassword)
+  restoreEnv("KILO_SERVER_USERNAME", original.envUsername)
 })
 
 function restoreEnv(key: string, value: string | undefined) {
@@ -54,8 +54,8 @@ function app(input?: { password?: string; username?: string }) {
       Layer.provide(
         ConfigProvider.layer(
           ConfigProvider.fromUnknown({
-            OPENCODE_SERVER_PASSWORD: input?.password,
-            OPENCODE_SERVER_USERNAME: input?.username,
+            KILO_SERVER_PASSWORD: input?.password,
+            KILO_SERVER_USERNAME: input?.username,
           }),
         ),
       ),
@@ -88,8 +88,8 @@ function uiApp(input?: { password?: string; username?: string; client?: Layer.La
         HttpServer.layerServices,
         ConfigProvider.layer(
           ConfigProvider.fromUnknown({
-            OPENCODE_SERVER_PASSWORD: input?.password,
-            OPENCODE_SERVER_USERNAME: input?.username,
+            KILO_SERVER_PASSWORD: input?.password,
+            KILO_SERVER_USERNAME: input?.username,
           }),
         ),
       ]),
@@ -118,8 +118,8 @@ function httpClient(response: Response, onRequest?: (request: HttpClientRequest.
 
 describe("HttpApi UI fallback", () => {
   test("serves the web UI through the experimental backend", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
-    Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_DISABLE_EMBEDDED_WEB_UI = true
     let proxiedUrl: string | undefined
 
     const response = await uiApp({
@@ -138,8 +138,8 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("strips upstream transfer encoding headers from proxied assets", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
-    Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_DISABLE_EMBEDDED_WEB_UI = true
     let proxiedUrl: string | undefined
 
     const response = await Effect.runPromise(
@@ -187,7 +187,7 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("keeps matched API routes ahead of the UI fallback", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
 
     const response = await Server.Default().app.request("/session/nope")
 
@@ -195,8 +195,8 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("requires server password for the web UI", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
-    Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_DISABLE_EMBEDDED_WEB_UI = true
 
     const response = await uiApp({ password: "secret", username: "opencode" }).request("/")
 
@@ -204,8 +204,8 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("accepts auth token for the web UI", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
-    Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_DISABLE_EMBEDDED_WEB_UI = true
 
     const response = await uiApp({
       password: "secret",
@@ -218,8 +218,8 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("accepts basic auth for the web UI", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
-    Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_DISABLE_EMBEDDED_WEB_UI = true
 
     const response = await uiApp({ password: "secret", username: "opencode" }).request("/", {
       headers: { authorization: `Basic ${btoa("opencode:secret")}` },
@@ -229,7 +229,7 @@ describe("HttpApi UI fallback", () => {
   })
 
   test("allows web UI preflight without auth", async () => {
-    Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
+    Flag.KILO_EXPERIMENTAL_HTTPAPI = true
 
     const response = await app({ password: "secret", username: "opencode" }).request("/", {
       method: "OPTIONS",

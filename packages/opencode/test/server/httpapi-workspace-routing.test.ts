@@ -33,12 +33,12 @@ import { testEffect } from "../lib/effect"
 
 const testStateLayer = Layer.effectDiscard(
   Effect.gen(function* () {
-    const originalWorkspaces = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
+    const originalWorkspaces = Flag.KILO_EXPERIMENTAL_WORKSPACES
     yield* Effect.promise(() => resetDatabase())
-    Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+    Flag.KILO_EXPERIMENTAL_WORKSPACES = true
     yield* Effect.addFinalizer(() =>
       Effect.promise(async () => {
-        Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = originalWorkspaces
+        Flag.KILO_EXPERIMENTAL_WORKSPACES = originalWorkspaces
         await resetDatabase()
       }),
     )
@@ -259,8 +259,8 @@ describe("HttpApi workspace routing middleware", () => {
       const response = yield* HttpClientRequest.patch(`/probe?workspace=${workspace.id}&keep=yes`).pipe(
         HttpClientRequest.setHeaders({
           "content-type": "application/json",
-          "x-opencode-directory": "/secret/path",
-          "x-opencode-workspace": "internal",
+          "x-kilo-directory": "/secret/path",
+          "x-kilo-workspace": "internal",
         }),
         HttpClient.execute,
       )
@@ -277,8 +277,8 @@ describe("HttpApi workspace routing middleware", () => {
       expect(forwarded?.method).toBe("PATCH")
       expect(forwarded?.headers["content-type"]).toBe("application/json")
       expect(forwarded?.headers["x-target-auth"]).toBe("secret")
-      expect(forwarded?.headers["x-opencode-directory"]).toBeUndefined()
-      expect(forwarded?.headers["x-opencode-workspace"]).toBeUndefined()
+      expect(forwarded?.headers["x-kilo-directory"]).toBeUndefined()
+      expect(forwarded?.headers["x-kilo-workspace"]).toBeUndefined()
     }),
   )
 
@@ -432,7 +432,7 @@ describe("HttpApi workspace routing middleware", () => {
       // directory hints before using the process cwd.
       const queryResponse = yield* HttpClient.get(`/probe?directory=${encodeURIComponent(queryDir)}`)
       const headerResponse = yield* HttpClientRequest.get("/probe").pipe(
-        HttpClientRequest.setHeader("x-opencode-directory", headerDir),
+        HttpClientRequest.setHeader("x-kilo-directory", headerDir),
         HttpClient.execute,
       )
 

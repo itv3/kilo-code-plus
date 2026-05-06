@@ -24,12 +24,12 @@ import { testEffect } from "../lib/effect"
 
 const testStateLayer = Layer.effectDiscard(
   Effect.gen(function* () {
-    const originalWorkspaces = Flag.OPENCODE_EXPERIMENTAL_WORKSPACES
+    const originalWorkspaces = Flag.KILO_EXPERIMENTAL_WORKSPACES
     yield* Effect.promise(() => resetDatabase())
-    Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = true
+    Flag.KILO_EXPERIMENTAL_WORKSPACES = true
     yield* Effect.addFinalizer(() =>
       Effect.promise(async () => {
-        Flag.OPENCODE_EXPERIMENTAL_WORKSPACES = originalWorkspaces
+        Flag.KILO_EXPERIMENTAL_WORKSPACES = originalWorkspaces
         await disposeAllInstances()
         await resetDatabase()
       }),
@@ -175,7 +175,7 @@ describe("HttpApi instance context middleware", () => {
       yield* serveProbe("/session")
 
       const response = yield* HttpClientRequest.get(`/session?workspace=${workspace.id}`).pipe(
-        HttpClientRequest.setHeader("x-opencode-directory", dir),
+        HttpClientRequest.setHeader("x-kilo-directory", dir),
         HttpClient.execute,
       )
 
@@ -200,7 +200,7 @@ describe("HttpApi instance context middleware", () => {
       yield* serveProbe()
 
       const response = yield* HttpClientRequest.get(`/probe?workspace=${workspace.id}`).pipe(
-        HttpClientRequest.setHeader("x-opencode-directory", dir),
+        HttpClientRequest.setHeader("x-kilo-directory", dir),
         HttpClient.execute,
       )
 

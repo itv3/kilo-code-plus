@@ -13,17 +13,17 @@ import * as Log from "@opencode-ai/core/util/log"
 
 void Log.init({ print: false })
 
-const originalHttpApi = Flag.OPENCODE_EXPERIMENTAL_HTTPAPI
+const originalHttpApi = Flag.KILO_EXPERIMENTAL_HTTPAPI
 
 function app(input: { password?: string; username?: string }) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = true
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = true
   const handler = HttpRouter.toWebHandler(
     ExperimentalHttpApiServer.routes.pipe(
       Layer.provide(
         ConfigProvider.layer(
           ConfigProvider.fromUnknown({
-            OPENCODE_SERVER_PASSWORD: input.password,
-            OPENCODE_SERVER_USERNAME: input.username,
+            KILO_SERVER_PASSWORD: input.password,
+            KILO_SERVER_USERNAME: input.username,
           }),
         ),
       ),
@@ -48,7 +48,7 @@ async function cancelBody(response: Response) {
 }
 
 afterEach(async () => {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = originalHttpApi
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = originalHttpApi
   await disposeAllInstances()
   await resetDatabase()
 })
@@ -57,7 +57,7 @@ describe("HttpApi raw route authorization", () => {
   test("requires configured auth before opening the raw instance event stream", async () => {
     await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
     const server = app({ password: "secret" })
-    const headers = { "x-opencode-directory": tmp.path }
+    const headers = { "x-kilo-directory": tmp.path }
 
     const missing = await server.request(EventPaths.event, { headers })
     await cancelBody(missing)
@@ -74,7 +74,7 @@ describe("HttpApi raw route authorization", () => {
     await using tmp = await tmpdir({ git: true, config: { formatter: false, lsp: false } })
     const server = app({ password: "secret" })
     const route = PtyPaths.connect.replace(":ptyID", PtyID.ascending())
-    const headers = { "x-opencode-directory": tmp.path }
+    const headers = { "x-kilo-directory": tmp.path }
 
     const missing = await server.request(route, { headers })
     await cancelBody(missing)

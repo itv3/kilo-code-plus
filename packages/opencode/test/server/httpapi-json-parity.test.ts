@@ -20,10 +20,10 @@ import { it } from "../lib/effect"
 
 void Log.init({ print: false })
 
-const original = Flag.OPENCODE_EXPERIMENTAL_HTTPAPI
+const original = Flag.KILO_EXPERIMENTAL_HTTPAPI
 
 function app(experimental: boolean) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = experimental
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = experimental
   return experimental ? Server.Default().app : Server.Legacy().app
 }
 type TestApp = ReturnType<typeof app>
@@ -88,7 +88,7 @@ function expectJsonParity(input: {
 }
 
 afterEach(async () => {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = original
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = original
   await disposeAllInstances()
   await resetDatabase()
 })
@@ -115,7 +115,7 @@ describe("HttpApi JSON parity", () => {
         Effect.gen(function* () {
           yield* Effect.promise(() => Bun.write(`${tmp.path}/hello.txt`, "hello\n"))
 
-          const headers = { "x-opencode-directory": tmp.path }
+          const headers = { "x-kilo-directory": tmp.path }
           const legacy = app(false)
           const httpapi = app(true)
 
@@ -181,7 +181,7 @@ describe("HttpApi JSON parity", () => {
     "matches legacy JSON shape for session read endpoints",
     withTmp({ git: true, config: { formatter: false, lsp: false } }, (tmp) =>
       Effect.gen(function* () {
-        const headers = { "x-opencode-directory": tmp.path }
+        const headers = { "x-kilo-directory": tmp.path }
         const seeded = yield* seedSessions.pipe(Effect.provide(Session.defaultLayer))
         const legacy = app(false)
         const httpapi = app(true)

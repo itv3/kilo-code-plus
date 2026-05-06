@@ -3,7 +3,7 @@ import { ConfigProvider, Effect, Layer } from "effect"
 import type * as Scope from "effect/Scope"
 import { HttpRouter } from "effect/unstable/http"
 import { Flag } from "@opencode-ai/core/flag/flag"
-import { createOpencodeClient } from "@opencode-ai/sdk/v2"
+import { createKiloClient } from "@kilocode/sdk/v2"
 import { Instance } from "../../src/project/instance"
 import { ExperimentalHttpApiServer } from "../../src/server/routes/instance/httpapi/server"
 import { Server } from "../../src/server/server"
@@ -19,22 +19,22 @@ import { disposeAllInstances, tmpdir } from "../fixture/fixture"
 import { it } from "../lib/effect"
 
 const original = {
-  OPENCODE_EXPERIMENTAL_HTTPAPI: Flag.OPENCODE_EXPERIMENTAL_HTTPAPI,
-  OPENCODE_SERVER_PASSWORD: Flag.OPENCODE_SERVER_PASSWORD,
-  OPENCODE_SERVER_USERNAME: Flag.OPENCODE_SERVER_USERNAME,
+  KILO_EXPERIMENTAL_HTTPAPI: Flag.KILO_EXPERIMENTAL_HTTPAPI,
+  KILO_SERVER_PASSWORD: Flag.KILO_SERVER_PASSWORD,
+  KILO_SERVER_USERNAME: Flag.KILO_SERVER_USERNAME,
 }
 
 type Backend = "legacy" | "httpapi"
-type Sdk = ReturnType<typeof createOpencodeClient>
+type Sdk = ReturnType<typeof createKiloClient>
 type SdkResult = { response: Response; data?: unknown; error?: unknown }
 type Captured = { status: number; data?: unknown; error?: unknown }
 type ProjectFixture = { sdk: Sdk; directory: string }
 type LlmProjectFixture = ProjectFixture & { llm: TestLLMServer["Service"] }
 
 function app(backend: Backend, input?: { password?: string; username?: string }) {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = backend === "httpapi"
-  Flag.OPENCODE_SERVER_PASSWORD = input?.password
-  Flag.OPENCODE_SERVER_USERNAME = input?.username
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = backend === "httpapi"
+  Flag.KILO_SERVER_PASSWORD = input?.password
+  Flag.KILO_SERVER_USERNAME = input?.username
   if (backend === "legacy") return Server.Legacy().app
 
   const handler = HttpRouter.toWebHandler(
@@ -42,8 +42,8 @@ function app(backend: Backend, input?: { password?: string; username?: string })
       Layer.provide(
         ConfigProvider.layer(
           ConfigProvider.fromUnknown({
-            OPENCODE_SERVER_PASSWORD: input?.password,
-            OPENCODE_SERVER_USERNAME: input?.username,
+            KILO_SERVER_PASSWORD: input?.password,
+            KILO_SERVER_USERNAME: input?.username,
           }),
         ),
       ),
@@ -69,7 +69,7 @@ function client(
       await serverApp.fetch(request instanceof Request ? request : new Request(request, init)),
     { preconnect: globalThis.fetch.preconnect },
   ) satisfies typeof globalThis.fetch
-  return createOpencodeClient({
+  return createKiloClient({
     baseUrl: "http://localhost",
     directory,
     headers: input?.headers,
@@ -257,9 +257,9 @@ function seedMessage(directory: string, sessionID: string) {
 }
 
 afterEach(async () => {
-  Flag.OPENCODE_EXPERIMENTAL_HTTPAPI = original.OPENCODE_EXPERIMENTAL_HTTPAPI
-  Flag.OPENCODE_SERVER_PASSWORD = original.OPENCODE_SERVER_PASSWORD
-  Flag.OPENCODE_SERVER_USERNAME = original.OPENCODE_SERVER_USERNAME
+  Flag.KILO_EXPERIMENTAL_HTTPAPI = original.KILO_EXPERIMENTAL_HTTPAPI
+  Flag.KILO_SERVER_PASSWORD = original.KILO_SERVER_PASSWORD
+  Flag.KILO_SERVER_USERNAME = original.KILO_SERVER_USERNAME
   await disposeAllInstances()
   await resetDatabase()
 })
