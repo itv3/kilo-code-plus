@@ -530,8 +530,24 @@ export function createKiloRoutes(deps: KiloRoutesDeps) {
               "application/json": {
                 schema: resolver(
                   z.object({
+                    // `recovering` and `restoring` are transitional states the
+                    // worker reports while it brings an instance back online
+                    // after an unexpected stop or a snapshot restore — see
+                    // cloud `services/kiloclaw/src/index.ts` and the
+                    // `PlatformStatusResponse` type in
+                    // cloud/apps/web/src/lib/kiloclaw/types.ts. Keeping them in
+                    // the enum so the SDK types stay accurate.
                     status: z
-                      .enum(["provisioned", "starting", "restarting", "running", "stopped", "destroying"])
+                      .enum([
+                        "provisioned",
+                        "starting",
+                        "restarting",
+                        "recovering",
+                        "running",
+                        "stopped",
+                        "destroying",
+                        "restoring",
+                      ])
                       .nullable(),
                     sandboxId: z.string().optional(),
                     flyRegion: z.string().optional(),

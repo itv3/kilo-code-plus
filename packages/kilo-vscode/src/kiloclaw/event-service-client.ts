@@ -2,9 +2,11 @@
  * Event Service WebSocket client for the VS Code extension host.
  *
  * Minimal inline port of `@kilocode/event-service` (cloud monorepo). Connects
- * to the kilo events Cloudflare Worker over WebSocket, authenticates with a
- * JWT carried in the `kilo.jwt.<base64url>` subprotocol header, subscribes to
- * per-conversation contexts, and dispatches server events to typed handlers.
+ * to the kilo events Cloudflare Worker using a two-step ticket flow:
+ *   1. POST `/connect-ticket` with `Authorization: Bearer <JWT>` to mint a
+ *      single-use ticket (30 s TTL).
+ *   2. Open WebSocket to `/connect?ticket=<ticket>` with subprotocol
+ *      `kilo.events.v1`.
  *
  * Runs in Node.js (the VS Code extension host). `WebSocket` is available in
  * Node 22+ without any import, matching the environment used elsewhere in
@@ -13,9 +15,10 @@
 
 import type { KiloChatEventMap, KiloChatEventName } from "./types"
 
-const SUBPROTOCOL_PREFIX = "kilo.jwt."
+const WS_SUBPROTOCOL = "kilo.events.v1"
 const HANDSHAKE_TIMEOUT_MS = 10_000
 const PING_INTERVAL_MS = 15_000
+const TICKET_FETCH_TIMEOUT_MS = 10_000
 
 export class WebSocketAuthError extends Error {
   constructor(message = "WebSocket authentication failed") {
@@ -58,10 +61,16 @@ export type EventServiceConfig = {
   onUnauthorized?: () => void
 }
 
-function encodeBase64Url(input: string): string {
-  // In the Node extension host btoa is available and JWTs are ASCII.
-  const b64 = typeof btoa === "function" ? btoa(input) : Buffer.from(input, "utf8").toString("base64")
-  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+/**
+ * The event-service base URL is configured as a WebSocket URL (`wss://…` /
+ * `ws://…`) but the connect-ticket endpoint is a plain HTTP request. Strip
+ * the trailing slash and swap the protocol so `fetch()` accepts the URL.
+ */
+function toHttpBase(wsBase: string): string {
+  const trimmed = wsBase.replace(/\/$/, "")
+  if (trimmed.startsWith("wss://")) return "https://" + trimmed.slice(6)
+  if (trimmed.startsWith("ws://")) return "http://" + trimmed.slice(5)
+  return trimmed
 }
 
 export class EventServiceClient {
@@ -182,10 +191,10 @@ export class EventServiceClient {
     }
 
     const token = await this.getToken()
-    const subprotocol = `${SUBPROTOCOL_PREFIX}${encodeBase64Url(token)}`
+    const ticket = await this.fetchTicket(token)
 
     return new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(`${this.url}/connect`, [subprotocol])
+      const ws = new WebSocket(`${this.url}/connect?ticket=${encodeURIComponent(ticket)}`, [WS_SUBPROTOCOL])
       this.ws = ws
 
       let settled = false
@@ -257,6 +266,46 @@ export class EventServiceClient {
         // blips. Settling here loses that context.
       })
     })
+  }
+
+  /**
+   * Mint a single-use connection ticket. The event-service issues a 30 s ticket
+   * scoped to the bearer JWT; the WebSocket upgrade then consumes it. We
+   * surface 401/403 as `WebSocketAuthError` so the caller can drop the cached
+   * token and prompt re-auth.
+   *
+   * `this.url` is the WebSocket base (`wss://…` or `ws://…`); `fetch()` only
+   * accepts `http(s)`, so we rewrite the protocol before the HTTP call.
+   */
+  private async fetchTicket(token: string): Promise<string> {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), TICKET_FETCH_TIMEOUT_MS)
+    try {
+      const res = await fetch(toHttpBase(this.url) + "/connect-ticket", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        signal: ctrl.signal,
+      })
+      if (res.status === 401 || res.status === 403) {
+        throw new WebSocketAuthError(`Event-service rejected ticket request: ${res.status}`)
+      }
+      if (!res.ok) {
+        throw new WebSocketConnectError(`Failed to mint event-service ticket: ${res.status}`, res.status)
+      }
+      const body = (await res.json().catch(() => null)) as { ticket?: unknown } | null
+      if (!body || typeof body.ticket !== "string" || !body.ticket) {
+        throw new WebSocketConnectError("Malformed event-service ticket response", 0)
+      }
+      return body.ticket
+    } catch (err) {
+      if (err instanceof WebSocketAuthError || err instanceof WebSocketConnectError) throw err
+      if ((err as { name?: string })?.name === "AbortError") {
+        throw new HandshakeTimeoutError()
+      }
+      throw new WebSocketConnectError(`Event-service ticket request failed: ${(err as Error)?.message ?? err}`, 0)
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
   private clearHandshakeTimer(): void {

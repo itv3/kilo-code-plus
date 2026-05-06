@@ -523,9 +523,15 @@ export class KiloClawProvider implements vscode.Disposable {
     this.chatSubs.push(
       events.on("conversation.created", (ctx, e: ConversationCreatedEvent) => {
         if (!this.sandboxId || ctx !== `/kiloclaw/${this.sandboxId}`) return
-        // Refetch so we capture title/joinedAt/etc.
+        // Newer servers include the full conversation snapshot — splice it in
+        // immediately so the list updates without a roundtrip. Fall back to a
+        // refetch when the snapshot is absent (older servers / safety net).
+        if (e.conversation) {
+          this.conversations = mergeConversations([e.conversation], this.conversations)
+          this.broadcastConversations({ replace: true })
+          return
+        }
         void this.refreshConversations()
-        void e
       }),
     )
 
@@ -754,6 +760,9 @@ export class KiloClawProvider implements vscode.Disposable {
   private async createConversation(title?: string): Promise<void> {
     if (!this.chat || !this.sandboxId) return
     try {
+      // The server now returns the full conversation snapshot alongside
+      // `conversationId`. We rely on `refreshConversations()` to pick up the
+      // canonical list-item shape rather than mapping the detail payload here.
       const res = await this.chat.createConversation({ sandboxId: this.sandboxId, title })
       await this.refreshConversations()
       await this.selectConversation(res.conversationId)
@@ -904,7 +913,7 @@ export class KiloClawProvider implements vscode.Disposable {
       if (this.activeConversationId !== conversationId) return
       const sorted = sortMessagesAscending(res.messages)
       this.messages = mergeMessages(sorted, this.messages)
-      this.hasMoreMessages = res.messages.length >= MESSAGES_PAGE
+      this.hasMoreMessages = res.hasMore
       this.broadcastMessages({ replace: true })
     } catch (err) {
       this.post({ type: "kiloclaw.error", error: this.formatError(err, "Failed to load messages") })
@@ -1005,8 +1014,13 @@ export class KiloClawProvider implements vscode.Disposable {
 
   private async markRead(conversationId: string): Promise<void> {
     if (!this.chat) return
+    if (conversationId !== this.activeConversationId) return
+    // The mark-read endpoint requires `lastSeenMessageId`. With no messages
+    // loaded there is nothing to mark — silently skip.
+    const last = lastNonPendingMessageId(this.messages)
+    if (!last) return
     try {
-      await this.chat.markConversationRead(conversationId)
+      await this.chat.markConversationRead(conversationId, { lastSeenMessageId: last })
     } catch (err) {
       void err
     }
@@ -1043,7 +1057,7 @@ export class KiloClawProvider implements vscode.Disposable {
       // only apply the messages if the active conversation is still `target`.
       if (this.activeConversationId !== target) return
       this.messages = sortMessagesAscending(res.messages)
-      this.hasMoreMessages = res.messages.length >= MESSAGES_PAGE
+      this.hasMoreMessages = res.hasMore
       this.broadcastMessages({ replace: true })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -1262,4 +1276,20 @@ function mergeConversations(
 /** listMessages returns newest-first; the UI renders oldest-first. */
 function sortMessagesAscending(messages: Message[]): Message[] {
   return [...messages].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+}
+
+/**
+ * Pick the latest server-confirmed message id from an ascending list. Pending
+ * (optimistic) messages use `pending-<clientId>` ids that the server doesn't
+ * recognise, so they're skipped — the new mark-read contract requires a real
+ * message id.
+ */
+function lastNonPendingMessageId(messages: Message[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (!m) continue
+    if (m.id.startsWith("pending-")) continue
+    return m.id
+  }
+  return null
 }

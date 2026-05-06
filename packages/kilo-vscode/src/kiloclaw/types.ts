@@ -13,7 +13,19 @@
 // ── Instance status (KiloClaw worker) ───────────────────────────────
 
 export type ClawStatus = {
-  status: "provisioned" | "starting" | "restarting" | "running" | "stopped" | "destroying" | null
+  // `recovering` and `restoring` are transitional states the worker reports
+  // while bringing an instance back from an unexpected stop or a snapshot
+  // restore (cloud: `services/kiloclaw/src/index.ts`).
+  status:
+    | "provisioned"
+    | "starting"
+    | "restarting"
+    | "recovering"
+    | "running"
+    | "stopped"
+    | "destroying"
+    | "restoring"
+    | null
   sandboxId?: string
   flyRegion?: string
   machineSize?: { cpus: number; memory_mb: number }
@@ -124,12 +136,25 @@ export type ConversationStatusRecord = {
 // ── Typed Kilo Chat events (server → client) ───────────────────────
 // Event names mirror `@kilocode/kilo-chat/events`.
 
+/**
+ * Snapshot of the message that was replied to. Server includes this on
+ * `message.created` so clients can render a reply preview without a follow-up
+ * fetch. `deleted` mirrors the soft-deletion state at the time of replying.
+ */
+export type ReplyToSnapshot = {
+  messageId: string
+  senderId: string
+  content: ContentBlock[]
+  deleted?: boolean
+}
+
 export type MessageCreatedEvent = {
   messageId: string
   senderId: string
   content: ContentBlock[]
   inReplyToMessageId: string | null
   clientId?: string
+  replyTo?: ReplyToSnapshot | null
 }
 
 export type MessageUpdatedEvent = {
@@ -144,10 +169,18 @@ export type MessageDeliveryFailedEvent = { messageId: string }
 export type TypingEvent = { memberId: string }
 export type TypingStopEvent = { memberId: string }
 
-export type ReactionAddedEvent = { messageId: string; memberId: string; emoji: string }
-export type ReactionRemovedEvent = { messageId: string; memberId: string; emoji: string }
+export type ReactionAddedEvent = { messageId: string; memberId: string; emoji: string; operationId?: string }
+export type ReactionRemovedEvent = { messageId: string; memberId: string; emoji: string; operationId?: string }
 
-export type ConversationCreatedEvent = { conversationId: string }
+/**
+ * Server fans out the full conversation snapshot on `conversation.created` so
+ * clients can append to their list without a follow-up fetch. Older servers may
+ * still send only the `conversationId`, so the snapshot is optional.
+ */
+export type ConversationCreatedEvent = {
+  conversationId: string
+  conversation?: ConversationListItem
+}
 export type ConversationRenamedEvent = { conversationId: string; title: string }
 export type ConversationLeftEvent = { conversationId: string }
 export type ConversationReadEvent = { conversationId: string; memberId: string; lastReadAt: number }

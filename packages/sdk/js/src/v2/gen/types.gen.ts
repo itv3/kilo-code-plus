@@ -7293,7 +7293,16 @@ export type KiloClawStatusResponses = {
    * Instance status
    */
   200: {
-    status: "provisioned" | "starting" | "restarting" | "running" | "stopped" | "destroying" | null
+    status:
+      | "provisioned"
+      | "starting"
+      | "restarting"
+      | "recovering"
+      | "running"
+      | "stopped"
+      | "destroying"
+      | "restoring"
+      | null
     sandboxId?: string
     flyRegion?: string
     machineSize?: {

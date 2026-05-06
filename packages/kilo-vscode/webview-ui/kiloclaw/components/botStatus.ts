@@ -1,4 +1,4 @@
-// Bot presence display helpers — ported from the web client so the
+// Bot presence display helpers — adapted from the web client so the
 // VS Code extension reaches the same conclusions for
 // "online / idle / offline / unknown".
 //
@@ -10,13 +10,25 @@ export type BotPresence = { online: boolean; lastAt: number }
 export type BotDisplayState = "online" | "idle" | "offline" | "unknown"
 export type BotDisplay = { state: BotDisplayState }
 
+/**
+ * Compute the bot's display state.
+ *
+ * The bot heartbeat (delivered via the event-service WebSocket every few
+ * seconds) is the authoritative signal for "can I reach the bot right now?".
+ * The gateway's `instanceStatus` is a 10 s poll over a slower control plane
+ * and lags transitional states (`recovering`, `restoring`, `restarting`) where
+ * the bot is still — or already — reachable. Trusting the heartbeat here
+ * avoids disabling the composer just because the gateway hasn't repolled yet.
+ */
 export function computeBotDisplay(params: {
   instanceStatus: string | null
   presence: BotPresence | undefined
   now: number
 }): BotDisplay {
-  if (params.instanceStatus !== "running") return { state: "offline" }
-  if (!params.presence) return { state: "unknown" }
+  if (!params.presence) {
+    if (params.instanceStatus === "running") return { state: "unknown" }
+    return { state: "offline" }
+  }
   if (!params.presence.online) return { state: "offline" }
   const elapsed = params.now - params.presence.lastAt
   if (elapsed > 90_000) return { state: "offline" }

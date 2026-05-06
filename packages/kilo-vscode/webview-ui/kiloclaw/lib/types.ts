@@ -10,7 +10,18 @@
 // ── Instance status ─────────────────────────────────────────────────
 
 export type ClawStatus = {
-  status: "provisioned" | "starting" | "restarting" | "running" | "stopped" | "destroying" | null
+  // Mirrors src/kiloclaw/types.ts. `recovering` / `restoring` are transitional
+  // states the cloud worker reports when bringing an instance back online.
+  status:
+    | "provisioned"
+    | "starting"
+    | "restarting"
+    | "recovering"
+    | "running"
+    | "stopped"
+    | "destroying"
+    | "restoring"
+    | null
   sandboxId?: string
   flyRegion?: string
   machineSize?: { cpus: number; memory_mb: number }

@@ -312,6 +312,7 @@ export async function connect(input: ConnectInput): Promise<ClawChatClient> {
   events.on("message.created", (ctx, e: MessageCreatedEvent) => {
     if (ctx !== activeCtx) return
     senderCache.set(e.messageId, e.senderId)
+    if (activeId) trackLastSeen(activeId, e.messageId)
     if (e.senderId !== input.currentUserId) stopTyping(e.senderId)
     emit(messageListeners, toChatMessageFromCreated(e, input.currentUserId))
   })
@@ -349,12 +350,25 @@ export async function connect(input: ConnectInput): Promise<ClawChatClient> {
     stopTyping(e.memberId)
   })
 
+  // Latest server-confirmed message id per conversation. Used to satisfy the
+  // mark-read endpoint's `lastSeenMessageId` requirement without re-listing.
+  const lastSeenByConv = new Map<string, string>()
+
+  function trackLastSeen(conversationId: string, messageId: string): void {
+    if (!messageId || messageId.startsWith("pending-")) return
+    const prev = lastSeenByConv.get(conversationId)
+    if (!prev || prev < messageId) lastSeenByConv.set(conversationId, messageId)
+  }
+
   async function loadHistory(conversationId?: string): Promise<ChatMessage[]> {
     const id = conversationId ?? activeId
     if (!id) return []
     const res = await chat.listMessages(id, { limit: 50 })
     const ascending = [...res.messages].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-    for (const m of ascending) senderCache.set(m.id, m.senderId)
+    for (const m of ascending) {
+      senderCache.set(m.id, m.senderId)
+      trackLastSeen(id, m.id)
+    }
     return ascending.map((m) => toChatMessage(m, input.currentUserId))
   }
 
@@ -376,9 +390,12 @@ export async function connect(input: ConnectInput): Promise<ClawChatClient> {
       activeStatus = status
       emit(statusListeners, activeStatus)
     }
-    await chat.markConversationRead(conversationId).catch((err) => {
-      log.warn("markConversationRead failed", { error: (err as Error)?.message ?? String(err) })
-    })
+    const lastSeen = lastSeenByConv.get(conversationId)
+    if (lastSeen) {
+      await chat.markConversationRead(conversationId, { lastSeenMessageId: lastSeen }).catch((err) => {
+        log.warn("markConversationRead failed", { error: (err as Error)?.message ?? String(err) })
+      })
+    }
     return { messages: msgs, status }
   }
 

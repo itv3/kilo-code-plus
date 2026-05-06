@@ -10588,7 +10588,16 @@
                       "anyOf": [
                         {
                           "type": "string",
-                          "enum": ["provisioned", "starting", "restarting", "running", "stopped", "destroying"]
+                          "enum": [
+                            "provisioned",
+                            "starting",
+                            "restarting",
+                            "recovering",
+                            "running",
+                            "stopped",
+                            "destroying",
+                            "restoring"
+                          ]
                         },
                         {
                           "type": "null"
