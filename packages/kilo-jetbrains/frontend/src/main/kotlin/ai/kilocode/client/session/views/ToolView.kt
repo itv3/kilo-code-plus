@@ -12,6 +12,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.xml.util.XmlStringUtil
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
@@ -112,7 +113,7 @@ class ToolView(tool: Tool) : PartView() {
             bind(it)
             it.addMouseListener(click)
         }
-        text.text = body(item)
+        text.text = preview(item)
         applyStyle(SessionStyle.current())
         add(root, BorderLayout.CENTER)
         sync()
@@ -143,6 +144,8 @@ class ToolView(tool: Tool) : PartView() {
     fun outputText(): String = output(item)
 
     fun bodyText(): String = body(item)
+
+    internal fun previewText(): String = text.text
 
     fun isExpanded(): Boolean = bodyVisible()
 
@@ -237,7 +240,7 @@ class ToolView(tool: Tool) : PartView() {
 
     private fun syncBody(): Boolean {
         var changed = false
-        val value = body(item)
+        val value = preview(item)
         if (text.text != value) {
             text.text = value
             text.caretPosition = 0
@@ -309,8 +312,9 @@ private fun subtitle(tool: Tool) = when (tool.name) {
 }
 
 private fun setText(label: JBLabel, text: String): Boolean {
-    if (label.text == text) return false
-    label.text = text
+    val value = if (text.isBlank()) "" else XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(text))
+    if (label.text == value) return false
+    label.text = value
     return true
 }
 
@@ -382,7 +386,26 @@ private fun output(tool: Tool): String =
         ?: tool.metadata["output"]?.takeIf { it.isNotBlank() }
         ?: ""
 
+private fun preview(tool: Tool): String = if (tool.name == "bash") shellPreview(tool) else plainPreview(tool)
+
 private fun body(tool: Tool): String = if (tool.name == "bash") shellBody(tool) else plainBody(tool)
+
+private fun shellPreview(tool: Tool): String {
+    val cmd = command(tool)
+    val out = output(tool)
+    val err = tool.error?.takeIf { it.isNotBlank() }
+    return Preview().apply {
+        if (cmd.isNotBlank()) append("$ ").append(cmd)
+        if (out.isNotBlank()) {
+            sep()
+            append(out)
+        }
+        if (err != null) {
+            sep()
+            append(err)
+        }
+    }.build()
+}
 
 private fun shellBody(tool: Tool): String {
     val cmd = command(tool)
@@ -401,13 +424,30 @@ private fun shellBody(tool: Tool): String {
     }
 }
 
+private fun plainPreview(tool: Tool): String {
+    val out = output(tool)
+    val err = tool.error?.takeIf { it.isNotBlank() }
+    return Preview().apply {
+        if (out.isNotBlank()) append(out)
+        if (err != null) {
+            sep()
+            append(err)
+        }
+    }.build()
+}
+
 private fun plainBody(tool: Tool): String {
     val out = output(tool)
     val err = tool.error?.takeIf { it.isNotBlank() }
     return listOf(out, err).filter { !it.isNullOrBlank() }.joinToString("\n\n")
 }
 
-private fun canExpand(tool: Tool): Boolean = body(tool).isNotBlank()
+private fun canExpand(tool: Tool): Boolean {
+    if (tool.name == "bash") {
+        return command(tool).isNotBlank() || output(tool).isNotBlank() || !tool.error.isNullOrBlank()
+    }
+    return output(tool).isNotBlank() || !tool.error.isNullOrBlank()
+}
 
 private fun toolTitle(tool: Tool): String =
     tool.title?.takeIf { it.isNotBlank() }
@@ -427,4 +467,33 @@ private fun tail(path: String): String {
     val index = maxOf(value.lastIndexOf('/'), value.lastIndexOf('\\'))
     if (index < 0) return value
     return value.substring(index + 1)
+}
+
+private class Preview {
+    private val text = StringBuilder()
+    private var cut = false
+
+    fun append(value: String): Preview {
+        if (cut) return this
+        val rem = UiStyle.Size.toolBodyLimit() - text.length
+        if (value.length <= rem) {
+            text.append(value)
+            return this
+        }
+        if (rem > 0) text.append(value, 0, rem)
+        cut = true
+        return this
+    }
+
+    fun sep(): Preview {
+        if (text.isNotEmpty()) append("\n\n")
+        return this
+    }
+
+    fun build(): String {
+        if (!cut) return text.toString()
+        if (text.isNotEmpty()) text.append("\n\n")
+        text.append(KiloBundle.message("session.part.tool.truncated"))
+        return text.toString()
+    }
 }

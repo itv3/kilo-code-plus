@@ -2,6 +2,7 @@ package ai.kilocode.client.ui
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.JBColor
+import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -28,6 +29,12 @@ object UiStyle {
         const val BUTTON_WIDTH = 28
         const val BUTTON = 24
         const val SCROLL = 16
+        const val USER_PROMPT = 100
+        const val TOOL_BODY = 20_000
+
+        fun userPromptMin(): Int = JBUI.scale(USER_PROMPT)
+
+        fun toolBodyLimit(): Int = TOOL_BODY
     }
 
     object Space {
@@ -43,6 +50,14 @@ object UiStyle {
     object Colors {
         internal const val BORDER_DELTA = 64
         internal const val HOVER_ALPHA = 0.35f
+
+        val timelineRead: Color = JBColor(Color(0x37, 0x94, 0xff), Color(0x37, 0x94, 0xff))
+        val timelineWrite: Color = JBColor(Color(0x00, 0x7f, 0xd4), Color(0x00, 0x7f, 0xd4))
+        val timelineTool: Color = JBColor(Color(0x00, 0x7a, 0xcc), Color(0x00, 0x7a, 0xcc))
+        val timelineSuccess: Color = JBColor.namedColor("Label.successForeground", UIUtil.getLabelSuccessForeground())
+        val timelineError: Color = JBColor(Color(0xf4, 0x87, 0x71), Color(0xf4, 0x87, 0x71))
+        val timelineText: Color = JBColor(Color(0x9d, 0x9d, 0x9d), Color(0x9d, 0x9d, 0x9d))
+        val timelineStep: Color = JBColor(Color(0x4d, 0x4d, 0x4d), Color(0x4d, 0x4d, 0x4d))
 
         fun bg(): Color = UIUtil.getPanelBackground()
 
@@ -61,6 +76,8 @@ object UiStyle {
         fun panelHover(): Color = JBColor.lazy { blend(panel(), line(), HOVER_ALPHA) }
 
         fun header(): Color = panel()
+
+        fun headerBar(): Color = JBUI.CurrentTheme.ToolWindow.headerBackground(false)
 
         /** Local hover color for collapsible transcript card headers. */
         fun headerHover(): Color = panelHover()
@@ -108,7 +125,11 @@ object UiStyle {
     }
 
     object Insets {
-        fun transcript(): Border = JBUI.Borders.empty(Space.PAD, Space.PAD)
+        fun none(): java.awt.Insets = JBUI.emptyInsets()
+
+        fun transcript(): java.awt.Insets = JBUI.insets(Space.PAD, Space.PAD, Space.PAD, Space.PAD)
+
+        fun userPrompt(): Int = Size.userPromptMin()
 
         fun empty(): Border = JBUI.Borders.empty(Space.PAD)
 
@@ -117,8 +138,6 @@ object UiStyle {
         fun header(): Border = JBUI.Borders.empty(Space.LG, Space.LG)
 
         fun body(): Border = JBUI.Borders.empty(Space.LG, Space.PAD)
-
-        fun progress(): Border = JBUI.Borders.empty(Space.MD, 0, Space.SM, 0)
     }
 
     object Borders {
@@ -133,8 +152,8 @@ object UiStyle {
         fun picker(): Border = JBUI.Borders.empty(Space.XS, Space.LG)
 
         fun user(): Border = JBUI.Borders.compound(
-            JBUI.Borders.customLineTop(Colors.line()),
-            JBUI.Borders.empty(Space.LG, 0, Space.SM, 0),
+            RoundedLineBorder(Colors.line(), JBUI.scale(Space.LG)),
+            JBUI.Borders.empty(Space.LG, Space.PAD),
         )!!
 
         fun assistant(): Border = JBUI.Borders.empty()

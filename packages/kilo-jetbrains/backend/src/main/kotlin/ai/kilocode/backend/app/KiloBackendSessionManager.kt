@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -90,7 +91,7 @@ class KiloBackendSessionManager(
 
     fun list(dir: String): SessionListDto {
         seed(dir)
-        val raw = requireClient().sessionList(directory = dir, roots = true)
+        val raw = requireClient().sessionList(directory = dir, roots = JsonPrimitive(true))
         val mapped = raw.map(::dto)
         val ids = mapped.map { it.id }.toSet()
         val relevant = _statuses.value.filterKeys { it in ids }
@@ -102,9 +103,9 @@ class KiloBackendSessionManager(
         val raw = requireClient().experimentalSessionList(
             directory = dir,
             worktrees = true,
-            roots = true,
+            roots = JsonPrimitive(true),
             limit = limit.toDouble(),
-            archived = false,
+            archived = JsonPrimitive(false),
         )
         val mapped = raw.map(::dto)
         val ids = mapped.map { it.id }.toSet()
@@ -185,9 +186,9 @@ class KiloBackendSessionManager(
         title = s.title,
         version = s.version,
         time = SessionTimeDto(
-            created = s.time.created,
-            updated = s.time.updated,
-            archived = s.time.archived,
+            created = s.time.created.toDouble(),
+            updated = s.time.updated.toDouble(),
+            archived = s.time.archived?.toDouble(),
         ),
         summary = s.summary?.let {
             SessionSummaryDto(
@@ -206,9 +207,9 @@ class KiloBackendSessionManager(
         title = s.title,
         version = s.version,
         time = SessionTimeDto(
-            created = s.time.created,
-            updated = s.time.updated,
-            archived = s.time.archived,
+            created = s.time.created.toDouble(),
+            updated = s.time.updated.toDouble(),
+            archived = s.time.archived?.toDouble(),
         ),
         summary = s.summary?.let {
             SessionSummaryDto(

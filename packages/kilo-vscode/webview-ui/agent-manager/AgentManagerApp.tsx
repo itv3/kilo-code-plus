@@ -114,6 +114,8 @@ import {
 import { sectionAwareDetector } from "./section-dnd"
 import { ConstrainDragXAxis } from "./constrain-drag-x"
 import { mergeWorktreeDiffs } from "./diff-state"
+import { initialMessage, seedInitialVariant } from "./initial-message"
+import { createMarkdownRender } from "./review-preferences"
 import "./agent-manager.css"
 import "./agent-manager-review.css"
 
@@ -358,13 +360,11 @@ const AgentManagerContent: Component = () => {
   const [diffFileLoading, setDiffFileLoading] = createSignal<Record<string, Record<string, true>>>({})
   const [diffWidth, setDiffWidth] = createSignal(Math.round(window.innerWidth * 0.5))
 
-  // Full-screen review state (in-memory, per sidebar context: local/worktree)
   const [reviewOpenByContext, setReviewOpenByContext] = createSignal<Record<string, boolean>>({})
   const [reviewCommentsByContext, setReviewCommentsByContext] = createSignal<Record<string, ReviewComment[]>>({})
   const [reviewActive, setReviewActive] = createSignal(false)
   const [reviewDiffStyle, setReviewDiffStyle] = createSignal<"unified" | "split">("unified")
-  // reviewOpen (memo below) controls tab presence for selected context.
-
+  const markdown = createMarkdownRender(vscode)
   // Per-worktree git stats (diff additions/deletions, commits missing from origin)
   const [worktreeStats, setWorktreeStats] = createSignal<Record<string, WorktreeGitStats>>({})
 
@@ -1326,6 +1326,7 @@ const AgentManagerContent: Component = () => {
         if (state.reviewDiffStyle === "split" || state.reviewDiffStyle === "unified") {
           setReviewDiffStyle(state.reviewDiffStyle)
         }
+        markdown.setRender(state.reviewMarkdownRender === true)
         if ("defaultBaseBranch" in state) setDefaultBaseBranch(state.defaultBaseBranch || undefined)
         setRunScriptConfigured(state.runScriptConfigured === true)
         syncRunStatuses(state.runStatuses)
@@ -1407,18 +1408,12 @@ const AgentManagerContent: Component = () => {
         if (ev.providerID && ev.modelID) {
           session.setSessionModel(ev.sessionId, ev.providerID, ev.modelID)
         }
+        seedInitialVariant(session, ev)
 
         // Only send a message if there's text — otherwise just clear busy state
-        if (ev.text) {
-          vscode.postMessage({
-            type: "sendMessage",
-            text: ev.text,
-            sessionID: ev.sessionId,
-            providerID: ev.providerID,
-            modelID: ev.modelID,
-            agent: ev.agent,
-            files: ev.files,
-          })
+        const init = initialMessage(ev)
+        if (init) {
+          vscode.postMessage(init)
         }
         // Clear busy state — use worktreeId from the message directly
         // to avoid race condition where managedSessions() hasn't updated yet
@@ -3102,6 +3097,8 @@ const AgentManagerContent: Component = () => {
                         sessionKey={diffSessionKey()}
                         diffStyle={reviewDiffStyle()}
                         onDiffStyleChange={setSharedDiffStyle}
+                        markdownRender={markdown.render()}
+                        onMarkdownRenderChange={markdown.update}
                         comments={reviewComments()}
                         onCommentsChange={setReviewCommentsForSelection}
                         onClose={() => setSidePanel(null)}
@@ -3135,6 +3132,8 @@ const AgentManagerContent: Component = () => {
                   onSendAll={closeReviewTab}
                   diffStyle={reviewDiffStyle()}
                   onDiffStyleChange={setSharedDiffStyle}
+                  markdownRender={markdown.render()}
+                  onMarkdownRenderChange={markdown.update}
                   onRequestDiff={requestDiffFile}
                   onOpenFile={(file, line) => {
                     const id = currentDiffSessionId()
