@@ -19,6 +19,7 @@ import ai.kilocode.rpc.dto.TokensDto
 import java.awt.Color
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
 
 class SessionHeaderPanelTest : SessionControllerTestBase() {
 
@@ -287,6 +288,76 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
             1,
             0,
             false,
+        ))
+
+        assertTrue(panel.timelineViewport().viewPosition.x > x)
+        assertEquals(y, panel.timelineViewport().viewPosition.y)
+    }
+
+    fun `test timeline touch scrolls horizontally inside viewport`() {
+        val c = promptedHeader()
+        val panel = SessionHeaderPanel(c, parent)
+        repeat(12) { idx ->
+            emit(ChatEventDto.PartUpdated("ses_test", tool("tool_touch_$idx", "bash", "running", "Touch $idx")))
+        }
+        panel.expandButton().doClick()
+        panel.timelineViewport().setSize(panel.timelineBarWidth() * 4, panel.timelineViewportPreferredSize().height)
+        panel.timelineViewport().doLayout()
+        panel.timelineViewport().viewPosition = Point(0, 0)
+
+        val x = panel.timelineViewport().viewPosition.x
+        val y = panel.timelineViewport().viewPosition.y
+        val timeline = panel.timelinePanel()
+        timeline.dispatchEvent(MouseWheelEvent(
+            timeline,
+            MouseWheelEvent.MOUSE_WHEEL,
+            System.currentTimeMillis(),
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            false,
+            3,
+            panel.timelineBarWidth(),
+            1,
+            panel.timelineBarWidth().toDouble(),
+        ))
+
+        assertTrue(panel.timelineViewport().viewPosition.x > x)
+        assertEquals(y, panel.timelineViewport().viewPosition.y)
+    }
+
+    fun `test timeline wheel scrolls horizontally inside viewport`() {
+        val c = promptedHeader()
+        val panel = SessionHeaderPanel(c, parent)
+        repeat(12) { idx ->
+            emit(ChatEventDto.PartUpdated("ses_test", tool("tool_wheel_$idx", "bash", "running", "Wheel $idx")))
+        }
+        panel.expandButton().doClick()
+        panel.timelineViewport().setSize(panel.timelineBarWidth() * 4, panel.timelineViewportPreferredSize().height)
+        panel.timelineViewport().doLayout()
+        panel.timelineViewport().viewPosition = Point(0, 0)
+
+        val x = panel.timelineViewport().viewPosition.x
+        val y = panel.timelineViewport().viewPosition.y
+        val timeline = panel.timelinePanel()
+        timeline.dispatchEvent(MouseWheelEvent(
+            timeline,
+            MouseWheelEvent.MOUSE_WHEEL,
+            System.currentTimeMillis(),
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            false,
+            MouseWheelEvent.WHEEL_UNIT_SCROLL,
+            1,
+            1,
+            1.0,
         ))
 
         assertTrue(panel.timelineViewport().viewPosition.x > x)

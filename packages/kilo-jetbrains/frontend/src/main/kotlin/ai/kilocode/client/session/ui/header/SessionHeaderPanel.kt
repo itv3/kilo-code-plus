@@ -21,6 +21,7 @@ import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
+import java.awt.event.MouseWheelEvent
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.Icon
@@ -39,6 +40,9 @@ class SessionHeaderPanel(
         private val CHEVRON_UP_ICON: Icon = RotatedIcon(CHEVRON_ICON)
         private val UP_ICON: Icon = IconLoader.getIcon("/icons/arrow-up.svg", SessionHeaderPanel::class.java)
         private val DOWN_ICON: Icon = IconLoader.getIcon("/icons/arrow-down-to-line.svg", SessionHeaderPanel::class.java)
+        private const val TOUCH_BEGIN = 2
+        private const val TOUCH_UPDATE = 3
+        private const val TOUCH_END = 4
     }
 
     private val title = JBLabel()
@@ -64,6 +68,7 @@ class SessionHeaderPanel(
     }
     private var press: Point? = null
     private var origin = Point()
+    private var rest = 0.0
     private val bar = ContextBar()
     private val tokenTitle = JBLabel(KiloBundle.message("session.header.tokens"))
     private val input = JBLabel().apply {
@@ -135,6 +140,8 @@ class SessionHeaderPanel(
                 drag(event)
             }
         })
+        timeline.addMouseWheelListener { scroll(it) }
+        viewport.addMouseWheelListener { scroll(it) }
 
         controller.model.addListener(parent) { event ->
             when (event) {
@@ -365,16 +372,51 @@ class SessionHeaderPanel(
 
     private fun drag(event: MouseEvent) {
         val start = press ?: return
-        val max = (timeline.width - viewport.extentSize.width).coerceAtLeast(0)
+        val max = limit()
         val x = (origin.x - (event.x - start.x)).coerceIn(0, max)
-        if (viewport.viewPosition.x == x) return
-        viewport.setViewPosition(Point(x, 0))
+        move(x)
     }
 
     private fun endTimeline() {
+        move(limit())
+    }
+
+    private fun scroll(event: MouseWheelEvent) {
+        if (event.scrollType == TOUCH_BEGIN || event.scrollType == TOUCH_END) {
+            rest = 0.0
+            event.consume()
+            return
+        }
+        val delta = delta(event)
+        if (delta == 0.0) return
+        rest += delta
+        val x = rest.toInt()
+        if (x == 0) return
+        if (!move(viewport.viewPosition.x + x)) {
+            rest = 0.0
+            return
+        }
+        rest -= x
+        event.consume()
+    }
+
+    private fun delta(event: MouseWheelEvent): Double {
+        if (!event.preciseWheelRotation.isFinite()) return 0.0
+        if (event.scrollType == TOUCH_UPDATE) return event.preciseWheelRotation * event.scrollAmount
+        if (event.scrollType == MouseWheelEvent.WHEEL_BLOCK_SCROLL) return event.preciseWheelRotation * viewport.extentSize.width
+        return event.preciseWheelRotation * event.scrollAmount * timeline.barWidth()
+    }
+
+    private fun move(x: Int): Boolean {
+        val next = x.coerceIn(0, limit())
+        if (viewport.viewPosition.x == next) return false
+        viewport.setViewPosition(Point(next, 0))
+        return true
+    }
+
+    private fun limit(): Int {
         val wide = timeline.preferredSize.width.coerceAtLeast(timeline.width)
-        val max = (wide - viewport.extentSize.width).coerceAtLeast(0)
-        viewport.setViewPosition(Point(max, 0))
+        return (wide - viewport.extentSize.width).coerceAtLeast(0)
     }
 
     private fun refresh() {
