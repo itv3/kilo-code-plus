@@ -50,6 +50,8 @@ describe("buildProxyEnv", () => {
     expect(buildProxyEnv()).toEqual({
       HTTP_PROXY: "http://proxy.corp.example:8080",
       HTTPS_PROXY: "http://proxy.corp.example:8080",
+      http_proxy: "http://proxy.corp.example:8080",
+      https_proxy: "http://proxy.corp.example:8080",
     })
   })
 
@@ -58,6 +60,7 @@ describe("buildProxyEnv", () => {
 
     expect(buildProxyEnv()).toEqual({
       NO_PROXY: "localhost,127.0.0.1,*.internal",
+      no_proxy: "localhost,127.0.0.1,*.internal",
     })
   })
 
@@ -71,6 +74,9 @@ describe("buildProxyEnv", () => {
       HTTP_PROXY: "http://proxy.corp.example:8080",
       HTTPS_PROXY: "http://proxy.corp.example:8080",
       NO_PROXY: "localhost,*.internal",
+      http_proxy: "http://proxy.corp.example:8080",
+      https_proxy: "http://proxy.corp.example:8080",
+      no_proxy: "localhost,*.internal",
     })
   })
 
@@ -80,6 +86,8 @@ describe("buildProxyEnv", () => {
     expect(buildProxyEnv()).toEqual({
       HTTP_PROXY: "",
       HTTPS_PROXY: "",
+      http_proxy: "",
+      https_proxy: "",
     })
   })
 
@@ -88,6 +96,7 @@ describe("buildProxyEnv", () => {
 
     expect(buildProxyEnv()).toEqual({
       NO_PROXY: "",
+      no_proxy: "",
     })
   })
 
@@ -104,6 +113,9 @@ describe("buildProxyEnv", () => {
       HTTP_PROXY: "",
       HTTPS_PROXY: "",
       NO_PROXY: "",
+      http_proxy: "",
+      https_proxy: "",
+      no_proxy: "",
     })
   })
 
@@ -118,6 +130,9 @@ describe("buildProxyEnv", () => {
       HTTP_PROXY: "",
       HTTPS_PROXY: "",
       NO_PROXY: "",
+      http_proxy: "",
+      https_proxy: "",
+      no_proxy: "",
     })
   })
 })

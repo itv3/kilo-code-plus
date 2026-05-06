@@ -235,13 +235,13 @@ function stripAnsi(str: string): string {
 
 /**
  * Translate VS Code's `http.proxy` / `http.noProxy` / `http.proxySupport`
- * settings into the standard HTTP_PROXY / HTTPS_PROXY / NO_PROXY env vars, so
- * the spawned CLI honors the user's proxy configuration. Returns an empty
- * object when no override is needed, so callers can spread unconditionally.
+ * settings into the standard proxy env vars, so the spawned CLI honors the
+ * user's proxy configuration. Returns an empty object when no override is
+ * needed, so callers can spread unconditionally.
  *
  * `http.proxySupport: "off"` is VS Code's opt-in way to disable proxy support
  * entirely; when set, we explicitly clear the env vars so ambient shell
- * HTTP_PROXY doesn't leak into the spawned child.
+ * HTTP_PROXY/http_proxy doesn't leak into the spawned child.
  */
 export function buildProxyEnv(): Record<string, string> {
   const httpConfig = vscode.workspace.getConfiguration("http")
@@ -250,7 +250,7 @@ export function buildProxyEnv(): Record<string, string> {
   const proxySupport = httpConfig.get<string>("proxySupport")
 
   if (proxySupport === "off") {
-    return { HTTP_PROXY: "", HTTPS_PROXY: "", NO_PROXY: "" }
+    return { HTTP_PROXY: "", HTTPS_PROXY: "", NO_PROXY: "", http_proxy: "", https_proxy: "", no_proxy: "" }
   }
 
   const proxy = httpConfig.get<string>("proxy")
@@ -279,16 +279,22 @@ export function buildProxyEnv(): Record<string, string> {
   if (proxy && proxy.trim() !== "") {
     env.HTTP_PROXY = proxy
     env.HTTPS_PROXY = proxy
+    env.http_proxy = proxy
+    env.https_proxy = proxy
   }
   if (proxySet && proxy !== undefined && proxy.trim() === "") {
     env.HTTP_PROXY = ""
     env.HTTPS_PROXY = ""
+    env.http_proxy = ""
+    env.https_proxy = ""
   }
   if (Array.isArray(noProxy) && noProxy.length > 0) {
     env.NO_PROXY = noProxy.join(",")
+    env.no_proxy = noProxy.join(",")
   }
   if (noProxySet && Array.isArray(noProxy) && noProxy.length === 0) {
     env.NO_PROXY = ""
+    env.no_proxy = ""
   }
   return env
 }
