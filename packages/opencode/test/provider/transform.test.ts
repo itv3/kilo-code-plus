@@ -3617,7 +3617,7 @@ describe("ProviderTransform.options - OpenAI Responses API params guard", () => 
   const sessionID = "test-session"
 
   const gpt5Model = (npm: string, providerID: string, apiId = "gpt-5.4"): any => ({
-    id: `${'${providerID}/${apiId}'}`,
+    id: `${providerID}/${apiId}`,
     providerID,
     api: { id: apiId, npm, url: "" },
     name: apiId,

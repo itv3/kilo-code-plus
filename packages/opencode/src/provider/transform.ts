@@ -49,20 +49,6 @@ function sdkKey(npm: string): string | undefined {
   return undefined
 }
 
-// kilocode_change start - gate OpenAI Responses API params for openai-compatible providers
-function supportsOpenAIResponsesParams(model: Provider.Model): boolean {
-  switch (model.api.npm) {
-    case "@ai-sdk/openai":
-    case "@ai-sdk/azure":
-    case "@ai-sdk/github-copilot":
-    case "@openrouter/ai-sdk-provider":
-    case "@kilocode/kilo-gateway":
-      return true
-  }
-  return false
-}
-// kilocode_change end
-
 function normalizeMessages(
   msgs: ModelMessage[],
   model: Provider.Model,
@@ -250,7 +236,7 @@ function normalizeMessages(
         const filteredContent = msg.content.filter((part: any) => part.type !== "reasoning")
 
         // Include reasoning_content | reasoning_details directly on the message for all assistant messages.
-        // Always set the field even when empty 鈥?some providers (e.g. DeepSeek) may return empty
+        // Always set the field even when empty — some providers (e.g. DeepSeek) may return empty
         // reasoning_content which still needs to be sent back in subsequent requests.
         return {
           ...msg,
@@ -999,20 +985,21 @@ export function options(input: {
   }
 
   if (input.model.api.id.includes("gpt-5") && !input.model.api.id.includes("gpt-5-chat")) {
-    const nativeOpenAI = supportsOpenAIResponsesParams(input.model)
+    const nativeOpenAI = [
+      "@ai-sdk/openai",
+      "@ai-sdk/azure",
+      "@ai-sdk/github-copilot",
+      "@openrouter/ai-sdk-provider",
+      "@kilocode/kilo-gateway",
+    ].includes(input.model.api.npm)
 
     if (!input.model.api.id.includes("gpt-5-pro")) {
       result["reasoningEffort"] = "medium"
-      // Only inject reasoningSummary for providers that support OpenAI Responses API params.
-      // @ai-sdk/openai-compatible proxies (e.g. LiteLLM) do not understand this
-      // parameter and return "Unknown parameter: 'reasoningSummary'".
       if (nativeOpenAI) {
         result["reasoningSummary"] = "auto"
       }
     }
 
-    // Only set textVerbosity for non-chat gpt-5.x models that support OpenAI Responses API params.
-    // Chat models (e.g. gpt-5.2-chat-latest) only support "medium" verbosity
     if (
       nativeOpenAI &&
       input.model.api.id.includes("gpt-5.") &&
@@ -1086,7 +1073,7 @@ export function smallOptions(model: Provider.Model) {
 }
 
 // Maps model ID prefix to provider slug used in providerOptions.
-// Example: "amazon/nova-2-lite" 鈫?"bedrock"
+// Example: "amazon/nova-2-lite" → "bedrock"
 const SLUG_OVERRIDES: Record<string, string> = {
   amazon: "bedrock",
 }
