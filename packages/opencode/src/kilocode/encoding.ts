@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "fs/promises"
 import { readFileSync } from "fs"
 import { dirname } from "path"
-import jschardet from "jschardet"
+import chardet from "chardet"
 import iconv from "iconv-lite"
 
 /**
@@ -9,9 +9,9 @@ import iconv from "iconv-lite"
  *
  * Supported:
  *  - UTF-8 (with or without BOM)
- *  - UTF-16 LE/BE with BOM (detected by jschardet)
- *  - UTF-32 LE/BE with BOM (detected by jschardet)
- *  - Legacy Latin and CJK encodings (detected by jschardet)
+ *  - UTF-16 LE/BE with BOM (detected by chardet)
+ *  - UTF-32 LE/BE with BOM (detected by chardet)
+ *  - Legacy Latin and CJK encodings (detected by chardet)
  *
  * Not supported:
  *  - UTF-16 or UTF-32 without BOM (ambiguous, rare)
@@ -19,7 +19,7 @@ import iconv from "iconv-lite"
  * Detection strategy:
  *  1. If the bytes are valid UTF-8, treat as UTF-8 (tracking the presence of a
  *     BOM so it can be written back).
- *  2. Otherwise, trust jschardet. jschardet only reports the wide UTF variants
+ *  2. Otherwise, trust chardet. chardet only reports the wide UTF variants
  *     when a BOM is present, which aligns with the contract above.
  *
  * iconv-lite's UTF codecs strip BOMs on decode and do not emit them on encode,
@@ -55,7 +55,19 @@ export namespace Encoding {
     return le || be
   }
 
-  /** Remap jschardet labels to iconv-lite compatible names. */
+  /**
+   * Canonicalize chardet labels to a stable lowercase-hyphenated form.
+   *
+   * iconv-lite already accepts every label chardet emits (e.g. "UTF-16 LE",
+   * "Shift_JIS", "KOI8-R"), so this map is not required to make decode/encode
+   * work. Its job is to give the rest of the codebase a consistent label —
+   * callers compare against `"utf-16le"`, `"windows-1251"`, etc., and should
+   * not have to account for chardet's casing or whitespace conventions.
+   *
+   * (ISO-2022-* is the one family iconv-lite does not support under any
+   * alias; those labels fall through to the `encodingExists` guard in
+   * `detect()` and are rejected to UTF-8.)
+   */
   function normalize(name: string): string {
     const lower = name.toLowerCase().replace(/[^a-z0-9]/g, "")
     const map: Record<string, string> = {
@@ -64,7 +76,6 @@ export namespace Encoding {
       utf16be: "utf-16be",
       utf32le: "utf-32le",
       utf32be: "utf-32be",
-      ascii: "utf-8",
       iso88591: "iso-8859-1",
       iso88592: "iso-8859-2",
       iso88595: "iso-8859-5",
@@ -82,13 +93,8 @@ export namespace Encoding {
       euckr: "euc-kr",
       iso2022kr: "iso-2022-kr",
       big5: "big5",
-      gb2312: "gb2312",
       gb18030: "gb18030",
       koi8r: "koi8-r",
-      maccyrillic: "x-mac-cyrillic",
-      ibm855: "cp855",
-      ibm866: "cp866",
-      tis620: "tis-620",
     }
     return map[lower] ?? name
   }
@@ -105,9 +111,9 @@ export namespace Encoding {
   export function detect(bytes: Buffer): string {
     if (bytes.length === 0) return DEFAULT
     if (isUtf8(bytes)) return hasUtf8Bom(bytes) ? UTF8_BOM : DEFAULT
-    const result = jschardet.detect(bytes)
-    if (!result.encoding) return DEFAULT
-    const enc = normalize(result.encoding)
+    const result = chardet.detect(bytes)
+    if (!result) return DEFAULT
+    const enc = normalize(result)
     if (!iconv.encodingExists(enc)) return DEFAULT
     return enc
   }
