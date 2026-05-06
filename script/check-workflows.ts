@@ -84,8 +84,12 @@ function diff(expected: Set<string>, actual: Set<string>, label: string) {
   return errs
 }
 
-const actualActive = new Set(readdirSync(DIR).filter((f) => f.endsWith(".yml")))
-const actualDisabled = new Set(readdirSync(path.join(DIR, "disabled")).filter((f) => f.endsWith(".disabled")))
+// GitHub picks up both .yml and .yaml in .github/workflows/. We list both so
+// an upstream `.yaml` addition also shows up as unexpected drift.
+const isWorkflow = (f: string) => f.endsWith(".yml") || f.endsWith(".yaml")
+const isDisabled = (f: string) => f.endsWith(".disabled")
+const actualActive = new Set(readdirSync(DIR).filter(isWorkflow))
+const actualDisabled = new Set(readdirSync(path.join(DIR, "disabled")).filter(isDisabled))
 
 const errs = [...diff(active, actualActive, "active"), ...diff(disabled, actualDisabled, "disabled")]
 
