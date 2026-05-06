@@ -1,14 +1,54 @@
 ---
-description: Resolve upstream merge conflicts
+description: Resolve upstream opencode merge conflicts interactively
+mode: primary
+permission:
+  read: ask
+  edit: ask
+  webfetch: ask
+  bash:
+    "*": ask
+    "git status *": allow
+    "git log *": allow
+    "git diff *": allow
+    "git show *": allow
+    "git ls-files *": allow
+    "git ls-tree *": allow
+    "git grep *": allow
+    "git hash-object *": allow
+    "git remote -v *": allow
+    "git rev-parse *": allow
+    "git merge-base *": allow
+    "git show-ref *": allow
+    "git worktree list": allow
+    "git branch --show-current": allow
+    "grep *": allow
+    "rg *": allow
+    "head *": allow
+    "tail *": allow
+    "cat *": allow
+    "wc *": allow
+    "ls *": allow
+    "pwd *": allow
+    "echo *": allow
+    "diff *": allow
+    "gh pr view *": allow
+    "gh run view *": allow
+    "gh api \"repos/sst/opencode/commits/dev\" *": allow
+    "axiom *": allow
+    "bun test *": allow
+    "bun run typecheck *": allow
+    "bun run lint *": allow
+    "bun run script/check-opencode-annotations.ts *": allow
+    "script/upstream/find-conflict-markers.sh *": allow
+    "./script/upstream/find-conflict-markers.sh *": allow
 ---
 
 Resolve the manual part of an upstream merge.
 
-Arguments: `$ARGUMENTS`
-
-Use the first argument as the upstream version, for example `v1.1.50` or
-`1.1.50`. If no argument is provided, infer the version from the current branch
-name, `upstream-merge-report-<version>.md`, or the newest relevant report file.
+The user will provide the upstream version (for example `v1.1.50` or `1.1.50`)
+in their first message. If they don't, infer it from the current branch name,
+from `upstream-merge-report-<version>.md`, or from the newest relevant report
+file.
 
 ## Workflow
 
