@@ -100,6 +100,14 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertEquals(200_000L, panel.contextBarReserved())
         assertEquals(1_783_700L, panel.contextBarAvailable())
         assertEquals(2_000_000L, panel.contextBarLimit())
+        assertEquals("16.3K / 2.0M tokens used\n200.0K reserved for output\n1.8M available", panel.contextBarTip())
+        assertNotSame(panel.contextBarTrackColor(), panel.contextBarReservedColor())
+        assertNotSame(panel.contextBarUsedColor(), panel.contextBarReservedColor())
+        assertEquals(panel.timelineScrollPreferredSize().height, panel.timelinePreferredSize().height)
+        assertTrue(panel.timelinePreferredSize().height >= panel.contextBar().preferredSize.height)
+        assertTrue(panel.timelineBarHeight(1) < panel.timelineScrollPreferredSize().height)
+        assertTrue(panel.timelineBarHeight(0) < panel.timelineBarHeight(1))
+        assertEquals(panel.timelineBarHeight(1), panel.timelineBarHeight(2))
 
         panel.expandButton().doClick()
 
@@ -108,6 +116,49 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertSame(timeline, panel.timelinePanel())
         assertSame(bar, panel.contextBar())
         assertEquals(3, panel.timelineCount())
+    }
+
+    fun `test expand button owns expanded state across updates`() {
+        val c = promptedHeader()
+        val panel = SessionHeaderPanel(c, parent)
+
+        assertFalse(panel.isExpanded())
+        assertEquals("Show session metrics", panel.expandTip())
+
+        panel.expandButton().doClick()
+        emit(ChatEventDto.SessionUpdated("ses_test", session("ses_test", title = "New title")))
+
+        assertTrue(panel.isExpanded())
+        assertEquals("Hide session metrics", panel.expandTip())
+
+        panel.expandButton().doClick()
+        emit(ChatEventDto.MessageUpdated("ses_test", assistant(cost = 0.2)))
+
+        assertFalse(panel.isExpanded())
+        assertEquals("Show session metrics", panel.expandTip())
+    }
+
+    fun `test context bar uses hot color after half context`() {
+        val c = promptedHeader()
+        val panel = SessionHeaderPanel(c, parent)
+        val color = panel.contextBarUsedColor()
+
+        emit(ChatEventDto.MessageUpdated("ses_test", assistant(tokens = TokensDto(1_200_000, 0, 0, 0, 0))))
+
+        assertNotSame(color, panel.contextBarUsedColor())
+    }
+
+    fun `test timeline width uses uniform bars and gaps`() {
+        val c = promptedHeader()
+        val panel = SessionHeaderPanel(c, parent)
+        val first = panel.timelinePreferredSize().width
+
+        emit(ChatEventDto.PartUpdated("ses_test", tool("tool_3", "bash", "running", "Short")))
+
+        val next = panel.timelinePreferredSize().width
+        assertTrue(first > 0)
+        assertEquals(4, panel.timelineCount())
+        assertEquals(panel.timelineBarWidth(), next - first)
     }
 
     private fun promptedHeader(): ai.kilocode.client.session.update.SessionController {
@@ -137,9 +188,9 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
 
         emit(ChatEventDto.SessionUpdated("ses_test", session("ses_test", title = "Generated title")))
         emit(ChatEventDto.MessageUpdated("ses_test", assistant()))
-        emit(ChatEventDto.PartUpdated("ses_test", reasoning(done = false)))
-        emit(ChatEventDto.PartUpdated("ses_test", tool("tool_1", "bash", "running", "Run tests")))
-        emit(ChatEventDto.PartUpdated("ses_test", tool("tool_2", "edit", "error", "Edit file")))
+        emit(ChatEventDto.PartUpdated("ses_test", reasoning(done = false, text = "Thinking")))
+        emit(ChatEventDto.PartUpdated("ses_test", tool("tool_1", "bash", "running", "Run tests", input = mapOf("cmd" to "test", "files" to "src"))))
+        emit(ChatEventDto.PartUpdated("ses_test", tool("tool_2", "edit", "error", "Edit file", input = mapOf("cmd" to "test", "files" to "src"))))
         emit(ChatEventDto.TodoUpdated("ses_test", listOf(
             TodoDto("Write tests", "completed", "high"),
             TodoDto("Ship it", "pending", "medium"),
@@ -159,16 +210,22 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         tokens = tokens,
     )
 
-    private fun reasoning(done: Boolean) = PartDto(
+    private fun reasoning(done: Boolean, text: String) = PartDto(
         id = "reasoning_1",
         sessionID = "ses_test",
         messageID = "msg1",
         type = "reasoning",
-        text = "Thinking",
+        text = text,
         time = if (done) PartTimeDto(1.0, 2.0) else PartTimeDto(1.0, null),
     )
 
-    private fun tool(id: String, name: String, state: String, title: String) = PartDto(
+    private fun tool(
+        id: String,
+        name: String,
+        state: String,
+        title: String,
+        input: Map<String, String> = mapOf("cmd" to "test"),
+    ) = PartDto(
         id = id,
         sessionID = "ses_test",
         messageID = "msg1",
@@ -176,7 +233,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         tool = name,
         state = state,
         title = title,
-        input = mapOf("cmd" to "test"),
+        input = input,
         time = PartTimeDto(1.0, 3.0),
     )
 }

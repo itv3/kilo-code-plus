@@ -10,7 +10,9 @@ import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.rpc.dto.TokensDto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -23,10 +25,13 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.geom.AffineTransform
+import kotlin.math.roundToInt
 import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants
+import javax.swing.SwingUtilities
 
 class SessionHeaderPanel(
     private val controller: SessionController,
@@ -53,9 +58,22 @@ class SessionHeaderPanel(
     }
     private val expand = UiStyle.Buttons.HoverIcon().apply {
         icon = CHEVRON_ICON
+        toolTipText = KiloBundle.message("session.header.expand")
+        accessibleContext.accessibleName = KiloBundle.message("session.header.expand")
         addActionListener { toggle() }
     }
     private val timeline = TimelinePanel()
+    private val scroll = JBScrollPane(timeline).apply {
+        border = JBUI.Borders.empty()
+        viewportBorder = JBUI.Borders.empty()
+        isOpaque = false
+        viewport.isOpaque = false
+        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER
+        preferredSize = JBUI.size(0, TimelinePanel.HEIGHT)
+        minimumSize = preferredSize
+        maximumSize = Dimension(Int.MAX_VALUE, preferredSize.height)
+    }
     private val bar = ContextBar()
     private val tokenTitle = JBLabel(KiloBundle.message("session.header.tokens")).apply { foreground = UiStyle.Colors.weak() }
     private val input = JBLabel().apply {
@@ -104,7 +122,7 @@ class SessionHeaderPanel(
         isOpaque = false
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         border = JBUI.Borders.empty(UiStyle.Space.SM, 0, 0, 0)
-        add(timeline)
+        add(scroll)
         add(bar)
         add(tokens)
         add(todoRow)
@@ -165,7 +183,6 @@ class SessionHeaderPanel(
         isVisible = header.visible
         if (!header.visible) {
             collapse()
-            syncExpand()
             if (before) refresh()
             return
         }
@@ -178,9 +195,10 @@ class SessionHeaderPanel(
         todoRow.isVisible = todos.isVisible
 
         compact.isEnabled = header.canCompact
-        timeline.setItems(header.timeline)
+        val appended = timeline.setItems(header.timeline)
+        if (scroll.isVisible != timeline.isVisible) scroll.isVisible = timeline.isVisible
+        if (appended) SwingUtilities.invokeLater { scroll.horizontalScrollBar.value = scroll.horizontalScrollBar.maximum }
         bar.setUsage(header.context)
-        syncExpand()
         refresh()
     }
 
@@ -243,11 +261,29 @@ class SessionHeaderPanel(
 
     internal fun contextBarLimit() = bar.values()?.limit
 
+    internal fun contextBarTip() = bar.toolTipText
+
+    internal fun contextBarTrackColor() = bar.trackColor()
+
+    internal fun contextBarUsedColor() = bar.usedColor()
+
+    internal fun contextBarReservedColor() = bar.reservedColor()
+
     internal fun timelineCount() = timeline.count()
 
     internal fun timelineKinds() = timeline.kinds()
 
     internal fun timelineActive(index: Int) = timeline.active(index)
+
+    internal fun timelinePreferredSize() = timeline.preferredSize
+
+    internal fun timelineBarHeight(index: Int) = timeline.barHeight(index)
+
+    internal fun timelineBarWidth() = timeline.barWidth()
+
+    internal fun timelineScrollPreferredSize() = scroll.preferredSize
+
+    internal fun expandTip() = expand.toolTipText
 
     private fun setTokens(value: TokensDto?) {
         val tk = value
@@ -268,24 +304,25 @@ class SessionHeaderPanel(
 
     private fun toggle() {
         if (isExpanded()) collapse() else expand()
-        syncExpand()
         refresh()
     }
 
     private fun expand(): Boolean {
         if (isExpanded()) return false
         add(body, BorderLayout.CENTER)
+        setExpand(true)
         return true
     }
 
     private fun collapse(): Boolean {
         val attached = body.parent === this
-        if (attached) remove(body)
+        if (!attached) return false
+        remove(body)
+        setExpand(false)
         return attached
     }
 
-    private fun syncExpand() {
-        val expanded = isExpanded()
+    private fun setExpand(expanded: Boolean) {
         val key = if (expanded) "session.header.collapse" else "session.header.expand"
         expand.icon = if (expanded) CHEVRON_UP_ICON else CHEVRON_ICON
         expand.toolTipText = KiloBundle.message(key)
@@ -373,6 +410,12 @@ private class ContextBar : JPanel(BorderLayout(UiStyle.Gap.inline(), 0)) {
 
     fun values(): ContextData? = meter.data
 
+    fun trackColor(): Color = meter.trackColor()
+
+    fun usedColor(): Color = meter.data?.let(meter::usedColor) ?: meter.usedColor()
+
+    fun reservedColor(): Color = meter.reservedColor()
+
     private fun data(value: ContextUsage?): ContextData? {
         val ctx = value ?: return null
         val max = ctx.limit?.takeIf { it > 0 } ?: return null
@@ -403,6 +446,10 @@ private data class ContextData(
 }
 
 private class Meter : JComponent() {
+    companion object {
+        private val HOT = JBColor.namedColor("Kilo.ContextProgress.hotBase", Color(128, 0, 0))
+    }
+
     var data: ContextData? = null
 
     init {
@@ -419,7 +466,7 @@ private class Meter : JComponent() {
             val h = JBUI.scale(4).coerceAtMost(height).coerceAtLeast(1)
             val y = (height - h) / 2
             val arc = JBUI.scale(4)
-            g2.color = UiStyle.Colors.line()
+            g2.color = trackColor()
             g2.fillRoundRect(0, y, width, h, arc, arc)
             val used = segment(data.used, data.limit)
             val reserved = segment(data.reserved, data.limit)
@@ -441,12 +488,16 @@ private class Meter : JComponent() {
         g.fillRoundRect(x, y, w, h, arc, arc)
     }
 
-    private fun usedColor(data: ContextData): Color {
-        if (data.used.toDouble() / data.limit.toDouble() >= 0.5) return UiStyle.Colors.error()
-        return UiStyle.Colors.fg()
+    fun trackColor(): Color = UIUtil.getBoundsColor()
+
+    fun usedColor(): Color = UiStyle.Colors.fg()
+
+    fun usedColor(data: ContextData): Color {
+        if (data.used.toDouble() / data.limit.toDouble() >= 0.5) return UiStyle.Colors.blend(HOT, UiStyle.Colors.error(), 0.6f)
+        return usedColor()
     }
 
-    private fun reservedColor(): Color = UiStyle.Colors.weak()
+    fun reservedColor(): Color = UiStyle.Colors.weak()
 }
 
 private class RotatedIcon(private val base: Icon) : Icon {
@@ -469,14 +520,23 @@ private class RotatedIcon(private val base: Icon) : Icon {
     }
 }
 
-private class TimelinePanel : JPanel(FlowLayout(FlowLayout.LEFT, UiStyle.Gap.xs(), 0)) {
+private class TimelinePanel : JPanel(null) {
+    companion object {
+        const val HEIGHT = 26
+        private const val WIDTH = 12
+        private const val MIN = 8
+        private const val PAD = 4
+        private const val GAP = 1
+    }
+
     private val bars = mutableListOf<TimelineBar>()
 
     init {
         isOpaque = false
     }
 
-    fun setItems(items: List<TimelineItem>) {
+    fun setItems(items: List<TimelineItem>): Boolean {
+        val appended = items.size > bars.size
         while (bars.size > items.size) {
             val bar = bars.removeAt(bars.lastIndex)
             remove(bar)
@@ -486,54 +546,87 @@ private class TimelinePanel : JPanel(FlowLayout(FlowLayout.LEFT, UiStyle.Gap.xs(
             bars.add(bar)
             add(bar)
         }
-        for ((index, item) in items.withIndex()) bars[index].setItem(item)
+        val max = items.maxOfOrNull { it.weight }?.coerceAtLeast(1) ?: 1
+        for ((index, item) in items.withIndex()) bars[index].setItem(item, height(item.weight, max))
         val show = items.isNotEmpty()
         if (isVisible != show) isVisible = show
         revalidate()
         repaint()
+        return appended
     }
+
+    override fun doLayout() {
+        val w = JBUI.scale(WIDTH)
+        val gap = JBUI.scale(GAP)
+        bars.forEachIndexed { index, bar ->
+            val h = bar.barHeight
+            val x = index * (w + gap)
+            val y = height - h
+            bar.setBounds(x, y.coerceAtLeast(0), w, h)
+        }
+    }
+
+    override fun getPreferredSize(): Dimension = JBUI.size(width(), HEIGHT)
+
+    override fun getMinimumSize(): Dimension = JBUI.size(0, HEIGHT)
+
+    override fun getMaximumSize(): Dimension = Dimension(Int.MAX_VALUE, JBUI.scale(HEIGHT))
 
     fun count() = bars.size
 
     fun kinds() = bars.map { it.kind }
 
     fun active(index: Int) = bars[index].active
+
+    fun barHeight(index: Int) = bars[index].barHeight
+
+    fun barWidth() = JBUI.scale(WIDTH + GAP)
+
+    private fun height(weight: Int, max: Int): Int {
+        val fill = MIN + (weight.toDouble() / max.toDouble()) * (HEIGHT - MIN - PAD)
+        return JBUI.scale(fill.roundToInt())
+    }
+
+    private fun width(): Int {
+        if (bars.isEmpty()) return 0
+        return bars.size * WIDTH + (bars.size - 1) * GAP
+    }
 }
 
 private class TimelineBar : JPanel() {
+    companion object {
+        private val READ_TOOLS = setOf("read", "glob", "grep", "find", "ls", "diagnostics", "warpgrep")
+        private val WRITE_TOOLS = setOf("edit", "write", "patch", "multi_edit", "multiedit", "apply_patch")
+    }
+
     var kind: String = ""
         private set
     var active: Boolean = false
         private set
-    private var error: Boolean = false
+    var barHeight: Int = JBUI.scale(8)
+        private set
 
     init {
-        isOpaque = false
+        isOpaque = true
     }
 
-    fun setItem(item: TimelineItem) {
+    fun setItem(item: TimelineItem, height: Int) {
         kind = item.kind
         active = item.active
-        error = item.kind == "error"
         toolTipText = item.title
-        preferredSize = JBUI.size((item.weight * 12).coerceAtLeast(12), 4)
-        minimumSize = preferredSize
-        maximumSize = preferredSize
+        barHeight = height
+        background = color(item)
     }
 
-    override fun paintComponent(g: Graphics) {
-        val g2 = g.create() as Graphics2D
-        try {
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-            g2.color = when {
-                error -> UiStyle.Colors.error()
-                active -> UiStyle.Colors.running()
-                else -> UIUtil.getBoundsColor()
-            }
-            val arc = JBUI.scale(4)
-            g2.fillRoundRect(0, 0, width, height.coerceAtLeast(JBUI.scale(4)), arc, arc)
-        } finally {
-            g2.dispose()
-        }
+    private fun color(item: TimelineItem): Color {
+        if (item.kind == "error") return UiStyle.Colors.timelineError
+        if (item.kind == "text") return UiStyle.Colors.timelineText
+        if (item.kind == "reasoning") return UiStyle.Colors.timelineText
+        if (item.kind == "compaction") return UiStyle.Colors.timelineStep
+        if (item.kind != "tool") return UiStyle.Colors.timelineStep
+        val name = item.tool?.lowercase().orEmpty()
+        if (READ_TOOLS.contains(name)) return UiStyle.Colors.timelineRead
+        if (WRITE_TOOLS.contains(name)) return UiStyle.Colors.timelineWrite
+        return UiStyle.Colors.timelineTool
     }
 }
