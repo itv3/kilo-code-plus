@@ -985,6 +985,7 @@ export function options(input: {
   }
 
   if (input.model.api.id.includes("gpt-5") && !input.model.api.id.includes("gpt-5-chat")) {
+    // kilocode_change start - guard OpenAI Responses-only params for compatible providers
     const nativeOpenAI = [
       "@ai-sdk/openai",
       "@ai-sdk/azure",
@@ -1009,6 +1010,7 @@ export function options(input: {
     ) {
       result["textVerbosity"] = "low"
     }
+    // kilocode_change end
 
     if (input.model.providerID.startsWith("opencode")) {
       result["promptCacheKey"] = input.sessionID
