@@ -64,8 +64,9 @@ const AutocompleteTab: Component<{ onNavigateToModels?: () => void }> = (props) 
       <p
         data-slot="autocomplete-models-hint"
         style={{
-          "margin-top": "12px",
+          "margin-top": "20px",
           "font-size": "var(--kilo-font-size-12)",
+          "text-align": "right",
           color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
         }}
       >
