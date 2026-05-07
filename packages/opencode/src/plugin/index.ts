@@ -25,7 +25,6 @@ import { errorMessage } from "@/util/error"
 import { PluginLoader } from "./loader"
 import { parsePluginSpecifier, readPluginId, readV1Plugin, resolvePluginId } from "./shared"
 import { KiloAuthPlugin } from "@kilocode/kilo-gateway" // kilocode_change
-import { DropMaxTokensForGpt5Plugin } from "@/kilocode/plugin/drop-max-tokens" // kilocode_change
 import { registerAdapter } from "@/control-plane/adapters"
 import type { WorkspaceAdapter } from "@/control-plane/types"
 
@@ -68,7 +67,6 @@ const INTERNAL_PLUGINS: PluginInstance[] = [
   CloudflareWorkersAuthPlugin,
   CloudflareAIGatewayAuthPlugin,
   AzureAuthPlugin,
-  DropMaxTokensForGpt5Plugin,
 ]
 // kilocode_change end
 
