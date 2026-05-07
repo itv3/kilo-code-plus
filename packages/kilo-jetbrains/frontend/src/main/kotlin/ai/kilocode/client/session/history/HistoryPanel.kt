@@ -2,6 +2,8 @@ package ai.kilocode.client.session.history
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.ui.UiStyle
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -27,6 +29,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListSelectionModel
+import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -65,6 +68,7 @@ class HistoryPanel(
         more.addActionListener { controller.loadMoreCloud() }
         bind(localList, controller.local)
         bind(cloudList, controller.cloud)
+        bindTheme()
         addHierarchyListener { e ->
             if (e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong() == 0L) return@addHierarchyListener
             if (isShowing && stale) {
@@ -82,7 +86,31 @@ class HistoryPanel(
 
     fun refresh() {
         stale = false
+        updateTheme()
         controller.reload(gitUrl())
+    }
+
+    private fun bindTheme() {
+        val bus = ApplicationManager.getApplication().messageBus.connect(this)
+        bus.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+            ApplicationManager.getApplication().invokeLater {
+                updateTheme()
+            }
+        })
+    }
+
+    private fun updateTheme() {
+        SwingUtilities.updateComponentTreeUI(this)
+        SwingUtilities.updateComponentTreeUI(localPanel)
+        SwingUtilities.updateComponentTreeUI(cloudPanel)
+        updateRenderer(localList)
+        updateRenderer(cloudList)
+        sync()
+    }
+
+    private fun updateRenderer(list: JBList<out HistoryItem>) {
+        val view = list.cellRenderer
+        if (view is JComponent) SwingUtilities.updateComponentTreeUI(view)
     }
 
     private fun search(model: HistoryModel<out HistoryItem>) = SearchTextField(false).apply {

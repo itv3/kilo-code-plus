@@ -68,6 +68,7 @@ internal open class HistoryRenderer<T : HistoryItem>(
     private val del = JBLabel().apply {
         horizontalAlignment = SwingConstants.CENTER
         verticalAlignment = SwingConstants.CENTER
+        border = JBUI.Borders.emptyLeft(JBUI.CurrentTheme.ActionsList.elementIconGap())
     }
     private val main = JPanel(BorderLayout()).apply {
         add(title, BorderLayout.CENTER)
