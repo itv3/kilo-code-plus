@@ -241,12 +241,12 @@ export const layer: Layer.Layer<
             tool.search,
             tool.skill,
             tool.patch,
-            ...(Flag.KILO_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []),
             // kilocode_change start
             tool.plan,
             ...(["cli", "vscode"].includes(Flag.KILO_CLIENT) ? [tool.suggest] : []),
             ...KiloToolRegistry.extra(kilo, cfg),
             // kilocode_change end
+            ...(Flag.KILO_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []),
           ],
           task: tool.task,
           read: tool.read,
