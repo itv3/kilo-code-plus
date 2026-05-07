@@ -2330,7 +2330,7 @@ describe("SessionNs.getUsage", () => {
     expect(result.cost).toBe(0.01)
   })
 
-  test("uses upstream_inference_cost for Anthropic Messages API via OpenRouter", () => {
+  test("uses usage.raw.cost_details.upstream_inference_cost for Anthropic Messages via OpenRouter", () => {
     const model = createModel({
       context: 100_000,
       output: 32_000,
@@ -2346,16 +2346,17 @@ describe("SessionNs.getUsage", () => {
         totalTokens: 1_100_000,
         inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
         outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
-      },
-      metadata: {
-        anthropic: {
-          usage: {
-            // Top-level `cost` is the OpenRouter fee and must be ignored
-            cost: 0.0057550875,
-            is_byok: true,
-            cost_details: {
-              upstream_inference_cost: 0.11510175,
-            },
+        // `convertAnthropicUsage` copies the verbatim provider usage onto `raw`.
+        // Top-level `cost` is the OpenRouter fee and must be ignored.
+        raw: {
+          input_tokens: 1,
+          output_tokens: 1121,
+          cache_creation_input_tokens: 5385,
+          cache_read_input_tokens: 106831,
+          cost: 0.0057550875,
+          is_byok: true,
+          cost_details: {
+            upstream_inference_cost: 0.11510175,
           },
         },
       },
@@ -2364,7 +2365,7 @@ describe("SessionNs.getUsage", () => {
     expect(result.cost).toBe(0.11510175)
   })
 
-  test("ignores Anthropic Messages `cost` when no upstream_inference_cost is reported", () => {
+  test("uses usage.raw.cost_details.upstream_inference_cost for OpenAI Responses via OpenRouter", () => {
     const model = createModel({
       context: 100_000,
       output: 32_000,
@@ -2380,13 +2381,46 @@ describe("SessionNs.getUsage", () => {
         totalTokens: 1_100_000,
         inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
         outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
-      },
-      metadata: {
-        anthropic: {
-          usage: {
-            cost: 0.5,
-            // cost_details missing
+        // `convertOpenAIResponsesUsage` copies the verbatim provider usage onto `raw`.
+        raw: {
+          input_tokens: 622051,
+          input_tokens_details: { cached_tokens: 594944 },
+          output_tokens: 304,
+          output_tokens_details: { reasoning_tokens: 0 },
+          total_tokens: 622355,
+          cost: 0.0439847,
+          is_byok: true,
+          cost_details: {
+            upstream_inference_cost: 0.879694,
+            upstream_inference_input_cost: 0.866014,
+            upstream_inference_output_cost: 0.01368,
           },
+        },
+      },
+    })
+
+    expect(result.cost).toBe(0.879694)
+  })
+
+  test("ignores raw `cost` when no upstream_inference_cost is reported", () => {
+    const model = createModel({
+      context: 100_000,
+      output: 32_000,
+      cost: { input: 3, output: 15, cache: { read: 0.3, write: 3.75 } },
+    })
+    const provider = { id: "kilo" } as Provider.Info
+    const result = SessionNs.getUsage({
+      model,
+      provider,
+      usage: {
+        inputTokens: 1_000_000,
+        outputTokens: 100_000,
+        totalTokens: 1_100_000,
+        inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+        raw: {
+          cost: 0.5,
+          // cost_details missing
         },
       },
     })
@@ -2470,13 +2504,7 @@ describe("SessionNs.getUsage", () => {
         inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
         outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
       },
-      metadata: {
-        anthropic: {
-          usage: {
-            // no cost_details
-          },
-        },
-      },
+      // No metadata, no usage.raw — should fall back
     })
 
     // 1M input * $3 + 100k output * $15 = 3 + 1.5

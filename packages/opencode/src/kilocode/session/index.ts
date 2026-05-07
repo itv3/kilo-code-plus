@@ -14,7 +14,7 @@ import { ProjectID } from "@/project/schema"
 import { Filesystem } from "@/util/filesystem"
 import { SessionTable } from "@/session/session.sql"
 import * as Log from "@opencode-ai/core/util/log"
-import type { ProviderMetadata } from "ai"
+import type { LanguageModelUsage, ProviderMetadata } from "ai"
 import type { Provider } from "@/provider/provider"
 
 export namespace KiloSession {
@@ -103,15 +103,22 @@ export namespace KiloSession {
   /**
    * Extract provider-reported cost from response metadata when available.
    *
-   * Supports three internal transports:
-   *   1. OpenRouter chat completions      -> `metadata.openrouter.usage.cost`
-   *                                          (`costDetails.upstreamInferenceCost` for Kilo BYOK)
-   *   2. Anthropic Messages via OpenRouter -> `metadata.anthropic.usage.cost_details.upstream_inference_cost`
-   *   3. Anthropic Messages via Vercel AI Gateway -> `metadata.gateway.marketCost`
+   * Supports the following internal transports:
+   *   1. OpenRouter chat completions  -> `metadata.openrouter.usage.cost`
+   *                                      (`costDetails.upstreamInferenceCost` for Kilo BYOK)
+   *   2. Anthropic Messages or OpenAI Responses via OpenRouter
+   *                                   -> `usage.raw.cost_details.upstream_inference_cost`
+   *      (the `@ai-sdk/anthropic` and `@ai-sdk/openai` providers both surface the verbatim
+   *      provider usage object on `LanguageModelUsage.raw`, so OpenRouter's BYOK cost lands
+   *      there with snake_case preserved)
+   *   3. Anthropic Messages or OpenAI Responses via Vercel AI Gateway
+   *                                   -> `metadata.gateway.marketCost` (defensive: the
+   *      gateway emits this in the SSE `provider_metadata` field, which the current AI SDK
+   *      providers drop before they reach this layer)
    *
-   * For the Anthropic Messages API paths only the upstream/market cost is used:
-   * the gateway-level `cost` field represents the gateway fee paid by Kilo
-   * (typically 0 for BYOK) and would understate the user's true spend.
+   * The top-level `cost` field for non-OpenRouter-chat-completions paths represents the
+   * gateway fee paid by Kilo (typically 0 for BYOK) and would understate the user's true
+   * spend, so it is deliberately never used.
    *
    * Returns `undefined` when no provider cost is available, so the caller
    * should fall back to the standard token-based calculation.
@@ -120,6 +127,7 @@ export namespace KiloSession {
    */
   export function providerCost(input: {
     metadata?: ProviderMetadata
+    usage?: LanguageModelUsage
     provider?: Provider.Info
     providerID: string
   }): number | undefined {
@@ -143,16 +151,24 @@ export namespace KiloSession {
       if (cost !== undefined) return cost
     }
 
-    // 2. Anthropic Messages API via OpenRouter. Only the upstream BYOK cost is meaningful;
-    //    the top-level `cost` field is the OpenRouter fee, which we deliberately ignore.
-    const anthropicUsage = input.metadata?.["anthropic"]?.["usage"] as
-      | { cost_details?: { upstream_inference_cost?: number } }
-      | undefined
-    const upstream = num(anthropicUsage?.cost_details?.upstream_inference_cost)
+    // 2. Anthropic Messages or OpenAI Responses via OpenRouter. The `@ai-sdk/anthropic`
+    //    (`convertAnthropicUsage`) and `@ai-sdk/openai` (`convertOpenAIResponsesUsage`)
+    //    providers both copy the verbatim provider usage object onto `usage.raw`, so
+    //    OpenRouter's BYOK upstream cost lands at `usage.raw.cost_details.upstream_inference_cost`
+    //    with snake_case preserved. Only the upstream BYOK cost is meaningful here; the
+    //    top-level `cost` is the OpenRouter fee.
+    const raw = input.usage?.raw as { cost_details?: { upstream_inference_cost?: number } } | undefined
+    const upstream = num(raw?.cost_details?.upstream_inference_cost)
     if (upstream !== undefined) return upstream
 
-    // 3. Anthropic Messages API via Vercel AI Gateway. `cost` is what Kilo paid the gateway
-    //    (typically 0 for BYOK), so we always use `marketCost`. Values are emitted as strings.
+    // 3. Anthropic Messages or OpenAI Responses via Vercel AI Gateway. `cost` is what Kilo
+    //    paid the gateway (typically 0 for BYOK), so we always use `marketCost`. Values are
+    //    emitted as strings on the wire.
+    //
+    //    NOTE: this branch is currently dormant because neither `@ai-sdk/anthropic` nor
+    //    `@ai-sdk/openai` (responses) forwards the SSE-level `provider_metadata.gateway`
+    //    block to `providerMetadata`. Kept as defensive code so the cost starts flowing
+    //    automatically once the SDK gap is closed.
     const gateway = input.metadata?.["gateway"] as { marketCost?: string | number } | undefined
     const marketCost = num(gateway?.marketCost)
     if (marketCost !== undefined) return marketCost
