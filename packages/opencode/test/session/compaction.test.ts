@@ -2329,6 +2329,155 @@ describe("SessionNs.getUsage", () => {
     // When upstream cost is missing for Kilo, fall back to regular cost field
     expect(result.cost).toBe(0.01)
   })
+
+  test("uses anthropic messages api cost for OpenRouter (Kilo BYOK)", () => {
+    const model = createModel({
+      context: 100_000,
+      output: 32_000,
+      cost: { input: 3, output: 15, cache: { read: 0.3, write: 3.75 } },
+    })
+    const provider = { id: "kilo" } as Provider.Info
+    const result = SessionNs.getUsage({
+      model,
+      provider,
+      usage: {
+        inputTokens: 1_000_000,
+        outputTokens: 100_000,
+        totalTokens: 1_100_000,
+        inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+      },
+      metadata: {
+        anthropic: {
+          usage: {
+            cost: 0.0057550875,
+            is_byok: true,
+            cost_details: {
+              upstream_inference_cost: 0.11510175,
+            },
+          },
+        },
+      },
+    })
+
+    expect(result.cost).toBe(0.11510175)
+  })
+
+  test("uses anthropic messages api cost for OpenRouter (non-BYOK)", () => {
+    const model = createModel({
+      context: 100_000,
+      output: 32_000,
+      cost: { input: 3, output: 15, cache: { read: 0.3, write: 3.75 } },
+    })
+    const provider = { id: "openrouter" } as Provider.Info
+    const result = SessionNs.getUsage({
+      model,
+      provider,
+      usage: {
+        inputTokens: 1_000_000,
+        outputTokens: 100_000,
+        totalTokens: 1_100_000,
+        inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+      },
+      metadata: {
+        anthropic: {
+          usage: {
+            cost: 0.5,
+            cost_details: { upstream_inference_cost: 0.45 },
+          },
+        },
+      },
+    })
+
+    expect(result.cost).toBe(0.5)
+  })
+
+  test("uses Vercel AI Gateway marketCost for Kilo provider", () => {
+    const model = createModel({
+      context: 100_000,
+      output: 32_000,
+      cost: { input: 3, output: 15, cache: { read: 0.3, write: 3.75 } },
+    })
+    const provider = { id: "kilo" } as Provider.Info
+    const result = SessionNs.getUsage({
+      model,
+      provider,
+      usage: {
+        inputTokens: 1_000_000,
+        outputTokens: 100_000,
+        totalTokens: 1_100_000,
+        inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+      },
+      metadata: {
+        gateway: {
+          // Strings, exactly as emitted by the AI Gateway message_delta event
+          cost: "0",
+          marketCost: "0.35349075",
+        },
+      },
+    })
+
+    expect(result.cost).toBe(0.35349075)
+  })
+
+  test("uses Vercel AI Gateway cost when marketCost missing", () => {
+    const model = createModel({
+      context: 100_000,
+      output: 32_000,
+      cost: { input: 3, output: 15, cache: { read: 0.3, write: 3.75 } },
+    })
+    const provider = { id: "kilo" } as Provider.Info
+    const result = SessionNs.getUsage({
+      model,
+      provider,
+      usage: {
+        inputTokens: 1_000_000,
+        outputTokens: 100_000,
+        totalTokens: 1_100_000,
+        inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+      },
+      metadata: {
+        gateway: {
+          cost: "0.123",
+        },
+      },
+    })
+
+    expect(result.cost).toBe(0.123)
+  })
+
+  test("falls back to calculated cost when no provider cost is reported", () => {
+    const model = createModel({
+      context: 100_000,
+      output: 32_000,
+      cost: { input: 3, output: 15, cache: { read: 0.3, write: 3.75 } },
+    })
+    const provider = { id: "kilo" } as Provider.Info
+    const result = SessionNs.getUsage({
+      model,
+      provider,
+      usage: {
+        inputTokens: 1_000_000,
+        outputTokens: 100_000,
+        totalTokens: 1_100_000,
+        inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+        outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+      },
+      metadata: {
+        anthropic: {
+          usage: {
+            // no cost / cost_details
+          },
+        },
+      },
+    })
+
+    // 1M input * $3 + 100k output * $15 = 3 + 1.5
+    expect(result.cost).toBe(3 + 1.5)
+  })
   // kilocode_change end
 
   test.each(["@ai-sdk/anthropic", "@ai-sdk/amazon-bedrock", "@ai-sdk/google-vertex/anthropic"])(

@@ -101,9 +101,18 @@ export namespace KiloSession {
   // ---------------------------------------------------------------------------
 
   /**
-   * Extract provider-reported cost from OpenRouter metadata when available.
-   * For the Kilo provider (BYOK), prefers `upstreamInferenceCost` over the
-   * regular `cost` field (which is just the OpenRouter 5% fee).
+   * Extract provider-reported cost from response metadata when available.
+   *
+   * Supports three internal transports:
+   *   1. OpenRouter chat completions   -> `metadata.openrouter.usage.cost`
+   *                                       (`costDetails.upstreamInferenceCost` for BYOK)
+   *   2. Anthropic Messages via OpenRouter -> `metadata.anthropic.usage.cost`
+   *                                       (`cost_details.upstream_inference_cost` for BYOK)
+   *   3. Anthropic Messages via Vercel AI Gateway -> `metadata.gateway.cost`
+   *                                       (`metadata.gateway.marketCost` for BYOK)
+   *
+   * For the Kilo provider (always BYOK), prefers the upstream/market cost over
+   * the regular `cost` field (which represents the gateway fee, often 0).
    *
    * Returns `undefined` when no provider cost is available, so the caller
    * should fall back to the standard token-based calculation.
@@ -115,23 +124,45 @@ export namespace KiloSession {
     provider?: Provider.Info
     providerID: string
   }): number | undefined {
-    const openrouterUsage = input.metadata?.["openrouter"]?.["usage"] as
-      | {
-          cost?: number
-          costDetails?: { upstreamInferenceCost?: number }
-        }
-      | undefined
-
-    if (!openrouterUsage) return undefined
-
     const isKilo = (input.provider?.id ?? input.providerID) === "kilo"
-    const upstream = openrouterUsage.costDetails?.upstreamInferenceCost
-    const regular = openrouterUsage.cost
 
-    // Kilo is always BYOK, so prefer upstream cost. For OpenRouter, use regular cost.
-    const cost = isKilo && upstream !== undefined ? upstream : regular
+    const num = (value: unknown): number | undefined => {
+      if (value === undefined || value === null) return undefined
+      const n = typeof value === "string" ? Number(value) : (value as number)
+      return Number.isFinite(n) ? n : undefined
+    }
 
-    if (cost !== undefined && cost !== null && Number.isFinite(cost)) return cost
+    const pick = (regular: unknown, upstream: unknown): number | undefined => {
+      const u = num(upstream)
+      const r = num(regular)
+      return isKilo && u !== undefined ? u : (r ?? u)
+    }
+
+    // 1. OpenRouter chat completions
+    const orUsage = input.metadata?.["openrouter"]?.["usage"] as
+      | { cost?: number; costDetails?: { upstreamInferenceCost?: number } }
+      | undefined
+    if (orUsage) {
+      const cost = pick(orUsage.cost, orUsage.costDetails?.upstreamInferenceCost)
+      if (cost !== undefined) return cost
+    }
+
+    // 2. Anthropic Messages API (passes through OpenRouter `usage` fields verbatim)
+    const anthropicUsage = input.metadata?.["anthropic"]?.["usage"] as
+      | { cost?: number; cost_details?: { upstream_inference_cost?: number } }
+      | undefined
+    if (anthropicUsage) {
+      const cost = pick(anthropicUsage.cost, anthropicUsage.cost_details?.upstream_inference_cost)
+      if (cost !== undefined) return cost
+    }
+
+    // 3. Vercel AI Gateway (cost / marketCost are emitted as strings)
+    const gateway = input.metadata?.["gateway"] as { cost?: string | number; marketCost?: string | number } | undefined
+    if (gateway) {
+      const cost = pick(gateway.cost, gateway.marketCost)
+      if (cost !== undefined) return cost
+    }
+
     return undefined
   }
 
