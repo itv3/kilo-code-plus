@@ -5,7 +5,7 @@ import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import SettingsRow from "./SettingsRow"
 
-const AutocompleteTab: Component = () => {
+const AutocompleteTab: Component<{ onNavigateToModels?: () => void }> = (props) => {
   const { settings, updateSetting } = useConfig()
   const language = useLanguage()
 
@@ -61,6 +61,24 @@ const AutocompleteTab: Component = () => {
           </Switch>
         </SettingsRow>
       </Card>
+      <p
+        data-slot="autocomplete-models-hint"
+        style={{
+          "margin-top": "12px",
+          "font-size": "var(--kilo-font-size-12)",
+          color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+        }}
+      >
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault()
+            props.onNavigateToModels?.()
+          }}
+        >
+          {language.t("settings.autocomplete.modelsHint")}
+        </a>
+      </p>
     </div>
   )
 }
