@@ -3,6 +3,7 @@ package ai.kilocode.client.session.history
 import ai.kilocode.client.app.KiloSessionService
 import ai.kilocode.client.app.KiloWorkspaceService
 import ai.kilocode.client.app.Workspace
+import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.testing.FakeSessionRpcApi
 import ai.kilocode.client.testing.FakeWorkspaceRpcApi
 import ai.kilocode.rpc.dto.CloudSessionDto
@@ -175,6 +176,24 @@ class HistoryControllerTest : BasePlatformTestCase() {
         assertTrue(panel.groupTitles().containsAll(listOf("Today", "Yesterday", "This Week", "Older")))
     }
 
+    fun `test cloud history uses relative time and sections`() {
+        val now = Instant.now()
+        val today = CloudHistoryItem(cloud("cloud_today", "Today", now.minus(5, ChronoUnit.HOURS)))
+        val yesterday = CloudHistoryItem(cloud("cloud_yesterday", "Yesterday", now.minus(1, ChronoUnit.DAYS)))
+        val offset = CloudHistoryItem(
+            cloud(
+                "cloud_offset",
+                "Offset",
+                now.minus(10, ChronoUnit.HOURS).toString().replace("Z", "+00"),
+            ),
+        )
+
+        assertEquals(KiloBundle.message("history.time.hours", 5), HistoryTime.relative(today, now.toEpochMilli()))
+        assertEquals(HistorySection.TODAY, HistoryTime.section(today, now.toEpochMilli()))
+        assertEquals(HistorySection.YESTERDAY, HistoryTime.section(yesterday, now.toEpochMilli()))
+        assertEquals(KiloBundle.message("history.time.hours", 10), HistoryTime.relative(offset, now.toEpochMilli()))
+    }
+
     fun `test local renderer exposes delete and cloud renderer hides it`() {
         rpc.listed += session("ses_1", "Local")
         rpc.cloud += cloud("cloud_1", "Cloud")
@@ -225,11 +244,13 @@ class HistoryControllerTest : BasePlatformTestCase() {
         time = SessionTimeDto(created = 1.0, updated = updated),
     )
 
-    private fun cloud(id: String, title: String) = CloudSessionDto(
+    private fun cloud(id: String, title: String, updated: Instant = Instant.parse("2026-01-02T00:00:00Z")) = cloud(id, title, updated.toString())
+
+    private fun cloud(id: String, title: String, updated: String) = CloudSessionDto(
         id = id,
         title = title,
         createdAt = "2026-01-01T00:00:00Z",
-        updatedAt = "2026-01-02T00:00:00Z",
+        updatedAt = updated,
         version = 1.0,
     )
 }

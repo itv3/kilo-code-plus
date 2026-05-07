@@ -3,6 +3,7 @@ package ai.kilocode.client.session.history
 import ai.kilocode.client.plugin.KiloBundle
 import java.time.Instant
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
@@ -22,8 +23,7 @@ enum class HistorySection {
 
 internal object HistoryTime {
     fun millis(item: HistoryItem): Long? {
-        if (item is CloudHistoryItem) return runCatching { Instant.parse(item.updatedAt).toEpochMilli() }.getOrNull()
-        val raw = item.updatedAt.toDoubleOrNull()?.toLong() ?: return null
+        val raw = item.updatedAt.toDoubleOrNull()?.toLong() ?: return parse(item.updatedAt)
         if (abs(raw) < SECOND_MS_LIMIT) return raw * 1000
         return raw
     }
@@ -68,4 +68,15 @@ internal object HistoryTime {
             .thenBy { it.title.lowercase() }
             .thenBy { it.id },
     )
+
+    private fun parse(value: String): Long? {
+        val text = value.trim().replace(' ', 'T')
+        val zoned = when {
+            text.matches(Regex(".*[+-]\\d{2}$")) -> "$text:00"
+            text.matches(Regex(".*[+-]\\d{4}$")) -> text.dropLast(2) + ":" + text.takeLast(2)
+            else -> text
+        }
+        return runCatching { Instant.parse(zoned).toEpochMilli() }.getOrNull()
+            ?: runCatching { OffsetDateTime.parse(zoned).toInstant().toEpochMilli() }.getOrNull()
+    }
 }
