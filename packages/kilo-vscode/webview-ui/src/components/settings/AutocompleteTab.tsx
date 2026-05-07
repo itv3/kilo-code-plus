@@ -72,6 +72,11 @@ const AutocompleteTab: Component<{ onNavigateToModels?: () => void }> = (props) 
       >
         <a
           href="#"
+          style={{
+            color: "var(--vscode-textLink-foreground)",
+            "text-decoration": "none",
+            cursor: "pointer",
+          }}
           onClick={(e) => {
             e.preventDefault()
             props.onNavigateToModels?.()
