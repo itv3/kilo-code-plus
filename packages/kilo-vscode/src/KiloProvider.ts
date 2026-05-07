@@ -177,6 +177,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private cachedCommandsMessage: unknown = null
   /** Cached configLoaded payload so requestConfig can be served before client is ready */
   private cachedConfigMessage: unknown = null
+  private cachedGlobalConfig: Config | null = null
   /** Cached indexingStatusLoaded payload so requestIndexingStatus can be served before client is ready */
   private cachedIndexingStatusMessage: unknown = null
   /** Cached mcpStatusLoaded payload so requestMcpStatus can be served before client is ready */
@@ -1724,6 +1725,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     )
     const set = (m: unknown) => {
       this.cachedConfigMessage = m
+      if (m && typeof m === "object" && "globalConfig" in m)
+        this.cachedGlobalConfig = (m as { globalConfig?: Config }).globalConfig ?? null
     }
     const method = typeof msg.method === "number" ? msg.method : 0
     const key = typeof msg.apiKey === "string" ? msg.apiKey : undefined
@@ -2077,10 +2080,13 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       const { data: config } = await retry(() =>
         this.client!.config.get({ directory: workspaceDir }, { throwOnError: true }),
       )
+      const { data: global } = await this.client.global.config.get({ throwOnError: true })
+      this.cachedGlobalConfig = global ?? null
 
       const message = {
         type: "configLoaded",
         config,
+        globalConfig: global,
         features: configFeatures(config),
       }
       this.cachedConfigMessage = message
@@ -2095,6 +2101,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     if (!this.client || this.connectionState !== "connected") return
     try {
       const { data: config } = await this.client.global.config.get({ throwOnError: true })
+      this.cachedGlobalConfig = config ?? null
       this.postMessage({ type: "globalConfigLoaded", config })
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Failed to fetch global config:", error)
@@ -2158,8 +2165,15 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     try {
       const dir = this.getWorkspaceDirectory()
       const { data: config } = await retry(() => this.client!.config.get({ directory: dir }, { throwOnError: true }))
-      this.cachedConfigMessage = { type: "configLoaded", config, features: configFeatures(config) }
-      this.postMessage({ type: "configUpdated", config, features: configFeatures(config) })
+      const { data: global } = await this.client.global.config.get({ throwOnError: true })
+      this.cachedGlobalConfig = global ?? null
+      this.cachedConfigMessage = {
+        type: "configLoaded",
+        config,
+        globalConfig: global,
+        features: configFeatures(config),
+      }
+      this.postMessage({ type: "configUpdated", config, globalConfig: global, features: configFeatures(config) })
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Failed to fetch config after update:", error)
     }
@@ -2343,8 +2357,20 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
     try {
       const { data: merged } = await retry(() => this.client!.config.get({ directory: dir }, { throwOnError: true }))
-      this.cachedConfigMessage = { type: "configLoaded", config: merged, features: configFeatures(merged) }
-      this.postMessage({ type: "configUpdated", config: merged, features: configFeatures(merged) })
+      const { data: global } = await this.client.global.config.get({ throwOnError: true })
+      this.cachedGlobalConfig = global ?? null
+      this.cachedConfigMessage = {
+        type: "configLoaded",
+        config: merged,
+        globalConfig: global,
+        features: configFeatures(merged),
+      }
+      this.postMessage({
+        type: "configUpdated",
+        config: merged,
+        globalConfig: global,
+        features: configFeatures(merged),
+      })
       if (refreshProviders) await this.fetchAndSendProviders()
     } catch (error) {
       console.error("[Kilo New] KiloProvider: Config write succeeded but post-write refresh failed:", error)
@@ -2359,6 +2385,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       this.postMessage({
         type: "configUpdated",
         config: optimistic,
+        globalConfig: this.cachedGlobalConfig ?? undefined,
         features: features ?? configFeatures(optimistic as Config),
       })
     } finally {
