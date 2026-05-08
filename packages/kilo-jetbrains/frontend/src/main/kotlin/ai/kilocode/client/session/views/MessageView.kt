@@ -6,7 +6,9 @@ import ai.kilocode.client.session.model.StepFinish
 import ai.kilocode.client.session.ui.SessionView
 import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.session.ui.SessionEditorStyleTarget
+import ai.kilocode.client.session.ui.SessionUiStyle
 import ai.kilocode.client.ui.UiStyle
+import com.intellij.util.ui.JBUI
 
 /**
  * A single message container inside a [TurnView].
@@ -22,7 +24,9 @@ import ai.kilocode.client.ui.UiStyle
 class MessageView(
     val msg: Message,
     private var style: SessionEditorStyle = SessionEditorStyle.current(),
-) : ai.kilocode.client.session.ui.SessionLayoutPanel(UiStyle.Card.groupGap()), SessionEditorStyleTarget, SessionView {
+) : ai.kilocode.client.session.ui.SessionLayoutPanel(
+    JBUI.scale(SessionUiStyle.SessionLayout.GAP),
+), SessionEditorStyleTarget, SessionView {
 
     constructor(msg: Message) : this(msg, SessionEditorStyle.current())
 

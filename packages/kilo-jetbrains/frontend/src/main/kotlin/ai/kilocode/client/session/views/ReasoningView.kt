@@ -6,11 +6,13 @@ import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Reasoning
 import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.SessionUiStyle
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.client.ui.md.MdView
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
@@ -34,20 +36,26 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
     private val body = TrackPanel().apply {
         isOpaque = true
         background = UiStyle.Colors.surface()
-        border = UiStyle.Card.bodyInsets()
+        border = JBUI.Borders.empty(
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+        )
     }
     private val scroll = JBScrollPane(body).apply {
-        border = UiStyle.Card.divider()
+        border = UiStyle.Borders.cardTop()
         isOpaque = true
         background = UiStyle.Colors.surface()
         viewport.background = UiStyle.Colors.surface()
         horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
         verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
     }
-    private val header = JPanel(UiStyle.Card.layout()).apply {
+    private val header = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
         isOpaque = true
         background = UiStyle.Colors.header()
-        border = UiStyle.Card.headerInsets()
+        border = JBUI.Borders.empty(
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+        )
     }
     private val title = JBLabel(KiloBundle.message("session.part.reasoning")).apply {
         foreground = UiStyle.Colors.weak()
@@ -80,9 +88,9 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
     init {
         layout = BorderLayout()
         isOpaque = false
-        border = UiStyle.Card.border()
+        border = UiStyle.Borders.card()
 
-        val left = JPanel(UiStyle.Card.layout()).apply {
+        val left = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
             isOpaque = false
             add(icon, BorderLayout.WEST)
             add(title, BorderLayout.CENTER)
@@ -142,7 +150,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     internal fun horizontalPolicy() = scroll.horizontalScrollBarPolicy
 
-    internal fun bodyMaxRows() = UiStyle.Card.REASONING_LINES
+    internal fun bodyMaxRows() = SessionUiStyle.SessionLayout.REASONING_LINES
 
     internal fun bodyCreated() = true
 
@@ -254,7 +262,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
     }
 
     private fun bodyMaxHeight(): Int = md.component.getFontMetrics(md.font).height * bodyMaxRows() +
-        UiStyle.Card.scrollChrome()
+        JBUI.scale(SessionUiStyle.SessionLayout.SCROLL_CHROME)
 
     override fun dumpLabel(): String {
         val state = if (bodyVisible()) "open" else "closed"
@@ -270,7 +278,7 @@ private class TrackPanel : JPanel(BorderLayout()), Scrollable {
         visibleRect: Rectangle,
         orientation: Int,
         direction: Int,
-    ) = UiStyle.Gap.scroll()
+    ) = JBUI.scale(SessionUiStyle.SessionLayout.SCROLL_INCREMENT)
     override fun getScrollableBlockIncrement(
         visibleRect: Rectangle,
         orientation: Int,

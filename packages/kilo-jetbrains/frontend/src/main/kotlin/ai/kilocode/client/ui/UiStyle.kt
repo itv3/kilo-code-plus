@@ -23,10 +23,8 @@ import javax.swing.border.Border
 object UiStyle {
     object Size {
         const val WIDTH = 350
-        const val CHROME = 16
         const val BUTTON_WIDTH = 28
         const val BUTTON = 24
-        const val SCROLL = 16
         const val TOOL_BODY = 20_000
 
         fun toolBodyLimit(): Int = TOOL_BODY
@@ -102,10 +100,6 @@ object UiStyle {
     }
 
     object Insets {
-        fun none(): java.awt.Insets = JBUI.emptyInsets()
-
-        fun transcript(): java.awt.Insets = JBUI.insets(Gap.pad(), Gap.pad(), Gap.pad(), Gap.pad())
-
         fun empty(): Border = JBUI.Borders.empty(Gap.pad())
 
         fun header(): Border = JBUI.Borders.empty(Gap.lg(), Gap.lg())
@@ -132,26 +126,6 @@ object UiStyle {
         fun assistant(): Border = JBUI.Borders.empty()
     }
 
-    /** Shared geometry for collapsible transcript cards such as tools and reasoning. */
-    object Card {
-        const val LINES = 15
-        const val REASONING_LINES = 5
-
-        fun layout(): BorderLayout = Gap.layout(Gap.md())
-
-        fun groupGap(): Int = Gap.small()
-
-        fun headerInsets(): Border = JBUI.Borders.empty(Gap.lg(), Gap.pad())
-
-        fun bodyInsets(): Border = JBUI.Borders.empty(Gap.lg(), Gap.pad())
-
-        fun border(): Border = Borders.card()
-
-        fun divider(): Border = Borders.cardTop()
-
-        fun scrollChrome(): Int = JBUI.scale(Size.CHROME)
-    }
-
     object Gap {
         fun xs() = JBUI.scale(2)
 
@@ -162,8 +136,6 @@ object UiStyle {
         fun small() = JBUI.scale(4)
 
         fun pad() = JBUI.scale(12)
-
-        fun scroll() = JBUI.scale(Size.SCROLL)
 
         fun layout(gap: Int = lg()) = BorderLayout(gap, 0)
     }

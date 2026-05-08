@@ -4,7 +4,8 @@ import ai.kilocode.client.session.model.Message
 import ai.kilocode.client.session.ui.SessionLayoutPanel
 import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.session.ui.SessionEditorStyleTarget
-import ai.kilocode.client.ui.UiStyle
+import ai.kilocode.client.session.ui.SessionUiStyle
+import com.intellij.util.ui.JBUI
 
 /**
  * Top-level transcript item representing one conversational turn.
@@ -18,7 +19,7 @@ import ai.kilocode.client.ui.UiStyle
 class TurnView(
     val id: String,
     private var style: SessionEditorStyle = SessionEditorStyle.current(),
-) : SessionLayoutPanel(UiStyle.Card.groupGap()), SessionEditorStyleTarget {
+) : SessionLayoutPanel(JBUI.scale(SessionUiStyle.SessionLayout.GAP)), SessionEditorStyleTarget {
 
     constructor(id: String) : this(id, SessionEditorStyle.current())
 

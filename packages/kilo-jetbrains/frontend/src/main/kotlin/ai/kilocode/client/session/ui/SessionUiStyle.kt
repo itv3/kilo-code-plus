@@ -13,7 +13,6 @@ object SessionUiStyle {
         const val EDITOR_LINES = 3
         const val EDITOR_CHROME = 16
         const val SEND_BUTTON_SIZE = 24
-        const val USER_PROMPT_INDENT = 100
         const val CORNER_ARC = 6
         const val FOCUS_WIDTH = 2
         const val PANEL_VERTICAL_PADDING = 8
@@ -21,6 +20,19 @@ object SessionUiStyle {
         const val CONTROL_GAP = 4
         const val SHELL_VERTICAL_PADDING = 6
         const val SHELL_HORIZONTAL_PADDING = 8
+    }
+
+    object SessionLayout {
+        const val GAP = 4
+        const val TRANSCRIPT_PADDING = 12
+        const val CARD_LINES = 15
+        const val REASONING_LINES = 5
+        const val CARD_LAYOUT_GAP = 6
+        const val CARD_VERTICAL_PADDING = 8
+        const val CARD_HORIZONTAL_PADDING = 12
+        const val USER_PROMPT_INDENT = 100
+        const val SCROLL_CHROME = 16
+        const val SCROLL_INCREMENT = 16
     }
 
     object RecentSessions {

@@ -1,6 +1,8 @@
 package ai.kilocode.client.ui
 
+import ai.kilocode.client.session.ui.SessionUiStyle
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.ui.JBUI
 import java.awt.Color
 
 @Suppress("UnstableApiUsage")
@@ -35,12 +37,12 @@ class UiStyleTest : BasePlatformTestCase() {
         assertEquals(hover.green, hover.blue)
     }
 
-    fun `test card helpers provide shared geometry`() {
-        assertNotNull(UiStyle.Card.layout())
-        assertNotNull(UiStyle.Card.border())
-        assertNotNull(UiStyle.Card.divider())
-        assertNotNull(UiStyle.Card.headerInsets())
-        assertNotNull(UiStyle.Card.bodyInsets())
-        assertTrue(UiStyle.Card.groupGap() > 0)
+    fun `test session layout constants provide shared geometry`() {
+        assertTrue(JBUI.scale(SessionUiStyle.SessionLayout.GAP) > 0)
+        assertTrue(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP) > 0)
+        assertTrue(JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING) > 0)
+        assertTrue(JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING) > 0)
+        assertTrue(SessionUiStyle.SessionLayout.CARD_LINES > 0)
+        assertTrue(SessionUiStyle.SessionLayout.REASONING_LINES > 0)
     }
 }

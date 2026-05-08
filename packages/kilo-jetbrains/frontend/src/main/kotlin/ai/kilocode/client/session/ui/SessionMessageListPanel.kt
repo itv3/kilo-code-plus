@@ -4,8 +4,8 @@ import ai.kilocode.client.session.model.SessionModel
 import ai.kilocode.client.session.model.SessionModelEvent
 import ai.kilocode.client.session.views.MessageView
 import ai.kilocode.client.session.views.TurnView
-import ai.kilocode.client.ui.UiStyle
 import com.intellij.openapi.Disposable
+import com.intellij.util.ui.JBUI
 
 /**
  * Scrollable transcript panel that maps the model's turn grouping to
@@ -31,7 +31,15 @@ import com.intellij.openapi.Disposable
 class SessionMessageListPanel(
     private val model: SessionModel,
     parent: Disposable,
-) : SessionLayoutPanel(UiStyle.Card.groupGap(), UiStyle.Insets.transcript()), SessionEditorStyleTarget {
+) : SessionLayoutPanel(
+    JBUI.scale(SessionUiStyle.SessionLayout.GAP),
+    JBUI.insets(
+        SessionUiStyle.SessionLayout.TRANSCRIPT_PADDING,
+        SessionUiStyle.SessionLayout.TRANSCRIPT_PADDING,
+        SessionUiStyle.SessionLayout.TRANSCRIPT_PADDING,
+        SessionUiStyle.SessionLayout.TRANSCRIPT_PADDING,
+    ),
+), SessionEditorStyleTarget {
 
     private val turnViews = LinkedHashMap<String, TurnView>()
     private val msgToTurn = HashMap<String, TurnView>()

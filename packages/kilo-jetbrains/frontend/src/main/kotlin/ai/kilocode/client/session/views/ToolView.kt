@@ -7,11 +7,13 @@ import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.SessionUiStyle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.util.ui.JBUI
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.BorderLayout
 import java.awt.Color
@@ -39,12 +41,15 @@ class ToolView(tool: Tool) : PartView() {
     private val root = JPanel(BorderLayout()).apply {
         isOpaque = true
         background = UiStyle.Colors.surface()
-        border = UiStyle.Card.border()
+        border = UiStyle.Borders.card()
     }
-    private val header = JPanel(UiStyle.Card.layout()).apply {
+    private val header = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
         isOpaque = true
         background = UiStyle.Colors.header()
-        border = UiStyle.Card.headerInsets()
+        border = JBUI.Borders.empty(
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+        )
     }
     private val glyph = JBLabel()
     private val title = JBLabel()
@@ -55,7 +60,7 @@ class ToolView(tool: Tool) : PartView() {
         foreground = UiStyle.Colors.weak()
     }
     private val arrow = JBLabel()
-    private val center = JPanel(UiStyle.Card.layout()).apply {
+    private val center = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
         isOpaque = false
     }
     private val controls: JComponent = Box.createHorizontalBox().apply {
@@ -70,10 +75,13 @@ class ToolView(tool: Tool) : PartView() {
         wrapStyleWord = true
         foreground = bodyColor()
         background = UiStyle.Colors.surface()
-        border = UiStyle.Card.bodyInsets()
+        border = JBUI.Borders.empty(
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+        )
     }
     private val scroll = JBScrollPane(text).apply {
-        border = UiStyle.Card.divider()
+        border = UiStyle.Borders.cardTop()
         isOpaque = true
         background = UiStyle.Colors.surface()
         viewport.background = UiStyle.Colors.surface()
@@ -171,7 +179,7 @@ class ToolView(tool: Tool) : PartView() {
 
     internal fun bodyWrap() = text.lineWrap
 
-    internal fun bodyMaxRows() = UiStyle.Card.LINES
+    internal fun bodyMaxRows() = SessionUiStyle.SessionLayout.CARD_LINES
 
     internal fun bodyCreated() = true
 
@@ -282,7 +290,8 @@ class ToolView(tool: Tool) : PartView() {
     private fun bodyColor() = if (item.state == ToolExecState.ERROR) UiStyle.Colors.error() else UiStyle.Colors.fg()
 
     private fun bodyMaxHeight(): Int {
-        return text.getFontMetrics(text.font).height * bodyMaxRows() + UiStyle.Card.scrollChrome()
+        return text.getFontMetrics(text.font).height * bodyMaxRows() +
+            JBUI.scale(SessionUiStyle.SessionLayout.SCROLL_CHROME)
     }
 
     override fun dumpLabel() = "ToolView#$contentId(${labelText()})"
