@@ -53,7 +53,8 @@ export const SortableTerminalTab: Component<{
             <TooltipKeybind
               title={props.tooltip}
               keybind={props.keybind ?? ""}
-              placement="bottom"
+              placement="top"
+              gutter={8}
               class="am-tab-tooltip"
               openDelay={0}
             >
@@ -67,7 +68,8 @@ export const SortableTerminalTab: Component<{
             <TooltipKeybind
               title={t("agentManager.tab.close")}
               keybind={props.closeKeybind ?? ""}
-              placement="bottom"
+              placement="top"
+              gutter={8}
               class="am-tab-close-wrap"
               openDelay={0}
             >

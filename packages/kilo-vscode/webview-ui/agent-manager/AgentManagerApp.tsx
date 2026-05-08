@@ -2647,16 +2647,6 @@ const AgentManagerContent: Component = () => {
             <ConstrainDragYAxis />
             <div class="am-tab-bar" onPointerLeave={releaseTabs}>
               <div class="am-tab-leading">
-                {renderNewTabButton({
-                  contextSelected: () => selection() !== null,
-                  kb,
-                  newSessionLabel: t("agentManager.session.new"),
-                  newTerminalLabel: t("agentManager.terminal.new"),
-                  newSessionMenuLabel: t("agentManager.session.newSession"),
-                  moreOptionsLabel: t("agentManager.tab.newOptions"),
-                  onNewSession: handleAddSession,
-                  onNewTerminal: () => termHandlers.requestNew(),
-                })}
                 <CurrentTabsMenu
                   items={tabMenuItems}
                   label={t("agentManager.tabsMenu.label")}
@@ -2710,6 +2700,19 @@ const AgentManagerContent: Component = () => {
                   </div>
                 </div>
                 <div class={`am-tab-fade am-tab-fade-right ${tabScroll.showRight() ? "am-tab-fade-visible" : ""}`} />
+              </div>
+              <div class="am-tab-add-wrap">
+                <div class="am-tab-add-separator" />
+                {renderNewTabButton({
+                  contextSelected: () => selection() !== null,
+                  kb,
+                  newSessionLabel: t("agentManager.session.new"),
+                  newTerminalLabel: t("agentManager.terminal.new"),
+                  newSessionMenuLabel: t("agentManager.session.newSession"),
+                  moreOptionsLabel: t("agentManager.tab.newOptions"),
+                  onNewSession: handleAddSession,
+                  onNewTerminal: () => termHandlers.requestNew(),
+                })}
               </div>
               <div class="am-tab-actions">
                 {(() => {

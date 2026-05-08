@@ -1028,7 +1028,6 @@ button.am-section-toggle:hover .am-section-label {
   border-bottom: 1px solid var(--border-weak-base);
   background: var(--surface-base);
   height: 36px;
-  padding: 0 4px;
   flex-shrink: 0;
 }
 
@@ -1038,8 +1037,7 @@ button.am-section-toggle:hover .am-section-label {
   gap: 2px;
   flex-shrink: 0;
   align-self: stretch;
-  margin-right: 4px;
-  padding-right: 6px;
+  padding: 0 4px;
   border-right: 1px solid var(--border-weak-base);
 }
 
@@ -1061,7 +1059,6 @@ button.am-section-toggle:hover .am-section-label {
 .am-tab-list-wrap {
   display: flex;
   align-items: stretch;
-  gap: 4px;
   min-width: 0;
   flex: 0 1 auto;
   max-width: 100%;
@@ -1081,6 +1078,23 @@ button.am-section-toggle:hover .am-section-label {
   align-items: stretch;
   height: 100%;
   overflow: hidden;
+}
+
+/* Fixed add-button area after the scrollable tab list */
+.am-tab-add-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch;
+  padding-right: 4px;
+}
+
+.am-tab-add-separator {
+  width: 1px;
+  align-self: stretch;
+  margin-right: 4px;
+  background: var(--border-weak-base);
+  flex-shrink: 0;
 }
 
 /* Fade indicators for overflow */
@@ -1120,18 +1134,21 @@ button.am-section-toggle:hover .am-section-label {
   font-size: var(--kilo-font-size-12);
   cursor: pointer;
   white-space: nowrap;
-  border: none;
-  border-bottom: 2px solid transparent;
+  border: 1px solid transparent;
+  border-bottom-width: 2px;
+  border-radius: 0;
   min-width: 0;
   width: 100%;
   height: 100%;
   transition:
-    background-color 120ms ease,
+    background 120ms ease,
     border-color 120ms ease,
     color 120ms ease;
 }
 
-.am-tab:hover {
+.am-tab:hover,
+.am-tab:focus-visible {
+  background: var(--button-ghost-hover, var(--surface-base-hover, rgba(128, 128, 128, 0.2)));
   color: var(--text-base);
 }
 
@@ -1310,7 +1327,6 @@ body.am-wt-dragging-active * {
   gap: 2px;
   flex-shrink: 0;
   align-self: stretch;
-  margin-left: 4px;
   padding-left: 6px;
   padding-right: 4px;
   border-left: 1px solid var(--border-weak-base);
