@@ -1162,6 +1162,19 @@ button.am-section-toggle:hover .am-section-label {
   white-space: nowrap;
 }
 
+.am-tab-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  width: 100%;
+}
+
+.am-tab-tooltip[data-component="tooltip-trigger"] {
+  min-width: 0;
+  flex: 1;
+}
+
 .am-tab-close-wrap {
   display: inline-flex;
   align-items: center;
@@ -1220,6 +1233,11 @@ button.am-section-toggle:hover .am-section-label {
   height: 100%;
   min-width: 0;
   width: 100%;
+}
+
+.am-tab-sortable > .am-tab,
+.am-tab-sortable > [data-slot="context-menu-trigger"] > .am-tab {
+  height: 100%;
 }
 
 .am-tab-dragging {
