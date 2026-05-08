@@ -3,7 +3,8 @@ import { Config } from "@/config/config"
 import { ModelsDev } from "@/provider/models"
 import { Provider } from "@/provider/provider"
 import { ProviderID } from "@/provider/schema"
-import { mapValues } from "remeda"
+import { mapValues, pickBy } from "remeda"
+import { ModelCache } from "@/provider/model-cache" // kilocode_change
 import { Effect, Schema } from "effect"
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi"
@@ -29,11 +30,16 @@ export const providerHandlers = HttpApiBuilder.group(InstanceHttpApi, "provider"
         mapValues(filtered, (item) => Provider.fromModelsDevProvider(item)),
         connected,
       )
+      // kilocode_change start
+      const failed = ModelCache.failedProviders()
+      const validProviders = pickBy(providers, (item, id) => Object.keys(item.models).length > 0 || id in connected)
       return {
-        all: Object.values(providers),
-        default: Provider.defaultModelIDs(providers),
+        all: Object.values(validProviders),
+        default: Provider.defaultModelIDs(pickBy(validProviders, (item) => Object.keys(item.models).length > 0)),
         connected: Object.keys(connected),
+        failed,
       }
+      // kilocode_change end
     })
 
     const auth = Effect.fn("ProviderHttpApi.auth")(function* () {

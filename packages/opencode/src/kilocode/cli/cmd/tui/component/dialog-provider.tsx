@@ -12,6 +12,32 @@ import type { ProviderAuthAuthorization } from "@kilocode/sdk/v2"
 import { KiloAutoMethod } from "@/kilocode/components/dialog-kilo-auto-method"
 
 // ---------------------------------------------------------------------------
+// Failed-state gutter/description helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a red `!` gutter element when the provider is in a failed auth state,
+ * or `undefined` if not failed and not connected (falls through to default check).
+ */
+export function renderGutter(
+  providerID: string,
+  failed: string[],
+  theme: { error: RGBA },
+): (() => JSX.Element) | undefined {
+  if (!failed.includes(providerID)) return undefined
+  return () => <text fg={theme.error}>!</text>
+}
+
+/**
+ * Returns a `(reconnect)` description suffix when the provider has failed auth,
+ * or `undefined` to leave the default description unchanged.
+ */
+export function failedDescription(providerID: string, failed: string[]): string | undefined {
+  if (!failed.includes(providerID)) return undefined
+  return "(reconnect)"
+}
+
+// ---------------------------------------------------------------------------
 // Provider priority (replaces upstream map entirely)
 // ---------------------------------------------------------------------------
 
