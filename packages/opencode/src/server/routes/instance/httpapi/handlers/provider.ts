@@ -32,7 +32,13 @@ export const providerHandlers = HttpApiBuilder.group(InstanceHttpApi, "provider"
       )
       // kilocode_change start
       const failed = ModelCache.failedProviders()
-      const validProviders = pickBy(providers, (item, id) => Object.keys(item.models).length > 0 || id in connected)
+      // Note: connected only contains providers with non-empty models after Provider.Service.list(),
+      // so failed must be checked explicitly for providers whose fetch returned an error.
+      const failedSet = new Set(failed)
+      const validProviders = pickBy(
+        providers,
+        (item, id) => Object.keys(item.models).length > 0 || id in connected || failedSet.has(id),
+      )
       return {
         all: Object.values(validProviders),
         default: Provider.defaultModelIDs(pickBy(validProviders, (item) => Object.keys(item.models).length > 0)),

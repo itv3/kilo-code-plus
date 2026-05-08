@@ -105,3 +105,20 @@ test("returns models without error on success", async () => {
   expect(result.error).toBeUndefined()
   expect(Object.keys(result.models).length).toBeGreaterThan(0)
 })
+
+test("returns error with kind=schema when response body is invalid JSON", async () => {
+  const orig = globalThis.fetch
+  stubFetch(async () =>
+    new Response("not valid json{{{{", {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  )
+
+  const result = await fetchKiloModels({})
+
+  ;(globalThis as any).fetch = orig
+
+  expect(result.models).toEqual({})
+  expect(result.error?.kind).toBe("schema")
+})

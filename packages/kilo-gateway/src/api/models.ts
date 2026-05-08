@@ -111,7 +111,11 @@ export async function fetchKiloModels(options?: {
     return { models: {}, error: { kind, status: response.status } }
   }
 
-  const json = await response.json()
+  const json = await response.json().catch(() => null)
+
+  if (json === null) {
+    return { models: {}, error: { kind: "schema" } }
+  }
 
   // Validate response schema
   const result = openRouterModelsResponseSchema.safeParse(json)

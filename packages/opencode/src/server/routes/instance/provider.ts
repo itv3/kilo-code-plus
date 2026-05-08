@@ -53,8 +53,14 @@ export const ProviderRoutes = lazy(() =>
           )
           // kilocode_change start
           const failed = ModelCache.failedProviders()
-          // Keep connected providers even when they have 0 models (auth failed) so /connect can re-auth them
-          const validProviders = pickBy(providers, (item, id) => Object.keys(item.models).length > 0 || id in connected)
+          // Keep connected or failed providers even when they have 0 models so /connect can re-auth them.
+          // Note: connected only contains providers whose model list is non-empty after Provider.Service.list(),
+          // so failed must be checked explicitly for providers whose fetch returned an error.
+          const failedSet = new Set(failed)
+          const validProviders = pickBy(
+            providers,
+            (item, id) => Object.keys(item.models).length > 0 || id in connected || failedSet.has(id),
+          )
           return {
             all: Object.values(validProviders),
             default: Provider.defaultModelIDs(pickBy(validProviders, (item) => Object.keys(item.models).length > 0)),
