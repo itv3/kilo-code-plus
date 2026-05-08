@@ -1,6 +1,5 @@
 package ai.kilocode.client.session.history
 
-import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.ui.PickerRow
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.icons.AllIcons
@@ -114,7 +113,7 @@ internal open class HistoryRenderer<T : HistoryItem>(
 
         title.clear()
         title.append(
-            value?.title?.takeIf { it.isNotBlank() } ?: KiloBundle.message("history.untitled"),
+            value?.let(::title).orEmpty(),
             SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, fg),
         )
         time.text = value?.let(HistoryTime::relative).orEmpty()

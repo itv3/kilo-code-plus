@@ -269,14 +269,6 @@ class HistoryPanel(
         return HistoryRenderer.isDeleteClick(list, box, e.point)
     }
 
-    private fun <T : HistoryItem> clicked(list: JBList<T>, e: MouseEvent): T? {
-        val row = list.locationToIndex(e.point)
-        val box = row.takeIf { it >= 0 }?.let { list.getCellBounds(it, it) } ?: return null
-        if (!box.contains(e.point)) return null
-        list.selectedIndex = row
-        return list.model.getElementAt(row)
-    }
-
     private fun activate(item: HistoryItem) {
         when (item) {
             is LocalHistoryItem -> controller.open(item)
@@ -288,7 +280,7 @@ class HistoryPanel(
         if (controller.deleting(item)) return
         val result = Messages.showYesNoDialog(
             this,
-            KiloBundle.message("history.delete.confirm.message", item.title.takeIf { it.isNotBlank() } ?: KiloBundle.message("history.untitled")),
+            KiloBundle.message("history.delete.confirm.message", title(item)),
             KiloBundle.message("history.delete.confirm.title"),
             Messages.getWarningIcon(),
         )

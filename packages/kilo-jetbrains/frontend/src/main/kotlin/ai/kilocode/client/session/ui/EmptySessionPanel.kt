@@ -2,6 +2,10 @@ package ai.kilocode.client.session.ui
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.SessionRef
+import ai.kilocode.client.session.history.HistoryTime
+import ai.kilocode.client.session.history.LocalHistoryItem
+import ai.kilocode.client.session.history.clicked
+import ai.kilocode.client.session.history.title
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.client.ui.md.MdView
@@ -28,7 +32,6 @@ import javax.swing.DefaultListModel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
-import kotlin.math.abs
 
 /**
  * Centered empty-session panel.
@@ -42,13 +45,9 @@ class EmptySessionPanel(
     companion object {
         internal val LIMIT = UiStyle.Size.LIMIT
         internal val MAX_WIDTH = UiStyle.Size.WIDTH
-        private const val SECOND_MS_LIMIT = 10_000_000_000L
-        private const val MINUTE = 60_000L
-        private const val HOUR = 60 * MINUTE
-        private const val DAY = 24 * HOUR
     }
 
-    private val model = DefaultListModel<SessionDto>()
+    private val model = DefaultListModel<LocalHistoryItem>()
     private var hover = -1
     private var style = SessionStyle.current()
     private val recentTitle = JBLabel(KiloBundle.message("session.empty.recent")).apply {
@@ -65,10 +64,8 @@ class EmptySessionPanel(
         emptyText.clear()
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
-                val index = row(e)
-                if (index < 0) return
-                selectedIndex = index
-                controller.openSession(SessionRef.Local(model.getElementAt(index)))
+                val item = clicked(this@apply, e) ?: return
+                controller.openSession(SessionRef.Local(item.session))
             }
 
             override fun mouseExited(e: MouseEvent) {
@@ -78,7 +75,7 @@ class EmptySessionPanel(
         })
         addMouseMotionListener(object : MouseMotionAdapter() {
             override fun mouseMoved(e: MouseEvent) {
-                val index = row(e)
+                val index = index(e)
                 if (hover == index) return
                 hover = index
                 repaint()
@@ -105,7 +102,7 @@ class EmptySessionPanel(
 
     private fun setSessions(sessions: List<SessionDto>) {
         model.clear()
-        sessions.take(LIMIT).forEach(model::addElement)
+        sessions.take(LIMIT).map(::LocalHistoryItem).forEach(model::addElement)
         revalidate()
         repaint()
     }
@@ -154,7 +151,7 @@ class EmptySessionPanel(
 
     internal fun clickRecent(index: Int) {
         list.selectedIndex = index
-        controller.openSession(SessionRef.Local(model.getElementAt(index)))
+        controller.openSession(SessionRef.Local(model.getElementAt(index).session))
     }
 
     internal fun recentVisible() = true
@@ -169,13 +166,7 @@ class EmptySessionPanel(
 
     internal fun activeView() = getComponent(0)
 
-    internal fun text(session: SessionDto, now: Long = System.currentTimeMillis()) = time(session, now)
-
-    internal fun normalize(value: Double): Long {
-        val raw = value.toLong()
-        if (abs(raw) < SECOND_MS_LIMIT) return raw * 1000
-        return raw
-    }
+    internal fun text(session: SessionDto, now: Long = System.currentTimeMillis()) = HistoryTime.relative(LocalHistoryItem(session), now)
 
     internal fun rendererComponent(
         session: SessionDto,
@@ -184,20 +175,20 @@ class EmptySessionPanel(
     ): Component {
         val old = this.hover
         this.hover = if (hover) 0 else -1
-        return list.cellRenderer.getListCellRendererComponent(list, session, 0, selected, false).also {
+        return list.cellRenderer.getListCellRendererComponent(list, LocalHistoryItem(session), 0, selected, false).also {
             this.hover = old
         }
     }
 
-    private fun row(e: MouseEvent): Int {
-        val index = list.locationToIndex(e.point)
-        if (index < 0) return -1
-        val box = list.getCellBounds(index, index) ?: return -1
+    private fun index(e: MouseEvent): Int {
+        val idx = list.locationToIndex(e.point)
+        if (idx < 0) return -1
+        val box = list.getCellBounds(idx, idx) ?: return -1
         if (!box.contains(e.point)) return -1
-        return index
+        return idx
     }
 
-    private inner class SessionRenderer : BorderLayoutPanel(), ListCellRenderer<SessionDto> {
+    private inner class SessionRenderer : BorderLayoutPanel(), ListCellRenderer<LocalHistoryItem> {
         private val title = JBLabel()
         private val time = JBLabel()
 
@@ -208,8 +199,8 @@ class EmptySessionPanel(
         }
 
         override fun getListCellRendererComponent(
-            list: JList<out SessionDto>,
-            value: SessionDto?,
+            list: JList<out LocalHistoryItem>,
+            value: LocalHistoryItem?,
             index: Int,
             selected: Boolean,
             focus: Boolean,
@@ -220,21 +211,9 @@ class EmptySessionPanel(
             title.foreground = if (active) list.selectionForeground else UIUtil.getLabelForeground()
             time.foreground = if (active) list.selectionForeground else UIUtil.getContextHelpForeground()
             title.text = value?.let(::title) ?: ""
-            time.text = value?.let { time(it) } ?: ""
+            time.text = value?.let(HistoryTime::relative) ?: ""
             return this
         }
-    }
-
-    private fun title(session: SessionDto) =
-        session.title.takeIf { it.isNotBlank() } ?: KiloBundle.message("session.tab.untitled")
-
-    private fun time(session: SessionDto, now: Long = System.currentTimeMillis()): String {
-        val ms = normalize(session.time.updated)
-        val diff = (now - ms).coerceAtLeast(0)
-        if (diff < MINUTE) return KiloBundle.message("session.empty.time.moments")
-        if (diff < HOUR) return KiloBundle.message("session.empty.time.minutes", (diff / MINUTE).coerceAtLeast(1))
-        if (diff < DAY) return KiloBundle.message("session.empty.time.hours", (diff / HOUR).coerceAtLeast(1))
-        return KiloBundle.message("session.empty.time.days", (diff / DAY).coerceAtLeast(1))
     }
 
     override fun dispose() {

@@ -5,6 +5,8 @@ import ai.kilocode.client.app.KiloSessionService
 import ai.kilocode.client.app.KiloWorkspaceService
 import ai.kilocode.client.app.Workspace
 import ai.kilocode.client.session.SessionRef
+import ai.kilocode.client.session.history.HistoryTime
+import ai.kilocode.client.session.history.LocalHistoryItem
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.testing.FakeAppRpcApi
 import ai.kilocode.client.testing.FakeSessionRpcApi
@@ -16,6 +18,8 @@ import ai.kilocode.rpc.dto.KiloWorkspaceStatusDto
 import ai.kilocode.rpc.dto.SessionDto
 import ai.kilocode.rpc.dto.SessionTimeDto
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -138,11 +142,16 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
         assertEquals(selected.background, hovered.background)
     }
 
-    fun `test timestamp normalization handles seconds and milliseconds`() {
-        val panel = panel()
+    fun `test renderer reuses history title fallback`() {
+        val cell = panel().rendererComponent(session("ses_1", title = "")) as BorderLayoutPanel
+        val label = UIUtil.uiTraverser(cell).filter(JBLabel::class.java).firstOrNull()
 
-        assertEquals(1_700_000_000_000L, panel.normalize(1_700_000_000.0))
-        assertEquals(1_700_000_000_000L, panel.normalize(1_700_000_000_000.0))
+        assertEquals("Untitled", label?.text)
+    }
+
+    fun `test timestamp normalization handles seconds and milliseconds`() {
+        assertEquals(1_700_000_000_000L, HistoryTime.millis(LocalHistoryItem(session("ses_1", 1_700_000_000))))
+        assertEquals(1_700_000_000_000L, HistoryTime.millis(LocalHistoryItem(session("ses_1", 1_700_000_000_000))))
     }
 
     fun `test timestamp renders coarse relative text`() {
@@ -158,11 +167,11 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
     private fun panel(recents: List<SessionDto> = emptyList()) =
         EmptySessionPanel(testRootDisposable, controller, recents)
 
-    private fun session(id: String, updated: Long = 2_000L) = SessionDto(
+    private fun session(id: String, updated: Long = 2_000L, title: String = "Title $id") = SessionDto(
         id = id,
         projectID = "prj",
         directory = "/repo/$id",
-        title = "Title $id",
+        title = title,
         version = "1",
         time = SessionTimeDto(created = 1.0, updated = updated.toDouble()),
     )
