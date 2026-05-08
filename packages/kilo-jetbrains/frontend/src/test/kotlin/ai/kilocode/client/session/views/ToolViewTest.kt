@@ -4,7 +4,7 @@ import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.model.toolKind
-import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import javax.swing.ScrollPaneConstants
@@ -208,7 +208,7 @@ class ToolViewTest : BasePlatformTestCase() {
     }
 
     fun `test bash output uses editor font settings`() {
-        val style = SessionStyle.current()
+        val style = SessionEditorStyle.current()
         val view = ToolView(tool("p1", "bash", ToolExecState.COMPLETED))
 
         assertEditorFont(view.bodyFont(), style)
@@ -219,7 +219,7 @@ class ToolViewTest : BasePlatformTestCase() {
     }
 
     fun `test tool header uses editor-derived fonts`() {
-        val style = SessionStyle.current()
+        val style = SessionEditorStyle.current()
         val view = ToolView(tool("p1", "bash", ToolExecState.COMPLETED))
 
         assertEditorFont(view.titleFont(), style)
@@ -230,7 +230,7 @@ class ToolViewTest : BasePlatformTestCase() {
 
     fun `test applyStyle updates tool fonts in place`() {
         val view = ToolView(tool("p1", "bash", ToolExecState.COMPLETED))
-        val style = SessionStyle.create(family = "Courier New", size = 25)
+        val style = SessionEditorStyle.create(family = "Courier New", size = 25)
 
         view.applyStyle(style)
 
@@ -329,12 +329,12 @@ class ToolViewTest : BasePlatformTestCase() {
     private fun tool(id: String, name: String, state: ToolExecState, title: String? = null): Tool =
         Tool(id, name, toolKind(name)).also { it.state = state; it.title = title }
 
-    private fun assertEditorFont(font: java.awt.Font, style: SessionStyle) {
+    private fun assertEditorFont(font: java.awt.Font, style: SessionEditorStyle) {
         assertEquals(style.editorFamily, font.name)
         assertEquals(style.editorSize, font.size)
     }
 
-    private fun assertSmallEditorFont(font: java.awt.Font, style: SessionStyle) {
+    private fun assertSmallEditorFont(font: java.awt.Font, style: SessionEditorStyle) {
         assertEquals(style.editorFamily, font.name)
         assertTrue(font.size < style.editorSize)
     }

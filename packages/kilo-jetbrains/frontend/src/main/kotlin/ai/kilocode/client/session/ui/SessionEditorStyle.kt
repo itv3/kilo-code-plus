@@ -10,7 +10,7 @@ import java.awt.Font
 import kotlin.math.roundToInt
 
 /** Snapshot of editor-derived transcript styling applied to live session components. */
-data class SessionStyle(
+data class SessionEditorStyle(
     val editorScheme: EditorColorsScheme,
     val editorFamily: String,
     val editorSize: Int,
@@ -30,7 +30,7 @@ data class SessionStyle(
     }
 
     companion object {
-        fun current(): SessionStyle {
+        fun current(): SessionEditorStyle {
             val scheme = EditorColorsManager.getInstance().globalScheme
             return create(scheme, scheme.editorFontName, scheme.editorFontSize)
         }
@@ -39,11 +39,11 @@ data class SessionStyle(
             scheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme,
             family: String = scheme.editorFontName,
             size: Int = scheme.editorFontSize,
-        ): SessionStyle {
+        ): SessionEditorStyle {
             val small = scaledSize(size, JBFont.small())
             val ui = JBUI.Fonts.label().deriveFont(size.toFloat())
             val smallUi = JBFont.small().deriveFont(small.toFloat())
-            return SessionStyle(
+            return SessionEditorStyle(
                 editorScheme = scheme,
                 editorFamily = family,
                 editorSize = size,
@@ -67,6 +67,6 @@ data class SessionStyle(
 }
 
 /** Implemented by session components that can update styling in place. */
-interface SessionStyleTarget {
-    fun applyStyle(style: SessionStyle)
+interface SessionEditorStyleTarget {
+    fun applyStyle(style: SessionEditorStyle)
 }

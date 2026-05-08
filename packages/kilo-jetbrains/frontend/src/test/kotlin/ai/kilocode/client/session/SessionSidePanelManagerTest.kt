@@ -184,7 +184,7 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
         manager.openSession(session("ses_1"))
         val first = active(manager) as SessionUi
         manager.openSession(session("ses_2"))
-        val style = ai.kilocode.client.session.ui.SessionStyle.create(family = "Courier New", size = 24)
+        val style = ai.kilocode.client.session.ui.SessionEditorStyle.create(family = "Courier New", size = 24)
 
         first.applyStyle(style)
         manager.openSession(session("ses_1"))

@@ -5,7 +5,7 @@ package ai.kilocode.client.session.views
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Reasoning
-import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.client.ui.md.MdView
 import com.intellij.icons.AllIcons
@@ -56,7 +56,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         foreground = UiStyle.Colors.weak()
     }
 
-    private var style = SessionStyle.current()
+    private var style = SessionEditorStyle.current()
     private var source = reasoning.content.toString()
 
     private val click = object : MouseAdapter() {
@@ -95,7 +95,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
             it.addMouseListener(mouse)
         }
 
-        applyStyle(SessionStyle.current())
+        applyStyle(SessionEditorStyle.current())
         md.opaque = false
         md.set(source)
         body.add(md.component, BorderLayout.CENTER)
@@ -146,7 +146,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     internal fun bodyCreated() = true
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         var changed = false
         if (title.font != style.smallEditorFont) {

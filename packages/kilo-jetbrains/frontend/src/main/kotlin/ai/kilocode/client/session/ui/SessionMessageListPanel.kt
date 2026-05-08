@@ -31,12 +31,12 @@ import com.intellij.openapi.Disposable
 class SessionMessageListPanel(
     private val model: SessionModel,
     parent: Disposable,
-) : SessionLayoutPanel(UiStyle.Card.groupGap(), UiStyle.Insets.transcript()), SessionStyleTarget {
+) : SessionLayoutPanel(UiStyle.Card.groupGap(), UiStyle.Insets.transcript()), SessionEditorStyleTarget {
 
     private val turnViews = LinkedHashMap<String, TurnView>()
     private val msgToTurn = HashMap<String, TurnView>()
     private val msgToView = HashMap<String, MessageView>()
-    private var style = SessionStyle.current()
+    private var style = SessionEditorStyle.current()
 
     /** Progress footer — always the last child inside the scroll. */
     val progress = ProgressPanel(model, parent)
@@ -240,7 +240,7 @@ class SessionMessageListPanel(
         repaint()
     }
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         for (view in turnViews.values) view.applyStyle(style)
         progress.applyStyle(style)

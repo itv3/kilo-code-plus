@@ -6,7 +6,7 @@ import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
-import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBLabel
@@ -34,7 +34,7 @@ class ToolView(tool: Tool) : PartView() {
     override val contentId: String = tool.id
 
     private var item = tool
-    private var style = SessionStyle.current()
+    private var style = SessionEditorStyle.current()
 
     private val root = JPanel(BorderLayout()).apply {
         isOpaque = true
@@ -114,7 +114,7 @@ class ToolView(tool: Tool) : PartView() {
             it.addMouseListener(click)
         }
         text.text = preview(item)
-        applyStyle(SessionStyle.current())
+        applyStyle(SessionEditorStyle.current())
         add(root, BorderLayout.CENTER)
         sync()
     }
@@ -175,7 +175,7 @@ class ToolView(tool: Tool) : PartView() {
 
     internal fun bodyCreated() = true
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         var changed = false
         changed = setFont(title, style.boldEditorFont) || changed

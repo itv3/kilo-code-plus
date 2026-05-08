@@ -3,7 +3,7 @@ package ai.kilocode.client.session.views
 import ai.kilocode.client.session.model.Compaction
 import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.plugin.KiloBundle
-import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.ui.components.JBLabel
 import java.awt.BorderLayout
@@ -35,7 +35,7 @@ class CompactionView(@Suppress("UNUSED_PARAMETER") compaction: Compaction) : Par
     init {
         layout = BorderLayout()
         isOpaque = false
-        applyStyle(SessionStyle.current())
+        applyStyle(SessionEditorStyle.current())
 
         val line = { JPanel().apply {
             background = UiStyle.Colors.line()
@@ -65,7 +65,7 @@ class CompactionView(@Suppress("UNUSED_PARAMETER") compaction: Compaction) : Par
 
     override fun update(content: Content) {}  // compaction has no mutable state
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         if (text.font == style.smallUiFont) return
         text.font = style.smallUiFont
         revalidate()

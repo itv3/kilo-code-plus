@@ -5,11 +5,11 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.awt.Font
 
 @Suppress("UnstableApiUsage")
-class SessionStyleTest : BasePlatformTestCase() {
+class SessionEditorStyleTest : BasePlatformTestCase() {
 
     fun `test transcript font uses editor settings`() {
         val scheme = EditorColorsManager.getInstance().globalScheme
-        val style = SessionStyle.current()
+        val style = SessionEditorStyle.current()
         val font = style.transcriptFont
 
         assertEquals(scheme.editorFontName, font.name)
@@ -20,7 +20,7 @@ class SessionStyleTest : BasePlatformTestCase() {
     }
 
     fun `test bold editor font uses editor family and size`() {
-        val style = SessionStyle.current()
+        val style = SessionEditorStyle.current()
         val font = style.boldEditorFont
 
         assertEquals(style.editorFamily, font.name)
@@ -29,7 +29,7 @@ class SessionStyleTest : BasePlatformTestCase() {
     }
 
     fun `test small editor font uses editor family with smaller editor-derived size`() {
-        val style = SessionStyle.current()
+        val style = SessionEditorStyle.current()
         val font = style.smallEditorFont
 
         assertEquals(style.editorFamily, font.name)
@@ -37,7 +37,7 @@ class SessionStyleTest : BasePlatformTestCase() {
     }
 
     fun `test custom style derives fonts from supplied editor baseline`() {
-        val style = SessionStyle.create(family = "Courier New", size = 22)
+        val style = SessionEditorStyle.create(family = "Courier New", size = 22)
 
         assertEquals("Courier New", style.editorFamily)
         assertEquals(22, style.editorSize)

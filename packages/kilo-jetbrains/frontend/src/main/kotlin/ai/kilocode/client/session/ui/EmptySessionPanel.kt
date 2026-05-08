@@ -48,7 +48,7 @@ class EmptySessionPanel(
     private val controller: SessionController,
     recents: List<SessionDto>,
     private val history: () -> Unit = {},
-) : BorderLayoutPanel(), Disposable, SessionStyleTarget {
+) : BorderLayoutPanel(), Disposable, SessionEditorStyleTarget {
 
     companion object {
         internal val LIMIT = UiStyle.Size.LIMIT
@@ -59,7 +59,7 @@ class EmptySessionPanel(
 
     private val model = DefaultListModel<LocalHistoryItem>()
     private var hover = -1
-    private var style = SessionStyle.current()
+    private var style = SessionEditorStyle.current()
 
     private val recentTitle = JBLabel(KiloBundle.message("session.empty.recent")).apply {
         foreground = UIUtil.getContextHelpForeground()
@@ -122,7 +122,7 @@ class EmptySessionPanel(
     init {
         Disposer.register(parent, this)
         isOpaque = false
-        applyStyle(SessionStyle.current())
+        applyStyle(SessionEditorStyle.current())
         setSessions(recents)
 
         val gap = UiStyle.Gap.pad()
@@ -304,7 +304,7 @@ class EmptySessionPanel(
         // no-op
     }
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         welcomeLabel.font = style.uiFont
         recentTitle.font = style.smallUiFont

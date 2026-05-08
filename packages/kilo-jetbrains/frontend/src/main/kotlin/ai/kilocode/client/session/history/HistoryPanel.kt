@@ -2,7 +2,7 @@ package ai.kilocode.client.session.history
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.ui.LoadingPanel
-import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.LafManagerListener
@@ -123,7 +123,7 @@ class HistoryPanel(
         SwingUtilities.updateComponentTreeUI(this)
         SwingUtilities.updateComponentTreeUI(localPanel)
         SwingUtilities.updateComponentTreeUI(cloudPanel)
-        load.applyStyle(SessionStyle.current())
+        load.applyStyle(SessionEditorStyle.current())
         updateRenderer(localList)
         updateRenderer(cloudList)
         sync()

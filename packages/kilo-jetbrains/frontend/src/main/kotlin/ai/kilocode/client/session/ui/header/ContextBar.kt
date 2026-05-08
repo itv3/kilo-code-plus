@@ -2,7 +2,7 @@ package ai.kilocode.client.session.ui.header
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.ContextUsage
-import ai.kilocode.client.session.ui.SessionStyle
+import ai.kilocode.client.session.ui.SessionEditorStyle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
@@ -40,7 +40,7 @@ internal class ContextBar : JPanel(BorderLayout(UiStyle.Gap.md(), 0)) {
         repaint()
     }
 
-    fun applyStyle(style: SessionStyle) {
+    fun applyStyle(style: SessionEditorStyle) {
         background = style.editorBackground
         foreground = style.editorForeground
         meter.background = style.editorBackground

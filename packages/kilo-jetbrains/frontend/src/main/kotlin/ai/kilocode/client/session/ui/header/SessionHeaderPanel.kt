@@ -3,8 +3,8 @@ package ai.kilocode.client.session.ui.header
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.SessionHeaderSnapshot
 import ai.kilocode.client.session.model.SessionModelEvent
-import ai.kilocode.client.session.ui.SessionStyle
-import ai.kilocode.client.session.ui.SessionStyleTarget
+import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.SessionEditorStyleTarget
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.rpc.dto.TokensDto
@@ -33,7 +33,7 @@ import javax.swing.SwingUtilities
 class SessionHeaderPanel(
     private val controller: SessionController,
     parent: Disposable,
-) : BorderLayoutPanel(), SessionStyleTarget {
+) : BorderLayoutPanel(), SessionEditorStyleTarget {
 
     companion object {
         private val COMPRESS_ICON: Icon = IconLoader.getIcon("/icons/compress.svg", SessionHeaderPanel::class.java)
@@ -118,7 +118,7 @@ class SessionHeaderPanel(
         add(bar)
         add(todoRow)
     }
-    private var style = SessionStyle.current()
+    private var style = SessionEditorStyle.current()
 
     init {
         isOpaque = true
@@ -212,7 +212,7 @@ class SessionHeaderPanel(
         refresh()
     }
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         background = style.editorBackground
         foreground = style.editorForeground

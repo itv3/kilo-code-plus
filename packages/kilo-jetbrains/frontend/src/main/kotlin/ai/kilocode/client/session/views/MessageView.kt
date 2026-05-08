@@ -4,8 +4,8 @@ import ai.kilocode.client.session.model.Content
 import ai.kilocode.client.session.model.Message
 import ai.kilocode.client.session.model.StepFinish
 import ai.kilocode.client.session.ui.SessionView
-import ai.kilocode.client.session.ui.SessionStyle
-import ai.kilocode.client.session.ui.SessionStyleTarget
+import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.SessionEditorStyleTarget
 import ai.kilocode.client.ui.UiStyle
 
 /**
@@ -21,10 +21,10 @@ import ai.kilocode.client.ui.UiStyle
  */
 class MessageView(
     val msg: Message,
-    private var style: SessionStyle = SessionStyle.current(),
-) : ai.kilocode.client.session.ui.SessionLayoutPanel(UiStyle.Card.groupGap()), SessionStyleTarget, SessionView {
+    private var style: SessionEditorStyle = SessionEditorStyle.current(),
+) : ai.kilocode.client.session.ui.SessionLayoutPanel(UiStyle.Card.groupGap()), SessionEditorStyleTarget, SessionView {
 
-    constructor(msg: Message) : this(msg, SessionStyle.current())
+    constructor(msg: Message) : this(msg, SessionEditorStyle.current())
 
     val role: String get() = msg.info.role
 
@@ -97,7 +97,7 @@ class MessageView(
     /** Compact dump for test assertions. */
     fun dump(): String = parts.values.joinToString(", ") { it.dumpLabel() }
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         for (view in parts.values) view.applyStyle(style)
         refresh()

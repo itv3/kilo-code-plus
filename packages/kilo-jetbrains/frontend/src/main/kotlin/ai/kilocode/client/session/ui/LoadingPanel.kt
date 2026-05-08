@@ -6,16 +6,16 @@ import com.intellij.util.ui.Centerizer
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-class LoadingPanel : JPanel(BorderLayout()), SessionStyleTarget {
+class LoadingPanel : JPanel(BorderLayout()), SessionEditorStyleTarget {
     private val label = JBLabel(KiloBundle.message("session.empty.loading"))
 
     init {
         isOpaque = false
         add(Centerizer(label, Centerizer.TYPE.BOTH), BorderLayout.CENTER)
-        applyStyle(SessionStyle.current())
+        applyStyle(SessionEditorStyle.current())
     }
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         label.font = style.uiFont
         revalidate()
         repaint()

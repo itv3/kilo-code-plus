@@ -17,8 +17,8 @@ import ai.kilocode.client.session.ui.QuestionPanel
 import ai.kilocode.client.session.ui.SessionRootPanel
 import ai.kilocode.client.session.ui.SessionMessageListPanel
 import ai.kilocode.client.session.ui.header.SessionHeaderPanel
-import ai.kilocode.client.session.ui.SessionStyle
-import ai.kilocode.client.session.ui.SessionStyleTarget
+import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.SessionEditorStyleTarget
 import ai.kilocode.client.session.update.EVENT_FLUSH_MS
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.session.update.SessionControllerEvent
@@ -53,7 +53,7 @@ class SessionUi(
     ref: SessionRef? = null,
     displayMs: Long = SessionController.DISPLAY_DELAY_MS,
     private val manager: SessionManager? = null,
-) : JPanel(BorderLayout()), Disposable, SessionStyleTarget {
+) : JPanel(BorderLayout()), Disposable, SessionEditorStyleTarget {
 
     companion object {
         private val LOG = KiloLog.create(SessionUi::class.java)
@@ -102,7 +102,7 @@ class SessionUi(
 
     private lateinit var prompt: PromptPanel
     private lateinit var load: LoadingPanel
-    private var style = SessionStyle.current()
+    private var style = SessionEditorStyle.current()
 
     init {
         buildUi()
@@ -264,12 +264,12 @@ class SessionUi(
         val bus = ApplicationManager.getApplication().messageBus.connect(this)
         bus.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
             ApplicationManager.getApplication().invokeLater {
-                applyStyle(SessionStyle.current())
+                applyStyle(SessionEditorStyle.current())
             }
         })
         bus.subscribe(LafManagerListener.TOPIC, LafManagerListener {
             ApplicationManager.getApplication().invokeLater {
-                applyStyle(SessionStyle.current())
+                applyStyle(SessionEditorStyle.current())
             }
         })
     }
@@ -345,7 +345,7 @@ class SessionUi(
         root.repaint()
     }
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         load.applyStyle(style)
         header.applyStyle(style)

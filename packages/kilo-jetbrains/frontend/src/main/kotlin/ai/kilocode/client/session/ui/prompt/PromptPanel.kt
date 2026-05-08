@@ -4,8 +4,8 @@ import ai.kilocode.client.actions.SendPromptAction
 import ai.kilocode.client.actions.StopSessionAction
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.ui.ReasoningPicker
-import ai.kilocode.client.session.ui.SessionStyle
-import ai.kilocode.client.session.ui.SessionStyleTarget
+import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.SessionEditorStyleTarget
 import ai.kilocode.client.session.ui.mode.ModePicker
 import ai.kilocode.client.session.ui.model.ModelPicker
 import ai.kilocode.client.ui.UiStyle
@@ -58,7 +58,7 @@ class PromptPanel(
     private val project: Project,
     private val onSend: (String) -> Unit,
     private val onAbort: () -> Unit,
-) : BorderLayoutPanel(), SessionStyleTarget, SendPromptContext {
+) : BorderLayoutPanel(), SessionEditorStyleTarget, SendPromptContext {
 
     companion object {
         private val LOG = KiloLog.create(PromptPanel::class.java)
@@ -72,7 +72,7 @@ class PromptPanel(
     val model = ModelPicker()
     val reasoning = ReasoningPicker()
     var onReset: () -> Unit = {}
-    private var style = SessionStyle.current()
+    private var style = SessionEditorStyle.current()
     private val shell = PromptShell()
     private var bus: MessageBusConnection? = null
 
@@ -206,7 +206,7 @@ class PromptPanel(
 
     internal val defaultFocusedComponent: JComponent get() = editor
 
-    override fun applyStyle(style: SessionStyle) {
+    override fun applyStyle(style: SessionEditorStyle) {
         this.style = style
         editor.font = style.transcriptFont
         editor.getEditor(false)?.let(style::applyToEditor)
