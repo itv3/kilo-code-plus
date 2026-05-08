@@ -32,31 +32,20 @@ internal class ModePickerRenderer(
     private val icon = JBLabel().apply {
         horizontalAlignment = SwingConstants.CENTER
         verticalAlignment = SwingConstants.CENTER
-        UiStyle.Components.transparent(this)
     }
-    private val title = SimpleColoredComponent().apply {
-        UiStyle.Components.transparent(this)
-    }
-    private val desc = SimpleColoredComponent().apply {
-        UiStyle.Components.transparent(this)
-    }
-    private val badge = JBLabel(KiloBundle.message("mode.picker.deprecated")).apply {
-        UiStyle.Components.transparent(this)
-    }
+    private val title = SimpleColoredComponent()
+    private val desc = SimpleColoredComponent()
+    private val badge = JBLabel(KiloBundle.message("mode.picker.deprecated"))
     private val head = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-        UiStyle.Components.transparent(this)
         add(title)
         add(badge)
     }
-    private val body = JPanel(BorderLayout()).apply {
-        UiStyle.Components.transparent(this)
-    }
+    private val body = JPanel(BorderLayout())
     private val row = JPanel(BorderLayout())
     private val wrap = PickerRow()
 
     init {
-        UiStyle.Components.transparent(this)
-        UiStyle.Components.transparent(row)
+        UiStyle.Components.transparent(this, icon, title, desc, badge, head, body, row)
         (row.layout as BorderLayout).hgap = UiStyle.Gap.md()
         row.border = JBUI.Borders.empty(
             UiStyle.Gap.md(),

@@ -69,8 +69,8 @@ object UiStyle {
 
     /** Small component helpers that keep repeated Swing setup in one place. */
     object Components {
-        fun transparent(component: JComponent) {
-            component.isOpaque = false
+        fun transparent(vararg components: JComponent) {
+            components.forEach { it.isOpaque = false }
         }
     }
 }

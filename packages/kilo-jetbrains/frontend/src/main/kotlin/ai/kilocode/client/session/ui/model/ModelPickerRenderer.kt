@@ -93,12 +93,7 @@ internal class ModelPickerRenderer(
     init {
         isOpaque = true
         top.isOpaque = true
-        UiStyle.Components.transparent(row)
-        UiStyle.Components.transparent(check)
-        UiStyle.Components.transparent(title)
-        UiStyle.Components.transparent(head)
-        UiStyle.Components.transparent(provider)
-        UiStyle.Components.transparent(star)
+        UiStyle.Components.transparent(row, check, title, head, provider, star)
         row.border = JBUI.Borders.empty(
             UiStyle.Gap.md(),
             UiStyle.Gap.lg(),
