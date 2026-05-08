@@ -71,7 +71,7 @@ internal class SessionScroll(
         component.verticalScrollBar.addAdjustmentListener { onScroll() }
         root.addOverlay(jump) { _, child ->
             val size = child.preferredSize
-            val gap = JBUI.scale(UiStyle.Space.PAD)
+            val gap = UiStyle.Gap.pad()
             Rectangle(
                 host.x + host.width - size.width - gap,
                 host.y + host.height - size.height - gap,

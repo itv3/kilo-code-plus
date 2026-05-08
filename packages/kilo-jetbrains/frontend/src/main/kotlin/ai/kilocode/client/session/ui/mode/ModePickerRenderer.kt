@@ -57,12 +57,12 @@ internal class ModePickerRenderer(
     init {
         UiStyle.Components.transparent(this)
         UiStyle.Components.transparent(row)
-        (row.layout as BorderLayout).hgap = UiStyle.Gap.inline()
+        (row.layout as BorderLayout).hgap = UiStyle.Gap.md()
         row.border = JBUI.Borders.empty(
-            UiStyle.Space.MD,
-            UiStyle.Space.LG,
-            UiStyle.Space.MD,
-            UiStyle.Space.LG,
+            UiStyle.Gap.md(),
+            UiStyle.Gap.lg(),
+            UiStyle.Gap.md(),
+            UiStyle.Gap.lg(),
         )
         body.add(head, BorderLayout.NORTH)
         body.add(desc, BorderLayout.CENTER)
@@ -98,8 +98,8 @@ internal class ModePickerRenderer(
         badge.border = JBUI.Borders.compound(
             JBUI.Borders.emptyLeft(JBUI.CurrentTheme.ActionsList.elementIconGap()),
             JBUI.Borders.compound(
-                RoundedLineBorder(warn, JBUI.scale(UiStyle.Space.SM)),
-                JBUI.Borders.empty(0, UiStyle.Space.MD),
+                RoundedLineBorder(warn, UiStyle.Gap.small()),
+                JBUI.Borders.empty(0, UiStyle.Gap.md()),
             ),
         )
         icon.icon = icon(value)

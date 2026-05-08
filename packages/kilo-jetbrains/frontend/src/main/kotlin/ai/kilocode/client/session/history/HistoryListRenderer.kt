@@ -82,7 +82,7 @@ internal open class HistoryRenderer<T : HistoryItem>(
     init {
         isOpaque = true
         top.isOpaque = true
-        row.border = JBUI.Borders.empty(UiStyle.Space.LG, UiStyle.Space.LG, UiStyle.Space.LG, UiStyle.Space.LG)
+        row.border = JBUI.Borders.empty(UiStyle.Gap.lg(), UiStyle.Gap.lg(), UiStyle.Gap.lg(), UiStyle.Gap.lg())
         UiStyle.Components.transparent(row)
         UiStyle.Components.transparent(main)
         UiStyle.Components.transparent(title)

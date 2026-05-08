@@ -115,7 +115,7 @@ class EmptySessionPanel(
         }
     }.apply {
         isOpaque = false
-        border = JBUI.Borders.empty(UiStyle.Space.LG, 0, UiStyle.Space.LG, 0)
+        border = JBUI.Borders.empty(UiStyle.Gap.lg(), 0, UiStyle.Gap.lg(), 0)
         add(welcomeLabel, BorderLayout.CENTER)
     }
 
@@ -125,7 +125,7 @@ class EmptySessionPanel(
         applyStyle(SessionStyle.current())
         setSessions(recents)
 
-        val gap = JBUI.scale(UiStyle.Gap.turn())
+        val gap = UiStyle.Gap.pad()
         layout = BorderLayout(0, gap)
 
         val logo = JBLabel(
@@ -233,8 +233,8 @@ class EmptySessionPanel(
         private val time = JBLabel()
 
         init {
-            layout = BorderLayout(JBUI.scale(UiStyle.Space.LG), 0)
-            border = JBUI.Borders.empty(UiStyle.Space.LG, UiStyle.Space.LG, UiStyle.Space.LG, UiStyle.Space.LG)
+            layout = BorderLayout(UiStyle.Gap.lg(), 0)
+            border = JBUI.Borders.empty(UiStyle.Gap.lg(), UiStyle.Gap.lg(), UiStyle.Gap.lg(), UiStyle.Gap.lg())
             add(title, BorderLayout.CENTER)
             add(time, BorderLayout.EAST)
         }

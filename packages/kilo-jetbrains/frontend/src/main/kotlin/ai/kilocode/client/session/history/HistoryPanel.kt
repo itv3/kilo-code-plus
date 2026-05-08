@@ -80,7 +80,7 @@ class HistoryPanel(
 
     init {
         Disposer.register(parent, this)
-        border = JBUI.Borders.empty(UiStyle.Space.LG)
+        border = JBUI.Borders.empty(UiStyle.Gap.lg())
         more.addActionListener { controller.loadMoreCloud() }
         bind(localList, controller.local)
         bind(cloudList, controller.cloud)
@@ -165,7 +165,7 @@ class HistoryPanel(
             cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
             addActionListener { nav() }
         }, BorderLayout.WEST)
-        border = JBUI.Borders.emptyRight(UiStyle.Space.LG)
+        border = JBUI.Borders.emptyRight(UiStyle.Gap.lg())
     }
 
     private fun panel(search: SearchTextField, list: JList<out HistoryItem>, footer: JComponent? = null): JComponent {
@@ -176,7 +176,7 @@ class HistoryPanel(
                 viewportBorder = JBUI.Borders.empty()
             }, BorderLayout.CENTER)
             footer?.let {
-                it.border = JBUI.Borders.emptyTop(UiStyle.Space.LG)
+                it.border = JBUI.Borders.emptyTop(UiStyle.Gap.lg())
                 add(it, BorderLayout.SOUTH)
             }
         }

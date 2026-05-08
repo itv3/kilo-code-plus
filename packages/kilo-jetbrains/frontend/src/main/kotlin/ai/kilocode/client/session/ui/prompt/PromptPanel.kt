@@ -151,7 +151,7 @@ class PromptPanel(
         val bar = BorderLayoutPanel().apply {
             layout = BoxLayout(this, BoxLayout.X_AXIS)
             isOpaque = false
-            border = JBUI.Borders.emptyTop(UiStyle.Space.SM)
+            border = JBUI.Borders.emptyTop(UiStyle.Gap.small())
         }
         bar.add(mode)
         bar.add(Box.createHorizontalStrut(UiStyle.Gap.small()))
@@ -354,12 +354,12 @@ class PromptPanel(
 
         init {
             isOpaque = false
-            border = JBUI.Borders.empty(UiStyle.Space.MD, UiStyle.Space.LG)
+            border = JBUI.Borders.empty(UiStyle.Gap.md(), UiStyle.Gap.lg())
         }
 
         override fun updateUI() {
             super.updateUI()
-            border = JBUI.Borders.empty(UiStyle.Space.MD, UiStyle.Space.LG)
+            border = JBUI.Borders.empty(UiStyle.Gap.md(), UiStyle.Gap.lg())
         }
 
         override fun paintComponent(g: Graphics) {

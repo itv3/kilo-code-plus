@@ -37,16 +37,6 @@ object UiStyle {
         fun toolBodyLimit(): Int = TOOL_BODY
     }
 
-    object Space {
-        const val XS = 2
-        const val SM = 4
-        const val MD = 6
-        const val LG = 8
-        const val PAD = 12
-        const val LOGO = 14
-        const val RECENT = 28
-    }
-
     object Colors {
         internal const val BORDER_DELTA = 64
         internal const val HOVER_ALPHA = 0.35f
@@ -127,17 +117,17 @@ object UiStyle {
     object Insets {
         fun none(): java.awt.Insets = JBUI.emptyInsets()
 
-        fun transcript(): java.awt.Insets = JBUI.insets(Space.PAD, Space.PAD, Space.PAD, Space.PAD)
+        fun transcript(): java.awt.Insets = JBUI.insets(Gap.pad(), Gap.pad(), Gap.pad(), Gap.pad())
 
         fun userPrompt(): Int = Size.userPromptMin()
 
-        fun empty(): Border = JBUI.Borders.empty(Space.PAD)
+        fun empty(): Border = JBUI.Borders.empty(Gap.pad())
 
-        fun prompt(): Border = JBUI.Borders.empty(Space.LG, Space.PAD, Space.LG, Space.PAD)
+        fun prompt(): Border = JBUI.Borders.empty(Gap.lg(), Gap.pad(), Gap.lg(), Gap.pad())
 
-        fun header(): Border = JBUI.Borders.empty(Space.LG, Space.LG)
+        fun header(): Border = JBUI.Borders.empty(Gap.lg(), Gap.lg())
 
-        fun body(): Border = JBUI.Borders.empty(Space.LG, Space.PAD)
+        fun body(): Border = JBUI.Borders.empty(Gap.lg(), Gap.pad())
     }
 
     object Borders {
@@ -149,11 +139,11 @@ object UiStyle {
 
         fun warning(): Border = JBUI.Borders.customLine(Colors.warning(), 1)
 
-        fun picker(): Border = JBUI.Borders.empty(Space.XS, Space.LG)
+        fun picker(): Border = JBUI.Borders.empty(Gap.xs(), Gap.lg())
 
         fun user(): Border = JBUI.Borders.compound(
-            RoundedLineBorder(Colors.line(), JBUI.scale(Space.LG)),
-            JBUI.Borders.empty(Space.LG, Space.PAD),
+            RoundedLineBorder(Colors.line(), Gap.lg()),
+            JBUI.Borders.empty(Gap.lg(), Gap.pad()),
         )!!
 
         fun assistant(): Border = JBUI.Borders.empty()
@@ -164,13 +154,13 @@ object UiStyle {
         const val LINES = 15
         const val REASONING_LINES = 5
 
-        fun layout(): BorderLayout = Gap.layout(Space.MD)
+        fun layout(): BorderLayout = Gap.layout(Gap.md())
 
         fun groupGap(): Int = Gap.small()
 
-        fun headerInsets(): Border = JBUI.Borders.empty(Space.LG, Space.PAD)
+        fun headerInsets(): Border = JBUI.Borders.empty(Gap.lg(), Gap.pad())
 
-        fun bodyInsets(): Border = JBUI.Borders.empty(Space.LG, Space.PAD)
+        fun bodyInsets(): Border = JBUI.Borders.empty(Gap.lg(), Gap.pad())
 
         fun border(): Border = Borders.card()
 
@@ -182,36 +172,34 @@ object UiStyle {
     object Dock {
         fun banner(): Border = JBUI.Borders.compound(
             JBUI.Borders.customLineTop(Colors.line()),
-            JBUI.Borders.empty(Space.SM, Space.LG, 0, Space.LG),
+            JBUI.Borders.empty(Gap.small(), Gap.lg(), 0, Gap.lg()),
         )!!
 
         fun neutral(): Border = JBUI.Borders.compound(
             JBUI.Borders.customLine(Colors.line(), 1),
-            JBUI.Borders.empty(Space.LG, Space.PAD),
+            JBUI.Borders.empty(Gap.lg(), Gap.pad()),
         )!!
 
         fun warning(): Border = JBUI.Borders.compound(
             Borders.warning(),
-            JBUI.Borders.empty(Space.LG, Space.PAD),
+            JBUI.Borders.empty(Gap.lg(), Gap.pad()),
         )!!
     }
 
     object Gap {
-        fun xs() = JBUI.scale(Space.XS)
+        fun xs() = JBUI.scale(2)
 
-        fun inline() = JBUI.scale(Space.MD)
+        fun md() = JBUI.scale(6)
 
-        fun regular() = JBUI.scale(Space.LG)
+        fun lg() = JBUI.scale(8)
 
-        fun small() = JBUI.scale(Space.SM)
+        fun small() = JBUI.scale(4)
 
-        fun turn() = JBUI.scale(Space.PAD)
-
-        fun part() = JBUI.scale(Space.SM)
+        fun pad() = JBUI.scale(12)
 
         fun scroll() = JBUI.scale(Size.SCROLL)
 
-        fun layout(gap: Int = Space.LG) = BorderLayout(JBUI.scale(gap), 0)
+        fun layout(gap: Int = lg()) = BorderLayout(gap, 0)
     }
 
     object Buttons {

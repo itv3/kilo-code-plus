@@ -20,7 +20,7 @@ class GenericView(content: Generic) : PartView() {
 
     private val label = JBLabel("[${content.type}]").apply {
         foreground = UiStyle.Colors.weak()
-        border = com.intellij.util.ui.JBUI.Borders.empty(UiStyle.Space.XS, 0)
+        border = com.intellij.util.ui.JBUI.Borders.empty(UiStyle.Gap.xs(), 0)
     }
 
     init {

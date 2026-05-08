@@ -86,7 +86,7 @@ class SessionHeaderPanel(
         iconTextGap = UiStyle.Gap.xs()
     }
     private val top = BorderLayoutPanel()
-    private val right = JPanel(FlowLayout(FlowLayout.RIGHT, UiStyle.Gap.inline(), 0)).apply {
+    private val right = JPanel(FlowLayout(FlowLayout.RIGHT, UiStyle.Gap.md(), 0)).apply {
         isOpaque = false
         add(cost)
         add(context)
@@ -95,24 +95,24 @@ class SessionHeaderPanel(
     }
     private val tokens = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
         isOpaque = false
-        border = JBUI.Borders.empty(UiStyle.Space.SM, 0, 0, 0)
+        border = JBUI.Borders.empty(UiStyle.Gap.small(), 0, 0, 0)
         add(tokenTitle)
-        add(Box.createHorizontalStrut(UiStyle.Gap.inline()))
+        add(Box.createHorizontalStrut(UiStyle.Gap.md()))
         add(input)
         add(Box.createHorizontalStrut(UiStyle.Gap.small()))
         add(output)
         add(Box.createHorizontalStrut(UiStyle.Gap.small()))
         add(cacheRead)
     }
-    private val todoRow = JPanel(FlowLayout(FlowLayout.LEFT, UiStyle.Gap.inline(), 0)).apply {
+    private val todoRow = JPanel(FlowLayout(FlowLayout.LEFT, UiStyle.Gap.md(), 0)).apply {
         isOpaque = false
-        border = JBUI.Borders.empty(UiStyle.Space.SM, 0, 0, 0)
+        border = JBUI.Borders.empty(UiStyle.Gap.small(), 0, 0, 0)
         add(todos)
     }
     private val body = JPanel().apply {
         isOpaque = false
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        border = JBUI.Borders.empty(UiStyle.Space.SM, 0, 0, 0)
+        border = JBUI.Borders.empty(UiStyle.Gap.small(), 0, 0, 0)
         add(viewport)
         add(tokens)
         add(bar)
@@ -178,7 +178,7 @@ class SessionHeaderPanel(
         super.updateUI()
         border = JBUI.Borders.compound(
             JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 1, 0),
-            JBUI.Borders.empty(UiStyle.Space.LG, UiStyle.Space.PAD, UiStyle.Space.SM, UiStyle.Space.PAD),
+            JBUI.Borders.empty(UiStyle.Gap.lg(), UiStyle.Gap.pad(), UiStyle.Gap.small(), UiStyle.Gap.pad()),
         )
     }
 

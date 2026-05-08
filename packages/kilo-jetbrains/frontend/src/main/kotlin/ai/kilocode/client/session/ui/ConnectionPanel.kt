@@ -39,11 +39,11 @@ class ConnectionPanel(
     }
 
     private val header = BorderLayoutPanel().apply {
-        border = JBUI.Borders.empty(UiStyle.Space.SM, UiStyle.Space.LG, 0, UiStyle.Space.LG)
+        border = JBUI.Borders.empty(UiStyle.Gap.small(), UiStyle.Gap.lg(), 0, UiStyle.Gap.lg())
     }
 
     private val left = BorderLayoutPanel().apply {
-        layout = UiStyle.Gap.layout(UiStyle.Space.SM)
+        layout = UiStyle.Gap.layout(UiStyle.Gap.small())
         addMouseListener(click)
     }
 
@@ -76,7 +76,7 @@ class ConnectionPanel(
     }
 
     private val scroll = JBScrollPane(details).apply {
-        border = JBUI.Borders.empty(0, UiStyle.Space.LG, UiStyle.Space.SM, 0)
+        border = JBUI.Borders.empty(0, UiStyle.Gap.lg(), UiStyle.Gap.small(), 0)
         // Match the banner background while retaining platform scroll behavior.
         isOpaque = false
         viewport.isOpaque = false

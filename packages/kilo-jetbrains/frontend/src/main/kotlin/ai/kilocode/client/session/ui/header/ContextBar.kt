@@ -15,14 +15,14 @@ import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class ContextBar : JPanel(BorderLayout(UiStyle.Gap.inline(), 0)) {
+internal class ContextBar : JPanel(BorderLayout(UiStyle.Gap.md(), 0)) {
     private val used = JBLabel()
     private val limit = JBLabel()
     private val meter = Meter()
 
     init {
         isOpaque = false
-        border = JBUI.Borders.empty(UiStyle.Space.SM, 0, 0, 0)
+        border = JBUI.Borders.empty(UiStyle.Gap.small(), 0, 0, 0)
         add(used, BorderLayout.WEST)
         add(meter, BorderLayout.CENTER)
         add(limit, BorderLayout.EAST)
