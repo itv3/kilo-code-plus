@@ -697,7 +697,7 @@ export class WorktreeManager {
         const env = nonInteractiveEnv()
         await simpleGit(this.root, { unsafe: { allowUnsafeSshCommand: isKiloOwnedSshCommand(env) } })
           .env(env)
-          .fetch(remote, branch)
+          .fetch(remote, branch, { "--quiet": null, "--no-tags": null })
         WorktreeManager.fetchCache.set(cacheKey, Date.now())
         if (await this.refExistsLocally(`${remote}/${branch}`)) {
           return {
