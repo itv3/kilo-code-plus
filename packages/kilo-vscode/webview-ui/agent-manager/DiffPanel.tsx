@@ -21,7 +21,7 @@ import {
   type AnnotationLabels,
   type AnnotationMeta,
 } from "./review-annotations"
-import { LONG_DIFF_MARKER_FILE_COUNT, initialOpenFiles, isLargeDiffFile } from "./diff-open-policy"
+import { LONG_DIFF_MARKER_FILE_COUNT, expandableOpenFiles, initialOpenFiles, isLargeDiffFile } from "./diff-open-policy"
 import { DiffEndMarker } from "./DiffEndMarker"
 import { treeOrder } from "./file-tree-utils"
 import { isMarkdownFile, MarkdownDiffView } from "./MarkdownDiffView"
@@ -71,8 +71,8 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
   )
   const [editing, setEditing] = createSignal<string | null>(null)
   let nextId = 0
-  // Tracks the session key for which auto-open has already run. When the
-  // key changes (different worktree) we re-expand. Within the same key,
+  // Tracks the session key for which initial open state has already run. When the
+  // key changes (different worktree) we expand reviewable files. Within the same key,
   // only pruning happens so the user's manual collapse state is preserved.
   let initializedKey: string | undefined
 
@@ -132,9 +132,9 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
     focusRoot()
   }
 
-  // Unified auto-open effect: tracks both sessionKey and diffs in a single effect
+  // Unified open-state effect: tracks both sessionKey and diffs in a single effect
   // to eliminate the race condition between the old separate sessionKey-reset and
-  // diffs-watch effects. Uses the session key to decide when auto-expand is needed
+  // diffs-watch effects. Uses the session key to decide when initialization is needed
   // vs when we just prune stale entries from the open list.
   createEffect(
     on(
@@ -321,8 +321,7 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
   }
 
   const handleExpandAll = () => {
-    const allOpen = open().length === props.diffs.length
-    setOpen(allOpen ? [] : props.diffs.map((d) => d.file))
+    setOpen(open().length > 0 ? [] : expandableOpenFiles(props.diffs))
   }
 
   const totals = createMemo(() => ({
@@ -374,22 +373,14 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
         <div class="am-diff-header-actions">
           <Show when={props.diffs.length > 0}>
             <Tooltip
-              value={
-                open().length === props.diffs.length
-                  ? t("ui.sessionReview.collapseAll")
-                  : t("ui.sessionReview.expandAll")
-              }
+              value={open().length > 0 ? t("ui.sessionReview.collapseAll") : t("ui.sessionReview.expandAll")}
               placement="bottom"
             >
               <IconButton
                 icon="chevron-grabber-vertical"
                 size="small"
                 variant="ghost"
-                label={
-                  open().length === props.diffs.length
-                    ? t("ui.sessionReview.collapseAll")
-                    : t("ui.sessionReview.expandAll")
-                }
+                label={open().length > 0 ? t("ui.sessionReview.collapseAll") : t("ui.sessionReview.expandAll")}
                 onClick={handleExpandAll}
               />
             </Tooltip>
