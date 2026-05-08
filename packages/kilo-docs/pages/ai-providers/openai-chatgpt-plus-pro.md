@@ -60,22 +60,6 @@ Then set your default model to one of the OpenAI Codex models available in Kilo 
 {% /tab %}
 {% /tabs %}
 
-## Recommended models
-
-Depending on your subscription tier, you'll find these models in the OpenAI Codex catalog:
-
-| Model                       | Best for                                                        |
-| --------------------------- | --------------------------------------------------------------- |
-| **GPT-5.4 / GPT-5.4-Codex** | Flagship model — complex workflows, reasoning, and computer-use |
-| **GPT-5.3-Codex**           | Powerful coding (56.8% SWE-bench Pro, 77.3% Terminal-Bench 2.0) |
-| **GPT-5.2-Codex**           | Agentic workflows and multi-file refactors                      |
-| **GPT-5.2**                 | Strong general-purpose reasoning for daily coding               |
-| **GPT-5-Mini**              | Fast, lightweight iterations                                    |
-| **o3**                      | Deep reasoning for complex planning and debugging               |
-| **o4-mini**                 | Efficient everyday reasoning                                    |
-
-**Suggested combinations:** Try o3 in Architect mode for project planning, GPT-5.2-Codex for implementation, and o3 again for complex debugging sessions.
-
 ## Tips and Notes
 
 - **Subscription Required:** You need an active ChatGPT Plus or Pro subscription. This provider won't work with free ChatGPT accounts. [Codex is included](https://developers.openai.com/codex/pricing/) in ChatGPT Plus, Pro, Business, Edu, and Enterprise plans. See [OpenAI's ChatGPT plans](https://chatgpt.com/pricing/) for more information.
