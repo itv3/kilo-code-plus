@@ -67,12 +67,11 @@ export function DialogModel(props: { providerID?: string }) {
 
   const options = createMemo(() => {
     const needle = query().trim()
-    const showSections = showExtra() && needle.length === 0
     const favorites = connected() ? local.model.favorite() : []
     const recents = local.model.recent()
 
     function toOptions(items: typeof favorites, category: string) {
-      if (!showSections) return []
+      if (!showExtra()) return [] // kilocode_change
       return items.flatMap((item) => {
         const provider = sync.data.provider.find((x) => x.id === item.providerID)
         if (!provider) return []
@@ -135,7 +134,6 @@ export function DialogModel(props: { providerID?: string }) {
             },
           })),
           filter((x) => {
-            if (!showSections) return true
             if (favorites.some((item) => item.providerID === x.value.providerID && item.modelID === x.value.modelID))
               return false
             if (recents.some((item) => item.providerID === x.value.providerID && item.modelID === x.value.modelID))
@@ -164,15 +162,13 @@ export function DialogModel(props: { providerID?: string }) {
         )
       : []
 
+    // kilocode_change start - Filter per-section to preserve group headers while typing
     if (needle) {
-      const filteredProviders = fuzzysort.go(needle, providerOptions, { keys: ["title", "category"] }).map((x) => x.obj)
-      const filteredPopular = fuzzysort.go(needle, popularProviders, { keys: ["title"] }).map((x) => x.obj)
-      // kilocode_change start - Partition Kilo Gateway results first (preserves fuzzysort order)
-      const kilo = filteredProviders.filter((x) => x.value.providerID === "kilo")
-      const rest = filteredProviders.filter((x) => x.value.providerID !== "kilo")
-      return [...kilo, ...rest, ...filteredPopular]
-      // kilocode_change end
+      const rank = <U extends { title: string; category?: string }>(items: U[]) =>
+        fuzzysort.go(needle, items, { keys: ["title", "category"] }).map((x) => x.obj)
+      return [...rank(favoriteOptions), ...rank(recentOptions), ...rank(providerOptions), ...rank(popularProviders)]
     }
+    // kilocode_change end
 
     return [...favoriteOptions, ...recentOptions, ...providerOptions, ...popularProviders]
   })
@@ -235,7 +231,6 @@ export function DialogModel(props: { providerID?: string }) {
             if (!next) return
             setPreview(next)
           }}
-          flat={true}
           skipFilter={true}
           title={title()}
           current={local.model.current()}
