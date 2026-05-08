@@ -45,16 +45,18 @@ export const layer = Layer.effect(
       // Plugin can mutate config so it has to be initialized before anything else.
       yield* plugin.init()
       yield* Effect.promise(() => KilocodeBootstrap.init()).pipe(Effect.forkDetach) // kilocode_change
+      // kilocode_change start - shareNext removed from list, handled by KilocodeBootstrap
       yield* Effect.all(
         [
           lsp,
-          /* shareNext, kilocode_change - handled by KilocodeBootstrap */ format,
+          format,
           file,
           fileWatcher,
           vcs,
           snapshot,
         ].map((s) => Effect.forkDetach(s.init())),
       ).pipe(Effect.withSpan("InstanceBootstrap.init"))
+      // kilocode_change end
 
       const projectID = ctx.project.id
       yield* bus.subscribeCallback(Command.Event.Executed, async (payload) => {

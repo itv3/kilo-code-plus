@@ -7,12 +7,12 @@ export const iconNames = [
   "zai",
   "zai-coding-plan",
   "xiaomi",
-  "xiaomi-token-plan-sgp",
-  "xiaomi-token-plan-cn",
-  "xiaomi-token-plan-ams",
+  "xiaomi-token-plan-sgp", // kilocode_change
+  "xiaomi-token-plan-cn", // kilocode_change
+  "xiaomi-token-plan-ams", // kilocode_change
   "xai",
   "wandb",
-  "wafer.ai",
+  "wafer.ai", // kilocode_change
   "vultr",
   "vivgrid",
   "vercel",
@@ -20,8 +20,8 @@ export const iconNames = [
   "v0",
   "upstage",
   "togetherai",
-  "the-grid-ai",
-  "tencent-tokenhub",
+  "the-grid-ai", // kilocode_change
+  "tencent-tokenhub", // kilocode_change
   "tencent-coding-plan",
   "synthetic",
   "submodel",
@@ -32,7 +32,7 @@ export const iconNames = [
   "scaleway",
   "sap-ai-core",
   "requesty",
-  "regolo-ai",
+  "regolo-ai", // kilocode_change
   "qiniu-ai",
   "qihang-ai",
   "privatemode-ai",
@@ -55,7 +55,7 @@ export const iconNames = [
   "moonshotai-cn",
   "modelscope",
   "moark",
-  "mixlayer",
+  "mixlayer", // kilocode_change
   "mistral",
   "minimax",
   "minimax-coding-plan",
@@ -64,7 +64,7 @@ export const iconNames = [
   "meganova",
   "lucidquery",
   "lmstudio",
-  "llmgateway",
+  "llmgateway", // kilocode_change
   "llama",
   "kuae-cloud-coding-plan",
   "kimi-for-coding",
@@ -75,7 +75,7 @@ export const iconNames = [
   "inception",
   "iflowcn",
   "huggingface",
-  "hpc-ai",
+  "hpc-ai", // kilocode_change
   "helicone",
   "groq",
   "google",
@@ -91,7 +91,7 @@ export const iconNames = [
   "evroc",
   "drun",
   "dinference",
-  "digitalocean",
+  "digitalocean", // kilocode_change
   "deepseek",
   "deepinfra",
   "cortecs",
@@ -114,7 +114,7 @@ export const iconNames = [
   "alibaba-coding-plan-cn",
   "alibaba-cn",
   "aihubmix",
-  "abliteration-ai",
+  "abliteration-ai", // kilocode_change
   "abacus",
   "302ai",
 ] as const

@@ -1,4 +1,4 @@
-// kilocode_change new file
+// kilocode_change - new file
 import { fetchKiloModels, type KiloModelsResult } from "@kilocode/kilo-gateway"
 import { Config } from "../config/config"
 import { Auth } from "../auth"
