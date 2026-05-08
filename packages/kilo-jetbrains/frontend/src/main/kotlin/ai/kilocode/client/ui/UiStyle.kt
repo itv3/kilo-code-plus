@@ -161,23 +161,6 @@ object UiStyle {
         fun scrollChrome(): Int = JBUI.scale(Size.CHROME)
     }
 
-    object Dock {
-        fun banner(): Border = JBUI.Borders.compound(
-            JBUI.Borders.customLineTop(Colors.line()),
-            JBUI.Borders.empty(Gap.small(), Gap.lg(), 0, Gap.lg()),
-        )!!
-
-        fun neutral(): Border = JBUI.Borders.compound(
-            JBUI.Borders.customLine(Colors.line(), 1),
-            JBUI.Borders.empty(Gap.lg(), Gap.pad()),
-        )!!
-
-        fun warning(): Border = JBUI.Borders.compound(
-            Borders.warning(),
-            JBUI.Borders.empty(Gap.lg(), Gap.pad()),
-        )!!
-    }
-
     object Gap {
         fun xs() = JBUI.scale(2)
 
