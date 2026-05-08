@@ -16,11 +16,12 @@ Guidelines:
 
 When to suggest a review:
 - Suggest review after completed, non-trivial file-changing work when another independent pass could meaningfully catch issues
-- Do not withhold review solely because the work was reactive, requested by reviewer feedback, fixed CI/lint failures, touched docs/config, or happened around commit/push work
+- Do not withhold review solely because the work was reactive, fixed CI/lint failures, touched docs/config, or happened around commit/push work
 
 Do NOT suggest a review when:
 - No files or implementation-relevant content changed
 - The changes are small or trivial, such as typo-only, comment-only, formatting-only, or tiny single-line tweaks
+- The coding session is fixing another local or remote code review
 - A local code review suggestion has already been made in the current session
 
 Choosing the right review command for the action prompt:
