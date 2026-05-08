@@ -130,6 +130,18 @@ class HistoryControllerTest : BasePlatformTestCase() {
         assertEquals(1, panel.itemCount())
     }
 
+    fun `test panel shows back button with tabs`() {
+        val panel = HistoryPanel(parent, controller())
+        flush()
+
+        assertEquals(KiloBundle.message("history.back"), panel.backText())
+
+        panel.clickCloud()
+        flush()
+
+        assertEquals(KiloBundle.message("history.back"), panel.backText())
+    }
+
     fun `test panel preserves independent search per source`() {
         rpc.listed += session("ses_1", "Alpha")
         rpc.listed += session("ses_2", "Beta")

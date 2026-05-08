@@ -4,7 +4,9 @@ import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.ui.LoadingPanel
 import ai.kilocode.client.session.ui.SessionStyle
 import ai.kilocode.client.ui.UiStyle
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.Messages
@@ -54,8 +56,12 @@ class HistoryPanel(
     private val cards = CardLayout()
     private val body = BorderLayoutPanel().apply { layout = cards }
     private val load = LoadingPanel()
-    private val localInfo = TabInfo(localPanel).setText(KiloBundle.message("history.tab.local"))
-    private val cloudInfo = TabInfo(cloudPanel).setText(KiloBundle.message("history.tab.cloud"))
+    private val localInfo = TabInfo(localPanel)
+        .setText(KiloBundle.message("history.tab.local"))
+        .setForeSideComponent(back())
+    private val cloudInfo = TabInfo(cloudPanel)
+        .setText(KiloBundle.message("history.tab.cloud"))
+        .setForeSideComponent(back())
     private var stale = false
     private val tabs: JBTabs = JBTabsFactory.createTabs(null, this).apply {
         presentation.setSingleRow(true)
@@ -148,6 +154,15 @@ class HistoryPanel(
             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
             JComponent.WHEN_FOCUSED,
         )
+    }
+
+    private fun back() = BorderLayoutPanel().apply {
+        add(JButton(KiloBundle.message("history.back"), AllIcons.Actions.Back).apply {
+            putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+            isFocusable = false
+            addActionListener { Unit }
+        }, BorderLayout.WEST)
+        border = JBUI.Borders.emptyRight(UiStyle.Space.LG)
     }
 
     private fun panel(search: SearchTextField, list: JList<out HistoryItem>, footer: JComponent? = null): JComponent {
@@ -293,6 +308,11 @@ class HistoryPanel(
 
     internal fun listFocusable() = activeList().isFocusable
 
+    internal fun backText(): String? {
+        val view = activeInfo().foreSideComponent ?: return null
+        return UIUtil.uiTraverser(view).filter(JButton::class.java).firstOrNull()?.text
+    }
+
     internal fun clickDelete() {
         localList.selectedValue?.let(controller::delete)
     }
@@ -337,6 +357,8 @@ class HistoryPanel(
     private fun activeModel(): HistoryModel<out HistoryItem> = if (tabs.selectedInfo === cloudInfo) controller.cloud else controller.local
 
     private fun activeSearch(): SearchTextField = if (tabs.selectedInfo === cloudInfo) cloudSearch else localSearch
+
+    private fun activeInfo(): TabInfo = if (tabs.selectedInfo === cloudInfo) cloudInfo else localInfo
 
     private fun move(step: Int) {
         val list = activeList()
