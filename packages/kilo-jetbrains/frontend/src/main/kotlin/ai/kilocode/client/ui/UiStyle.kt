@@ -8,9 +8,10 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.UIManager
 
-/** Static UI tokens and helpers for JetBrains session Swing surfaces. */
+/** Shared Swing style tokens that are not tied to one session component. */
 object UiStyle {
 
+    /** DPI-aware spacing primitives used across custom Swing layouts. */
     object Gap {
         fun xs() = JBUI.scale(2)
 
@@ -23,6 +24,7 @@ object UiStyle {
         fun pad() = JBUI.scale(12)
     }
 
+    /** Theme-aware colors and color math used by multiple UI surfaces. */
     object Colors {
         fun bg(): Color = UIUtil.getPanelBackground()
 
@@ -65,7 +67,7 @@ object UiStyle {
             (color.red * 0.299 + color.green * 0.587 + color.blue * 0.114) >= 128
     }
 
-
+    /** Small component helpers that keep repeated Swing setup in one place. */
     object Components {
         fun transparent(component: JComponent) {
             component.isOpaque = false

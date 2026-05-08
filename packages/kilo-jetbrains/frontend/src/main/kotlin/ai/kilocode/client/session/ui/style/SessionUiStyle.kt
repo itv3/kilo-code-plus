@@ -8,8 +8,9 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import javax.swing.border.Border
 
-/** Static UI tokens and helpers for session-specific Swing surfaces. */
+/** Static style tokens owned by the chat session UI. */
 object SessionUiStyle {
+    /** Geometry for the transcript list and its scroll behavior. */
     object SessionLayout {
         const val GAP = 4
         const val TRANSCRIPT_PADDING = 12
@@ -17,6 +18,7 @@ object SessionUiStyle {
         const val SCROLL_INCREMENT = 16
     }
 
+    /** Shared tokens for individual transcript views and cards. */
     object View {
         const val CARD_LAYOUT_GAP = 6
         const val CARD_VERTICAL_PADDING = 8
@@ -42,6 +44,7 @@ object SessionUiStyle {
 
         fun cardTop(): Border = JBUI.Borders.customLineTop(line())
 
+        /** Prompt input dimensions and chrome inside the session view. */
         object Prompt {
             const val EDITOR_LINES = 3
             const val EDITOR_CHROME = 16
@@ -55,10 +58,12 @@ object SessionUiStyle {
             const val SHELL_HORIZONTAL_PADDING = 8
         }
 
+        /** Reasoning block preview sizing. */
         object Reasoning {
             const val BODY_LINES = 5
         }
 
+        /** Message container roles and user bubble geometry. */
         object Message {
             const val USER_ROLE = "user"
             const val ASSISTANT_ROLE = "assistant"
@@ -67,6 +72,7 @@ object SessionUiStyle {
             const val USER_BORDER_HORIZONTAL_PADDING = 12
         }
 
+        /** Tool card preview limits and state colors. */
         object Tool {
             const val BODY_LINES = 15
             const val PREVIEW_LIMIT = 20_000
@@ -81,11 +87,13 @@ object SessionUiStyle {
         }
     }
 
+    /** Limits for the empty-state recent sessions list. */
     object RecentSessions {
         const val LIMIT = 5
         const val DESCRIPTION_WIDTH = 250
     }
 
+    /** Colors for timeline/activity indicators in the session header. */
     object Timeline {
         val READ: Color = JBColor(Color(0x37, 0x94, 0xff), Color(0x37, 0x94, 0xff))
         val WRITE: Color = JBColor(Color(0x00, 0x7f, 0xd4), Color(0x00, 0x7f, 0xd4))
@@ -97,6 +105,7 @@ object SessionUiStyle {
     }
 }
 
+/** Border presets for question, permission, and connection dock panels. */
 object Dock {
     fun banner(): Border = JBUI.Borders.compound(
         JBUI.Borders.customLineTop(SessionUiStyle.View.line()),

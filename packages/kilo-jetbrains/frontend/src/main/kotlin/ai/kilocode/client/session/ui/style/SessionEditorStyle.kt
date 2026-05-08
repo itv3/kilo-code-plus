@@ -9,7 +9,12 @@ import java.awt.Color
 import java.awt.Font
 import kotlin.math.roundToInt
 
-/** Snapshot of editor-derived transcript styling applied to live session components. */
+/**
+ * Immutable snapshot of editor-derived fonts and colors for transcript components.
+ *
+ * Session UI uses this instead of reading editor globals in every component so font and color changes can be applied
+ * consistently through [SessionEditorStyleTarget].
+ */
 data class SessionEditorStyle(
     val editorScheme: EditorColorsScheme,
     val editorFamily: String,
@@ -30,6 +35,7 @@ data class SessionEditorStyle(
     }
 
     companion object {
+        /** Builds a style snapshot from the current global editor color scheme. */
         fun current(): SessionEditorStyle {
             val scheme = EditorColorsManager.getInstance().globalScheme
             return create(scheme, scheme.editorFontName, scheme.editorFontSize)
@@ -66,7 +72,7 @@ data class SessionEditorStyle(
     }
 }
 
-/** Implemented by session components that can update styling in place. */
+/** Session component contract for applying a refreshed [SessionEditorStyle] without rebuilding Swing nodes. */
 interface SessionEditorStyleTarget {
     fun applyStyle(style: SessionEditorStyle)
 }
