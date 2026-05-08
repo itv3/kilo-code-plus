@@ -5,7 +5,7 @@ import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.model.toolKind
 import ai.kilocode.client.session.ui.style.SessionEditorStyle
-import ai.kilocode.client.ui.UiStyle
+import ai.kilocode.client.session.ui.style.SessionUiStyle
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import javax.swing.ScrollPaneConstants
 
@@ -266,7 +266,7 @@ class ToolViewTest : BasePlatformTestCase() {
     }
 
     fun `test large tool output is truncated in preview`() {
-        val out = "x".repeat(UiStyle.Size.toolBodyLimit() + 1_000)
+        val out = "x".repeat(SessionUiStyle.View.Tool.PREVIEW_LIMIT + 1_000)
         val t = tool("p1", "bash", ToolExecState.COMPLETED).also {
             it.input = mapOf("command" to "log")
             it.output = out
@@ -281,7 +281,7 @@ class ToolViewTest : BasePlatformTestCase() {
     }
 
     fun `test large generic tool output is truncated in preview`() {
-        val out = "x".repeat(UiStyle.Size.toolBodyLimit() + 1_000)
+        val out = "x".repeat(SessionUiStyle.View.Tool.PREVIEW_LIMIT + 1_000)
         val t = tool("p1", "glob", ToolExecState.COMPLETED).also {
             it.output = out
         }

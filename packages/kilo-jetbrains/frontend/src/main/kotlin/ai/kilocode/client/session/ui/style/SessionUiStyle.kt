@@ -25,14 +25,21 @@ object SessionUiStyle {
     object SessionLayout {
         const val GAP = 4
         const val TRANSCRIPT_PADDING = 12
-        const val CARD_LINES = 15
-        const val REASONING_LINES = 5
+        const val USER_PROMPT_INDENT = 100
+        const val SCROLL_INCREMENT = 16
+    }
+
+    object View {
         const val CARD_LAYOUT_GAP = 6
         const val CARD_VERTICAL_PADDING = 8
         const val CARD_HORIZONTAL_PADDING = 12
-        const val USER_PROMPT_INDENT = 100
-        const val SCROLL_CHROME = 16
-        const val SCROLL_INCREMENT = 16
+        const val CARD_BODY_EXTRA_HEIGHT = 16
+        const val REASONING_LINES = 5
+
+        object Tool {
+            const val BODY_LINES = 15
+            const val PREVIEW_LIMIT = 20_000
+        }
     }
 
     object RecentSessions {

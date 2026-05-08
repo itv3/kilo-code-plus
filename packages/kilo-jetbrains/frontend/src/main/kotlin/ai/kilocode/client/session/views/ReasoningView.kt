@@ -37,8 +37,8 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         isOpaque = true
         background = UiStyle.Colors.surface()
         border = JBUI.Borders.empty(
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_HORIZONTAL_PADDING),
         )
     }
     private val scroll = JBScrollPane(body).apply {
@@ -49,12 +49,12 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
         verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
     }
-    private val header = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
+    private val header = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.View.CARD_LAYOUT_GAP), 0)).apply {
         isOpaque = true
         background = UiStyle.Colors.header()
         border = JBUI.Borders.empty(
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_HORIZONTAL_PADDING),
         )
     }
     private val title = JBLabel(KiloBundle.message("session.part.reasoning")).apply {
@@ -90,7 +90,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
         isOpaque = false
         border = UiStyle.Borders.card()
 
-        val left = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
+        val left = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.View.CARD_LAYOUT_GAP), 0)).apply {
             isOpaque = false
             add(icon, BorderLayout.WEST)
             add(title, BorderLayout.CENTER)
@@ -150,7 +150,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
 
     internal fun horizontalPolicy() = scroll.horizontalScrollBarPolicy
 
-    internal fun bodyMaxRows() = SessionUiStyle.SessionLayout.REASONING_LINES
+    internal fun bodyMaxRows() = SessionUiStyle.View.REASONING_LINES
 
     internal fun bodyCreated() = true
 
@@ -262,7 +262,7 @@ class ReasoningView(reasoning: Reasoning) : PartView() {
     }
 
     private fun bodyMaxHeight(): Int = md.component.getFontMetrics(md.font).height * bodyMaxRows() +
-        JBUI.scale(SessionUiStyle.SessionLayout.SCROLL_CHROME)
+        JBUI.scale(SessionUiStyle.View.CARD_BODY_EXTRA_HEIGHT)
 
     override fun dumpLabel(): String {
         val state = if (bodyVisible()) "open" else "closed"

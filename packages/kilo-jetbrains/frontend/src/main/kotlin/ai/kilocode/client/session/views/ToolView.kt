@@ -43,12 +43,12 @@ class ToolView(tool: Tool) : PartView() {
         background = UiStyle.Colors.surface()
         border = UiStyle.Borders.card()
     }
-    private val header = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
+    private val header = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.View.CARD_LAYOUT_GAP), 0)).apply {
         isOpaque = true
         background = UiStyle.Colors.header()
         border = JBUI.Borders.empty(
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_HORIZONTAL_PADDING),
         )
     }
     private val glyph = JBLabel()
@@ -60,7 +60,7 @@ class ToolView(tool: Tool) : PartView() {
         foreground = UiStyle.Colors.weak()
     }
     private val arrow = JBLabel()
-    private val center = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.SessionLayout.CARD_LAYOUT_GAP), 0)).apply {
+    private val center = JPanel(BorderLayout(JBUI.scale(SessionUiStyle.View.CARD_LAYOUT_GAP), 0)).apply {
         isOpaque = false
     }
     private val controls: JComponent = Box.createHorizontalBox().apply {
@@ -76,8 +76,8 @@ class ToolView(tool: Tool) : PartView() {
         foreground = bodyColor()
         background = UiStyle.Colors.surface()
         border = JBUI.Borders.empty(
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_VERTICAL_PADDING),
-            JBUI.scale(SessionUiStyle.SessionLayout.CARD_HORIZONTAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_VERTICAL_PADDING),
+            JBUI.scale(SessionUiStyle.View.CARD_HORIZONTAL_PADDING),
         )
     }
     private val scroll = JBScrollPane(text).apply {
@@ -179,7 +179,7 @@ class ToolView(tool: Tool) : PartView() {
 
     internal fun bodyWrap() = text.lineWrap
 
-    internal fun bodyMaxRows() = SessionUiStyle.SessionLayout.CARD_LINES
+    internal fun bodyMaxRows() = SessionUiStyle.View.Tool.BODY_LINES
 
     internal fun bodyCreated() = true
 
@@ -291,7 +291,7 @@ class ToolView(tool: Tool) : PartView() {
 
     private fun bodyMaxHeight(): Int {
         return text.getFontMetrics(text.font).height * bodyMaxRows() +
-            JBUI.scale(SessionUiStyle.SessionLayout.SCROLL_CHROME)
+            JBUI.scale(SessionUiStyle.View.CARD_BODY_EXTRA_HEIGHT)
     }
 
     override fun dumpLabel() = "ToolView#$contentId(${labelText()})"
@@ -484,7 +484,7 @@ private class Preview {
 
     fun append(value: String): Preview {
         if (cut) return this
-        val rem = UiStyle.Size.toolBodyLimit() - text.length
+        val rem = SessionUiStyle.View.Tool.PREVIEW_LIMIT - text.length
         if (value.length <= rem) {
             text.append(value)
             return this
