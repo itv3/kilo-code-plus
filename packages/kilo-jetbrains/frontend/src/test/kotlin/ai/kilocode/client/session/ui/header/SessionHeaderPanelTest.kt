@@ -5,7 +5,7 @@ import ai.kilocode.client.session.model.StepFinish
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.model.ToolKind
-import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.style.SessionEditorStyle
 import ai.kilocode.client.session.update.SessionControllerTestBase
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.MessageDto

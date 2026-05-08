@@ -3,8 +3,8 @@ package ai.kilocode.client.session.ui.header
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.SessionHeaderSnapshot
 import ai.kilocode.client.session.model.SessionModelEvent
-import ai.kilocode.client.session.ui.SessionEditorStyle
-import ai.kilocode.client.session.ui.SessionEditorStyleTarget
+import ai.kilocode.client.session.ui.style.SessionEditorStyle
+import ai.kilocode.client.session.ui.style.SessionEditorStyleTarget
 import ai.kilocode.client.session.update.SessionController
 import ai.kilocode.client.ui.HoverIcon
 import ai.kilocode.client.ui.UiStyle

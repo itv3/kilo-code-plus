@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.ui
+package ai.kilocode.client.session.ui.style
 
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.ui.JBColor

@@ -9,7 +9,7 @@ import ai.kilocode.client.session.model.TimelineItem
 import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.model.ToolKind
-import ai.kilocode.client.session.ui.SessionUiStyle
+import ai.kilocode.client.session.ui.style.SessionUiStyle
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Dimension

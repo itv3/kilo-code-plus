@@ -1,6 +1,8 @@
 package ai.kilocode.client.session.ui
 
 import ai.kilocode.client.plugin.KiloBundle
+import ai.kilocode.client.session.ui.style.SessionEditorStyle
+import ai.kilocode.client.session.ui.style.SessionEditorStyleTarget
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.Centerizer
 import java.awt.BorderLayout

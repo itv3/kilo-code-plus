@@ -1,6 +1,6 @@
 package ai.kilocode.client.ui
 
-import ai.kilocode.client.session.ui.SessionUiStyle
+import ai.kilocode.client.session.ui.style.SessionUiStyle
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.JBUI
 import java.awt.Color

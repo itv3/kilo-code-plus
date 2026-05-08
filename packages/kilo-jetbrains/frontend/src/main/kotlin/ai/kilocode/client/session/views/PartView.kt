@@ -1,8 +1,8 @@
 package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Content
-import ai.kilocode.client.session.ui.SessionEditorStyle
-import ai.kilocode.client.session.ui.SessionEditorStyleTarget
+import ai.kilocode.client.session.ui.style.SessionEditorStyle
+import ai.kilocode.client.session.ui.style.SessionEditorStyleTarget
 import javax.swing.JPanel
 
 /**

@@ -1,7 +1,7 @@
 package ai.kilocode.client.session.views
 
 import ai.kilocode.client.session.model.Reasoning
-import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.style.SessionEditorStyle
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import javax.swing.ScrollPaneConstants
 

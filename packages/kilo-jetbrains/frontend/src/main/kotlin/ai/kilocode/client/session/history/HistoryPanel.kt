@@ -2,7 +2,7 @@ package ai.kilocode.client.session.history
 
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.ui.LoadingPanel
-import ai.kilocode.client.session.ui.SessionEditorStyle
+import ai.kilocode.client.session.ui.style.SessionEditorStyle
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.LafManagerListener

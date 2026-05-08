@@ -3,8 +3,8 @@ package ai.kilocode.client.session
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.ui.SessionMessageListPanel
 import ai.kilocode.client.session.ui.SessionRootPanel
-import ai.kilocode.client.session.ui.SessionEditorStyle
-import ai.kilocode.client.session.ui.SessionEditorStyleTarget
+import ai.kilocode.client.session.ui.style.SessionEditorStyle
+import ai.kilocode.client.session.ui.style.SessionEditorStyleTarget
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.IconLoader
