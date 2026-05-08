@@ -219,7 +219,7 @@ class SessionUi(
 
                 is SessionControllerEvent.ViewChanged.ShowRecents -> {
                     val panel = EmptySessionPanel(this, controller, event.recents) { manager?.showHistory() }
-                    scroll.show(panel)
+                    scroll.show(panel.view)
                 }
 
                 is SessionControllerEvent.ViewChanged.ShowSession -> {

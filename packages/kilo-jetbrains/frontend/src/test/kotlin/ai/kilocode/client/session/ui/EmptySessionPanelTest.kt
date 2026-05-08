@@ -84,11 +84,24 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
         assertTrue(panel.preferredSize.height > 0)
     }
 
-    fun `test content has fixed preferred width`() {
+    fun `test description width is capped at DESCRIPTION_WIDTH`() {
         val panel = panel()
 
-        assertEquals(com.intellij.util.ui.JBUI.scale(EmptySessionPanel.MAX_WIDTH), panel.contentPreferredSize().width)
-        assertTrue(panel.contentPreferredSize().height > 0)
+        assertEquals(com.intellij.util.ui.JBUI.scale(EmptySessionPanel.DESCRIPTION_WIDTH), panel.descriptionPreferredSize().width)
+        assertEquals(com.intellij.util.ui.JBUI.scale(EmptySessionPanel.DESCRIPTION_WIDTH), panel.descriptionMaximumSize().width)
+    }
+
+    fun `test description label is centered`() {
+        val panel = panel()
+
+        assertEquals(javax.swing.SwingConstants.CENTER, panel.welcomeLabelAlignment())
+    }
+
+    fun `test show history button has its own preferred width`() {
+        val panel = panel()
+        val btn = panel.historyButtonPreferredWidth()
+
+        assertTrue(btn > 0)
     }
 
     fun `test recent sessions are capped at five`() {
@@ -98,12 +111,12 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
         assertEquals(5, panel.recentCount())
     }
 
-    fun `test explanation uses markdown view`() {
+    fun `test explanation uses welcome message`() {
         val panel = panel()
 
         assertEquals(
             "Kilo Code is an AI coding assistant. Ask it to build features, fix bugs, or explain your codebase.",
-            panel.explanationMarkdown(),
+            panel.explanationText(),
         )
     }
 
