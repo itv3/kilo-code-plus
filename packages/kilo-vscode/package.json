@@ -950,7 +950,7 @@
     "marked": "catalog:",
     "openai": "^4.85.4",
     "quick-lru": "^7.0.0",
-    "simple-git": "3.35.2",
+    "simple-git": "3.36.0",
     "solid-js": "^1.9.11",
     "uri-js": "^4.4.1",
     "virtua": "catalog:",
