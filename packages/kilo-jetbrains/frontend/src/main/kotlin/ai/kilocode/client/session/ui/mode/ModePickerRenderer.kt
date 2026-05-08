@@ -98,7 +98,7 @@ internal class ModePickerRenderer(
         badge.border = JBUI.Borders.compound(
             JBUI.Borders.emptyLeft(JBUI.CurrentTheme.ActionsList.elementIconGap()),
             JBUI.Borders.compound(
-                RoundedLineBorder(warn, UiStyle.Gap.small()),
+                RoundedLineBorder(warn, UiStyle.Gap.sm()),
                 JBUI.Borders.empty(0, UiStyle.Gap.md()),
             ),
         )

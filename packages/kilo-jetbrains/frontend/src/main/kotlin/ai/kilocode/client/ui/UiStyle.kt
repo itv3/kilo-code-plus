@@ -4,13 +4,24 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
 import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.UIManager
 
 /** Static UI tokens and helpers for JetBrains session Swing surfaces. */
 object UiStyle {
+
+    object Gap {
+        fun xs() = JBUI.scale(2)
+
+        fun md() = JBUI.scale(6)
+
+        fun lg() = JBUI.scale(8)
+
+        fun sm() = JBUI.scale(4)
+
+        fun pad() = JBUI.scale(12)
+    }
 
     object Colors {
         fun bg(): Color = UIUtil.getPanelBackground()
@@ -54,23 +65,6 @@ object UiStyle {
             (color.red * 0.299 + color.green * 0.587 + color.blue * 0.114) >= 128
     }
 
-    object Borders {
-        fun warning() = JBUI.Borders.customLine(Colors.warningLabelForeground(), 1)
-    }
-
-    object Gap {
-        fun xs() = JBUI.scale(2)
-
-        fun md() = JBUI.scale(6)
-
-        fun lg() = JBUI.scale(8)
-
-        fun small() = JBUI.scale(4)
-
-        fun pad() = JBUI.scale(12)
-
-        fun layout(gap: Int = lg()) = BorderLayout(gap, 0)
-    }
 
     object Components {
         fun transparent(component: JComponent) {

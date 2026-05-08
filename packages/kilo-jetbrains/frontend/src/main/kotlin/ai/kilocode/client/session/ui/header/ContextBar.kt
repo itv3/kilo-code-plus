@@ -22,7 +22,7 @@ internal class ContextBar : JPanel(BorderLayout(UiStyle.Gap.md(), 0)) {
 
     init {
         isOpaque = false
-        border = JBUI.Borders.empty(UiStyle.Gap.small(), 0, 0, 0)
+        border = JBUI.Borders.empty(UiStyle.Gap.sm(), 0, 0, 0)
         add(used, BorderLayout.WEST)
         add(meter, BorderLayout.CENTER)
         add(limit, BorderLayout.EAST)

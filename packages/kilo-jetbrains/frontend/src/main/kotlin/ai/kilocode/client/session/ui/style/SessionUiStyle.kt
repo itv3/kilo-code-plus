@@ -3,6 +3,7 @@ package ai.kilocode.client.session.ui.style
 import ai.kilocode.client.ui.UiStyle
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Borders.customLine
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import javax.swing.border.Border
@@ -99,7 +100,7 @@ object SessionUiStyle {
 object Dock {
     fun banner(): Border = JBUI.Borders.compound(
         JBUI.Borders.customLineTop(SessionUiStyle.View.line()),
-        JBUI.Borders.empty(UiStyle.Gap.small(), UiStyle.Gap.lg(), 0, UiStyle.Gap.lg()),
+        JBUI.Borders.empty(UiStyle.Gap.sm(), UiStyle.Gap.lg(), 0, UiStyle.Gap.lg()),
     )!!
 
     fun neutral(): Border = JBUI.Borders.compound(
@@ -108,7 +109,7 @@ object Dock {
     )!!
 
     fun warning(): Border = JBUI.Borders.compound(
-        UiStyle.Borders.warning(),
+        customLine(UiStyle.Colors.warningLabelForeground(), 1),
         JBUI.Borders.empty(UiStyle.Gap.lg(), UiStyle.Gap.pad()),
     )!!
 }
