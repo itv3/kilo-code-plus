@@ -1074,7 +1074,7 @@ button.am-section-toggle:hover .am-section-label {
   position: relative;
   display: flex;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   align-items: stretch;
   height: 100%;
   overflow: hidden;
@@ -1334,6 +1334,7 @@ body.am-wt-dragging-active * {
   gap: 2px;
   flex-shrink: 0;
   align-self: stretch;
+  margin-left: auto;
   padding-left: 6px;
   padding-right: 4px;
   border-left: 1px solid var(--border-weak-base);
