@@ -16,7 +16,7 @@ import ai.kilocode.client.session.ui.QuestionPanel
 import ai.kilocode.client.session.ui.SessionMessageListPanel
 import ai.kilocode.client.session.ui.SessionRootPanel
 import ai.kilocode.client.session.ui.header.SessionHeaderPanel
-import ai.kilocode.client.session.update.SessionControllerEvent
+import ai.kilocode.client.session.controller.SessionControllerEvent
 import ai.kilocode.rpc.dto.MessageWithPartsDto
 import com.intellij.ui.components.JBScrollPane
 import javax.swing.JLayeredPane

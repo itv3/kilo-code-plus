@@ -3,7 +3,7 @@ package ai.kilocode.client.session.ui
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.session.model.Question
 import ai.kilocode.client.session.ui.style.Dock
-import ai.kilocode.client.session.update.SessionController
+import ai.kilocode.client.session.controller.SessionController
 import ai.kilocode.rpc.dto.QuestionReplyDto
 import com.intellij.icons.AllIcons
 import com.intellij.ui.dsl.builder.RightGap

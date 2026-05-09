@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.update
+package ai.kilocode.client.session.controller
 
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.app.KiloSessionService
@@ -40,7 +40,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 /**
- * Base class for [ai.kilocode.client.session.update.SessionController] tests.
+ * Base class for [ai.kilocode.client.session.controller.SessionController] tests.
  *
  * Provides real IntelliJ Application/EDT/Disposer via [BasePlatformTestCase],
  * real frontend services wired to fake RPC backends, and shared helpers.

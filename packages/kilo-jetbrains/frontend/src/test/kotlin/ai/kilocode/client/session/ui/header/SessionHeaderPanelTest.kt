@@ -6,7 +6,7 @@ import ai.kilocode.client.session.model.Tool
 import ai.kilocode.client.session.model.ToolExecState
 import ai.kilocode.client.session.model.ToolKind
 import ai.kilocode.client.session.ui.style.SessionEditorStyle
-import ai.kilocode.client.session.update.SessionControllerTestBase
+import ai.kilocode.client.session.controller.SessionControllerTestBase
 import ai.kilocode.rpc.dto.ChatEventDto
 import ai.kilocode.rpc.dto.MessageDto
 import ai.kilocode.rpc.dto.MessageTimeDto
@@ -464,7 +464,7 @@ class SessionHeaderPanelTest : SessionControllerTestBase() {
         assertEquals(0, panel.timelineViewport().viewPosition.y)
     }
 
-    private fun promptedHeader(): ai.kilocode.client.session.update.SessionController {
+    private fun promptedHeader(): ai.kilocode.client.session.controller.SessionController {
         appRpc.state.value = ai.kilocode.rpc.dto.KiloAppStateDto(
             ai.kilocode.rpc.dto.KiloAppStatusDto.READY,
             config = ai.kilocode.rpc.dto.ConfigDto(model = "kilo/gpt-5"),

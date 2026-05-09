@@ -396,10 +396,10 @@ class SessionSidePanelManagerTest : BasePlatformTestCase() {
 
     private fun active(manager: SessionSidePanelManager) = manager.component.getComponent(0) as JPanel
 
-    private fun JPanel.controller(): ai.kilocode.client.session.update.SessionController {
+    private fun JPanel.controller(): ai.kilocode.client.session.controller.SessionController {
         val field = SessionUi::class.java.getDeclaredField("controller")
         field.isAccessible = true
-        return field.get(this) as ai.kilocode.client.session.update.SessionController
+        return field.get(this) as ai.kilocode.client.session.controller.SessionController
     }
 
     private fun remove(manager: SessionSidePanelManager, id: String) {

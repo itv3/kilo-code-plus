@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.update
+package ai.kilocode.client.session.controller
 
 import ai.kilocode.log.ChatLogSummary
 import ai.kilocode.log.KiloLog

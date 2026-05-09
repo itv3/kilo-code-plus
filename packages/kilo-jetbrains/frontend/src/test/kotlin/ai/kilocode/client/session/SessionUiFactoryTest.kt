@@ -94,10 +94,10 @@ class SessionUiFactoryTest : BasePlatformTestCase() {
         assertEquals(1, manager.history)
     }
 
-    private fun controller(ui: SessionUi): ai.kilocode.client.session.update.SessionController {
+    private fun controller(ui: SessionUi): ai.kilocode.client.session.controller.SessionController {
         val field = SessionUi::class.java.getDeclaredField("controller")
         field.isAccessible = true
-        return field.get(ui) as ai.kilocode.client.session.update.SessionController
+        return field.get(ui) as ai.kilocode.client.session.controller.SessionController
     }
 
     fun `test application service is available`() {

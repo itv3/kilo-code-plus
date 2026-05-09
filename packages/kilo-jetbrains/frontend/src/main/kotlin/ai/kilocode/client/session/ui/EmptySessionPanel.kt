@@ -9,7 +9,7 @@ import ai.kilocode.client.session.history.title
 import ai.kilocode.client.session.ui.style.SessionEditorStyle
 import ai.kilocode.client.session.ui.style.SessionEditorStyleTarget
 import ai.kilocode.client.session.ui.style.SessionUiStyle
-import ai.kilocode.client.session.update.SessionController
+import ai.kilocode.client.session.controller.SessionController
 import ai.kilocode.client.ui.CenterShrinkPanel
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.rpc.dto.SessionDto

@@ -1,8 +1,8 @@
 package ai.kilocode.client.session.ui
 
-import ai.kilocode.client.session.update.SessionController
-import ai.kilocode.client.session.update.SessionControllerEvent
-import ai.kilocode.client.session.update.SessionControllerTestBase
+import ai.kilocode.client.session.controller.SessionController
+import ai.kilocode.client.session.controller.SessionControllerEvent
+import ai.kilocode.client.session.controller.SessionControllerTestBase
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.rpc.dto.ConfigWarningDto
 import ai.kilocode.rpc.dto.KiloAppStateDto

@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.update
+package ai.kilocode.client.session.controller
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager

@@ -1,4 +1,4 @@
-package ai.kilocode.client.session.update
+package ai.kilocode.client.session.controller
 
 import ai.kilocode.client.session.SessionRef
 import ai.kilocode.client.session.model.SessionState
