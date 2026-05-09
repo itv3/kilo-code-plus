@@ -121,7 +121,7 @@ class SessionUiLayoutTest : SessionUiTestBase() {
     fun `test empty and message bodies share the same scroll pane`() {
         settle()
         val pane = scrollComponent()
-        val empty = find<EmptySessionPanel>(ui)
+        val empty = find<EmptySessionPanel>(ui).view
 
         assertSame(empty, scrollView())
 
@@ -182,6 +182,8 @@ class SessionUiLayoutTest : SessionUiTestBase() {
 
     fun `test empty explicit session id shows message body`() {
         rpc.recent.add(session("ses_recent"))
+        settle()
+        rpc.recentCalls.clear()
 
         ui = newUi(id = "ses_test")
         settle()
@@ -194,6 +196,8 @@ class SessionUiLayoutTest : SessionUiTestBase() {
     fun `test explicit session id loading does not show recents`() {
         rpc.historyGate = kotlinx.coroutines.CompletableDeferred()
         rpc.recent.add(session("ses_recent"))
+        settle()
+        rpc.recentCalls.clear()
 
         ui = newUi(id = "ses_test", displayMs = 50)
         settleShort(100)
@@ -213,6 +217,8 @@ class SessionUiLayoutTest : SessionUiTestBase() {
         rpc.importedCloudSession = session("ses_imported")
         rpc.historyGate = kotlinx.coroutines.CompletableDeferred()
         rpc.recent.add(session("ses_recent"))
+        settle()
+        rpc.recentCalls.clear()
 
         ui = newUi(id = "cloud:cloud_1", displayMs = 50)
         settleShort(100)
@@ -274,7 +280,7 @@ class SessionUiLayoutTest : SessionUiTestBase() {
         settle()
 
         val panel = find<EmptySessionPanel>(ui)
-        assertSame(panel, scrollView())
+        assertSame(panel.view, scrollView())
         assertEquals(1, panel.recentCount())
     }
 

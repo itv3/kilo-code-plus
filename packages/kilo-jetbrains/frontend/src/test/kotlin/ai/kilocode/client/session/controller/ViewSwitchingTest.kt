@@ -149,6 +149,45 @@ class ViewSwitchingTest : SessionControllerTestBase() {
         assertFalse(events.any { it is SessionControllerEvent.ViewChanged.ShowRecents })
     }
 
+    fun `test local history session event sees loaded state on EDT`() {
+        projectRpc.state.value = workspaceReady()
+        val gate = CompletableDeferred<Unit>()
+        rpc.historyGate = gate
+        val m = controller("ses_test", displayMs = 50)
+        val states = collectStates(m)
+
+        gate.complete(Unit)
+        flush()
+
+        val state = states.single { it.first is SessionControllerEvent.ViewChanged.ShowSession }.second
+        assertTrue(state.showSession)
+        assertEquals(SessionControllerEvent.ViewChanged.ShowSession, state.viewState)
+        assertEquals("Idle", state.sessionLoadState)
+        assertEquals("Idle", state.recentsState)
+        assertEquals("ses_test", state.refKey)
+        assertEquals("LOCAL", state.refType)
+    }
+
+    fun `test cloud history session event sees imported local state on EDT`() {
+        projectRpc.state.value = workspaceReady()
+        rpc.importedCloudSession = session("ses_imported")
+        val gate = CompletableDeferred<Unit>()
+        rpc.historyGate = gate
+        val m = controller("cloud:cloud_1", displayMs = 50)
+        val states = collectStates(m)
+
+        gate.complete(Unit)
+        flush()
+
+        val state = states.single { it.first is SessionControllerEvent.ViewChanged.ShowSession }.second
+        assertTrue(state.showSession)
+        assertEquals(SessionControllerEvent.ViewChanged.ShowSession, state.viewState)
+        assertEquals("Idle", state.sessionLoadState)
+        assertEquals("Idle", state.recentsState)
+        assertEquals("ses_imported", state.refKey)
+        assertEquals("LOCAL", state.refType)
+    }
+
     fun `test existing session load shows progress immediately`() {
         val gate = CompletableDeferred<Unit>()
         rpc.historyGate = gate
