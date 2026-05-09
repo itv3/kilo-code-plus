@@ -232,8 +232,8 @@ class KiloBackendSessionManager(
         title = s.title,
         version = s.version,
         time = SessionTimeDto(
-            created = s.time.created,
-            updated = s.time.updated,
+            created = s.time.created.toDouble(),
+            updated = s.time.updated.toDouble(),
             archived = s.time.archived,
         ),
         summary = s.summary?.let {
@@ -253,8 +253,8 @@ class KiloBackendSessionManager(
         title = s.title,
         version = s.version,
         time = SessionTimeDto(
-            created = s.time.created,
-            updated = s.time.updated,
+            created = s.time.created.toDouble(),
+            updated = s.time.updated.toDouble(),
             archived = s.time.archived,
         ),
         summary = s.summary?.let {
@@ -276,7 +276,7 @@ class KiloBackendSessionManager(
 
     private fun encode(value: String) = java.net.URLEncoder.encode(value, Charsets.UTF_8)
 
-    private fun escape(value: String) = value.buildString {
+    private fun escape(value: String) = buildString {
         for (c in value) {
             when (c) {
                 '\\' -> append("\\\\")
