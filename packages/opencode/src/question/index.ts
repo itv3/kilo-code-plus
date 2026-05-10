@@ -29,7 +29,8 @@ export class Option extends Schema.Class<Option>("QuestionOption")({
   descriptionKey: Schema.optional(Schema.String).annotate({
     description: "Optional i18n key for the description",
   }),
-  // Hint to VS Code and other UI clients to switch the active agent/mode picker
+  // kilocode_change end
+  // kilocode_change start - hint to UI clients to switch the active agent/mode picker
   // when this option is selected (before the reply is confirmed by the server).
   mode: Schema.optional(Schema.String).annotate({
     description: "Optional agent/mode name to pre-select in the UI when this option is picked",
