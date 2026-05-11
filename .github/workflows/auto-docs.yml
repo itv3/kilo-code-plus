@@ -13,7 +13,7 @@ on:
         description: "PR number to test"
         required: true
 
-# Minimal permissions: read repo contents (for gh api) and PR metadata only.
+# Minimal permissions: read repo contents and PR metadata only.
 permissions:
   contents: read
   pull-requests: read
@@ -40,74 +40,70 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      # On manual dispatch, fetch real PR metadata via the GitHub API so that
-      # manual runs are full end-to-end tests rather than "ping only" runs.
-      # The fetched fields are written to GITHUB_ENV and picked up by the next
-      # step via the `env.TITLE` etc. fallbacks in its `env:` block.
-      - name: Fetch PR metadata (manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-          REPO: ${{ github.repository }}
-        run: |
-          gh api "repos/$REPO/pulls/$PR_NUMBER" > pr.json
-          {
-            echo "TITLE=$(jq -r .title pr.json)"
-            echo "BODY<<__EOF__"
-            jq -r '.body // ""' pr.json
-            echo "__EOF__"
-            echo "AUTHOR=$(jq -r .user.login pr.json)"
-            echo "MERGED_AT=$(jq -r '.merged_at // ""' pr.json)"
-            echo "PR_URL=$(jq -r .html_url pr.json)"
-          } >> "$GITHUB_ENV"
-
       - name: Build webhook payload
         env:
+          GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           REPO: ${{ github.repository }}
-          # For pull_request_target the left-hand side is populated by the event.
-          # For workflow_dispatch it evaluates to empty, so we fall back to the
-          # values written to GITHUB_ENV by the "Fetch PR metadata" step above.
-          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
-          TITLE: ${{ github.event.pull_request.title || env.TITLE }}
-          BODY: ${{ github.event.pull_request.body || env.BODY }}
-          AUTHOR: ${{ github.event.pull_request.user.login || env.AUTHOR }}
-          MERGED_AT: ${{ github.event.pull_request.merged_at || env.MERGED_AT }}
-          PR_URL: ${{ github.event.pull_request.html_url || env.PR_URL }}
+          PR_NUMBER_FROM_EVENT: ${{ github.event.pull_request.number }}
+          PR_NUMBER_FROM_INPUT: ${{ inputs.pr_number }}
         run: |
-          payload=$(jq -n \
+          set -euo pipefail
+
+          PR_NUMBER="${PR_NUMBER_FROM_EVENT:-$PR_NUMBER_FROM_INPUT}"
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Missing PR number"
+            exit 1
+          fi
+
+          gh api "repos/$REPO/pulls/$PR_NUMBER" > pr.json
+
+          jq -n \
             --arg event_name "$EVENT_NAME" \
             --arg repo "$REPO" \
             --arg pr_number "$PR_NUMBER" \
-            --arg title "$TITLE" \
-            --arg body "$BODY" \
-            --arg author "$AUTHOR" \
-            --arg merged_at "$MERGED_AT" \
-            --arg pr_url "$PR_URL" \
+            --slurpfile pr pr.json \
             '{
               event_name: $event_name,
               repo: $repo,
               pr_number: $pr_number,
-              title: $title,
-              description: $body,
-              author: $author,
-              merged_at: $merged_at,
-              pr_url: $pr_url
-            }'
-          )
+              title: $pr[0].title,
+              description: ($pr[0].body // ""),
+              author: $pr[0].user.login,
+              merged_at: ($pr[0].merged_at // ""),
+              pr_url: $pr[0].html_url,
+              base_branch: $pr[0].base.ref,
+              head_branch: $pr[0].head.ref
+            }' > payload.json
 
-          echo "$payload" > payload.json
-          echo "Payload:"
-          cat payload.json
+          echo "Payload created:"
+          jq '{
+            event_name,
+            repo,
+            pr_number,
+            title,
+            author,
+            merged_at,
+            pr_url,
+            base_branch,
+            head_branch
+          }' payload.json
 
       - name: Send webhook to Val Town
         env:
           DOC_WEBHOOK_URL: ${{ secrets.DOC_WEBHOOK_URL }}
           DOC_WEBHOOK_SECRET: ${{ secrets.DOC_WEBHOOK_SECRET }}
         run: |
-          if [ -z "$DOC_WEBHOOK_URL" ]; then
+          set -euo pipefail
+
+          if [ -z "${DOC_WEBHOOK_URL:-}" ]; then
             echo "DOC_WEBHOOK_URL secret is not set"
+            exit 1
+          fi
+
+          if [ -z "${DOC_WEBHOOK_SECRET:-}" ]; then
+            echo "DOC_WEBHOOK_SECRET secret is not set"
             exit 1
           fi
 
