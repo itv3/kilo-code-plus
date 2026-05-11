@@ -13,9 +13,9 @@ description: "Use Kilo Code directly from Slack, GitHub, and Linear"
 
 | Integration | Trigger | What It Can Do |
 |---|---|---|
-| [Slack](/code-with-ai/platforms/slack) | `@Kilo` in any channel or DM | Ask questions, implement fixes, debug issues |
-| [GitHub](/code-with-ai/platforms/github) | `@kilocode-bot` on issues and PRs | Fix issues, review code, cross-repo changes |
-| [Linear](/code-with-ai/platforms/linear) | `@kilo` on any issue | Implement fixes, investigate bugs, cross-repo changes |
+| [Slack](/docs/code-with-ai/platforms/slack) | `@Kilo` in any channel or DM | Ask questions, implement fixes, debug issues |
+| [GitHub](/docs/code-with-ai/platforms/github) | `@kilocode-bot` on issues and PRs | Fix issues, review code, cross-repo changes |
+| [Linear](/docs/code-with-ai/platforms/linear) | `@kilo` on any issue | Implement fixes, investigate bugs, cross-repo changes |
 
 ---
 
