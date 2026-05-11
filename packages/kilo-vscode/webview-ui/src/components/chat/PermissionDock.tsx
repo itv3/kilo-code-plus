@@ -42,7 +42,15 @@ export const PermissionDock: Component<{
   const label = (rule: string) => (rule === "*" ? "" : rule.replace(/ \*$/, ""))
   const command = () => {
     const cmd = props.request.args?.command
-    return typeof cmd === "string" ? cmd : undefined
+    if (typeof cmd !== "string") return undefined
+    // Normalize IDN/Unicode hostnames to punycode ASCII to prevent homograph attacks.
+    return cmd.replace(/https?:\/\/\S+/g, (match) => {
+      try {
+        return new URL(match).href
+      } catch {
+        return match
+      }
+    })
   }
   const description = createMemo(() =>
     command() ? null : describePatterns(props.request.toolName, props.request.patterns, language.t),

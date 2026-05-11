@@ -34,12 +34,23 @@ export const WebFetchTool = Tool.define(
             throw new Error("URL must start with http:// or https://")
           }
 
+          // Normalize URL: convert IDN/Unicode hostnames to punycode ASCII to prevent
+          // homograph attacks where visually similar Unicode characters impersonate trusted domains.
+          // e.g. "аpitest.com" (Cyrillic а) → "xn--pitest-n5b.com"
+          const url = (() => {
+            try {
+              return new URL(params.url).href
+            } catch {
+              return params.url
+            }
+          })()
+
           yield* ctx.ask({
             permission: "webfetch",
-            patterns: [params.url],
+            patterns: [url],
             always: ["*"],
             metadata: {
-              url: params.url,
+              url,
               format: params.format,
               timeout: params.timeout,
             },
@@ -71,7 +82,7 @@ export const WebFetchTool = Tool.define(
             "Accept-Language": "en-US,en;q=0.9",
           }
 
-          const request = HttpClientRequest.get(params.url).pipe(HttpClientRequest.setHeaders(headers))
+          const request = HttpClientRequest.get(url).pipe(HttpClientRequest.setHeaders(headers))
 
           // Retry with honest UA if blocked by Cloudflare bot detection (TLS fingerprint mismatch)
           const response = yield* httpOk.execute(request).pipe(
@@ -82,7 +93,7 @@ export const WebFetchTool = Tool.define(
                 err.reason.response.headers["cf-mitigated"] === "challenge",
               () =>
                 httpOk.execute(
-                  HttpClientRequest.get(params.url).pipe(
+                  HttpClientRequest.get(url).pipe(
                     HttpClientRequest.setHeaders({ ...headers, "User-Agent": "kilo" }), // kilocode_change
                   ),
                 ),
@@ -103,7 +114,7 @@ export const WebFetchTool = Tool.define(
 
           const contentType = response.headers["content-type"] || ""
           const mime = contentType.split(";")[0]?.trim().toLowerCase() || ""
-          const title = `${params.url} (${contentType})`
+          const title = `${url} (${contentType})`
 
           if (isImageAttachment(mime)) {
             const base64Content = Buffer.from(arrayBuffer).toString("base64")

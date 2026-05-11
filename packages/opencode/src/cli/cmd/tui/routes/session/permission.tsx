@@ -22,6 +22,18 @@ import { ConfigProtection } from "@/kilocode/permission/config-paths" // kilocod
 
 type PermissionStage = "permission" | "always" | "reject"
 
+// Convert IDN/Unicode hostnames to punycode ASCII in any http/https URLs found
+// in the given string, to prevent homograph attacks in permission dialogs.
+function normalizeUrls(text: string) {
+  return text.replace(/https?:\/\/\S+/g, (match) => {
+    try {
+      return new URL(match).href
+    } catch {
+      return match
+    }
+  })
+}
+
 function normalizePath(input?: string) {
   if (!input) return ""
 
@@ -294,7 +306,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
             if (permission === "bash") {
               const title =
                 typeof data.description === "string" && data.description ? data.description : "Shell command"
-              const command = typeof data.command === "string" ? data.command : ""
+              const command = normalizeUrls(typeof data.command === "string" ? data.command : "")
               return {
                 icon: "#",
                 title,
@@ -325,7 +337,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
             }
 
             if (permission === "webfetch") {
-              const url = typeof data.url === "string" ? data.url : ""
+              const url = normalizeUrls(typeof data.url === "string" ? data.url : "")
               return {
                 icon: "%",
                 title: `WebFetch ${url}`,

@@ -238,6 +238,19 @@ function preview(text: string) {
   return "...\n\n" + text.slice(-MAX_METADATA_LENGTH)
 }
 
+// Normalize any http/https URLs in a command string so that IDN/Unicode hostnames
+// are converted to their punycode ASCII form, preventing homograph attacks in
+// permission dialogs where "аpitest.com" (Cyrillic) looks identical to "apitest.com".
+function normalizeUrls(text: string) {
+  return text.replace(/https?:\/\/\S+/g, (match) => {
+    try {
+      return new URL(match).href
+    } catch {
+      return match
+    }
+  })
+}
+
 function tail(text: string, maxLines: number, maxBytes: number) {
   const lines = text.split("\n")
   if (lines.length <= maxLines && Buffer.byteLength(text, "utf-8") <= maxBytes) {
@@ -296,7 +309,7 @@ const ask = Effect.fn("BashTool.ask")(function* (ctx: Tool.Context, scan: Scan, 
     permission: "bash",
     patterns: Array.from(scan.patterns),
     always: Array.from(scan.always),
-    metadata: { command }, // kilocode_change
+    metadata: { command: normalizeUrls(command) }, // kilocode_change
   })
 })
 
