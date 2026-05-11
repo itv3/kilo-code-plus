@@ -61,9 +61,10 @@ class HistoryController(
             if (item.id in deleting) return@edt
             deleting.add(item.id)
             local.refresh()
+            val dir = item.directory ?: workspace.directory
             cs.launch {
                 try {
-                    sessions.deleteSession(item.id, item.directory ?: workspace.directory)
+                    sessions.deleteSession(item.id, dir)
                     edt {
                         deleting.remove(item.id)
                         local.remove(item.id)
@@ -75,6 +76,18 @@ class HistoryController(
                         local.fail(e.message ?: KiloBundle.message("history.error.local.delete"))
                     }
                 }
+            }
+        }
+    }
+
+    fun rename(item: LocalHistoryItem, title: String) {
+        val dir = item.directory ?: workspace.directory
+        cs.launch {
+            try {
+                val updated = sessions.renameSession(item.id, dir, title)
+                edt { local.update(LocalHistoryItem(updated)) }
+            } catch (e: Exception) {
+                edt { local.fail(e.message ?: KiloBundle.message("history.error.local.rename")) }
             }
         }
     }
