@@ -2,7 +2,7 @@
  * Sidebar worktree item with inline delete confirmation, HoverCard, rename, and stats.
  * Extracted from AgentManagerApp for reuse and visual-regression testing via Storybook.
  */
-import { Component, Show, createSignal } from "solid-js"
+import { Component, For, Show, createSignal } from "solid-js"
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { Spinner } from "@kilocode/kilo-ui/spinner"
@@ -10,7 +10,8 @@ import { Tooltip, TooltipKeybind } from "@kilocode/kilo-ui/tooltip"
 import { HoverCard } from "@kilocode/kilo-ui/hover-card"
 import { ContextMenu } from "@kilocode/kilo-ui/context-menu"
 import { Button } from "@kilocode/kilo-ui/button"
-import type { WorktreeState, WorktreeGitStats, PRStatus } from "../src/types/messages"
+import type { WorktreeState, WorktreeGitStats, PRStatus, SectionState, RunStatus } from "../src/types/messages"
+import { colorCss } from "./section-colors"
 import { useLanguage } from "../src/context/language"
 import { formatRelativeDate } from "../src/utils/date"
 
@@ -30,8 +31,8 @@ interface WorktreeItemProps {
   /** Whether an agent session on this worktree is actively working (shows spinner instead of branch icon). */
   working: boolean
   stale: boolean
-  /** 1-indexed shortcut number shown as ⌘2, ⌘3, etc. Pass 0 or >9 to hide. */
-  shortcut: number
+  /** 1-indexed shortcut number shown as ⌘2, ⌘3, etc. Pass 0, >9, or undefined to hide. */
+  shortcut?: number
   stats?: WorktreeGitStats
   /** Navigation hint text shown in the hover card (e.g. "⌘⌥↑"). */
   navHint?: string
@@ -55,8 +56,17 @@ interface WorktreeItemProps {
   openKeybind: string
   /** PR status for this worktree's branch, or null if no PR. */
   pr?: PRStatus | null
+  runStatus?: RunStatus
   /** Callback when the PR badge is clicked. */
   onOpenPR?: () => void
+  /** Available sections for the "Move to Section" submenu. */
+  sections?: SectionState[]
+  /** ID of the section this worktree currently belongs to (for disabling current item). */
+  currentSectionId?: string
+  /** Move this worktree to a section (or null for ungrouped). */
+  onMoveToSection?: (sectionId: string | null) => void
+  /** Move this worktree to a new section. */
+  onMoveToNewSection?: () => void
 
   onClick: () => void
   onDelete: (e: MouseEvent) => void
@@ -96,6 +106,28 @@ function reviewLabel(review: string): string {
   if (review === "approved") return "Approved"
   if (review === "changes_requested") return "Changes Requested"
   return "Pending"
+}
+
+function runAccent(status: RunStatus | undefined): "running" | "stopping" | "success" | "error" | undefined {
+  if (status?.state === "running") return "running"
+  if (status?.state === "stopping") return "stopping"
+  if (status?.exitCode === undefined && !status?.error) return undefined
+  if (status.exitCode === 0 && !status.error) return "success"
+  return "error"
+}
+
+function RunBadge(props: { status?: RunStatus }) {
+  const kind = () => runAccent(props.status)
+  return (
+    <Show when={kind()}>
+      <span class="am-run-badge" data-run-state={kind()}>
+        <Icon name={kind() === "success" ? "check-small" : kind() === "error" ? "warning" : "play"} size="small" />
+        <Show when={props.status?.state === "running" || props.status?.state === "stopping"}>
+          <span class="am-run-badge-label">{props.status?.state === "stopping" ? "Stopping" : "Running"}</span>
+        </Show>
+      </span>
+    </Show>
+  )
 }
 
 export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
@@ -234,7 +266,9 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                         <span class="am-worktree-delete-hint">{t("agentManager.worktree.confirmDelete")}</span>
                       </Show>
                       <div class="am-wt-hover-actions">
-                        <Show when={props.shortcut >= 2 && props.shortcut <= MAX_SHORTCUT}>
+                        <Show
+                          when={props.shortcut !== undefined && props.shortcut >= 2 && props.shortcut <= MAX_SHORTCUT}
+                        >
                           <span class="am-shortcut-badge">
                             {isMac ? "⌘" : "Ctrl+"}
                             {props.shortcut}
@@ -269,6 +303,7 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                     <Show when={props.subtitle}>
                       <span class="am-worktree-subtitle">{props.subtitle}</span>
                     </Show>
+                    <RunBadge status={props.runStatus} />
                     <Show
                       when={props.pr}
                       fallback={
@@ -286,7 +321,7 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                             data-pending={pr().state === "open" && pr().checks.status === "pending" ? "" : undefined}
                             onClick={handleOpenPR}
                           >
-                            <Icon name="branch" size="small" />
+                            <Icon name={pr().review === "approved" ? "check-small" : "branch"} size="small" />
                             <span class="am-pr-badge-number">#{pr().number}</span>
                           </span>
                         )
@@ -451,6 +486,38 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
               <Icon name="copy" size="small" />
               <ContextMenu.ItemLabel>{t("agentManager.worktree.copyPath")}</ContextMenu.ItemLabel>
             </ContextMenu.Item>
+            <ContextMenu.Separator />
+            <ContextMenu.Item onSelect={() => props.onMoveToNewSection?.()}>
+              <Icon name="plus" size="small" />
+              <ContextMenu.ItemLabel>{t("agentManager.worktree.newSection")}</ContextMenu.ItemLabel>
+            </ContextMenu.Item>
+            <Show when={props.sections && props.sections.length > 0}>
+              <ContextMenu.Separator />
+              <ContextMenu.Item onSelect={() => props.onMoveToSection?.(null)}>
+                <Show when={!props.currentSectionId}>
+                  <Icon name="check" size="small" />
+                </Show>
+                <ContextMenu.ItemLabel>{t("agentManager.worktree.ungrouped")}</ContextMenu.ItemLabel>
+              </ContextMenu.Item>
+              <For each={props.sections}>
+                {(sec) => (
+                  <ContextMenu.Item onSelect={() => props.onMoveToSection?.(sec.id)}>
+                    <Show
+                      when={props.currentSectionId === sec.id}
+                      fallback={
+                        <span
+                          class="am-color-swatch am-color-swatch-sm"
+                          style={{ background: colorCss(sec.color) ?? "var(--vscode-panel-border)" }}
+                        />
+                      }
+                    >
+                      <Icon name="check" size="small" />
+                    </Show>
+                    <ContextMenu.ItemLabel>{sec.name}</ContextMenu.ItemLabel>
+                  </ContextMenu.Item>
+                )}
+              </For>
+            </Show>
           </ContextMenu.Content>
         </ContextMenu.Portal>
       </ContextMenu>

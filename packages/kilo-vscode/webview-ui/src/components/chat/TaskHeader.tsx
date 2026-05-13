@@ -14,11 +14,13 @@ import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { Checkbox } from "@kilocode/kilo-ui/checkbox"
 import { useSession } from "../../context/session"
+import { collapseCostBreakdown } from "../../context/session-utils"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import { TaskTimeline } from "./TaskTimeline"
 import { ContextProgress } from "./ContextProgress"
-import type { TodoItem, ExtensionMessage } from "../../types/messages"
+import { target as todoTarget } from "../../context/todo-revert"
+import type { Part, TodoItem, ExtensionMessage } from "../../types/messages"
 
 interface TaskHeaderProps {
   readonly?: boolean
@@ -31,7 +33,7 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
   const title = createMemo(() => session.currentSession()?.title ?? language.t("command.session.new"))
   const hasMessages = createMemo(() => session.messages().length > 0)
   const busy = createMemo(() => session.status() === "busy")
-  const canCompact = createMemo(() => !busy() && hasMessages() && !!session.selected())
+  const canCompact = createMemo(() => !busy() && session.visibleMessages().length > 0 && !!session.selected())
 
   const fmt = (n: number) => new Intl.NumberFormat(language.locale(), { style: "currency", currency: "USD" }).format(n)
 
@@ -46,9 +48,12 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
   const costTooltip = createMemo(() => {
     const items = breakdown()
     if (items.length <= 1) return <span>{language.t("context.usage.sessionCost")}</span>
+    const collapsed = collapseCostBreakdown(items, (n) =>
+      language.t("context.usage.olderSessions", { count: String(n) }),
+    )
     return (
       <div style={{ "text-align": "left", "white-space": "nowrap" }}>
-        <For each={items}>{(e) => <div>{`${e.label}: ${fmt(e.cost)}`}</div>}</For>
+        <For each={collapsed}>{(e) => <div>{`${e.label}: ${fmt(e.cost)}`}</div>}</For>
       </div>
     )
   })
@@ -63,7 +68,7 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
 
   // Token breakdown from the last assistant message — only return if at least one value is > 0
   const tokens = createMemo(() => {
-    const msgs = session.messages()
+    const msgs = session.visibleMessages()
     for (let i = msgs.length - 1; i >= 0; i--) {
       const m = msgs[i]
       if (m.role !== "assistant" || !m.tokens) continue
@@ -72,6 +77,14 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
       if (has) return tk
     }
     return undefined
+  })
+
+  const hasTimeline = createMemo(() => {
+    for (const m of session.visibleMessages()) {
+      if (m.role !== "assistant") continue
+      if (session.getParts(m.id).some((p) => p.type !== "step-start")) return true
+    }
+    return false
   })
 
   const fmtNum = (n: number): string => {
@@ -112,6 +125,16 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
   })
 
   const [todosOpen, setTodosOpen] = createSignal(false)
+
+  const donePart = (idx: number): Part | undefined =>
+    todoTarget({ messages: session.messages(), parts: session.allParts() }, idx)
+
+  const revertTodo = (part: Part | undefined) => {
+    if (session.status() !== "idle") return
+    if (part?.type !== "tool") return
+    if (!part.messageID) return
+    session.revertSession(part.messageID, part.id)
+  }
 
   return (
     <Show when={hasMessages()}>
@@ -162,7 +185,7 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
         </div>
       </div>
       {/* Expanded graph section: timeline + context bar + token breakdown */}
-      <Show when={expanded() && session.messages().some((m) => m.role === "assistant")}>
+      <Show when={expanded() && hasTimeline()}>
         <div data-component="task-header-graph">
           <TaskTimeline />
           <div data-slot="task-header-graph-row">
@@ -222,16 +245,21 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
           <Show when={todosOpen()}>
             <div data-slot="task-header-todos-list">
               <For each={todos()}>
-                {(todo: TodoItem) => (
-                  <Checkbox readOnly checked={todo.status === "completed"}>
-                    <span
-                      data-slot="task-header-todo-content"
-                      data-completed={todo.status === "completed" ? "" : undefined}
-                    >
-                      {todo.content}
-                    </span>
-                  </Checkbox>
-                )}
+                {(todo: TodoItem, idx) => {
+                  const part = createMemo(() => (todo.status === "completed" ? donePart(idx()) : undefined))
+                  return (
+                    <Tooltip value={part() ? language.t("settings.checkpoints.title") : undefined} placement="bottom">
+                      <Checkbox readOnly checked={todo.status === "completed"} onClick={() => revertTodo(part())}>
+                        <span
+                          data-slot="task-header-todo-content"
+                          data-completed={todo.status === "completed" ? "" : undefined}
+                        >
+                          {todo.content}
+                        </span>
+                      </Checkbox>
+                    </Tooltip>
+                  )
+                }}
               </For>
             </div>
           </Show>

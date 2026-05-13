@@ -38,6 +38,12 @@ export interface SessionProvider {
   trackSession(id: string): void
   refreshSessions(): void
   registerSession(session: Session): void
+  /** Recover any pending permission/question prompts for tracked sessions. */
+  recoverPendingPrompts(): void
+  /** Register a callback invoked when a plan follow-up session is adopted.
+   *  The callback receives the new session and its directory so the Agent Manager
+   *  can route it to the correct worktree instead of LOCAL. */
+  onFollowupAdopted(cb: (session: Session, directory: string) => void): void
   dispose(): void
 }
 
@@ -49,6 +55,12 @@ export interface SessionProvider {
 export interface PanelContext {
   /** Send a message to the webview. */
   postMessage(msg: unknown): void
+
+  /** Resolve once the panel webview is ready to receive messages. */
+  waitForReady(): Promise<void>
+
+  /** Resolve once the panel is the active editor tab. */
+  waitForActive(): Promise<void>
 
   /** Reveal the panel. */
   reveal(preserveFocus?: boolean): void
