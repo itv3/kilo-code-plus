@@ -55,6 +55,11 @@ describe("plan_exit renderer uses openFile not openDiff (source)", () => {
     expect(src).toContain("data.openFile")
   })
 
+  it("uses a safe inert anchor href", () => {
+    expect(src).toContain('href="#"')
+    expect(src).not.toContain("href={display()}")
+  })
+
   it("always uses the generic ready label", () => {
     expect(src).toContain('language.t("plan.exit.ready")')
     expect(src).not.toContain('language.t("plan.exit.readyUpdated")')

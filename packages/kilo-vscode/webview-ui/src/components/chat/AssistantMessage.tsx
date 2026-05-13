@@ -74,7 +74,7 @@ function PlanExitCard(props: { part: ToolPart }) {
         {" "}
         <a
           data-slot="plan-exit-link"
-          href={display()}
+          href="#"
           onClick={open}
         >
           {display()}
