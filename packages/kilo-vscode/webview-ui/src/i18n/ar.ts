@@ -1563,6 +1563,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "لا توجد فروع مطابقة",
   "diffViewer.baseBranch.loading": "جارٍ تحميل الفروع…",
   "diffViewer.baseBranch.none": "—",
-  // plan_exit tool part display
   "plan.exit.ready": "الخطة جاهزة:",
 }

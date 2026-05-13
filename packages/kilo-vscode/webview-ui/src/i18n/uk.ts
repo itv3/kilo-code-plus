@@ -1611,6 +1611,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "No matching branches",
   "diffViewer.baseBranch.loading": "Loading branches…",
   "diffViewer.baseBranch.none": "—",
-  // plan_exit tool part display
   "plan.exit.ready": "План готовий:",
 }

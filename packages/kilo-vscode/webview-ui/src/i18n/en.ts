@@ -1593,6 +1593,5 @@ export const dict = {
   "diffViewer.baseBranch.loading": "Loading branches…",
   "diffViewer.baseBranch.none": "—",
 
-  // plan_exit tool part display
   "plan.exit.ready": "Plan is ready:",
 }

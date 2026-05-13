@@ -1535,6 +1535,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "沒有相符的分支",
   "diffViewer.baseBranch.loading": "正在載入分支…",
   "diffViewer.baseBranch.none": "—",
-  // plan_exit tool part display
   "plan.exit.ready": "計畫已準備就緒：",
 } satisfies Partial<Record<Keys, string>>
