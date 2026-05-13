@@ -27,6 +27,7 @@ import java.awt.Cursor
 import java.awt.event.KeyEvent
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.event.ListDataEvent
@@ -571,6 +572,23 @@ class HistoryControllerTest : BasePlatformTestCase() {
         assertNull(rpc.cloudCalls[0].gitUrl)
         assertEquals(false, controller.repoOnly)
         assertNull(controller.gitUrl)
+    }
+
+    fun `test cloud git url resolves once across overlapping reloads`() {
+        rpc.cloud += cloud("cloud_1", "Cloud One")
+        val calls = AtomicInteger()
+        val controller = HistoryController(sessions, workspace, scope, gitUrlProvider = {
+            calls.incrementAndGet()
+            Thread.sleep(100)
+            "git@github.com:test/repo.git"
+        })
+
+        controller.reloadCloud()
+        controller.reloadCloud()
+        flush()
+
+        assertEquals(1, calls.get())
+        assertEquals(2, rpc.cloudCalls.size)
     }
 
     fun `test cloud load passes null when repo only disabled`() {

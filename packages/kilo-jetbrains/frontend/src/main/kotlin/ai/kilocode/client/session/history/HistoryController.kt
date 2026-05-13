@@ -8,7 +8,11 @@ import ai.kilocode.rpc.dto.CloudSessionDto
 import ai.kilocode.rpc.dto.SessionDto
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 class HistoryController(
     private val sessions: KiloSessionService,
@@ -29,6 +33,10 @@ class HistoryController(
     @Volatile
     var gitUrl: String? = null
         private set
+
+    @Volatile
+    private var resolved = false
+    private val lock = Mutex()
 
     /** Whether to filter cloud history by the current repository. */
     var repoOnly: Boolean = false
@@ -151,14 +159,18 @@ class HistoryController(
      * propagates state updates to EDT via [edt].
      */
     private suspend fun resolveUrlIfNeeded(): String? {
-        if (gitUrl != null) return gitUrl
-        val url = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            gitUrlProvider()
+        if (resolved) return gitUrl
+        return lock.withLock {
+            if (resolved) return@withLock gitUrl
+            val url = withContext(Dispatchers.IO) {
+                gitUrlProvider()
+            }
+            // Write gitUrl directly (volatile) so it is visible before EDT callbacks fire.
+            gitUrl = url
+            resolved = true
+            if (url != null) updateRepoOnly(true)
+            url
         }
-        // Write gitUrl directly (volatile) so it is visible before EDT callbacks fire.
-        gitUrl = url
-        if (url != null) updateRepoOnly(true)
-        return url
     }
 }
 
