@@ -16,6 +16,7 @@ import { SessionTable } from "@/session/session.sql"
 import * as Log from "@opencode-ai/core/util/log"
 import type { LanguageModelUsage, ProviderMetadata } from "ai"
 import type { Provider } from "@/provider/provider"
+import { ENV_FEATURE } from "@kilocode/kilo-gateway"
 
 export namespace KiloSession {
   const log = Log.create({ service: "session.kilo" })
@@ -49,6 +50,17 @@ export namespace KiloSession {
   // ---------------------------------------------------------------------------
 
   const overrides = new Map<string, string>()
+  const parents = new Map<string, string>()
+  const roots = new Map<string, string>()
+
+  export function register(input: { id: string; parentID?: string; platform?: string }) {
+    const root = input.parentID ? (roots.get(input.parentID) ?? input.parentID) : input.id
+    const platform = input.platform ?? (input.parentID ? resolvePlatform(input.parentID) : undefined)
+
+    roots.set(input.id, root)
+    if (input.parentID) parents.set(input.id, input.parentID)
+    if (platform) overrides.set(input.id, platform)
+  }
 
   export function setPlatformOverride(id: string, platform: string) {
     overrides.set(id, platform)
@@ -58,45 +70,16 @@ export namespace KiloSession {
     return overrides.get(id)
   }
 
-  function getParentID(id: string): string | undefined {
-    const row = Database.use((db) =>
-      db
-        .select({ parentID: SessionTable.parent_id })
-        .from(SessionTable)
-        .where(eq(SessionTable.id, SessionID.make(id)))
-        .get(),
-    )
-    return row?.parentID ?? undefined
-  }
-
   export function resolvePlatform(id: string): string | undefined {
     const override = overrides.get(id)
     if (override) return override
-
-    let current: string | undefined = id
-    const seen = new Set<string>()
-    while (current && !seen.has(current)) {
-      seen.add(current)
-      const parentID = getParentID(current)
-      if (!parentID) break
-      const parentOverride = overrides.get(parentID)
-      if (parentOverride) return parentOverride
-      current = parentID
-    }
-
-    return undefined
+    const parent = parents.get(id)
+    if (!parent) return undefined
+    return resolvePlatform(parent)
   }
 
   export function resolveRoot(id: string): string {
-    let root = id
-    const seen = new Set<string>()
-    while (!seen.has(root)) {
-      seen.add(root)
-      const parentID = getParentID(root)
-      if (!parentID) return root
-      root = parentID
-    }
-    return root
+    return roots.get(id) ?? id
   }
 
   export function featureForPlatform(platform: string | undefined): string | undefined {
@@ -114,6 +97,15 @@ export namespace KiloSession {
 
   export function clearPlatformOverride(id: string) {
     overrides.delete(id)
+    parents.delete(id)
+    roots.delete(id)
+  }
+
+  export function attribution(id: string): { rootID: string; feature?: string } {
+    const rootID = resolveRoot(id)
+    const platform = resolvePlatform(rootID) ?? process.env["KILO_PLATFORM"]
+    const feature = featureForPlatform(platform) ?? process.env[ENV_FEATURE]
+    return { rootID, ...(feature ? { feature } : {}) }
   }
 
   // ---------------------------------------------------------------------------

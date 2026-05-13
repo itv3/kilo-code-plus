@@ -489,7 +489,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
       directory: string
       path?: string
       permission?: Permission.Ruleset
-      platform?: string
+      platform?: string // kilocode_change - per-session platform override for telemetry attribution
     }) {
       const ctx = yield* InstanceState.context
       const result: Info = {
@@ -510,9 +510,9 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
       }
       log.info("created", result)
 
-      if (input.platform) {
-        KiloSession.setPlatformOverride(result.id, input.platform)
-      }
+      // kilocode_change start - register attribution before session.created subscribers run
+      KiloSession.register({ id: result.id, parentID: result.parentID, platform: input.platform })
+      // kilocode_change end
 
       yield* sync.run(Event.Created, { sessionID: result.id, info: result })
 
@@ -657,7 +657,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
         path: sessionPath(ctx.worktree, ctx.directory),
         title: input?.title,
         permission: input?.permission,
-        platform: input?.platform ?? (input?.parentID ? KiloSession.resolvePlatform(input.parentID) : undefined),
+        platform: input?.platform, // kilocode_change
         workspaceID: input?.workspaceID ?? workspace, // kilocode_change - allow explicit override
       })
       return session
