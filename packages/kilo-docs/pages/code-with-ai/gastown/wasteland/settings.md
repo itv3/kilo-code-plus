@@ -113,7 +113,7 @@ If the Mayor reports DoltHub authentication errors, the PAT may have expired or 
 - The token's scope still covers the wasteland database
 - The token hasn't hit a rate limit
 
-See [Troubleshooting](/docs/code-with-ai/gastown/wasteland/troubleshooting) for detailed diagnosis steps.
+See the [Wasteland overview](/docs/code-with-ai/gastown/wasteland) for detailed diagnosis steps.
 
 ## Wanted Item Filters
 

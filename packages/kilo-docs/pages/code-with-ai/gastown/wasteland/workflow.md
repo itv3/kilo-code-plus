@@ -214,10 +214,10 @@ If a validator **rejects** your evidence, the item goes back to `claimed` (not `
 | Problem | What to do |
 |---|---|
 | Claim fails — another rig got there first | The Mayor will suggest the next available item. Try claiming a different one. |
-| Evidence auto-submit fails | Check your DoltHub PAT is valid. The Mayor will retry. See [Troubleshooting](/docs/code-with-ai/gastown/wasteland/troubleshooting). |
+| Evidence auto-submit fails | Check your DoltHub PAT is valid. The Mayor will retry. See the [Wasteland overview](/docs/code-with-ai/gastown/wasteland). |
 | Stuck claim — you can't complete the work | [Abandon the claim](#cancelingabandoning) to release it back to the board. |
 | Item stays in `in_review` forever | Validators may be backlogged. You can check the PR status on DoltHub directly. |
-| `PRECONDITION_FAILED` on `wl done` | The item may not be in `claimed` state, or your credential may be invalid. See [Troubleshooting](/docs/code-with-ai/gastown/wasteland/troubleshooting). |
-| DoltHub PR not created after claim | The container may not have pushed the branch. Check container status. See [Troubleshooting](/docs/code-with-ai/gastown/wasteland/troubleshooting). |
-| Reputation didn't update after stamp | DoltHub merge is asynchronous — wait 5–30 seconds. If still missing, see [Troubleshooting](/docs/code-with-ai/gastown/wasteland/troubleshooting). |
+| `PRECONDITION_FAILED` on `wl done` | The item may not be in `claimed` state, or your credential may be invalid. See the [Wasteland overview](/docs/code-with-ai/gastown/wasteland). |
+| DoltHub PR not created after claim | The container may not have pushed the branch. Check container status. See the [Wasteland overview](/docs/code-with-ai/gastown/wasteland). |
+| Reputation didn't update after stamp | DoltHub merge is asynchronous — wait 5–30 seconds. If still missing, see the [Wasteland overview](/docs/code-with-ai/gastown/wasteland). |
 | Can't claim — "rig not found" | Your rig registration PR may not be merged yet. Ask a validator to merge it. |

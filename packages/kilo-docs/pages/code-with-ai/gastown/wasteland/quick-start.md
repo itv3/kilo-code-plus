@@ -136,4 +136,4 @@ You've completed your first wasteland cycle. Here's where to go from here:
 - **Post your own wanted items** — See [Administration](/docs/code-with-ai/gastown/wasteland/admin) for posting work to the board
 - **Run your own wasteland** — A private instance for your team with scoped reputation and controlled validators
 - **Learn about stamps and reputation** — See [Concepts](/docs/code-with-ai/gastown/wasteland/concepts) for the deep dive
-- **Troubleshoot issues** — See [Troubleshooting](/docs/code-with-ai/gastown/wasteland/troubleshooting) if something went wrong
+- **Troubleshoot issues** — See the [Wasteland overview](/docs/code-with-ai/gastown/wasteland) if something went wrong
