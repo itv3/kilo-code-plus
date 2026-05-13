@@ -56,8 +56,10 @@ export function fallbackSanitization(content: string): string {
 
     // if value contains a colon, convert to block scalar
     if (value.includes(":")) {
+      // kilocode_change start - preserve unquoted colon values as a block scalar
       result.push(`${key}: |`)
       result.push(`  ${value}`)
+      // kilocode_change end
       continue
     }
 
@@ -71,6 +73,7 @@ export function fallbackSanitization(content: string): string {
 export async function parse(filePath: string) {
   const template = await Filesystem.readText(filePath)
 
+  // kilocode_change start - substitute content and retry invalid frontmatter with permissive sanitization
   try {
     const md = matter(template)
     md.content = await KilocodeMarkdown.substitute(md.content, filePath) // kilocode_change
@@ -90,8 +93,10 @@ export async function parse(filePath: string) {
       )
     }
   }
+  // kilocode_change end
 }
 
+// kilocode_change start - export structured frontmatter parse errors
 export const FrontmatterError = NamedError.create(
   "ConfigFrontmatterError",
   z.object({
@@ -99,7 +104,9 @@ export const FrontmatterError = NamedError.create(
     message: z.string(),
   }),
 )
+// kilocode_change end
 
+// kilocode_change start - export helpers as namespace object
 export const ConfigMarkdown = {
   FILE_REGEX,
   SHELL_REGEX,
@@ -109,3 +116,4 @@ export const ConfigMarkdown = {
   parse,
   FrontmatterError,
 }
+// kilocode_change end

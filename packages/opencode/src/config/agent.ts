@@ -1,6 +1,6 @@
 export * as ConfigAgent from "./agent"
 
-import path from "path"
+import path from "path" // kilocode_change
 import { Exit, Schema, SchemaGetter } from "effect"
 import { Bus } from "@/bus"
 import { zod } from "@/util/effect-zod"
@@ -14,7 +14,7 @@ import * as ConfigMarkdown from "./markdown"
 import { ConfigModelID } from "./model-id"
 import { ConfigParse } from "./parse"
 import { ConfigPermission } from "./permission"
-import { ConfigVariable } from "./variable"
+import { ConfigVariable } from "./variable" // kilocode_change
 // kilocode_change start
 import { KilocodeConfig } from "@/kilocode/config/config"
 import type { Warning } from "./config"
@@ -164,6 +164,7 @@ export async function load(dir: string, warnings?: Warning[]) {
     // kilocode_change end
     const name = configEntryNameFromPath(item, patterns)
 
+    // kilocode_change start - substitute agent prompt variables relative to the agent file
     const prompt = await ConfigVariable.substitute({
       text: md.content.trim(),
       type: "virtual",
@@ -172,12 +173,12 @@ export async function load(dir: string, warnings?: Warning[]) {
       missing: "empty",
       escapeJson: false,
     })
-
     const config = {
       name,
       ...md.data,
       prompt,
     }
+    // kilocode_change end
     // kilocode_change start - use Effect schema (propertyOrder: original) + non-fatal handleInvalid
     try {
       result[config.name] = ConfigParse.effectSchema(Info, config, item) as Info

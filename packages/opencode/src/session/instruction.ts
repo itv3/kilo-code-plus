@@ -89,7 +89,7 @@ export const layer: Layer.Layer<
     })
 
     const read = Effect.fnUntraced(function* (filepath: string) {
-      const content = yield* fs.readFileString(filepath).pipe(Effect.catch(() => Effect.succeed("")))
+      const content = yield* fs.readFileString(filepath).pipe(Effect.catch(() => Effect.succeed(""))) // kilocode_change
       return yield* Effect.promise(() => KilocodeInstruction.content(content, filepath)) // kilocode_change
     })
 
