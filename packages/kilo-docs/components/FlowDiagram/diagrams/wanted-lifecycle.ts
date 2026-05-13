@@ -18,7 +18,7 @@ const nodes: Node[] = [
   {
     id: "posted",
     position: { x: 0, y: 0 },
-    data: { label: "posted" },
+    data: { label: "Posted" },
     sourcePosition: "right" as Position,
     targetPosition: "top" as Position,
     style: stateStyle("#22c55e", "34,197,94"),
@@ -26,7 +26,7 @@ const nodes: Node[] = [
   {
     id: "claimed",
     position: { x: 200, y: 0 },
-    data: { label: "claimed" },
+    data: { label: "Claimed" },
     sourcePosition: "right" as Position,
     targetPosition: "left" as Position,
     style: stateStyle("#3b82f6", "59,130,246"),
@@ -34,7 +34,7 @@ const nodes: Node[] = [
   {
     id: "in_progress",
     position: { x: 400, y: 0 },
-    data: { label: "in_progress" },
+    data: { label: "In progress" },
     sourcePosition: "right" as Position,
     targetPosition: "left" as Position,
     style: stateStyle("#f8a020", "248,160,32"),
@@ -42,7 +42,7 @@ const nodes: Node[] = [
   {
     id: "evidence_submitted",
     position: { x: 600, y: 0 },
-    data: { label: "evidence_submitted" },
+    data: { label: "Evidence submitted" },
     sourcePosition: "right" as Position,
     targetPosition: "left" as Position,
     style: stateStyle("#a78bfa", "167,139,250"),
@@ -50,7 +50,7 @@ const nodes: Node[] = [
   {
     id: "stamped",
     position: { x: 850, y: 0 },
-    data: { label: "✓ stamped" },
+    data: { label: "Stamped" },
     sourcePosition: "top" as Position,
     targetPosition: "left" as Position,
     style: stateStyle("#22c55e", "34,197,94"),
@@ -58,7 +58,7 @@ const nodes: Node[] = [
   {
     id: "rejected",
     position: { x: 600, y: 160 },
-    data: { label: "rejected" },
+    data: { label: "Rejected" },
     sourcePosition: "bottom" as Position,
     targetPosition: "top" as Position,
     style: stateStyle("#ef4444", "239,68,68"),
@@ -66,7 +66,7 @@ const nodes: Node[] = [
   {
     id: "abandoned",
     position: { x: 200, y: 160 },
-    data: { label: "abandoned" },
+    data: { label: "Abandoned" },
     sourcePosition: "top" as Position,
     targetPosition: "top" as Position,
     style: stateStyle("#888", "255,255,255"),
@@ -82,8 +82,6 @@ const edges: Edge[] = [
     target: "claimed",
     type: "smoothstep",
     animated: true,
-    label: "rig claims",
-    labelStyle,
     style: { strokeWidth: 2, stroke: "#3b82f6" },
   },
   {
@@ -92,8 +90,6 @@ const edges: Edge[] = [
     target: "in_progress",
     type: "smoothstep",
     animated: true,
-    label: "work starts",
-    labelStyle,
     style: { strokeWidth: 2, stroke: "#f8a020" },
   },
   {
@@ -102,8 +98,6 @@ const edges: Edge[] = [
     target: "evidence_submitted",
     type: "smoothstep",
     animated: true,
-    label: "submit evidence",
-    labelStyle,
     style: { strokeWidth: 2, stroke: "#a78bfa" },
   },
   {
@@ -112,8 +106,6 @@ const edges: Edge[] = [
     target: "stamped",
     type: "smoothstep",
     animated: true,
-    label: "validator approves",
-    labelStyle,
     style: { strokeWidth: 2, stroke: "#22c55e" },
   },
   {
@@ -121,7 +113,7 @@ const edges: Edge[] = [
     source: "evidence_submitted",
     target: "rejected",
     type: "smoothstep",
-    label: "validator rejects",
+    label: "rejects",
     labelStyle,
     style: { strokeWidth: 2, stroke: "#ef4444", strokeDasharray: "5 3" },
   },
@@ -134,33 +126,15 @@ const edges: Edge[] = [
     labelStyle,
     style: { strokeWidth: 2, stroke: "#f8a020", strokeDasharray: "5 3" },
   },
-  {
-    id: "rejected-posted",
-    source: "rejected",
-    target: "posted",
-    type: "smoothstep",
-    label: "release",
-    labelStyle,
-    style: { strokeWidth: 1, stroke: "#888", strokeDasharray: "4 4" },
-  },
+
   {
     id: "claimed-abandoned",
     source: "claimed",
     target: "abandoned",
     type: "smoothstep",
-    label: "claim released",
-    labelStyle,
     style: { strokeWidth: 2, stroke: "#888", strokeDasharray: "5 3" },
   },
-  {
-    id: "abandoned-posted",
-    source: "abandoned",
-    target: "posted",
-    type: "smoothstep",
-    label: "re-post",
-    labelStyle,
-    style: { strokeWidth: 1, stroke: "#888", strokeDasharray: "4 4" },
-  },
+
 ]
 
 export const wantedLifecycle: DiagramDefinition = {

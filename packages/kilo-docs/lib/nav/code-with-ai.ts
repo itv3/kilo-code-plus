@@ -40,7 +40,6 @@ export const CodeWithAiNav: NavSection[] = [
           { href: "/code-with-ai/gastown/wasteland/workflow", children: "Wasteland: Workflow" },
           { href: "/code-with-ai/gastown/wasteland/admin", children: "Wasteland: Administration" },
           { href: "/code-with-ai/gastown/wasteland/settings", children: "Wasteland: Settings" },
-          { href: "/code-with-ai/gastown/wasteland/troubleshooting", children: "Wasteland: Troubleshooting" },
         ],
       },
     ],

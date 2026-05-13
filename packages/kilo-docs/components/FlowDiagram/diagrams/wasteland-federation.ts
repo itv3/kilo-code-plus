@@ -43,7 +43,7 @@ const dbStyle = {
 const nodes: Node[] = [
   {
     id: "town-you",
-    position: { x: 0, y: 0 },
+    position: { x: -60, y: 0 },
     data: { label: "Your Town" },
     sourcePosition: "bottom" as Position,
     targetPosition: "top" as Position,
@@ -51,7 +51,7 @@ const nodes: Node[] = [
   },
   {
     id: "town-acme",
-    position: { x: 200, y: 0 },
+    position: { x: 140, y: 0 },
     data: { label: "Acme Eng Town" },
     sourcePosition: "bottom" as Position,
     targetPosition: "top" as Position,
@@ -59,7 +59,7 @@ const nodes: Node[] = [
   },
   {
     id: "town-oss",
-    position: { x: 420, y: 0 },
+    position: { x: 360, y: 0 },
     data: { label: "Open Source Town" },
     sourcePosition: "bottom" as Position,
     targetPosition: "top" as Position,
@@ -67,7 +67,7 @@ const nodes: Node[] = [
   },
   {
     id: "commons-wl",
-    position: { x: 120, y: 180 },
+    position: { x: 60, y: 180 },
     data: { label: "Commons Wasteland" },
     sourcePosition: "bottom" as Position,
     targetPosition: "top" as Position,
@@ -75,7 +75,7 @@ const nodes: Node[] = [
   },
   {
     id: "commons-db",
-    position: { x: 140, y: 340 },
+    position: { x: 80, y: 340 },
     data: { label: "DoltHub DB" },
     sourcePosition: "top" as Position,
     targetPosition: "top" as Position,
@@ -83,7 +83,7 @@ const nodes: Node[] = [
   },
   {
     id: "private-wl",
-    position: { x: 480, y: 180 },
+    position: { x: 520, y: 180 },
     data: { label: "Private Team\nWasteland" },
     sourcePosition: "bottom" as Position,
     targetPosition: "top" as Position,
@@ -91,7 +91,7 @@ const nodes: Node[] = [
   },
   {
     id: "private-town1",
-    position: { x: 440, y: 0 },
+    position: { x: 540, y: 0 },
     data: { label: "Private Town" },
     sourcePosition: "bottom" as Position,
     targetPosition: "top" as Position,
@@ -99,7 +99,7 @@ const nodes: Node[] = [
   },
   {
     id: "private-db",
-    position: { x: 500, y: 340 },
+    position: { x: 540, y: 340 },
     data: { label: "DoltHub DB" },
     sourcePosition: "top" as Position,
     targetPosition: "top" as Position,
@@ -128,6 +128,7 @@ const edges: Edge[] = [
     animated: true,
     label: "claim / submit",
     labelStyle,
+    zIndex: 10,
     style: { strokeWidth: 2, stroke: "#3b82f6" },
   },
   {
@@ -136,7 +137,6 @@ const edges: Edge[] = [
     target: "commons-wl",
     type: "smoothstep",
     animated: true,
-    label: "claim / submit",
     labelStyle,
     style: { strokeWidth: 2, stroke: "#3b82f6" },
   },
