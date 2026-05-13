@@ -1,5 +1,82 @@
 # kilo-code
 
+## 7.2.51
+
+### Patch Changes
+
+- [#10143](https://github.com/Kilo-Org/kilocode/pull/10143) [`ea023b0`](https://github.com/Kilo-Org/kilocode/commit/ea023b06dd269445eaf0c433fb42f4c9de2605b9) - Reduce delays in long sessions by compacting older tool outputs when the model request becomes too large.
+
+## 7.2.50
+
+### Patch Changes
+
+- [#10082](https://github.com/Kilo-Org/kilocode/pull/10082) [`0aa908c`](https://github.com/Kilo-Org/kilocode/commit/0aa908c7afe9f5e43c77ba157936511a7b959c9f) - Keep the Agent Manager new-tab button visible at the end of the tab row, separated by a divider, and show all tab tooltips above the tabs.
+
+- [#10082](https://github.com/Kilo-Org/kilocode/pull/10082) [`a5f2fbc`](https://github.com/Kilo-Org/kilocode/commit/a5f2fbc9fdba4c51adcdbf6298088a323631f769) - Move Agent Manager tab creation and search controls to the left side of the tab bar with clearer toolbar separators.
+
+- [#10134](https://github.com/Kilo-Org/kilocode/pull/10134) [`0e8d2fe`](https://github.com/Kilo-Org/kilocode/commit/0e8d2fe0911719a2e364a43fdc70b1a18ce4d935) - Fix session cost breakdowns after reloading conversations with subagents.
+
+- [#10125](https://github.com/Kilo-Org/kilocode/pull/10125) [`fc6ce73`](https://github.com/Kilo-Org/kilocode/commit/fc6ce735c9dde64a544e0952d789397fa9fb7815) - Hide the task header graph area until timeline data is available.
+
+- [#10129](https://github.com/Kilo-Org/kilocode/pull/10129) [`d858252`](https://github.com/Kilo-Org/kilocode/commit/d8582521c3d0b1daef7ca6da64cc2a8340786ca9) - Keep older revert checkpoints available after reverting a message in the VS Code extension.
+
+- [#10130](https://github.com/Kilo-Org/kilocode/pull/10130) [`5482cc0`](https://github.com/Kilo-Org/kilocode/commit/5482cc0d09f7c22e15063c75dac223f13b1fa4f9) - Improve review comment plus icon contrast in diff viewers.
+
+- [#10127](https://github.com/Kilo-Org/kilocode/pull/10127) [`3259008`](https://github.com/Kilo-Org/kilocode/commit/3259008074cafe232a30d380e9ecc73c63ca0a35) - Keep shell command blocks stable while output streams so pending animations and expanded state do not reset.
+
+- Updated dependencies [[`5482cc0`](https://github.com/Kilo-Org/kilocode/commit/5482cc0d09f7c22e15063c75dac223f13b1fa4f9)]:
+  - @kilocode/kilo-ui@7.2.50
+
+## 7.2.49
+
+## 7.2.48
+
+### Minor Changes
+
+- [#10054](https://github.com/Kilo-Org/kilocode/pull/10054) [`e5d8c4f`](https://github.com/Kilo-Org/kilocode/commit/e5d8c4f18d6abc81d0caa73575f3bf42a7c3b8fd) - Support commenting on rendered Markdown lines in diff reviewers.
+
+### Patch Changes
+
+- [#10066](https://github.com/Kilo-Org/kilocode/pull/10066) [`3cf5d15`](https://github.com/Kilo-Org/kilocode/commit/3cf5d151ff03f086db5882ce525be904a716e20b) - Open the Kilo Code sidebar before adding selected code or terminal output to chat context.
+
+- [#10051](https://github.com/Kilo-Org/kilocode/pull/10051) [`2d50e1f`](https://github.com/Kilo-Org/kilocode/commit/2d50e1f2dda5533196425b55e5915ee2a49334b6) - Harden git operations against malicious repositories and environment variables by upgrading the underlying git library.
+
+- [#10055](https://github.com/Kilo-Org/kilocode/pull/10055) [`f9fa1a7`](https://github.com/Kilo-Org/kilocode/commit/f9fa1a7efd46453ad7d603262c42c1f266dc4bc9) - Open reviewable Agent Manager diffs by default while keeping generated or extreme files collapsed.
+
+- [#10057](https://github.com/Kilo-Org/kilocode/pull/10057) [`05b10d9`](https://github.com/Kilo-Org/kilocode/commit/05b10d975dd2604eda5ef3583626bdb4b68255e2) - Improve the diff viewer bulk expand and collapse control so it reflects the current file state.
+
+- [#10064](https://github.com/Kilo-Org/kilocode/pull/10064) [`ebda89b`](https://github.com/Kilo-Org/kilocode/commit/ebda89b34ae8f46a99f5b492327bfc9e96dfb562) - Stop repeatedly reloading non-renderable Agent Manager diff previews.
+
+- [#10058](https://github.com/Kilo-Org/kilocode/pull/10058) [`eb8334d`](https://github.com/Kilo-Org/kilocode/commit/eb8334db016e7942ce3f99a55353e2e10cfadf39) - Keep Agent Manager promoted sessions aware of their worktree location.
+
+- [#10063](https://github.com/Kilo-Org/kilocode/pull/10063) [`d08238d`](https://github.com/Kilo-Org/kilocode/commit/d08238d5d12e66eaebf9872e653c35539c0ef65e) - Improve Changes diff responsiveness when switching worktrees by deferring offscreen diff rendering and ignoring stale diff updates.
+
+- [#10053](https://github.com/Kilo-Org/kilocode/pull/10053) [`09a7be8`](https://github.com/Kilo-Org/kilocode/commit/09a7be8fcdab92263b4c589523f2011fd086b0c3) - Improve @ file search relevance and keep mention suggestions responsive while typing.
+
+- [#10067](https://github.com/Kilo-Org/kilocode/pull/10067) [`c451d00`](https://github.com/Kilo-Org/kilocode/commit/c451d007e8050c114846ff86fce6470104954ade) - Keep Agent Manager review diffs responsive during worktree diff refreshes.
+
+- [#10059](https://github.com/Kilo-Org/kilocode/pull/10059) [`5456c96`](https://github.com/Kilo-Org/kilocode/commit/5456c962dd83631c7b1625d5adfaad2a3e0cf320) - Speed up Agent Manager worktree creation when refreshing the base branch by avoiding unnecessary tag fetches.
+
+- Updated dependencies [[`924f034`](https://github.com/Kilo-Org/kilocode/commit/924f034e12f3455f8cb69bb112541f887f4adfe5), [`05b10d9`](https://github.com/Kilo-Org/kilocode/commit/05b10d975dd2604eda5ef3583626bdb4b68255e2), [`d08238d`](https://github.com/Kilo-Org/kilocode/commit/d08238d5d12e66eaebf9872e653c35539c0ef65e)]:
+  - @kilocode/kilo-indexing@7.2.48
+  - @kilocode/kilo-ui@7.2.48
+
+## 7.2.47
+
+### Minor Changes
+
+- [#9851](https://github.com/Kilo-Org/kilocode/pull/9851) [`9de7c98`](https://github.com/Kilo-Org/kilocode/commit/9de7c986e78683015631d14fabd513c3123ff330) - Support Kilo-hosted embeddings as a selectable code indexing provider.
+
+### Patch Changes
+
+- [#10016](https://github.com/Kilo-Org/kilocode/pull/10016) [`d2ae16a`](https://github.com/Kilo-Org/kilocode/commit/d2ae16a9216f0de6e1cb08950f739108515e7998) - Support configuring Azure OpenAI resource names or endpoint URLs from the provider settings flow, and document using the native Azure provider for GPT-5 family deployments.
+
+- [#10017](https://github.com/Kilo-Org/kilocode/pull/10017) [`d9560d8`](https://github.com/Kilo-Org/kilocode/commit/d9560d8feb1b55509098090d4c09a8e0eaf90823) - Fix the task cost shown at the top of the chat double-counting subagent costs. Sessions that spawned subagents were overreporting their totals because the backend already rolls descendant costs up into the parent session, and the webview was then summing them again.
+
+- [#10015](https://github.com/Kilo-Org/kilocode/pull/10015) [`556b5e4`](https://github.com/Kilo-Org/kilocode/commit/556b5e47e0a2eeb037bd5e950451688362485e2b) - Collapse the Auto-Approve Exceptions list by default when it has more than 5 entries.
+
+- [#10008](https://github.com/Kilo-Org/kilocode/pull/10008) [`f539f59`](https://github.com/Kilo-Org/kilocode/commit/f539f59210e79a1e028ea6b2021283f7f9f89bf2) - Show an "Open in Diff Viewer" icon on Write tool calls (matching the Edit tool), so the changes can be inspected in a full diff tab.
+
 ## 7.2.44
 
 ### Minor Changes

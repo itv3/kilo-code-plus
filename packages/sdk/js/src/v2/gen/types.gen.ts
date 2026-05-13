@@ -93,6 +93,10 @@ export type QuestionOption = {
    * Optional i18n key for the description
    */
   descriptionKey?: string
+  /**
+   * Optional agent/mode name to pre-select in the UI when this option is picked
+   */
+  mode?: string
 }
 
 export type QuestionInfo = {
@@ -1430,6 +1434,7 @@ export type IndexingConfig = {
    * Embedding provider to use for codebase indexing
    */
   provider?:
+    | "kilo"
     | "openai"
     | "ollama"
     | "openai-compatible"
@@ -1451,6 +1456,14 @@ export type IndexingConfig = {
    * Vector store backend (default: qdrant)
    */
   vectorStore?: "lancedb" | "qdrant"
+  /**
+   * Kilo-hosted embedding provider options
+   */
+  kilo?: {
+    apiKey?: string
+    baseUrl?: string
+    organizationId?: string
+  }
   /**
    * OpenAI embedding provider options
    */
@@ -5119,6 +5132,7 @@ export type ProviderListResponses = {
       [key: string]: string
     }
     connected: Array<string>
+    failed: Array<string>
   }
 }
 
@@ -6333,6 +6347,25 @@ export type NetworkRejectResponses = {
 }
 
 export type NetworkRejectResponse = NetworkRejectResponses[keyof NetworkRejectResponses]
+
+export type IndexingStatusData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/indexing/status"
+}
+
+export type IndexingStatusResponses = {
+  /**
+   * Indexing status
+   */
+  200: IndexingStatus
+}
+
+export type IndexingStatusResponse = IndexingStatusResponses[keyof IndexingStatusResponses]
 
 export type SuggestionListData = {
   body?: never

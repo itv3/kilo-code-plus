@@ -465,6 +465,11 @@ export const dict = {
   "error.promotionLimit.description":
     "무료로 가입하여 500개 이상의 모델을 탐색하세요. 2분이면 완료, 신용카드 불필요. 또는 나중에 다시 오세요.",
   "error.promotionLimit.action": "가입하기",
+  "error.providerAuth.title": "{{provider}}에서 로그아웃되었습니다",
+  "error.providerAuth.description": "{{provider}}에 다시 연결한 후 메시지를 다시 보내주세요.",
+  "error.providerAuth.chatgpt.title": "OpenAI에서 로그아웃되었습니다",
+  "error.providerAuth.chatgpt.description":
+    "ChatGPT에 다시 로그인한 후 메시지를 다시 보내 Codex 모델을 계속 사용하세요.",
 
   "error.chain.unknown": "알 수 없는 오류",
   "error.chain.causedBy": "원인:",
@@ -1062,6 +1067,10 @@ export const dict = {
   "settings.indexing.model.description": "선택한 공급자의 기본 임베딩 모델을 재정의합니다.",
   "settings.indexing.model.title": "임베딩 모델",
   "settings.indexing.provider.description": "의미 검색을 위한 임베딩 생성에 사용할 공급자를 선택하세요.",
+  "settings.indexing.kiloModel.title": "Kilo 모델 프리셋",
+  "settings.indexing.kiloModel.description": "지원되는 Kilo 호스팅 임베딩 모델을 선택하세요.",
+  "settings.indexing.kiloSignIn.title": "Kilo 로그인이 필요합니다",
+  "settings.indexing.kiloSignIn.description": "호스팅 임베딩을 사용하려면 Kilo에 로그인하세요.",
   "settings.indexing.provider.title": "임베딩 공급자",
   "settings.indexing.providerField.description": "공급자별 연결 설정.",
   "settings.indexing.qdrantApiKey.description": "Qdrant 인스턴스에 대한 선택적 API 키입니다.",
@@ -1534,9 +1543,15 @@ export const dict = {
   "notifications.action.close": "닫기",
   "notifications.action.tryModel": "{{model}} 시도",
   "notifications.action.tryModelGeneric": "모델 시도",
-  "diffViewer.source.workspace.label": "로컬 변경 사항",
+  "diffViewer.source.workspace.label": "브랜치",
   "diffViewer.source.workspace.tooltip":
     "베이스 브랜치와 비교한 이 브랜치의 모든 변경 사항. 커밋되지 않은 파일(staged, unstaged, 추적되지 않음)과 아직 베이스에 반영되지 않은 로컬 커밋을 포함합니다.",
+  "diffViewer.source.staged.label": "스테이징됨",
+  "diffViewer.source.staged.tooltip":
+    "git 스테이징 영역에 추가한(`git add`) 변경사항이 있는 파일입니다. 다음 커밋에 포함됩니다.",
+  "diffViewer.source.unstaged.label": "스테이징 안 됨",
+  "diffViewer.source.unstaged.tooltip":
+    "작업 트리에서 수정되었지만 아직 스테이징되지 않은 파일과 추적되지 않는(새) 파일입니다.",
   "diffViewer.source.session.label": "세션",
   "diffViewer.source.session.tooltip":
     "현재 세션 동안 Kilo가 변경한 파일로, 턴별 스냅샷을 기반으로 합니다. 새 세션을 시작하면 초기화됩니다.",
@@ -1544,4 +1559,12 @@ export const dict = {
   "diffViewer.group.git": "Git",
   "diffViewer.notice.snapshotsDisabled":
     "이 리포지토리에서 스냅샷이 비활성화되어 있습니다. 세션 변경 사항을 표시하려면 구성 파일을 편집하세요.",
+
+  "diffViewer.baseBranch.auto": "기본",
+  "diffViewer.baseBranch.default": "기본",
+  "diffViewer.baseBranch.remote": "원격",
+  "diffViewer.baseBranch.search": "브랜치 검색",
+  "diffViewer.baseBranch.empty": "일치하는 브랜치 없음",
+  "diffViewer.baseBranch.loading": "브랜치 로딩 중…",
+  "diffViewer.baseBranch.none": "—",
 }
