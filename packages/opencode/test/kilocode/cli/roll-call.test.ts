@@ -1,6 +1,21 @@
-// kilocode_change - new file
 import { test, expect, describe } from "bun:test"
-import { formatTable, formatMarkdown, isTextModel } from "../../src/cli/cmd/roll-call"
+import type { Provider } from "../../../src/provider/provider"
+import { formatTable, formatMarkdown, isTextModel } from "../../../src/kilocode/cli/cmd/roll-call"
+
+const base = {
+  input: { text: false, audio: false, image: false, video: false, pdf: false },
+  output: { text: false, audio: false, image: false, video: false, pdf: false },
+}
+
+function caps(opts: { input?: Partial<typeof base.input>; output?: Partial<typeof base.output> }) {
+  return {
+    capabilities: {
+      ...base,
+      input: { ...base.input, ...opts.input },
+      output: { ...base.output, ...opts.output },
+    },
+  } as Provider.Model
+}
 
 describe("formatTable", () => {
   test("formats simple table correctly", () => {
@@ -19,13 +34,11 @@ describe("formatTable", () => {
   })
 
   test("truncates long snippets", () => {
-    const longSnippet = "A".repeat(200)
-    const rows = [["model", "YES", longSnippet, "100ms"]]
+    const rows = [["model", "YES", "A".repeat(200), "100ms"]]
     const result = formatTable(rows, 80)
+    const start = result.rows[0].indexOf("AAA")
 
-    const rowContent = result.rows[0]
-    const snippetStart = rowContent.indexOf("AAA")
-    expect(snippetStart).toBeGreaterThanOrEqual(0)
+    expect(start).toBeGreaterThanOrEqual(0)
   })
 
   test("strips ANSI codes from cells", () => {
@@ -38,6 +51,7 @@ describe("formatTable", () => {
 
   test("handles empty rows", () => {
     const result = formatTable([], 120)
+
     expect(result.rows).toHaveLength(0)
     expect(result.header).toContain("Model")
   })
@@ -56,33 +70,15 @@ describe("formatTable", () => {
 
   test("adjusts column widths for terminal", () => {
     const rows = [["very-long-model-name-here", "YES", "short", "100ms"]]
-    const wideResult = formatTable(rows, 200)
-    const narrowResult = formatTable(rows, 60)
+    const wide = formatTable(rows, 200)
+    const narrow = formatTable(rows, 60)
 
-    const wideSnippetStart = wideResult.header.indexOf("Snippet")
-    const narrowSnippetStart = narrowResult.header.indexOf("Snippet")
-
-    expect(wideSnippetStart).toBeGreaterThanOrEqual(0)
-    expect(narrowSnippetStart).toBeGreaterThanOrEqual(0)
+    expect(wide.header.indexOf("Snippet")).toBeGreaterThanOrEqual(0)
+    expect(narrow.header.indexOf("Snippet")).toBeGreaterThanOrEqual(0)
   })
 })
 
 describe("isTextModel", () => {
-  const base = {
-    input: { text: false, audio: false, image: false, video: false, pdf: false },
-    output: { text: false, audio: false, image: false, video: false, pdf: false },
-  }
-
-  function caps(overrides: { input?: Partial<typeof base.input>; output?: Partial<typeof base.output> }) {
-    return {
-      capabilities: {
-        ...base,
-        input: { ...base.input, ...overrides.input },
-        output: { ...base.output, ...overrides.output },
-      },
-    } as any
-  }
-
   test("accepts text-in text-out model", () => {
     expect(isTextModel(caps({ input: { text: true }, output: { text: true } }))).toBe(true)
   })
@@ -91,15 +87,15 @@ describe("isTextModel", () => {
     expect(isTextModel(caps({ input: { text: true, image: true }, output: { text: true } }))).toBe(true)
   })
 
-  test("rejects audio-in text-out model (e.g. whisper)", () => {
+  test("rejects audio-in text-out model", () => {
     expect(isTextModel(caps({ input: { audio: true }, output: { text: true } }))).toBe(false)
   })
 
-  test("rejects text-in image-out model (e.g. dall-e)", () => {
+  test("rejects text-in image-out model", () => {
     expect(isTextModel(caps({ input: { text: true }, output: { image: true } }))).toBe(false)
   })
 
-  test("rejects embedding model (no text output)", () => {
+  test("rejects embedding model", () => {
     expect(isTextModel(caps({ input: { text: true } }))).toBe(false)
   })
 })
@@ -121,13 +117,15 @@ describe("formatMarkdown", () => {
   test("handles empty rows", () => {
     const md = formatMarkdown([])
     const lines = md.split("\n")
-    expect(lines).toHaveLength(2) // header + separator only
+
+    expect(lines).toHaveLength(2)
   })
 
   test("escapes pipe characters in cells", () => {
     const rows = [["model", "YES", "hello | world", "100ms"]]
     const md = formatMarkdown(rows)
+
     expect(md).toContain("hello \\| world")
-    expect(md.split("\n")[2].match(/(?<!\\)\|/g)!.length).toBe(5) // only structural pipes
+    expect(md.split("\n")[2].match(/(?<!\\)\|/g)?.length).toBe(5)
   })
 })
