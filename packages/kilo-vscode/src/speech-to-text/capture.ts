@@ -30,14 +30,20 @@ type Audio = {
 }
 
 let active: Recording | undefined
+let starting: string | undefined
 
 export async function startSpeechCapture(input: Input): Promise<boolean> {
-  if (active) throw new Error("Speech recording is already in progress")
+  if (active || starting) throw new Error("Speech recording is already in progress")
 
-  const bin = await findFFmpeg()
-  const file = path.join(os.tmpdir(), `kilo-stt-${process.pid}-${Date.now()}.wav`)
-  const state = await startWithArgs(bin, file, input, await inputArgSets(bin))
-  return !state.stopped
+  starting = input.requestId
+  try {
+    const bin = await findFFmpeg()
+    const file = path.join(os.tmpdir(), `kilo-stt-${process.pid}-${Date.now()}.wav`)
+    const state = await startWithArgs(bin, file, input, await inputArgSets(bin))
+    return !state.stopped
+  } finally {
+    if (starting === input.requestId) starting = undefined
+  }
 }
 
 export async function stopSpeechCapture(requestId: string): Promise<Audio> {
