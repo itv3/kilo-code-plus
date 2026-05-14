@@ -235,25 +235,31 @@ export namespace KiloCompactionChunks {
       const mdl = model(input.model)
       const worker = yield* input.processors.create({ assistantMessage: msg, sessionID: input.sessionID, model: mdl })
       const opts = input.agent.options
-      input.agent.options = {
-        ...opts,
-        maxOutputTokens: Math.min(
-          OUTPUT,
-          typeof opts?.maxOutputTokens === "number" ? opts.maxOutputTokens : OUTPUT,
-        ),
+      const agent = {
+        ...input.agent,
+        options: {
+          ...opts,
+          maxOutputTokens: Math.min(
+            OUTPUT,
+            typeof opts?.maxOutputTokens === "number" ? opts.maxOutputTokens : OUTPUT,
+          ),
+        },
       }
       const result = yield* worker.process({
         user: input.user,
-        agent: input.agent,
+        agent,
         sessionID: input.sessionID,
         tools: {},
         system: [],
         messages: [...input.data, { role: "user", content: [{ type: "text", text: input.text }] }],
         model: mdl,
-      }).pipe(Effect.ensuring(Effect.sync(() => { input.agent.options = opts })))
+      }).pipe(
+        Effect.ensuring(
+          input.session.removeMessage({ sessionID: input.sessionID, messageID: worker.message.id }).pipe(Effect.ignore),
+        ),
+      )
       const parts = MessageV2.parts(worker.message.id)
       const output = text(worker.message, parts)
-      yield* input.session.removeMessage({ sessionID: input.sessionID, messageID: worker.message.id }).pipe(Effect.ignore)
       if (result !== "continue") return { result, output: undefined }
       if (!output) return { result: "stop" as const, output: undefined }
       return { result, output }
@@ -305,7 +311,7 @@ export namespace KiloCompactionChunks {
         { concurrency: 1 },
       )
       if (next.some((item) => item.result !== "continue" || !item.output)) return result
-      return yield* reduce({ ...input, summaries: next.map((item) => item.output!), depth: input.depth + 1 })
+      return yield* reduce({ ...input, summaries: next.map((item) => item.output!), depth: input.depth + 2 })
     })
   }
 

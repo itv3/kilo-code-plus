@@ -24,7 +24,8 @@ export namespace KiloLLM {
     tools: Record<string, { description?: string; inputSchema?: unknown }>
     configured: number | undefined
   }): number | undefined {
-    if (!input.configured) return input.configured
+    if (input.configured == null) return input.configured
+    if (input.configured <= 0) return undefined
     const { context } = input.model.limit
     if (!context) return input.configured
 
