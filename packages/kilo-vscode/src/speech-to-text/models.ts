@@ -23,12 +23,12 @@ const models: SpeechToTextModelDef[] = [
   {
     id: "openai/whisper-large-v3-turbo",
     label: "Whisper Large V3 Turbo",
-    provider: "Groq",
+    provider: "OpenAI-compatible",
   },
   {
     id: "openai/whisper-large-v3",
     label: "Whisper Large V3",
-    provider: "Groq",
+    provider: "OpenAI-compatible",
   },
   {
     id: "google/chirp-3",

@@ -10,10 +10,14 @@ const packages: Record<string, string> = {
   "alpine-x64": "@ffmpeg-installer/linux-x64@4.1.0",
   "alpine-arm64": "@ffmpeg-installer/linux-arm64@4.1.4",
   "win32-x64": "@ffmpeg-installer/win32-x64@4.1.0",
-  "win32-arm64": "@ffmpeg-installer/win32-x64@4.1.0",
 }
 
 export async function ensureFfmpegForTarget(target: string, bin: string): Promise<void> {
+  if (target === "win32-arm64") {
+    console.warn("No Windows ARM64 FFmpeg helper package is available; speech input will use system FFmpeg.")
+    return
+  }
+
   const spec = packages[target]
   if (!spec) throw new Error(`No FFmpeg helper package configured for target ${target}`)
 

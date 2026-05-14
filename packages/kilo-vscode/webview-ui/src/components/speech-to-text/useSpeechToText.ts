@@ -29,7 +29,6 @@ type StartOptions = {
 export type SpeechToText = {
   state: Accessor<SpeechState>
   error: Accessor<string | undefined>
-  supported: Accessor<boolean>
   active: Accessor<boolean>
   start: (opts: StartOptions) => void
   stop: () => void
@@ -40,7 +39,6 @@ export type SpeechToText = {
 export function useSpeechToText(vscode: VSCode, server: Server, lang: Lang): SpeechToText {
   const [state, setState] = createSignal<SpeechState>("idle")
   const [error, setError] = createSignal<string | undefined>()
-  const supported = () => true
   const active = () => state() === "recording" || state() === "transcribing"
   const prefix = globalThis.crypto?.randomUUID?.() ?? `stt-${Math.random().toString(36).slice(2)}`
 
@@ -147,7 +145,7 @@ export function useSpeechToText(vscode: VSCode, server: Server, lang: Lang): Spe
     insert = undefined
   }
 
-  return { state, error, supported, active, start, stop, cancel, clear }
+  return { state, error, active, start, stop, cancel, clear }
 }
 
 function isSpeechMessage(

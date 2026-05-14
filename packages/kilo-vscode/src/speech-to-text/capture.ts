@@ -31,13 +31,13 @@ type Audio = {
 
 let active: Recording | undefined
 
-export async function startSpeechCapture(input: Input): Promise<void> {
+export async function startSpeechCapture(input: Input): Promise<boolean> {
   if (active) throw new Error("Speech recording is already in progress")
 
   const bin = await findFFmpeg()
   const file = path.join(os.tmpdir(), `kilo-stt-${process.pid}-${Date.now()}.wav`)
-  const state = await startWithArgs(bin, file, input, inputArgSets())
-  active = state
+  const state = await startWithArgs(bin, file, input, await inputArgSets(bin))
+  return !state.stopped
 }
 
 export async function stopSpeechCapture(requestId: string): Promise<Audio> {
@@ -77,27 +77,36 @@ async function waitForStart(state: Recording): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const done = () => {
       state.proc.off("error", onError)
+      state.proc.off("exit", onExit)
+      state.proc.stderr?.off("data", onData)
+      clearTimeout(timer)
       resolve()
     }
     const onError = (err: Error) => {
-      state.proc.off("spawn", onSpawn)
+      state.proc.off("exit", onExit)
+      state.proc.stderr?.off("data", onData)
+      clearTimeout(timer)
       reject(err)
     }
-    const onSpawn = () => {
-      setTimeout(() => {
-        if (state.exit && state.exit.code !== 0) {
-          reject(new Error(summary(state, "Could not start microphone recording")))
-          return
-        }
+    const onExit = () => {
+      if (state.stopped) {
         done()
-      }, 700)
+        return
+      }
+      onError(new Error(summary(state, "Could not start microphone recording")))
     }
+    const onData = (data: Buffer) => {
+      if (/Output #0|Press \[q\]|size=\s*\d+/i.test(data.toString())) done()
+    }
+    const timer = setTimeout(() => {
+      onError(new Error(summary(state, "Timed out starting microphone recording")))
+    }, 5000)
 
-    state.proc.once("spawn", onSpawn)
+    state.proc.stderr?.on("data", onData)
     state.proc.once("error", onError)
+    state.proc.once("exit", onExit)
   }).catch(async (err: unknown) => {
     if (active === state) active = undefined
-    state.stopped = true
     await stopProcess(state)
     await removeFile(state.file)
     throw err
@@ -130,6 +139,7 @@ async function startWithArgs(bin: string, file: string, input: Input, args: stri
     await waitForStart(state)
     return state
   } catch (err) {
+    if (state.stopped) return state
     if (rest.length === 0) throw err
     return startWithArgs(bin, file, input, rest)
   }
@@ -192,7 +202,8 @@ function bundledPath(): string {
 }
 
 function platformPaths(): string[] {
-  if (process.platform === "darwin") return ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/opt/local/bin/ffmpeg"]
+  if (process.platform === "darwin")
+    return ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/opt/local/bin/ffmpeg"]
   if (process.platform === "win32") {
     return [
       "C:\\ffmpeg\\bin\\ffmpeg.exe",
@@ -209,15 +220,43 @@ function platformPaths(): string[] {
   return ["/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/snap/bin/ffmpeg", "/home/linuxbrew/.linuxbrew/bin/ffmpeg"]
 }
 
-function inputArgSets(): string[][] {
+async function inputArgSets(bin: string): Promise<string[][]> {
   if (process.platform === "darwin") return [["-f", "avfoundation", "-i", ":default"]]
   if (process.platform === "linux")
     return [
       ["-f", "pulse", "-i", "default"],
       ["-f", "alsa", "-i", "default"],
     ]
-  if (process.platform === "win32") return [["-f", "dshow", "-i", "audio=default"]]
+  if (process.platform === "win32") return await windowsInputArgSets(bin)
   return []
+}
+
+async function windowsInputArgSets(bin: string): Promise<string[][]> {
+  const configured = process.env.KILO_FFMPEG_AUDIO_DEVICE
+  if (configured) return [["-f", "dshow", "-i", `audio=${configured}`]]
+
+  const devices = await listDshowAudioDevices(bin)
+  if (devices.length === 0) throw new Error("No Windows audio input devices found for speech input")
+  return devices.map((device) => ["-f", "dshow", "-i", `audio=${device}`])
+}
+
+async function listDshowAudioDevices(bin: string): Promise<string[]> {
+  const raw = await exec(bin, ["-list_devices", "true", "-f", "dshow", "-i", "dummy"], { timeout: 5000 })
+    .then((result) => `${result.stdout}\n${result.stderr}`)
+    .catch((err: unknown) => processOutput(err))
+  return parseDshowAudioDevices(raw)
+}
+
+export function parseDshowAudioDevices(raw: string): string[] {
+  const devices = new Set<string>()
+  for (const match of raw.matchAll(/"([^"]+)"\s+\(audio\)/g)) devices.add(match[1]!)
+  return [...devices]
+}
+
+function processOutput(err: unknown): string {
+  if (!err || typeof err !== "object") return ""
+  const result = err as { stdout?: unknown; stderr?: unknown }
+  return `${typeof result.stdout === "string" ? result.stdout : ""}\n${typeof result.stderr === "string" ? result.stderr : ""}`
 }
 
 function summary(state: Recording, fallback: string): string {

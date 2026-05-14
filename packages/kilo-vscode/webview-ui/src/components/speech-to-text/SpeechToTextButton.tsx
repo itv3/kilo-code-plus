@@ -12,9 +12,8 @@ type Props = {
 }
 
 export const SpeechToTextButton: Component<Props> = (props) => {
-  const disabled = () => !!props.disabled || !props.speech.supported()
+  const disabled = () => !!props.disabled
   const label = () => {
-    if (!props.speech.supported()) return props.label("speechToText.tooltip.unsupported")
     if (props.speech.state() === "recording") return props.label("speechToText.tooltip.stop")
     if (props.speech.state() === "transcribing") return props.label("speechToText.tooltip.transcribing")
     if (props.speech.state() === "error") return props.speech.error() || props.label("speechToText.tooltip.error")
