@@ -243,6 +243,13 @@ export interface AppendReviewCommentsMessage {
   autoSend?: boolean
 }
 
+export interface AppendReviewCommentsToTerminalMessage {
+  type: "appendReviewCommentsToTerminal"
+  comments: ReviewComment[]
+  autoSend?: boolean
+  targetTerminalId: string
+}
+
 export interface TriggerTaskMessage {
   type: "triggerTask"
   text: string
@@ -512,6 +519,7 @@ export interface AgentManagerStateMessage {
   tabOrder?: Record<string, string[]>
   worktreeOrder?: string[]
   sessionsCollapsed?: boolean
+  sidebarCollapsed?: boolean
   reviewDiffStyle?: "unified" | "split"
   reviewMarkdownRender?: boolean
   isGitRepo?: boolean
@@ -957,6 +965,7 @@ export type ExtensionMessage =
   | SetChatBoxMessage
   | AppendChatBoxMessage
   | AppendReviewCommentsMessage
+  | AppendReviewCommentsToTerminalMessage
   | TriggerTaskMessage
   | VariantsLoadedMessage
   | CloudSessionDataLoadedMessage
