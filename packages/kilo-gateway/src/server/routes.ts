@@ -137,6 +137,16 @@ export function createKiloRoutes(deps: KiloRoutesDeps) {
     usage: z.unknown().optional(),
   })
 
+  const getProxyAuth = async () => {
+    const auth = await Auth.get("kilo")
+    const token = auth?.type === "api" ? auth.key : auth?.type === "oauth" ? auth.access : undefined
+    return {
+      auth,
+      token,
+      organizationId: auth?.type === "oauth" ? auth.accountId : undefined,
+    }
+  }
+
   return new Hono()
     .get(
       "/profile",
@@ -426,18 +436,16 @@ export function createKiloRoutes(deps: KiloRoutesDeps) {
         }),
       ),
       async (c: any) => {
-        const auth = await Auth.get("kilo")
-        if (!auth) return c.json({ error: "Not authenticated with Kilo Gateway" }, 401)
+        const auth = await getProxyAuth()
+        if (!auth.auth) return c.json({ error: "Not authenticated with Kilo Gateway" }, 401)
 
-        const token = auth.type === "api" ? auth.key : auth.type === "oauth" ? auth.access : undefined
-        if (!token) return c.json({ error: "No valid token found" }, 401)
+        if (!auth.token) return c.json({ error: "No valid token found" }, 401)
 
-        const organizationId = auth.type === "oauth" ? auth.accountId : undefined
         const body = c.req.valid("json")
         const headers = {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          ...buildKiloHeaders(undefined, { kilocodeOrganizationId: organizationId }),
+          Authorization: `Bearer ${auth.token}`,
+          ...buildKiloHeaders(undefined, { kilocodeOrganizationId: auth.organizationId }),
           [HEADER_FEATURE]: "vscode-extension",
         }
 

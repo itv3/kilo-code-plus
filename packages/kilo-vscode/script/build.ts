@@ -82,7 +82,7 @@ for (const config of targets) {
 
   console.log(`  ✅ Binary ready at ${targetBinary}`)
 
-  console.log("  🎙️ Adding bundled FFmpeg helper...")
+  console.log("Adding bundled FFmpeg helper...")
   await ensureFfmpegForTarget(config.target, binDir)
 
   console.log(`  📦 Packaging .vsix for ${config.target}${prerelease ? " (pre-release)" : ""}...`)
