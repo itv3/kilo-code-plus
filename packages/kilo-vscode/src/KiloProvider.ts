@@ -135,6 +135,7 @@ import type { KiloProviderOptions } from "./kilo-provider/options"
 import { fetchKiloEmbeddingModelCatalog } from "@kilocode/kilo-gateway"
 
 type MessageLoadMode = "replace" | "prepend" | "focus" | "reconcile"
+type ContextMessage = { contextDirectory?: unknown }
 // Helper to map agent data to the subset of fields sent to the webview
 const mapAgent = (a: Agent) => ({
   name: a.name,
@@ -634,7 +635,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           this.readyResolvers.splice(0).forEach((r) => r())
           break
         case "sendMessage": {
-          const files = parseMessageFiles(message.files)
+          const msg = message as typeof message & ContextMessage
           await this.handleSendMessage(
             message.text,
             typeof message.messageID === "string" ? message.messageID : undefined,
@@ -644,13 +645,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
             message.modelID,
             message.agent,
             message.variant,
-            files,
+            parseMessageFiles(message.files),
             typeof message.agentManagerContext === "string" ? message.agentManagerContext : undefined,
+            typeof msg.contextDirectory === "string" ? msg.contextDirectory : undefined,
           )
           break
         }
         case "sendCommand": {
-          const files = parseMessageFiles(message.files)
+          const msg = message as typeof message & ContextMessage
           await this.handleSendCommand(
             message.command,
             message.arguments,
@@ -661,8 +663,9 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
             message.modelID,
             message.agent,
             message.variant,
-            files,
+            parseMessageFiles(message.files),
             typeof message.agentManagerContext === "string" ? message.agentManagerContext : undefined,
+            typeof msg.contextDirectory === "string" ? msg.contextDirectory : undefined,
           )
           break
         }
@@ -1068,13 +1071,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           break
         }
         case "fetchMarketplaceData": {
-          const workspace = this.getProjectDirectory(this.currentSession?.id)
-          const mp = this.getMarketplace()
-          // Fetch skills from CLI backend (authoritative source) so the
-          // marketplace doesn't need to duplicate the CLI's skill scanning.
-          const skills = await this.fetchCliSkills()
-          const data = await mp.fetchData(workspace, skills)
-          this.postMessage({ type: "marketplaceData", ...data })
+          await this.handleFetchMarketplaceData()
           break
         }
         case "filterMarketplaceItems": {
@@ -1122,6 +1119,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     const d = diff as import("./DiffVirtualProvider").DiffVirtualFile
     d.initialDiffStyle = initialDiffStyle === "split" ? "split" : "unified"
     this.diffVirtualProvider.open(d)
+  }
+
+  private async handleFetchMarketplaceData(): Promise<void> {
+    const workspace = this.getProjectDirectory(this.currentSession?.id)
+    const mp = this.getMarketplace()
+    const skills = await this.fetchCliSkills()
+    const data = await mp.fetchData(workspace, skills)
+    this.postMessage({ type: "marketplaceData", ...data })
   }
 
   /**
@@ -1522,6 +1527,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
             client.session.list({ directory: dir, roots: true }, { throwOnError: true }).then(({ data }) => data)
         : null,
       sessionDirectories: this.sessionDirectories,
+      worktreeDirectories: this.opts.worktreeDirectories,
       workspaceDirectory: this.getWorkspaceDirectory(),
       postMessage: (msg: unknown) => this.postMessage(msg),
     }
@@ -2421,7 +2427,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       details: getConfigErrorDetails(error),
     })
   }
-  private async resolveSession(sessionID?: string, draftID?: string, context?: string) {
+  private async resolveSession(sessionID?: string, draftID?: string, context?: string, contextDirectory?: string) {
     if (!this.client) return undefined
 
     const dir = resolveNewSessionDirectory({
@@ -2429,6 +2435,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       currentSessionID: this.currentSession?.id,
       contextSessionID: this.contextSessionID,
       agentManagerContext: context,
+      contextDirectory,
       sessionDirectories: this.sessionDirectories,
       workspaceDirectory: this.getRootDirectory(),
     })
@@ -2538,6 +2545,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     variant?: string,
     files?: MessageFile[],
     context?: string,
+    contextDirectory?: string,
   ): Promise<void> {
     if (!this.client) {
       this.postMessage({
@@ -2554,7 +2562,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
     let resolved: { sid: string; dir: string } | undefined
     try {
-      resolved = await this.resolveSession(sessionID, draftID, context)
+      resolved = await this.resolveSession(sessionID, draftID, context, contextDirectory)
 
       const parts: Array<TextPartInput | FilePartInput> = []
       if (files) {
@@ -2615,6 +2623,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     variant?: string,
     files?: MessageFile[],
     context?: string,
+    contextDirectory?: string,
   ): Promise<void> {
     if (!this.client) {
       this.postMessage({
@@ -2631,7 +2640,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
     let resolved: { sid: string; dir: string } | undefined
     try {
-      resolved = await this.resolveSession(sessionID, draftID, context)
+      resolved = await this.resolveSession(sessionID, draftID, context, contextDirectory)
 
       if (messageID) {
         this.connectionService.recordMessageSessionId(messageID, resolved!.sid)
