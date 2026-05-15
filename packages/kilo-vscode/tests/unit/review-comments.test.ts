@@ -245,9 +245,7 @@ describe("markdownCommentBlocks", () => {
 
 describe("review annotation speech keys", () => {
   it("keeps draft keys scoped to the selected review location", () => {
-    expect(reviewDraftSpeechKey({ file: "src/a.ts", side: "additions", line: 4 })).toBe(
-      "draft:src/a.ts:additions:4:4",
-    )
+    expect(reviewDraftSpeechKey({ file: "src/a.ts", side: "additions", line: 4 })).toBe("draft:src/a.ts:additions:4:4")
     expect(reviewDraftSpeechKey({ file: "src/a.ts", side: "deletions", line: 4, endLine: 8 })).toBe(
       "draft:src/a.ts:deletions:4:8",
     )

@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup, Show, type Accessor } from "solid-js"
+import { createEffect, createRoot, createSignal, onCleanup, Show, type Accessor } from "solid-js"
 import { render as renderSolid } from "solid-js/web"
 import { SpeechToTextButton } from "../src/components/speech-to-text/SpeechToTextButton"
 import { insertSpacedText } from "../src/components/chat/prompt-input-utils"
@@ -19,7 +19,7 @@ type Node = {
   setTextarea: (textarea: HTMLTextAreaElement) => void
 }
 
-export function insertReviewSpeechText(textarea: HTMLTextAreaElement, value: string): void {
+function insertReviewSpeechText(textarea: HTMLTextAreaElement, value: string): void {
   const text = textarea.value
   const start = textarea.selectionStart ?? text.length
   const end = textarea.selectionEnd ?? start
@@ -42,11 +42,18 @@ export function createReviewAnnotationSpeechRenderer(props: Props) {
     let field = textarea
     const mine = () => owner() === key
     const state = (): SpeechState => (mine() ? props.speech.state() : "idle")
+    const start = (model: string) => {
+      setOwner(key)
+      props.speech.start({
+        model,
+        insert: (value) => insertReviewSpeechText(field, value),
+      })
+    }
     const speech: SpeechToText = {
       state,
       error: () => (mine() ? props.speech.error() : undefined),
       active: () => mine() && props.speech.active(),
-      start: props.speech.start,
+      start: (opts) => start(opts.model),
       stop: () => {
         if (!mine()) return
         props.speech.stop()
@@ -63,22 +70,24 @@ export function createReviewAnnotationSpeechRenderer(props: Props) {
       },
     }
     const blocked = () => props.speech.active() && !mine()
-    const start = () => {
-      setOwner(key)
-      props.speech.start({
-        model: props.model(),
-        insert: (value) => insertReviewSpeechText(field, value),
-      })
-    }
 
-    const dispose = renderSolid(
-      () => (
-        <Show when={props.enabled()}>
-          <SpeechToTextButton speech={speech} disabled={blocked()} start={start} label={props.label} />
-        </Show>
-      ),
-      host,
-    )
+    const dispose = createRoot((root) => {
+      const view = renderSolid(
+        () => (
+          <Show when={props.enabled()}>
+            <SpeechToTextButton
+              speech={speech}
+              disabled={blocked()}
+              start={() => start(props.model())}
+              label={props.label}
+            />
+          </Show>
+        ),
+        host,
+      )
+      onCleanup(view)
+      return root
+    })
 
     const node = {
       host,
