@@ -423,7 +423,7 @@ export class AgentManagerProvider implements Disposable {
       const ctx = typeof m.agentManagerContext === "string" ? m.agentManagerContext : undefined
       const worktree = ctx && ctx !== "local" ? this.getStateManager()?.getWorktree(ctx) : undefined
       if (worktree) {
-        this.activeSessionId = m.draftID
+        if (m.draftID) this.activeSessionId = m.draftID
         return { ...msg, contextDirectory: worktree.path }
       }
     }
