@@ -3,4 +3,5 @@ export type KiloProviderOptions = {
   platform?: string
   slimEditMetadata?: boolean
   tabTitle?: (title: string) => void
+  worktreeDirectories?: () => string[]
 }
