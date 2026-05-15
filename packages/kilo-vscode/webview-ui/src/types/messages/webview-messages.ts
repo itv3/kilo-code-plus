@@ -29,6 +29,7 @@ export interface SendMessageRequest {
   variant?: string
   files?: FileAttachment[]
   agentManagerContext?: string
+  contextDirectory?: string
 }
 
 export interface AbortRequest {
@@ -240,6 +241,7 @@ export interface SendCommandRequest {
   variant?: string
   files?: FileAttachment[]
   agentManagerContext?: string
+  contextDirectory?: string
 }
 
 export interface RemoveSkillMessage {
@@ -500,6 +502,7 @@ export interface OpenLocallyRequest {
 export interface AddSessionToWorktreeRequest {
   type: "agentManager.addSessionToWorktree"
   worktreeId: string
+  sessionId?: string
 }
 
 // Fork an existing session (copies conversation history)

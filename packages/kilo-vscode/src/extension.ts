@@ -171,6 +171,7 @@ export function activate(context: vscode.ExtensionContext) {
       deserializeWebviewPanel(panel: vscode.WebviewPanel) {
         const ctx = agentManagerHost.wrapExistingPanel(panel, {
           onBeforeMessage: (msg) => agentManagerProvider.handleMessage(msg),
+          worktreeDirectories: () => agentManagerProvider.getWorktreeDirectories(),
         })
         agentManagerProvider.deserializePanel(ctx)
         return Promise.resolve()
