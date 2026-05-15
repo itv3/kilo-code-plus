@@ -3,4 +3,5 @@ export type KiloProviderOptions = {
   slimEditMetadata?: boolean
   tabTitle?: (title: string) => void
   onSidebarVisibilityChange?: (visible: boolean) => void
+  worktreeDirectories?: () => string[]
 }
