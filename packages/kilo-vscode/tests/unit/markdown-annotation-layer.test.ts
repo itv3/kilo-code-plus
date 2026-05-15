@@ -1,15 +1,20 @@
 import { describe, expect, it } from "bun:test"
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
+import { isAnnotationMutation } from "../../webview-ui/agent-manager/MarkdownAnnotationLayer"
 
-const file = join(import.meta.dir, "../../webview-ui/agent-manager/MarkdownAnnotationLayer.tsx")
-const src = readFileSync(file, "utf8")
+function mutation(target: Node): Pick<MutationRecord, "target"> {
+  return { target }
+}
 
-describe("MarkdownAnnotationLayer", () => {
-  it("ignores inline annotation DOM mutations while watching rendered Markdown", () => {
-    expect(src).toMatch(/function isAnnotationMutation[\s\S]*target\.closest\(selector\)/)
-    expect(src).toMatch(
-      /new MutationObserver\(\(mutations\) => \{[\s\S]*mutations\.every\(isAnnotationMutation\)[\s\S]*schedule\(\)/,
-    )
+describe("isAnnotationMutation", () => {
+  it("matches nested annotation DOM mutations", () => {
+    const target = { closest: () => ({}) } as unknown as Node
+    expect(isAnnotationMutation(mutation(target))).toBe(true)
+  })
+
+  it("keeps external Markdown DOM mutations observable", () => {
+    const markdown = { closest: () => null } as unknown as Node
+    const plain = {} as Node
+    expect(isAnnotationMutation(mutation(markdown))).toBe(false)
+    expect(isAnnotationMutation(mutation(plain))).toBe(false)
   })
 })

@@ -90,9 +90,11 @@ function matches(annotation: DiffLineAnnotation<AnnotationMeta>, anchor: Anchor,
 
 const selector = ".am-markdown-inline-annotations, .am-markdown-list-annotation, .am-markdown-table-annotation"
 
-function isAnnotationMutation(mutation: MutationRecord): boolean {
+// Keep host insertion observable, only nested annotation UI updates are safe to ignore.
+export function isAnnotationMutation(mutation: Pick<MutationRecord, "target">): boolean {
   const target = mutation.target
-  if (!(target instanceof Element)) return false
+  if (!("closest" in target)) return false
+  if (typeof target.closest !== "function") return false
   return target.closest(selector) !== null
 }
 
@@ -213,7 +215,7 @@ export const MarkdownAnnotationLayer: Component<MarkdownAnnotationLayerProps> = 
     if (!root) return
     observer?.disconnect()
     observer = new MutationObserver((mutations) => {
-      if (mutations.length > 0 && mutations.every(isAnnotationMutation)) return
+      if (mutations.every(isAnnotationMutation)) return
       schedule()
     })
     observer.observe(root, { childList: true, subtree: true })
