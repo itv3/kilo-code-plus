@@ -92,6 +92,7 @@ export const dict = {
   "command.session.share.description": "แชร์เซสชันนี้และคัดลอก URL ไปยังคลิปบอร์ด",
   "command.session.unshare": "ยกเลิกการแชร์เซสชัน",
   "command.session.unshare.description": "หยุดการแชร์เซสชันนี้",
+  "command.session.export": "ส่งออกบันทึกเซสชัน",
 
   "palette.search.placeholder": "ค้นหาไฟล์ คำสั่ง และเซสชัน",
   "palette.empty": "ไม่พบผลลัพธ์",
@@ -269,6 +270,7 @@ export const dict = {
   "prompt.attachment.remove": "เอาไฟล์แนบออก",
   "prompt.action.send": "ส่ง",
   "prompt.action.send.blocked": "โปรดตอบหรือข้ามคำถามที่รอดำเนินการก่อน",
+  "prompt.action.send.recording": "ถอดเสียงและส่ง",
   "prompt.action.stop": "หยุด",
   "prompt.action.enhance": "ปรับปรุงพรอมต์",
   "prompt.action.autoApprove.enable": "เปิดใช้การอนุมัติอัตโนมัติ",
@@ -281,7 +283,7 @@ export const dict = {
   "prompt.action.indexing": "การตั้งค่าการสร้างดัชนี",
 
   "speechToText.tooltip.start": "เริ่มการป้อนข้อมูลด้วยเสียง",
-  "speechToText.tooltip.stop": "หยุดบันทึก",
+  "speechToText.tooltip.stop": "หยุดจับเสียง",
   "speechToText.tooltip.transcribing": "กำลังถอดเสียง... คลิกเพื่อยกเลิก",
   "speechToText.tooltip.error": "การป้อนข้อมูลด้วยเสียงล้มเหลว คลิกเพื่อล้าง",
   "speechToText.error.title": "การป้อนข้อมูลด้วยเสียงล้มเหลว",
@@ -1590,4 +1592,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "No matching branches",
   "diffViewer.baseBranch.loading": "Loading branches…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "แผนพร้อมแล้ว:",
 }

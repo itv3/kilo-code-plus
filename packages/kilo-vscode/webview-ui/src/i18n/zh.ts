@@ -96,6 +96,7 @@ export const dict = {
   "command.session.share.description": "分享此会话并将链接复制到剪贴板",
   "command.session.unshare": "取消分享会话",
   "command.session.unshare.description": "停止分享此会话",
+  "command.session.export": "导出会话记录",
 
   "palette.search.placeholder": "搜索文件、命令和会话",
   "palette.empty": "未找到结果",
@@ -273,6 +274,7 @@ export const dict = {
   "prompt.attachment.remove": "移除附件",
   "prompt.action.send": "发送",
   "prompt.action.send.blocked": "请先回答或忽略待处理的问题",
+  "prompt.action.send.recording": "转录并发送",
   "prompt.action.stop": "停止",
   "prompt.action.enhance": "优化提示词",
   "prompt.action.resetModel": "重置模型为默认值",
@@ -280,7 +282,7 @@ export const dict = {
     "'增强提示'按钮通过提供额外上下文、澄清或重新表述来帮助改进您的请求。尝试在此处输入请求，然后再次点击按钮查看其工作原理。",
 
   "speechToText.tooltip.start": "开始语音输入",
-  "speechToText.tooltip.stop": "停止录音",
+  "speechToText.tooltip.stop": "停止捕获音频",
   "speechToText.tooltip.transcribing": "正在转录... 点击取消。",
   "speechToText.tooltip.error": "语音输入失败。点击清除。",
   "speechToText.error.title": "语音输入失败",
@@ -1547,4 +1549,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "没有匹配的分支",
   "diffViewer.baseBranch.loading": "正在加载分支…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "计划已准备就绪：",
 } satisfies Partial<Record<Keys, string>>

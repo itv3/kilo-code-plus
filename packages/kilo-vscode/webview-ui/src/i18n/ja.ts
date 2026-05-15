@@ -92,6 +92,7 @@ export const dict = {
   "command.session.share.description": "このセッションを共有しURLをクリップボードにコピー",
   "command.session.unshare": "セッションの共有を停止",
   "command.session.unshare.description": "このセッションの共有を停止",
+  "command.session.export": "セッション記録をエクスポート",
 
   "palette.search.placeholder": "ファイル、コマンド、セッションを検索",
   "palette.empty": "結果が見つかりません",
@@ -268,6 +269,7 @@ export const dict = {
   "prompt.attachment.remove": "添付ファイルを削除",
   "prompt.action.send": "送信",
   "prompt.action.send.blocked": "最初に保留中の質問に答えるか、閉じてください",
+  "prompt.action.send.recording": "文字起こしして送信",
   "prompt.action.stop": "停止",
   "prompt.action.enhance": "プロンプトを改善",
   "prompt.action.autoApprove.enable": "自動承認を有効化",
@@ -280,7 +282,7 @@ export const dict = {
   "prompt.action.indexing": "インデックス設定",
 
   "speechToText.tooltip.start": "音声入力を開始",
-  "speechToText.tooltip.stop": "録音を停止",
+  "speechToText.tooltip.stop": "音声キャプチャを停止",
   "speechToText.tooltip.transcribing": "文字起こし中... クリックしてキャンセル。",
   "speechToText.tooltip.error": "音声入力に失敗しました。クリックしてクリア。",
   "speechToText.error.title": "音声入力に失敗しました",
@@ -1606,4 +1608,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "一致するブランチがありません",
   "diffViewer.baseBranch.loading": "ブランチを読み込み中…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "プランの準備ができました:",
 }

@@ -96,6 +96,7 @@ export const dict = {
   "command.session.share.description": "分享此工作階段並將連結複製到剪貼簿",
   "command.session.unshare": "取消分享工作階段",
   "command.session.unshare.description": "停止分享此工作階段",
+  "command.session.export": "匯出會話紀錄",
 
   "palette.search.placeholder": "搜尋檔案、命令和工作階段",
   "palette.empty": "找不到結果",
@@ -268,6 +269,7 @@ export const dict = {
   "prompt.attachment.remove": "移除附件",
   "prompt.action.send": "傳送",
   "prompt.action.send.blocked": "請先回答或忽略待處理的問題",
+  "prompt.action.send.recording": "轉錄並傳送",
   "prompt.action.stop": "停止",
   "prompt.action.enhance": "改善提示詞",
   "prompt.action.autoApprove.enable": "啟用自動核准",
@@ -279,7 +281,7 @@ export const dict = {
     "「強化提示詞」按鈕可透過提供額外內容、說明或改寫來協助改善提示詞。試著在這裡輸入提示詞，再點選一次按鈕以了解其運作方式。",
 
   "speechToText.tooltip.start": "開始語音輸入",
-  "speechToText.tooltip.stop": "停止錄音",
+  "speechToText.tooltip.stop": "停止擷取音訊",
   "speechToText.tooltip.transcribing": "正在轉錄... 點擊取消。",
   "speechToText.tooltip.error": "語音輸入失敗。點擊清除。",
   "speechToText.error.title": "語音輸入失敗",
@@ -1554,4 +1556,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "沒有相符的分支",
   "diffViewer.baseBranch.loading": "正在載入分支…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "計畫已準備就緒：",
 } satisfies Partial<Record<Keys, string>>

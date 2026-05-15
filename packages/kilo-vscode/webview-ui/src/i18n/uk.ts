@@ -92,6 +92,7 @@ export const dict = {
   "command.session.share.description": "Відкрити доступ до цієї сесії та скопіювати URL до буфера обміну",
   "command.session.unshare": "Закрити доступ до сесії",
   "command.session.unshare.description": "Закрити доступ до цієї сесії",
+  "command.session.export": "Експортувати запис сеансу",
 
   "palette.search.placeholder": "Пошук файлів, команд і сесій",
   "palette.empty": "Результатів не знайдено",
@@ -270,6 +271,7 @@ export const dict = {
   "prompt.attachment.remove": "Видалити вкладення",
   "prompt.action.send": "Надіслати",
   "prompt.action.send.blocked": "Спочатку дайте відповідь або закрийте очікуюче питання",
+  "prompt.action.send.recording": "Транскрибувати та надіслати",
   "prompt.action.stop": "Зупинити",
   "prompt.action.enhance": "Покращити запит",
   "prompt.action.indexing": "Налаштування індексування",
@@ -283,7 +285,7 @@ export const dict = {
     "Кнопка 'Покращити запит' допомагає вдосконалити ваш запит, надаючи додатковий контекст, уточнення або перефразування. Введіть запит тут і натисніть кнопку ще раз, щоб побачити, як це працює.",
 
   "speechToText.tooltip.start": "Почати голосове введення",
-  "speechToText.tooltip.stop": "Зупинити запис",
+  "speechToText.tooltip.stop": "Зупинити захоплення звуку",
   "speechToText.tooltip.transcribing": "Транскрибування... Натисніть, щоб скасувати.",
   "speechToText.tooltip.error": "Помилка голосового введення. Натисніть, щоб очистити.",
   "speechToText.error.title": "Помилка голосового введення",
@@ -1633,4 +1635,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "No matching branches",
   "diffViewer.baseBranch.loading": "Loading branches…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "План готовий:",
 }

@@ -96,6 +96,7 @@ export const dict = {
   "command.session.share.description": "Diese Sitzung teilen und URL in die Zwischenablage kopieren",
   "command.session.unshare": "Teilen der Sitzung aufheben",
   "command.session.unshare.description": "Teilen dieser Sitzung beenden",
+  "command.session.export": "Sitzungsprotokoll exportieren",
 
   "palette.search.placeholder": "Dateien, Befehle und Sitzungen durchsuchen",
   "palette.empty": "Keine Ergebnisse gefunden",
@@ -273,6 +274,7 @@ export const dict = {
   "prompt.attachment.remove": "Anhang entfernen",
   "prompt.action.send": "Senden",
   "prompt.action.send.blocked": "Beantworten oder verwerfen Sie zuerst die ausstehende Frage",
+  "prompt.action.send.recording": "Transkribieren und senden",
   "prompt.action.stop": "Stopp",
   "prompt.action.enhance": "Prompt verbessern",
   "prompt.action.autoApprove.enable": "Automatische Genehmigung aktivieren",
@@ -286,7 +288,7 @@ export const dict = {
     "Die Schaltfläche 'Prompt verbessern' hilft, deine Anfrage durch zusätzlichen Kontext, Klarstellungen oder Umformulierungen zu verbessern. Versuche, hier eine Anfrage einzugeben und klicke erneut auf die Schaltfläche, um zu sehen, wie es funktioniert.",
 
   "speechToText.tooltip.start": "Spracheingabe starten",
-  "speechToText.tooltip.stop": "Aufnahme beenden",
+  "speechToText.tooltip.stop": "Audioerfassung beenden",
   "speechToText.tooltip.transcribing": "Transkribieren... Zum Abbrechen klicken.",
   "speechToText.tooltip.error": "Spracheingabe fehlgeschlagen. Zum Löschen klicken.",
   "speechToText.error.title": "Spracheingabe fehlgeschlagen",
@@ -1643,4 +1645,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "Keine passenden Branches",
   "diffViewer.baseBranch.loading": "Branches werden geladen…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "Plan ist bereit:",
 } satisfies Partial<Record<Keys, string>>

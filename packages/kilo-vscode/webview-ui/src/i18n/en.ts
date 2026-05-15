@@ -92,6 +92,7 @@ export const dict = {
   "command.session.share.description": "Share this session and copy the URL to clipboard",
   "command.session.unshare": "Unshare session",
   "command.session.unshare.description": "Stop sharing this session",
+  "command.session.export": "Export session transcript",
 
   "palette.search.placeholder": "Search files, commands, and sessions",
   "palette.empty": "No results found",
@@ -270,6 +271,7 @@ export const dict = {
   "prompt.attachment.remove": "Remove attachment",
   "prompt.action.send": "Send",
   "prompt.action.send.blocked": "Answer or dismiss the pending question first",
+  "prompt.action.send.recording": "Transcribe and send",
   "prompt.action.stop": "Stop",
   "prompt.action.enhance": "Enhance prompt",
   "prompt.action.indexing": "Indexing settings",
@@ -281,7 +283,7 @@ export const dict = {
   "prompt.action.enhanceDescription":
     "The 'Enhance Prompt' button helps improve your prompt by providing additional context, clarification, or rephrasing. Try typing a prompt in here and clicking the button again to see how it works.",
   "speechToText.tooltip.start": "Start voice input",
-  "speechToText.tooltip.stop": "Stop recording",
+  "speechToText.tooltip.stop": "Stop capturing",
   "speechToText.tooltip.transcribing": "Transcribing... Click to cancel.",
   "speechToText.tooltip.error": "Speech input failed. Click to clear.",
   "speechToText.error.title": "Speech input failed",
@@ -1612,4 +1614,6 @@ export const dict = {
   "diffViewer.baseBranch.empty": "No matching branches",
   "diffViewer.baseBranch.loading": "Loading branches…",
   "diffViewer.baseBranch.none": "—",
+
+  "plan.exit.ready": "Plan is ready:",
 }

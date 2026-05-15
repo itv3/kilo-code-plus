@@ -92,6 +92,7 @@ export const dict = {
   "command.session.share.description": "Del denne session og kopier URL'en til udklipsholderen",
   "command.session.unshare": "Stop deling af session",
   "command.session.unshare.description": "Stop med at dele denne session",
+  "command.session.export": "Eksporter sessionsudskrift",
 
   "palette.search.placeholder": "Søg i filer, kommandoer og sessioner",
   "palette.empty": "Ingen resultater fundet",
@@ -269,6 +270,7 @@ export const dict = {
   "prompt.attachment.remove": "Fjern vedhæftning",
   "prompt.action.send": "Send",
   "prompt.action.send.blocked": "Besvar eller afvis det afventende spørgsmål først",
+  "prompt.action.send.recording": "Transskriber og send",
   "prompt.action.stop": "Stop",
   "prompt.action.enhance": "Forbedr prompt",
   "prompt.action.autoApprove.enable": "Aktiver automatisk godkendelse",
@@ -282,7 +284,7 @@ export const dict = {
     "Knappen 'Forbedr prompt' hjælper med at forbedre din forespørgsel ved at give ekstra kontekst, præcisering eller omformulering. Prøv at skrive en forespørgsel her og klik på knappen igen for at se hvordan det virker.",
 
   "speechToText.tooltip.start": "Start stemmeinput",
-  "speechToText.tooltip.stop": "Stop optagelse",
+  "speechToText.tooltip.stop": "Stop lydoptagelse",
   "speechToText.tooltip.transcribing": "Transskriberer... Klik for at annullere.",
   "speechToText.tooltip.error": "Stemmeinput mislykkedes. Klik for at rydde.",
   "speechToText.error.title": "Stemmeinput mislykkedes",
@@ -1612,4 +1614,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "No matching branches",
   "diffViewer.baseBranch.loading": "Loading branches…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "Planen er klar:",
 }

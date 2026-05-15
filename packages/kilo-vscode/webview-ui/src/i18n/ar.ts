@@ -92,6 +92,7 @@ export const dict = {
   "command.session.share.description": "مشاركة هذه الجلسة ونسخ الرابط إلى الحافظة",
   "command.session.unshare": "إلغاء مشاركة الجلسة",
   "command.session.unshare.description": "إيقاف مشاركة هذه الجلسة",
+  "command.session.export": "تصدير سجل الجلسة",
 
   "palette.search.placeholder": "البحث في الملفات والأوامر والجلسات",
   "palette.empty": "لا توجد نتائج",
@@ -268,6 +269,7 @@ export const dict = {
   "prompt.attachment.remove": "إزالة المرفق",
   "prompt.action.send": "إرسال",
   "prompt.action.send.blocked": "أجب عن السؤال المعلق أو تجاهله أولاً",
+  "prompt.action.send.recording": "تفريغ وإرسال",
   "prompt.action.stop": "توقف",
   "prompt.action.enhance": "تحسين النص",
   "prompt.action.autoApprove.enable": "تفعيل الموافقة التلقائية",
@@ -279,7 +281,7 @@ export const dict = {
     "زر «حسّن الموجه» يطوّر موجهك بإضافة سياق أو توضيح أو إعادة صياغة. جرّب اكتب موجه هنا ثم اضغط الزر مرة ثانية وشوف النتيجة.",
 
   "speechToText.tooltip.start": "بدء الإدخال الصوتي",
-  "speechToText.tooltip.stop": "إيقاف التسجيل",
+  "speechToText.tooltip.stop": "إيقاف التقاط الصوت",
   "speechToText.tooltip.transcribing": "جاري تحويل الصوت إلى نص... انقر للإلغاء.",
   "speechToText.tooltip.error": "فشل الإدخال الصوتي. انقر للمسح.",
   "speechToText.error.title": "فشل الإدخال الصوتي",
@@ -1584,4 +1586,5 @@ export const dict = {
   "diffViewer.baseBranch.empty": "لا توجد فروع مطابقة",
   "diffViewer.baseBranch.loading": "جارٍ تحميل الفروع…",
   "diffViewer.baseBranch.none": "—",
+  "plan.exit.ready": "الخطة جاهزة:",
 }
