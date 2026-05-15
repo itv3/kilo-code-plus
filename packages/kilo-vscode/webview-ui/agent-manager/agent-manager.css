@@ -2553,10 +2553,23 @@ body.am-wt-dragging-active * {
 .am-nv-dialog .am-prompt-input-wrapper {
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.am-nv-dialog .am-prompt-input-container:has(.model-selector-popover[data-component="popover-content"]),
+.am-nv-dialog-content:has(.model-selector-popover[data-component="popover-content"]),
+[data-component="dialog"]:has(.am-nv-dialog .model-selector-popover[data-component="popover-content"])
+  [data-slot="dialog-body"] {
+  overflow: visible;
 }
 
 .am-nv-dialog .am-prompt-input-ghost-wrapper {
   height: 100%;
+}
+
+.am-nv-dialog .prompt-input-hint {
+  flex-shrink: 0;
 }
 
 .am-nv-dialog .am-prompt-input {
