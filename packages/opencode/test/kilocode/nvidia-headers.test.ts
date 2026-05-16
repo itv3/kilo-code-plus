@@ -1,13 +1,14 @@
 import { expect } from "bun:test"
 import path from "path"
 import { Effect, Layer } from "effect"
+import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { provideTmpdirInstance } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
 import { Env } from "../../src/env"
 import { Provider } from "../../src/provider/provider"
 import { ProviderID } from "../../src/provider/schema"
 
-const it = testEffect(Layer.mergeAll(Provider.defaultLayer, Env.defaultLayer))
+const it = testEffect(Layer.mergeAll(Provider.defaultLayer, Env.defaultLayer, CrossSpawnSpawner.defaultLayer))
 
 function withNvidiaKey<A, E, R>(self: Effect.Effect<A, E, R>) {
   return Effect.gen(function* () {
