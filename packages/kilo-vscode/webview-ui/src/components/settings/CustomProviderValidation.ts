@@ -156,25 +156,37 @@ function serializeVariant(v: VariantEntry): [string, Record<string, unknown>] {
   return [v.name.trim(), cfg]
 }
 
-function serializeModel(m: ModelEntry): [string, Record<string, unknown>] {
-  const ventries = m.reasoning ? m.variants.filter((v) => v.name.trim()).map(serializeVariant) : []
+function extractModelLimits(m: ModelEntry) {
   const context = m.contextLimit.trim() ? Number(m.contextLimit.trim()) : undefined
   const output = m.outputLimit.trim() ? Number(m.outputLimit.trim()) : undefined
-  const limit =
-    context !== undefined || output !== undefined ? { context: context ?? 0, output: output ?? 0 } : undefined
-  const inputCost = m.costEnabled && m.inputCost.trim() ? Number(m.inputCost.trim()) : undefined
-  const outputCost = m.costEnabled && m.outputCost.trim() ? Number(m.outputCost.trim()) : undefined
-  const cacheReadCost = m.costEnabled && m.cacheReadCost.trim() ? Number(m.cacheReadCost.trim()) : undefined
-  const cacheWriteCost = m.costEnabled && m.cacheWriteCost.trim() ? Number(m.cacheWriteCost.trim()) : undefined
-  const cost =
-    inputCost !== undefined || outputCost !== undefined || cacheReadCost !== undefined || cacheWriteCost !== undefined
-      ? {
-          input: inputCost ?? 0,
-          output: outputCost ?? 0,
-          ...(cacheReadCost !== undefined ? { cache_read: cacheReadCost } : {}),
-          ...(cacheWriteCost !== undefined ? { cache_write: cacheWriteCost } : {}),
-        }
-      : undefined
+  if (context !== undefined || output !== undefined) {
+    return { context: context ?? 0, output: output ?? 0 }
+  }
+  return undefined
+}
+
+function extractModelCosts(m: ModelEntry) {
+  if (!m.costEnabled) return undefined
+  const inputCost = m.inputCost.trim() ? Number(m.inputCost.trim()) : undefined
+  const outputCost = m.outputCost.trim() ? Number(m.outputCost.trim()) : undefined
+  const cacheReadCost = m.cacheReadCost.trim() ? Number(m.cacheReadCost.trim()) : undefined
+  const cacheWriteCost = m.cacheWriteCost.trim() ? Number(m.cacheWriteCost.trim()) : undefined
+  
+  if (inputCost !== undefined || outputCost !== undefined || cacheReadCost !== undefined || cacheWriteCost !== undefined) {
+    return {
+      input: inputCost ?? 0,
+      output: outputCost ?? 0,
+      ...(cacheReadCost !== undefined ? { cache_read: cacheReadCost } : {}),
+      ...(cacheWriteCost !== undefined ? { cache_write: cacheWriteCost } : {}),
+    }
+  }
+  return undefined
+}
+
+function serializeModel(m: ModelEntry): [string, Record<string, unknown>] {
+  const ventries = m.reasoning ? m.variants.filter((v) => v.name.trim()).map(serializeVariant) : []
+  const limit = extractModelLimits(m)
+  const cost = extractModelCosts(m)
   const entry: Record<string, unknown> = { name: m.name.trim() }
   if (m.reasoning) entry.reasoning = true
   entry.modalities = { input: m.image ? ["text", "image"] : ["text"], output: ["text"] }
