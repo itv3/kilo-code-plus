@@ -1,4 +1,4 @@
-# kilo code-custom · 开发方案
+# Kilo Code Plus · 开发方案
 
 ## 0. 目标与结论
 
@@ -15,7 +15,7 @@
 
 | 项 | 结论 |
 |---|---|
-| 产品名 | `kilo code-custom` |
+| 产品名 | `Kilo Code Plus` |
 | 目标编辑器 | Cursor + VS Code |
 | 工程基础 | Kilo Code v2 `main` / `master` |
 | 内部命令 ID | 保留 `kilo-code.*` / `kilo-code-ActivityBar`,避免命令和视图失效 |
@@ -210,8 +210,8 @@ const providers = response.all
 
 | 字段 | 建议值 |
 |---|---|
-| `displayName` | `kilo code-custom` |
-| `name` | `kilo-code-custom` |
+| `displayName` | `Kilo Code Plus` |
+| `name` | `kilo-code-plus` |
 | `publisher` | 待定 |
 | `icon` | 自定义图标 |
 | `repository.url` | fork 仓库 |

@@ -1,6 +1,6 @@
 {
-  "name": "kilo-code-custom",
-  "displayName": "Kilo Code Custom",
+  "name": "kilo-code-plus",
+  "displayName": "Kilo Code Plus",
   "description": "Open Source AI coding agent that generates code from natural language, automates tasks, and runs terminal commands. Features inline autocomplete, browser automation, automated refactoring, and custom modes for planning, coding, and debugging. Supports 500+ AI models including Claude (Anthropic), Gemini, Grok, GPT, Codex and GLM.",
   "version": "7.3.54",
   "icon": "assets/icons/logo-outline-black.png",
@@ -11,7 +11,7 @@
   "publisher": "itv3",
   "repository": {
     "type": "git",
-    "url": "https://github.com/itv3/kilo-code-custom.git",
+    "url": "https://github.com/itv3/kilo-code-plus.git",
     "directory": "packages/kilo-vscode"
   },
   "engines": {
