@@ -1,8 +1,8 @@
 {
   "name": "kilo-code-plus",
   "displayName": "Kilo Code Plus",
-  "description": "Open Source AI coding agent that generates code from natural language, automates tasks, and runs terminal commands. Features inline autocomplete, browser automation, automated refactoring, and custom modes for planning, coding, and debugging. Supports 500+ AI models including Claude (Anthropic), Gemini, Grok, GPT, Codex and GLM.",
-  "version": "7.3.54-2026.6.28-1840",
+  "description": "基于上游 Kilo Code 的 Plus 版本，重点增强自定义提供商：支持 OpenAI / Anthropic / Gemini API 类型、模型自动发现、图像与推理能力、高级 token 参数和成本配置。",
+  "version": "7.3.5401",
   "icon": "assets/icons/logo-outline-black.png",
   "galleryBanner": {
     "color": "#FFFFFF",

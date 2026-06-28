@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "要发布的版本，例如 7.3.55；留空则使用 package version。"
+        description: "发布批次，例如 7.3.54-v0.01；留空则使用市场版本。"
         required: false
         type: string
       pre_release:
@@ -50,23 +50,30 @@ jobs:
           set -euo pipefail
 
           input="${{ inputs.version || '' }}"
+          label=""
           if [[ -n "$input" ]]; then
-            version="${input#v}"
+            label="${input#v}"
           elif [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" == kilo-code-plus-v* ]]; then
-            version="${GITHUB_REF_NAME#kilo-code-plus-v}"
+            label="${GITHUB_REF_NAME#kilo-code-plus-v}"
           else
-            version="$(bun -e 'console.log(require("./packages/kilo-vscode/package.json").version)')"
+            label="$(bun -e 'console.log(require("./packages/kilo-vscode/package.json").version)')"
           fi
+
+          version="$(bun -e 'console.log(require("./packages/kilo-vscode/package.json").version)')"
 
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
             echo "Invalid version: $version" >&2
             exit 1
           fi
+          if [[ -z "$label" ]]; then
+            label="$version"
+          fi
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=kilo-code-plus-v$version" >> "$GITHUB_OUTPUT"
-          echo "vsix=packages/kilo-vscode/out/kilo-code-plus-$version-${TARGET}.vsix" >> "$GITHUB_OUTPUT"
-          if [[ "$version" == *-* || "${{ inputs.pre_release || false }}" == "true" ]]; then
+          echo "label=$label" >> "$GITHUB_OUTPUT"
+          echo "tag=kilo-code-plus-v$label" >> "$GITHUB_OUTPUT"
+          echo "vsix=packages/kilo-vscode/out/kilo-code-plus-$label-${TARGET}.vsix" >> "$GITHUB_OUTPUT"
+          if [[ "${{ inputs.pre_release || false }}" == "true" ]]; then
             echo "pre=true" >> "$GITHUB_OUTPUT"
           else
             echo "pre=false" >> "$GITHUB_OUTPUT"
@@ -108,19 +115,19 @@ jobs:
               --no-dependencies \
               --skip-license \
               --target "$TARGET" \
-              -o "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix"
+              -o "out/kilo-code-plus-${{ steps.meta.outputs.label }}-$TARGET.vsix"
           else
             ./node_modules/.bin/vsce package \
               --no-dependencies \
               --skip-license \
               --target "$TARGET" \
-              -o "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix"
+              -o "out/kilo-code-plus-${{ steps.meta.outputs.label }}-$TARGET.vsix"
           fi
 
       - name: 上传 VSIX 构建产物
         uses: actions/upload-artifact@v7
         with:
-          name: kilo-code-plus-${{ steps.meta.outputs.version }}-${{ env.TARGET }}
+          name: kilo-code-plus-${{ steps.meta.outputs.label }}-${{ env.TARGET }}
           path: ${{ steps.meta.outputs.vsix }}
 
       - name: 发布到 VS Marketplace
@@ -140,7 +147,7 @@ jobs:
             fi
           fi
 
-          args=(--packagePath "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix")
+          args=(--packagePath "out/kilo-code-plus-${{ steps.meta.outputs.label }}-$TARGET.vsix")
           if [[ "${{ steps.meta.outputs.pre }}" == "true" ]]; then
             args=(--pre-release "${args[@]}")
           fi
@@ -170,7 +177,7 @@ jobs:
           fi
 
           pat="${OVSX_TOKEN:-${OPENVSX_TOKEN:-}}"
-          args=(--pat "$pat" --packagePath "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix")
+          args=(--pat "$pat" --packagePath "out/kilo-code-plus-${{ steps.meta.outputs.label }}-$TARGET.vsix")
           if [[ "${{ steps.meta.outputs.pre }}" == "true" ]]; then
             args=(--pre-release "${args[@]}")
           fi
@@ -194,6 +201,6 @@ jobs:
           if ! gh release view "$tag" >/dev/null 2>&1; then
             gh release create "$tag" \
               --title "$tag" \
-              --notes "自动发布 Kilo Code Plus ${{ steps.meta.outputs.version }}"
+              --notes "自动发布 Kilo Code Plus ${{ steps.meta.outputs.label }}，市场内部版本 ${{ steps.meta.outputs.version }}。"
           fi
           gh release upload "$tag" "${{ steps.meta.outputs.vsix }}" --clobber
