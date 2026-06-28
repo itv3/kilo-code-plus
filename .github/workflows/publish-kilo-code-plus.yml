@@ -90,7 +90,11 @@ jobs:
 
       - name: 构建扩展
         working-directory: packages/kilo-vscode
-        run: bun run package
+        run: |
+          bun run prepare:cli-binary -- --force
+          bun run rebuild-sdk
+          bun run typecheck
+          node esbuild.js --production
 
       - name: 打包 VSIX
         working-directory: packages/kilo-vscode
