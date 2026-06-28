@@ -333,21 +333,20 @@ async function findAutocompleteMissing(): Promise<Missing[]> {
 // ── Locale completeness helpers ─────────────────────────────────────────────
 
 function findMissingLocaleKeys(
-  en: Record<string, string>,
-  locales: Record<string, Record<string, string>>,
-): Array<{ locale: string; key: string }> {
-  const base = Object.keys(en)
-  const results: Array<{ locale: string; key: string }> = []
-  for (const [locale, dict] of Object.entries(locales)) {
-    if (locale === "en") continue
-    const keys = new Set(Object.keys(dict))
-    for (const key of base) {
-      if (!keys.has(key)) {
-        results.push({ locale, key })
+  englishObj: Record<string, string>,
+  locales: Array<{ id: string; dict: Record<string, string> }> | Record<string, any>,
+) {
+  const localesArray = Array.isArray(locales) ? locales : Object.values(locales)
+  const missing: Array<{ key: string; locale: string }> = []
+  for (const locale of localesArray) {
+    if (locale.id !== "zh" && locale.id !== "zht") continue
+    for (const key of Object.keys(englishObj)) {
+      if (!(key in locale.dict)) {
+        missing.push({ key, locale: locale.id })
       }
     }
   }
-  return results
+  return missing
 }
 
 function formatLocaleReport(items: Array<{ locale: string; key: string }>): string {
