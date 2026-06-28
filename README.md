@@ -1,177 +1,48 @@
-<p align="center">
-  English | <a href="README.zh.md">简体中文</a> | <a href="README.zht.md">繁體中文</a> | <a href="README.ko.md">한국어</a> | <a href="README.de.md">Deutsch</a> | <a href="README.es.md">Español</a> | <a href="README.fr.md">Français</a> | <a href="README.it.md">Italiano</a> | <a href="README.da.md">Dansk</a> | <a href="README.ja.md">日本語</a> | <a href="README.pl.md">Polski</a> | <a href="README.ru.md">Русский</a> | <a href="README.bs.md">Bosanski</a> | <a href="README.ar.md">العربية</a> | <a href="README.no.md">Norsk</a> | <a href="README.br.md">Português (Brasil)</a> | <a href="README.th.md">ไทย</a> | <a href="README.tr.md">Türkçe</a> | <a href="README.uk.md">Українська</a> | <a href="README.bn.md">বাংলা</a> | <a href="README.gr.md">Ελληνικά</a> | <a href="README.vi.md">Tiếng Việt</a>
-</p>
+# Kilo Code Plus
 
-<p align="center">
-  <a href="https://kilo.ai"><img width="250" alt="Kilo Code logo" src="https://github.com/user-attachments/assets/bdb0c174-b9fd-40ad-a47b-f3aab9b54e8d" /></a>
-</p>
+这是基于上游 Kilo Code 的 Plus 版本，主要改进如下。
 
-<p align="center">The open source coding agent for building with AI in VS Code, JetBrains, or the CLI.</p>
+## 版本说明
 
-<p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=kilocode.Kilo-Code"><img src="https://raster.shields.io/badge/VS_Code_Marketplace-007ACC?style=flat&logo=visualstudiocode&logoColor=white" alt="VS Code Marketplace" height="20"></a>
-  <a href="https://www.npmjs.com/package/@kilocode/cli"><img alt="npm" src="https://raster.shields.io/npm/v/@kilocode/cli?style=flat" height="20" /></a>
-  <a href="https://x.com/kilocode"><img src="https://raster.shields.io/badge/kilocode-000000?style=flat&logo=x&logoColor=white" alt="X (Twitter)" height="20"></a>
-  <a href="https://blog.kilo.ai"><img src="https://raster.shields.io/badge/Blog-555?style=flat&logo=substack&logoColor=white" alt="Blog" height="20"></a>
-  <a href="https://kilo.ai/discord"><img src="https://raster.shields.io/badge/Join%20Discord-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord" height="20"></a>
-  <a href="https://www.reddit.com/r/kilocode/"><img src="https://raster.shields.io/badge/Join%20r%2Fkilocode-D84315?style=flat&logo=reddit&logoColor=white" alt="Reddit" height="20"></a>
-</p>
+- 上游版本：`7.3.54`
+- Plus 自定义版本：`v0.01`
+- 发布批次：`7.3.54-v0.01`
+- 市场版本：`7.3.5401`
 
-![Kilo-in-VS-Code-and-CLI](https://github.com/user-attachments/assets/0536ca59-ed81-4512-9e05-d186187a1b52)
+说明：VS Marketplace 不支持 `7.3.54-v0.01` 这种带后缀的扩展版本号，所以市场页面显示的版本使用纯数字 `7.3.5401`。GitHub tag、GitHub Release、VSIX 文件名使用发布批次 `7.3.54-v0.01`。
 
----
+## 主要改进
 
-Kilo Code is an AI coding agent that meets you everywhere you work: [VS Code](https://kilo.ai/landing/vs-code), [JetBrains](https://kilo.ai/features/jetbrains-native), and the [CLI](https://kilo.ai/cli). It's open source with open pricing. You pick from 500+ models, switch between them mid-task, and pay the model provider's rate with zero markup. No API keys required to start.
+### UI 页面自定义提供商增强
 
-### Installation
+1. API 类型：自定义提供商支持 OpenAI / Anthropic / Gemini 三种 API 类型。
+2. 模型自动发现：支持 OpenAI、Anthropic、Gemini，并自动处理 endpoint 和认证头。
+3. 模型能力配置：支持手动勾选图像输入能力、推理能力。
+4. 高级模型参数：支持 context token limit、output token limit。
+5. 成本选项：默认隐藏，勾选后显示和保存输入、输出、缓存读取、缓存写入成本。
+6. 默认值补全：添加模型时用模型 ID 匹配内置默认模型，匹配上后自动带出高级模型参数、图像输入能力、推理能力、成本。
 
-Pick where you want to run Kilo.
+## 发布
 
-<details open>
-<summary><strong>VS Code</strong></summary>
+自动发布 workflow：`.github/workflows/publish-kilo-code-plus.yml`
 
-<br>
+推送 tag 后自动发布到：
 
-Install the [Kilo Code extension](vscode:extension/kilocode.kilo-code) directly, or grab it from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kilocode.Kilo-Code). Create an account and you'll have access to 500+ models including GPT-5.5, Claude Opus 4.7, Claude Sonnet 4.6, and Gemini 3.1 Pro Preview, all at provider pricing.
+- Open VSX：`https://open-vsx.org/extension/itv3/kilo-code-plus`
+- VS Marketplace：`https://marketplace.visualstudio.com/items?itemName=itv3.kilo-code-plus`
 
-</details>
+当前发布目标平台：`darwin-arm64`
 
-<details open>
-<summary><strong>CLI</strong></summary>
-
-<br>
+常用发布命令：
 
 ```bash
-# npm
-npm install -g @kilocode/cli
-
-# curl
-curl -fsSL https://kilo.ai/cli/install | bash
-
-# pnpm
-pnpm add -g @kilocode/cli
-
-# bun
-bun add -g @kilocode/cli
-
-# Homebrew (macOS / Linux)
-brew install Kilo-Org/tap/kilo
-
-# Arch Linux (AUR)
-paru -S kilo-bin
+git push custom main
+git tag kilo-code-plus-v7.3.54-v0.01
+git push custom kilo-code-plus-v7.3.54-v0.01
 ```
 
-Then run `kilo` in any project directory to start.
+## 反馈
 
-</details>
+如果是上游 Kilo Code 本身的源码问题，请向上游反馈。
 
-<details>
-<summary><strong>JetBrains</strong></summary>
-
-<br>
-
-Install the [Kilo Code plugin](https://plugins.jetbrains.com/plugin/28350-kilo-code) from the JetBrains Marketplace, or search "Kilo Code" in `Settings → Plugins` inside any JetBrains IDE.
-
-</details>
-
-<details>
-<summary><strong>Cloud Agent</strong></summary>
-
-<br>
-
-Run Kilo from the web, no local machine needed, at [app.kilo.ai/cloud](https://app.kilo.ai/cloud).
-
-</details>
-
-<details>
-<summary><strong>Code Reviews</strong></summary>
-
-<br>
-
-Set up automated AI code reviews on your pull requests at [app.kilo.ai/code-reviews](https://app.kilo.ai/code-reviews).
-
-</details>
-
-<details>
-<summary><strong>KiloClaw</strong></summary>
-
-<br>
-
-Spin up your always-on AI agent at [app.kilo.ai/claw](https://app.kilo.ai/claw).
-
-</details>
-
-<details>
-<summary>Install the CLI from GitHub Releases (binaries)</summary>
-
-Download the latest binary from the [Releases page](https://github.com/Kilo-Org/kilocode/releases).
-
-| Platform | Asset |
-|---|---|
-| Windows (most PCs) | `kilo-windows-x64.zip` |
-| macOS (Apple Silicon) | `kilo-darwin-arm64.zip` |
-| macOS (Intel) | `kilo-darwin-x64.zip` |
-| Linux x64 | `kilo-linux-x64.tar.gz` |
-| Linux ARM | `kilo-linux-arm64.tar.gz` |
-
-Notes: `x64-baseline` is a compatibility build for older CPUs without AVX. `musl` is the statically linked build for Alpine or minimal Docker images without glibc. `kilo-vscode-*.vsix` is the VS Code extension package, not the CLI. `Source code` archives are for building from source.
-
-</details>
-
-### Agents
-
-Kilo ships with specialized agents you switch between depending on the task. You can also build your own custom agents.
-
-- **Code** - The default. Implements and edits code from natural language.
-- **Plan** - Designs architecture and writes implementation plans before any code gets written.
-- **Ask** - Answers questions about your codebase without touching any files.
-- **Debug** - Troubleshoots and traces issues.
-- **Review** - Reviews your changes and surfaces issues across performance, security, style, and test coverage.
-
-Learn more about [agents and custom agents](https://kilo.ai/docs/code-with-ai/agents/using-agents).
-
-### What it does
-
-- **Code generation** from natural language, across multiple files.
-- **Inline autocomplete** with ghost-text suggestions and tab to accept.
-- **Self-checking** so the agent reviews and corrects its own work.
-- **Terminal and browser control** to run commands and automate the web.
-- **MCP marketplace** to find and wire up MCP servers that extend what the agent can do.
-- **500+ models** with mid-task switching, so you can match latency, cost, and reasoning to the job.
-
-### Autonomous Mode (CI/CD)
-
-Run `kilo run` with `--auto` for fully autonomous operation with no prompts, built for CI/CD pipelines:
-
-```bash
-kilo run --auto "run tests and fix any failures"
-```
-
-`--auto` disables all permission prompts and lets the agent execute any action without confirmation. Only use it in trusted environments.
-
-### Documentation
-
-For configuration and everything else, [head over to the docs](https://kilo.ai/docs).
-
-### Contributing
-
-Contributions are welcome from developers, writers, and everyone in between. Start with the [Contributing Guide](/CONTRIBUTING.md) for environment setup, coding standards, and how to open a pull request. See [RELEASING.md](RELEASING.md) for the VS Code extension and CLI release process, and [packages/kilo-jetbrains/RELEASING.md](packages/kilo-jetbrains/RELEASING.md) for the JetBrains plugin.
-
-Please review our [Code of Conduct](/CODE_OF_CONDUCT.md) before getting involved.
-
-### License
-
-MIT. You're free to use, modify, and distribute this code, including commercially, as long as you keep the attribution and license notices. See [License](/LICENSE).
-
-### FAQ
-
-<details>
-<summary>Where did Kilo CLI come from?</summary>
-
-Kilo CLI is a fork of [OpenCode](https://github.com/Kilo-Org/kilocode), enhanced to work within the Kilo agentic engineering platform.
-
-</details>
-
----
-
-**Join the community** [Discord](https://kilo.ai/discord) | [X](https://x.com/kilocode) | [Reddit](https://www.reddit.com/r/kilocode/)
+如果是 Plus 自定义提供商增强相关问题，请在本仓库反馈。
