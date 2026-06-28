@@ -31,6 +31,8 @@ import {
   applySessionPatch,
   sessionPatchToWebview,
   indexProvidersById,
+  filterProviders,
+  filterAgents,
   filterVisibleAgents,
   mapSSEEventToWebviewMessage,
   getErrorMessage,
@@ -319,8 +321,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private connectionGeneration = 0
   private loginAttempt = 0
   private isWebviewReady = false
-  private readonly extensionVersion =
-    vscode.extensions.getExtension("kilocode.kilo-code")?.packageJSON?.version ?? "unknown"
+  private readonly extensionVersion: string
   private cachedProvidersMessage: unknown = null
   /**
    * Provider API keys retained extension-side for authenticated model
@@ -431,6 +432,11 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     private readonly extensionContext?: vscode.ExtensionContext,
     private readonly opts: KiloProviderOptions = {},
   ) {
+    this.extensionVersion =
+      this.extensionContext?.extension.packageJSON?.version ??
+      vscode.extensions.getExtension("itv3.kilo-code-plus")?.packageJSON?.version ??
+      vscode.extensions.getExtension("kilocode.kilo-code")?.packageJSON?.version ??
+      "unknown"
     this.projectDirectory = opts.projectDirectory
     this.slimEditMetadata = opts.slimEditMetadata ?? true
     this.unsubscribeSandboxPreference = this.connectionService.sandboxPreference?.onChange(() => {
@@ -1982,9 +1988,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           }
           this.storedProviderKeys = storedKeys
           const settings = vscode.workspace.getConfiguration("kilo-code.new.model")
+          const providers = filterProviders(response.all, response.connected)
           const message = {
             type: "providersLoaded",
-            providers: indexProvidersById(response.all),
+            providers: indexProvidersById(providers),
             connected: response.connected,
             defaults: response.default,
             defaultSelection: computeDefaultSelection(
@@ -2098,12 +2105,13 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         this.client!.app.agents({ directory: workspaceDir }, { throwOnError: true }),
       )
 
-      const { visible, defaultAgent } = filterVisibleAgents(agents)
+      const all = filterAgents(agents)
+      const { visible, defaultAgent } = filterVisibleAgents(all)
 
       const message = {
         type: "agentsLoaded",
         agents: visible.map(mapAgent),
-        allAgents: agents.map(mapAgent),
+        allAgents: all.map(mapAgent),
         defaultAgent,
       }
       this.cachedAgentsMessage = message
@@ -3290,7 +3298,10 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     if (confirmed !== "Reset") return
 
     const prefix = "kilo-code.new."
-    const ext = vscode.extensions.getExtension("kilocode.kilo-code")
+    const ext =
+      this.extensionContext?.extension ??
+      vscode.extensions.getExtension("itv3.kilo-code-plus") ??
+      vscode.extensions.getExtension("kilocode.kilo-code")
     const properties = ext?.packageJSON?.contributes?.configuration?.properties as Record<string, unknown> | undefined
     if (!properties) return
 
