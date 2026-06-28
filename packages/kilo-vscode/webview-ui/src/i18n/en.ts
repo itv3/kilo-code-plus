@@ -1417,6 +1417,14 @@ export const dict = {
   "settings.agentBehaviour.defaultAgent.title": "Default Agent",
   "settings.agentBehaviour.defaultAgent.description": "Agent to use when none is specified",
   "settings.agentBehaviour.availableAgents": "Available Agents",
+  "agent.description.ask": "Get answers and explanations without making changes to the codebase.",
+  "agent.description.code": "The default agent. Executes tools based on configured permissions.",
+  "agent.description.debug": "Diagnose and fix software issues with systematic debugging methodology.",
+  "agent.description.explore":
+    'Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. "src/components/**/*.tsx"), search code for keywords (eg. "API endpoints"), or answer questions about the codebase (eg. "how do API endpoints work?"). When calling this agent, specify the desired thoroughness level: "quick" for basic searches, "medium" for moderate exploration, or "very thorough" for comprehensive analysis across multiple locations and naming conventions.',
+  "agent.description.general":
+    "General-purpose agent for researching complex questions and executing multi-step tasks. Use this agent to execute multiple units of work in parallel.",
+  "agent.description.plan": "Plan mode. Can only edit plan files; all other filesystem mutations are denied.",
   "settings.agentBehaviour.selectAgent": "Select an agent to configure…",
   "settings.agentBehaviour.selectAgent.title": "Agent",
   "settings.agentBehaviour.selectAgent.description": "Select an agent to configure…",

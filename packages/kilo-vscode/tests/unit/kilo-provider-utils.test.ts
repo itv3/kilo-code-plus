@@ -4,6 +4,8 @@ import {
   applySessionPatch,
   sessionPatchToWebview,
   indexProvidersById,
+  filterProviders,
+  filterAgents,
   filterVisibleAgents,
   buildSettingPath,
   mapSSEEventToWebviewMessage,
@@ -55,12 +57,22 @@ function makeSession(overrides: Partial<Session> = {}): Session {
   }
 }
 
-function makeProvider(id: string): ProviderInfo {
+function makeModel(overrides: Partial<ProviderInfo["models"][string]> = {}): ProviderInfo["models"][string] {
+  return {
+    id: "model",
+    name: "Model",
+    ...overrides,
+  } as ProviderInfo["models"][string]
+}
+
+function makeProvider(id: string, models: ProviderInfo["models"] = {}): ProviderInfo {
   return {
     id,
     name: id.toUpperCase(),
+    source: "custom",
     env: [],
-    models: {},
+    options: {},
+    models,
   }
 }
 
@@ -294,6 +306,64 @@ describe("indexProvidersById", () => {
   })
 })
 
+describe("filterProviders", () => {
+  it("keeps only free Kilo models", () => {
+    const result = filterProviders(
+      [
+        makeProvider("kilo", {
+          free: makeModel({ id: "free", isFree: true }),
+          paid: makeModel({ id: "paid", isFree: false }),
+          unknown: makeModel({ id: "unknown" }),
+        }),
+      ],
+      [],
+    )
+
+    expect(Object.keys(result[0]!.models)).toEqual(["free"])
+  })
+
+  it("keeps connected provider models", () => {
+    const result = filterProviders(
+      [
+        makeProvider("kilo", { free: makeModel({ id: "free", isFree: true }) }),
+        makeProvider("openai", { gpt: makeModel({ id: "gpt" }) }),
+      ],
+      ["openai"],
+    )
+
+    expect(result.map((provider) => provider.id)).toEqual(["kilo", "openai"])
+    expect(result[1]!.models).toHaveProperty("gpt")
+  })
+
+  it("drops disconnected providers even when source is custom", () => {
+    const result = filterProviders(
+      [
+        makeProvider("kilo", { free: makeModel({ id: "free", isFree: true }) }),
+        makeProvider("relay", { claude: makeModel({ id: "claude" }) }),
+      ],
+      [],
+    )
+
+    expect(result.map((provider) => provider.id)).toEqual(["kilo"])
+  })
+
+  it("drops providers with no visible models", () => {
+    const result = filterProviders(
+      [makeProvider("kilo", { paid: makeModel({ id: "paid", isFree: false }) }), makeProvider("openai")],
+      ["openai"],
+    )
+
+    expect(result).toEqual([])
+  })
+})
+
+describe("filterAgents", () => {
+  it("drops orchestrator from webview agent lists", () => {
+    const agents = [makeAgent({ name: "code" }), makeAgent({ name: "orchestrator" })]
+    expect(filterAgents(agents).map((agent) => agent.name)).toEqual(["code"])
+  })
+})
+
 describe("filterVisibleAgents", () => {
   it("filters out subagent mode", () => {
     const agents = [makeAgent({ name: "code", mode: "primary" }), makeAgent({ name: "sub", mode: "subagent" })]
@@ -307,6 +377,12 @@ describe("filterVisibleAgents", () => {
     const { visible } = filterVisibleAgents(agents)
     expect(visible).toHaveLength(1)
     expect(visible[0]!.name).toBe("code")
+  })
+
+  it("filters out orchestrator", () => {
+    const agents = [makeAgent({ name: "orchestrator" }), makeAgent({ name: "ask" })]
+    const { visible } = filterVisibleAgents(agents)
+    expect(visible.map((agent) => agent.name)).toEqual(["ask"])
   })
 
   it("uses first visible agent as default", () => {

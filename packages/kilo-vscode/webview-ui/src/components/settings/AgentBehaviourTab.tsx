@@ -20,6 +20,7 @@ import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
 import { selectedDefaultAgentValue } from "./agent-behaviour-patches"
 import { parseImport, MAX_IMPORT_SIZE } from "./mode-io"
 import type { ImportError } from "./mode-io"
+import { agentDescription, isHiddenAgent } from "../../utils/agent-display"
 
 type SubtabId = "agents" | "mcpServers" | "rules" | "workflows" | "skills"
 
@@ -92,7 +93,7 @@ const AgentBehaviourTab: Component = () => {
       .filter((a) => !a.hidden)
       .map((a) => a.name)
     // Also include any agents from config that might not be in the agent list
-    const agents = Object.keys(config().agent ?? {})
+    const agents = Object.keys(config().agent ?? {}).filter((name) => !isHiddenAgent(name))
     for (const name of agents) {
       if (!names.includes(name)) {
         names.push(name)
@@ -373,6 +374,10 @@ const AgentBehaviourTab: Component = () => {
                 const disabled = () => agentCfg().disable ?? false
                 const hidden = () => agentCfg().hidden ?? false
                 const deprecated = () => agent()?.deprecated ?? false
+                const desc = () => {
+                  const item = agent()
+                  return item ? agentDescription(item, language.t) : undefined
+                }
                 return (
                   <div
                     style={{
@@ -462,7 +467,7 @@ const AgentBehaviourTab: Component = () => {
                           </span>
                         </Show>
                       </div>
-                      <Show when={agent()?.description}>
+                      <Show when={desc()}>
                         <div
                           style={{
                             "font-size": "var(--kilo-font-size-11)",
@@ -473,7 +478,7 @@ const AgentBehaviourTab: Component = () => {
                             "white-space": "nowrap",
                           }}
                         >
-                          {agent()!.description}
+                          {desc()}
                         </div>
                       </Show>
                     </div>

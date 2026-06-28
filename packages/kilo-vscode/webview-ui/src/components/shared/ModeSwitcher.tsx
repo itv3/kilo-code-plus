@@ -13,16 +13,8 @@ import { Button } from "@kilocode/kilo-ui/button"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import type { AgentInfo } from "../../types/messages"
+import { agentDescription, agentLabel } from "../../utils/agent-display"
 import { isEnterKeyCommitNotIme } from "../../utils/ime-enter"
-
-/** Format an agent for display. Uses displayName if available, otherwise title-cases the slug. */
-function formatAgentLabel(agent: AgentInfo): string {
-  if (agent.displayName) return agent.displayName
-  return agent.name
-    .split(/[-_]/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ")
-}
 
 // ---------------------------------------------------------------------------
 // Reusable base component
@@ -96,7 +88,7 @@ export const ModeSwitcherBase: Component<ModeSwitcherBaseProps> = (props) => {
 
   const triggerLabel = () => {
     const agent = props.agents.find((a) => a.name === props.value)
-    if (agent) return formatAgentLabel(agent)
+    if (agent) return agentLabel(agent)
     return props.value || "Code"
   }
 
@@ -129,36 +121,39 @@ export const ModeSwitcherBase: Component<ModeSwitcherBaseProps> = (props) => {
             style={bodyH() !== undefined ? { "max-height": `${bodyH()}px` } : {}}
           >
             <For each={props.agents}>
-              {(agent, i) => (
-                <div
-                  class={`mode-switcher-item${agent.name === props.value ? " selected" : ""}`}
-                  role="option"
-                  aria-selected={agent.name === props.value}
-                  tabindex={focused() === i() ? 0 : -1}
-                  onClick={() => pick(agent.name)}
-                  onFocus={() => setFocused(i())}
-                >
-                  <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
-                    <span class="mode-switcher-item-name">{formatAgentLabel(agent)}</span>
-                    <Show when={agent.deprecated}>
-                      <span
-                        style={{
-                          "font-size": "var(--kilo-font-size-10)",
-                          padding: "1px 5px",
-                          "border-radius": "3px",
-                          background: "var(--vscode-editorWarning-foreground, #cca700)",
-                          color: "var(--vscode-editorWarning-foreground-text, #1e1e1e)",
-                        }}
-                      >
-                        {language.t("settings.agentBehaviour.badge.deprecated")}
-                      </span>
+              {(agent, i) => {
+                const desc = () => agentDescription(agent, language.t)
+                return (
+                  <div
+                    class={`mode-switcher-item${agent.name === props.value ? " selected" : ""}`}
+                    role="option"
+                    aria-selected={agent.name === props.value}
+                    tabindex={focused() === i() ? 0 : -1}
+                    onClick={() => pick(agent.name)}
+                    onFocus={() => setFocused(i())}
+                  >
+                    <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                      <span class="mode-switcher-item-name">{agentLabel(agent)}</span>
+                      <Show when={agent.deprecated}>
+                        <span
+                          style={{
+                            "font-size": "var(--kilo-font-size-10)",
+                            padding: "1px 5px",
+                            "border-radius": "3px",
+                            background: "var(--vscode-editorWarning-foreground, #cca700)",
+                            color: "var(--vscode-editorWarning-foreground-text, #1e1e1e)",
+                          }}
+                        >
+                          {language.t("settings.agentBehaviour.badge.deprecated")}
+                        </span>
+                      </Show>
+                    </div>
+                    <Show when={desc()}>
+                      <span class="mode-switcher-item-desc">{desc()}</span>
                     </Show>
                   </div>
-                  <Show when={agent.description}>
-                    <span class="mode-switcher-item-desc">{agent.description}</span>
-                  </Show>
-                </div>
-              )}
+                )
+              }}
             </For>
           </div>
         )}

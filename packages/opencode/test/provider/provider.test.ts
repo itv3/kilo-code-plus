@@ -774,6 +774,29 @@ it.instance(
 )
 
 it.instance(
+  "provider with multiple api key env aliases includes matched apiKey",
+  Effect.gen(function* () {
+    yield* set("FALLBACK_API_KEY", "fallback-api-key")
+    const providers = yield* list
+    expect(providers[ProviderID.make("multi-api-key")]).toBeDefined()
+    expect(providers[ProviderID.make("multi-api-key")].key).toBe("fallback-api-key")
+  }),
+  {
+    config: {
+      provider: {
+        "multi-api-key": {
+          name: "Multi API Key Provider",
+          npm: "@ai-sdk/openai-compatible",
+          env: ["PRIMARY_API_KEY", "FALLBACK_API_KEY"],
+          models: { "model-1": { name: "Model 1", tool_call: true, limit: { context: 8000, output: 2000 } } },
+          options: { baseURL: "https://api.example.com/v1" },
+        },
+      },
+    },
+  },
+)
+
+it.instance(
   "provider with single env var includes apiKey automatically",
   Effect.gen(function* () {
     yield* set("SINGLE_ENV_KEY", "my-api-key")

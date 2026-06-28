@@ -1447,11 +1447,14 @@ export const layer = Layer.effect(
             continue
           }
           const apiKey = provider.env.map((item) => envs[item]).find(Boolean)
+          const match = provider.env
+            .map((name) => ({ name, value: envs[name] }))
+            .find((item) => item.value && /(?:^|_)API_KEY$/.test(item.name)) // kilocode_change
           // kilocode_change end
           if (!apiKey) continue
           mergeProvider(providerID, {
             source: "env",
-            key: provider.env.length === 1 ? apiKey : undefined,
+            key: provider.env.length === 1 ? apiKey : match?.value, // kilocode_change
           })
         }
 

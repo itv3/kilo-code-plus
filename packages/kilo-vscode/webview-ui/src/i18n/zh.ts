@@ -1343,6 +1343,13 @@ export const dict = {
   "settings.agentBehaviour.defaultAgent.title": "默认智能体",
   "settings.agentBehaviour.defaultAgent.description": "未指定时使用的智能体",
   "settings.agentBehaviour.availableAgents": "可用代理",
+  "agent.description.ask": "回答问题并提供解释，不会修改代码库。",
+  "agent.description.code": "默认智能体。根据已配置的权限执行工具。",
+  "agent.description.debug": "使用系统化调试方法诊断并修复软件问题。",
+  "agent.description.explore":
+    "快速探索代码库的专用智能体。适合按模式快速查找文件（如 \"src/components/**/*.tsx\"）、搜索代码关键词（如 \"API endpoints\"），或回答代码库相关问题（如 \"API endpoints 是如何工作的？\"）。调用此智能体时，请指定期望的细致程度：\"quick\" 用于基础搜索，\"medium\" 用于中等探索，\"very thorough\" 用于跨多个位置和命名约定的全面分析。",
+  "agent.description.general": "用于研究复杂问题和执行多步骤任务的通用智能体。适合并行执行多个工作单元。",
+  "agent.description.plan": "计划模式。只能编辑计划文件；其他所有文件系统变更都会被拒绝。",
   "settings.agentBehaviour.selectAgent": "选择要配置的智能体…",
   "settings.agentBehaviour.selectAgent.title": "智能体",
   "settings.agentBehaviour.selectAgent.description": "选择要配置的智能体…",
