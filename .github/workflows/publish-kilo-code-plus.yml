@@ -1,0 +1,181 @@
+name: publish-kilo-code-plus
+
+on:
+  push:
+    tags:
+      - "kilo-code-plus-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "要发布的版本，例如 7.3.55；留空则使用 package version。"
+        required: false
+        type: string
+      pre_release:
+        description: "是否发布为预发布版本"
+        required: false
+        type: boolean
+        default: false
+
+concurrency: publish-kilo-code-plus-${{ github.ref_name }}-${{ inputs.version || '' }}
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.repository == 'itv3/kilo-code-plus'
+    runs-on: macos-14
+    timeout-minutes: 90
+    env:
+      TARGET: darwin-arm64
+      VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
+      OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+      OPENVSX_TOKEN: ${{ secrets.OPENVSX_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-bun
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: 解析版本号
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          input="${{ inputs.version || '' }}"
+          if [[ -n "$input" ]]; then
+            version="${input#v}"
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" == kilo-code-plus-v* ]]; then
+            version="${GITHUB_REF_NAME#kilo-code-plus-v}"
+          else
+            version="$(bun -e 'console.log(require("./packages/kilo-vscode/package.json").version)')"
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: $version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=kilo-code-plus-v$version" >> "$GITHUB_OUTPUT"
+          echo "vsix=packages/kilo-vscode/out/kilo-code-plus-$version-${TARGET}.vsix" >> "$GITHUB_OUTPUT"
+
+      - name: 检查发布密钥
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${VSCE_PAT:-}" ]]; then
+            echo "Missing GitHub secret: VSCE_TOKEN" >&2
+            exit 1
+          fi
+          if [[ -z "${OVSX_TOKEN:-}${OPENVSX_TOKEN:-}" ]]; then
+            echo "Missing GitHub secret: OVSX_TOKEN or OPENVSX_TOKEN" >&2
+            exit 1
+          fi
+
+      - name: 同步包版本
+        run: bun run script/sync-versions.ts "${{ steps.meta.outputs.version }}"
+
+      - name: 构建扩展
+        working-directory: packages/kilo-vscode
+        run: bun run package
+
+      - name: 打包 VSIX
+        working-directory: packages/kilo-vscode
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          ./node_modules/.bin/vsce package \
+            --no-dependencies \
+            --skip-license \
+            --target "$TARGET" \
+            -o "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix"
+
+      - name: 上传 VSIX 构建产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: kilo-code-plus-${{ steps.meta.outputs.version }}-${{ env.TARGET }}
+          path: ${{ steps.meta.outputs.vsix }}
+
+      - name: 发布到 VS Marketplace
+        working-directory: packages/kilo-vscode
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ./node_modules/.bin/vsce show --json itv3.kilo-code-plus >/tmp/vsce-extension.json 2>/dev/null; then
+            if node -e '
+              const fs = require("fs")
+              const data = JSON.parse(fs.readFileSync("/tmp/vsce-extension.json", "utf8"))
+              const ok = data.versions?.some((v) => v.version === process.env.VERSION && v.targetPlatform === process.env.TARGET)
+              process.exit(ok ? 0 : 1)
+            '; then
+              echo "VS Marketplace 已存在 $VERSION ($TARGET)，跳过发布。"
+              exit 0
+            fi
+          fi
+
+          args=(--packagePath "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix")
+          if [[ "${{ inputs.pre_release || false }}" == "true" ]]; then
+            args=(--pre-release "${args[@]}")
+          fi
+          ./node_modules/.bin/vsce verify-pat itv3
+          for i in 1 2 3; do
+            if ./node_modules/.bin/vsce publish "${args[@]}"; then
+              exit 0
+            fi
+            if [[ "$i" == "3" ]]; then
+              exit 1
+            fi
+            sleep 20
+          done
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+
+      - name: 发布到 Open VSX
+        working-directory: packages/kilo-vscode
+        shell: bash
+        run: |
+          set -euo pipefail
+          if curl --fail --silent --show-error \
+            "https://open-vsx.org/api/itv3/kilo-code-plus/$TARGET/${{ steps.meta.outputs.version }}" \
+            >/dev/null; then
+            echo "Open VSX 已存在 ${{ steps.meta.outputs.version }} ($TARGET)，跳过发布。"
+            exit 0
+          fi
+
+          pat="${OVSX_TOKEN:-${OPENVSX_TOKEN:-}}"
+          args=(--pat "$pat" --packagePath "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix")
+          if [[ "${{ inputs.pre_release || false }}" == "true" ]]; then
+            args=(--pre-release "${args[@]}")
+          fi
+          for i in 1 2 3; do
+            if npx --yes ovsx publish "${args[@]}"; then
+              exit 0
+            fi
+            if [[ "$i" == "3" ]]; then
+              exit 1
+            fi
+            sleep 20
+          done
+
+      - name: 发布 GitHub Release 产物
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ steps.meta.outputs.tag }}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              --title "$tag" \
+              --notes "自动发布 Kilo Code Plus ${{ steps.meta.outputs.version }}"
+          fi
+          gh release upload "$tag" "${{ steps.meta.outputs.vsix }}" --clobber
