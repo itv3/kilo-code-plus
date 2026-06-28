@@ -66,6 +66,11 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=kilo-code-plus-v$version" >> "$GITHUB_OUTPUT"
           echo "vsix=packages/kilo-vscode/out/kilo-code-plus-$version-${TARGET}.vsix" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* || "${{ inputs.pre_release || false }}" == "true" ]]; then
+            echo "pre=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pre=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: 检查发布密钥
         shell: bash
@@ -93,11 +98,20 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out
-          ./node_modules/.bin/vsce package \
-            --no-dependencies \
-            --skip-license \
-            --target "$TARGET" \
-            -o "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix"
+          if [[ "${{ steps.meta.outputs.pre }}" == "true" ]]; then
+            ./node_modules/.bin/vsce package \
+              --pre-release \
+              --no-dependencies \
+              --skip-license \
+              --target "$TARGET" \
+              -o "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix"
+          else
+            ./node_modules/.bin/vsce package \
+              --no-dependencies \
+              --skip-license \
+              --target "$TARGET" \
+              -o "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix"
+          fi
 
       - name: 上传 VSIX 构建产物
         uses: actions/upload-artifact@v7
@@ -123,7 +137,7 @@ jobs:
           fi
 
           args=(--packagePath "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix")
-          if [[ "${{ inputs.pre_release || false }}" == "true" ]]; then
+          if [[ "${{ steps.meta.outputs.pre }}" == "true" ]]; then
             args=(--pre-release "${args[@]}")
           fi
           ./node_modules/.bin/vsce verify-pat itv3
@@ -153,7 +167,7 @@ jobs:
 
           pat="${OVSX_TOKEN:-${OPENVSX_TOKEN:-}}"
           args=(--pat "$pat" --packagePath "out/kilo-code-plus-${{ steps.meta.outputs.version }}-$TARGET.vsix")
-          if [[ "${{ inputs.pre_release || false }}" == "true" ]]; then
+          if [[ "${{ steps.meta.outputs.pre }}" == "true" ]]; then
             args=(--pre-release "${args[@]}")
           fi
           for i in 1 2 3; do
