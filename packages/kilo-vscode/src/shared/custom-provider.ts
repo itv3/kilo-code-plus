@@ -23,6 +23,23 @@ const VariantConfigSchema = z.object({
 
 export type VariantConfig = z.infer<typeof VariantConfigSchema>
 
+const ModalitySchema = z.enum(["text", "image", "audio", "video", "pdf"])
+const ModelLimitSchema = z
+  .object({
+    context: z.number().int().nonnegative(),
+    input: z.number().int().nonnegative().optional(),
+    output: z.number().int().nonnegative(),
+  })
+  .strict()
+const ModelCostSchema = z
+  .object({
+    input: z.number().nonnegative(),
+    output: z.number().nonnegative(),
+    cache_read: z.number().nonnegative().optional(),
+    cache_write: z.number().nonnegative().optional(),
+  })
+  .strict()
+
 export const CustomProviderConfigSchema = z
   .object({
     npm: z.enum(CUSTOM_PROVIDER_PACKAGES).default(CUSTOM_PROVIDER_PACKAGE),
@@ -47,6 +64,15 @@ export const CustomProviderConfigSchema = z
           .object({
             name: z.string().trim().min(1).max(200),
             reasoning: z.boolean().optional(),
+            modalities: z
+              .object({
+                input: z.array(ModalitySchema).optional(),
+                output: z.array(ModalitySchema).optional(),
+              })
+              .strict()
+              .optional(),
+            limit: ModelLimitSchema.optional(),
+            cost: ModelCostSchema.optional(),
             variants: z.record(z.string().trim().min(1), VariantConfigSchema).optional(),
           })
           .strict(),
@@ -63,7 +89,17 @@ export type SanitizedProviderConfig = {
     baseURL: string
     headers?: Record<string, string>
   }
-  models: Record<string, { name: string; reasoning?: true; variants?: Record<string, VariantConfig> }>
+  models: Record<
+    string,
+    {
+      name: string
+      reasoning?: true
+      modalities?: { input?: string[]; output?: string[] }
+      limit?: { context: number; input?: number; output: number }
+      cost?: { input: number; output: number; cache_read?: number; cache_write?: number }
+      variants?: Record<string, VariantConfig>
+    }
+  >
 }
 
 export type CustomProviderAuthChange = { mode: "preserve" } | { mode: "clear" } | { mode: "set"; key: string }
@@ -134,6 +170,9 @@ export function normalizeCustomProviderConfig(
         {
           name: model.name.trim(),
           ...(model.reasoning ? { reasoning: true as const } : {}),
+          ...(model.modalities ? { modalities: model.modalities } : {}),
+          ...(model.limit ? { limit: model.limit } : {}),
+          ...(model.cost ? { cost: model.cost } : {}),
           ...(model.variants && Object.keys(model.variants).length > 0 ? { variants: model.variants } : {}),
         },
       ]),
@@ -153,6 +192,8 @@ export function sanitizeCustomProviderConfig(provider: unknown): { value: Saniti
 
 type AnyRecord = Record<string, unknown>
 type VariantPatch = Partial<{ [Key in keyof VariantConfig]: VariantConfig[Key] | null }>
+type LimitPatch = { context?: number | null; input?: number | null; output?: number | null }
+type CostPatch = { input?: number | null; output?: number | null; cache_read?: number | null; cache_write?: number | null }
 type ProviderPatch = Omit<SanitizedProviderConfig, "models"> & {
   models: Record<
     string,
@@ -160,12 +201,57 @@ type ProviderPatch = Omit<SanitizedProviderConfig, "models"> & {
       name: string
       reasoning?: true | null
       variants?: Record<string, VariantConfig | VariantPatch | null>
+      modalities?: { input?: string[]; output?: string[] } | null
+      limit?: LimitPatch | null
+      cost?: CostPatch | null
     }
   >
 }
 
 function isRecord(v: unknown): v is AnyRecord {
   return !!v && typeof v === "object" && !Array.isArray(v)
+}
+
+function variantPatch(
+  oldModel: AnyRecord,
+  newModel: AnyRecord,
+): Record<string, VariantConfig | VariantPatch | null> | undefined {
+  const oldVariants = isRecord(oldModel.variants) ? oldModel.variants : {}
+  const newVariants = isRecord(newModel.variants) ? newModel.variants : {}
+  const changes: Record<string, VariantPatch | null> = {}
+  for (const [name, oldVariant] of Object.entries(oldVariants)) {
+    if (!(name in newVariants)) {
+      changes[name] = null
+      continue
+    }
+    const item = newVariants[name]
+    if (!isRecord(oldVariant) || !isRecord(item)) continue
+    const removed = Object.keys(oldVariant).filter((key) => !(key in item))
+    if (removed.length === 0) continue
+    const nulls = Object.fromEntries(removed.map((key) => [key, null]))
+    changes[name] = { ...item, ...nulls } as VariantPatch
+  }
+  if (Object.keys(changes).length === 0)
+    return isRecord(newModel.variants)
+      ? (newModel.variants as Record<string, VariantConfig | VariantPatch | null>)
+      : undefined
+  return { ...newVariants, ...changes } as Record<string, VariantConfig | VariantPatch | null>
+}
+
+function limitPatch(oldModel: AnyRecord, newModel: AnyRecord) {
+  if (!isRecord(oldModel.limit)) return isRecord(newModel.limit) ? (newModel.limit as LimitPatch) : undefined
+  const next = isRecord(newModel.limit) ? (newModel.limit as LimitPatch) : undefined
+  const removed = Object.keys(oldModel.limit).filter((key) => !(key in (next ?? {})))
+  if (removed.length === 0) return next
+  return { ...next, ...Object.fromEntries(removed.map((key) => [key, null])) } as LimitPatch
+}
+
+function costPatch(oldModel: AnyRecord, newModel: AnyRecord) {
+  if (!isRecord(oldModel.cost)) return isRecord(newModel.cost) ? (newModel.cost as CostPatch) : undefined
+  const next = isRecord(newModel.cost) ? (newModel.cost as CostPatch) : undefined
+  const removed = Object.keys(oldModel.cost).filter((key) => !(key in (next ?? {})))
+  if (removed.length === 0) return next
+  return { ...next, ...Object.fromEntries(removed.map((key) => [key, null])) } as CostPatch
 }
 
 /**
@@ -188,26 +274,18 @@ export function withCustomProviderDeletions(existing: unknown, next: SanitizedPr
     const oldModel = oldModels[id]
     const newModel = patched[id]
     if (!isRecord(oldModel) || !isRecord(newModel)) continue
-    const oldVariants = isRecord(oldModel.variants) ? oldModel.variants : {}
-    const newVariants = isRecord(newModel.variants) ? newModel.variants : {}
-    const changes: Record<string, VariantPatch | null> = {}
-    for (const [name, oldVariant] of Object.entries(oldVariants)) {
-      if (!(name in newVariants)) {
-        changes[name] = null
-        continue
-      }
-      const newVariant = newVariants[name]
-      if (!isRecord(oldVariant) || !isRecord(newVariant)) continue
-      const removed = Object.keys(oldVariant).filter((key) => !(key in newVariant))
-      if (removed.length === 0) continue
-      const nulls = Object.fromEntries(removed.map((key) => [key, null]))
-      changes[name] = { ...newVariant, ...nulls } as VariantPatch
-    }
-    const variants = Object.keys(changes).length > 0 ? { ...newVariants, ...changes } : newModel.variants
+    const variants = variantPatch(oldModel, newModel)
+    const limit = limitPatch(oldModel, newModel)
+    const cost = costPatch(oldModel, newModel)
     patched[id] = {
       ...newModel,
       ...(variants ? { variants } : {}),
+      ...(limit ? { limit } : {}),
+      ...(cost ? { cost } : {}),
       ...(oldModel.reasoning !== undefined && newModel.reasoning === undefined ? { reasoning: null } : {}),
+      ...(oldModel.modalities !== undefined && newModel.modalities === undefined ? { modalities: null } : {}),
+      ...(oldModel.limit !== undefined && newModel.limit === undefined ? { limit: null } : {}),
+      ...(oldModel.cost !== undefined && newModel.cost === undefined ? { cost: null } : {}),
     }
   }
 

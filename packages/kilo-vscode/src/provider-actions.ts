@@ -455,7 +455,7 @@ export async function saveCustomProvider(
     const { data: updated } = await ctx.client.global.config.update(
       {
         config: {
-          provider: { [id]: patch },
+          provider: { [id]: patch } as unknown as NonNullable<Config["provider"]>,
           disabled_providers: nextDisabled,
         },
       },

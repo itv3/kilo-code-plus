@@ -12,7 +12,22 @@ function base(): FormState {
     npm: "@ai-sdk/openai-compatible",
     baseURL: "https://example.com/v1",
     apiKey: "",
-    models: [{ id: "model-1", name: "Model One", reasoning: false, variants: [] }],
+    models: [
+      {
+        id: "model-1",
+        name: "Model One",
+        image: false,
+        contextLimit: "",
+        outputLimit: "",
+        costEnabled: false,
+        inputCost: "",
+        outputCost: "",
+        cacheReadCost: "",
+        cacheWriteCost: "",
+        reasoning: false,
+        variants: [],
+      },
+    ],
     headers: [],
     saving: false,
   }
@@ -162,6 +177,7 @@ describe("validateCustomProvider – variant name validation", () => {
     expect(out.result).toBeDefined()
     const saved = out.result!.config.models["model-1"] as Record<string, unknown>
     expect(saved.variants).toBeUndefined()
+    expect(saved.modalities).toEqual({ input: ["text"], output: ["text"] })
   })
 
   it("persists named variants in the saved config when reasoning is enabled", () => {
@@ -190,5 +206,72 @@ describe("validateCustomProvider – variant name validation", () => {
         reasoningEffort: "low",
       },
     })
+  })
+
+  it("persists image and token limits in the saved config", () => {
+    const form = base()
+    form.models[0].image = true
+    form.models[0].contextLimit = "128000"
+    form.models[0].outputLimit = "8192"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeDefined()
+    const saved = out.result!.config.models["model-1"] as Record<string, unknown>
+    expect(saved.modalities).toEqual({ input: ["text", "image"], output: ["text"] })
+    expect(saved.limit).toEqual({ context: 128000, output: 8192 })
+  })
+
+  it("persists model costs in the saved config", () => {
+    const form = base()
+    form.models[0].costEnabled = true
+    form.models[0].inputCost = "3"
+    form.models[0].outputCost = "15"
+    form.models[0].cacheReadCost = "0.3"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeDefined()
+    const saved = out.result!.config.models["model-1"] as Record<string, unknown>
+    expect(saved.cost).toEqual({ input: 3, output: 15, cache_read: 0.3 })
+  })
+
+  it("does not persist model costs when cost options are disabled", () => {
+    const form = base()
+    form.models[0].inputCost = "3"
+    form.models[0].outputCost = "15"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeDefined()
+    const saved = out.result!.config.models["model-1"] as Record<string, unknown>
+    expect(saved.cost).toBeUndefined()
+  })
+
+  it("rejects invalid model costs", () => {
+    const form = base()
+    form.models[0].costEnabled = true
+    form.models[0].inputCost = "-1"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeUndefined()
+    expect(out.errors.models[0].inputCost).toBe("provider.custom.error.cost")
+  })
+
+  it("normalizes Gemini native base URLs to v1beta", () => {
+    const form = base()
+    form.npm = "@ai-sdk/google"
+    form.baseURL = "https://api.3a.bin"
+    const out = validateCustomProvider(args(form))
+    expect(out.result?.config.options.baseURL).toBe("https://api.3a.bin/v1beta")
+  })
+
+  it("normalizes Anthropic native base URLs to v1", () => {
+    const form = base()
+    form.npm = "@ai-sdk/anthropic"
+    form.baseURL = "https://api.3a.bin"
+    const out = validateCustomProvider(args(form))
+    expect(out.result?.config.options.baseURL).toBe("https://api.3a.bin/v1")
+  })
+
+  it("rejects invalid token limits", () => {
+    const form = base()
+    form.models[0].contextLimit = "1.5"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeUndefined()
+    expect(out.errors.models[0].contextLimit).toBe("provider.custom.error.tokenLimit")
   })
 })

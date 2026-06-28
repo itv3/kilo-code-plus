@@ -1014,6 +1014,7 @@ export interface FetchCustomProviderModelsMessage {
   type: "fetchCustomProviderModels"
   requestId: string
   baseURL: string
+  protocol?: "openai" | "anthropic" | "gemini"
   apiKey?: string
   /**
    * When editing an existing provider and the key field is untouched, the

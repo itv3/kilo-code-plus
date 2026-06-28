@@ -152,7 +152,8 @@ import {
 } from "./provider-actions"
 import type { StoredProviderKey } from "./provider-actions"
 import { AnacondaDesktopBridge } from "./anaconda-desktop/bridge"
-import { fetchOpenAIModels, FetchModelsError } from "./shared/fetch-models"
+import { fetchModels, FetchModelsError } from "./shared/fetch-models"
+import type { FetchModelsProtocol } from "./shared/fetch-models"
 import type { Agent } from "@kilocode/sdk/v2/client"
 import { configFeatures } from "./features"
 import { createAutoApproveBridge } from "./kilo-provider/auto-approve"
@@ -2066,11 +2067,12 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     const rid = typeof msg.requestId === "string" ? msg.requestId : ""
     const url = typeof msg.baseURL === "string" ? msg.baseURL : ""
     if (!rid || !url) return
+    const protocol = typeof msg.protocol === "string" ? (msg.protocol as FetchModelsProtocol) : "openai"
     const key =
       typeof msg.apiKey === "string" ? msg.apiKey : resolveStoredKey(this.storedProviderKeys, msg.providerID, url)
     const headers = msg.headers && typeof msg.headers === "object" ? (msg.headers as Record<string, string>) : undefined
     try {
-      const models = await fetchOpenAIModels({ baseURL: url, apiKey: key, headers })
+      const models = await fetchModels({ baseURL: url, apiKey: key, headers, protocol })
       this.postMessage({ type: "customProviderModelsFetched", requestId: rid, models })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to fetch models"

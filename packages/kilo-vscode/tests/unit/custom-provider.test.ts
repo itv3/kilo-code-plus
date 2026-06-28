@@ -15,6 +15,7 @@ describe("isCustomProviderPackage", () => {
     expect(isCustomProviderPackage("@ai-sdk/openai-compatible")).toBe(true)
     expect(isCustomProviderPackage("@ai-sdk/openai")).toBe(true)
     expect(isCustomProviderPackage("@ai-sdk/anthropic")).toBe(true)
+    expect(isCustomProviderPackage("@ai-sdk/google")).toBe(true)
     expect(isCustomProviderPackage("malicious-package")).toBe(false)
   })
 })
@@ -105,6 +106,64 @@ describe("sanitizeCustomProviderConfig", () => {
         },
         models: {
           "model-1": { name: "Model One" },
+        },
+      },
+    })
+  })
+
+  it("preserves model modalities and token limits", () => {
+    const result = sanitizeCustomProviderConfig({
+      npm: "@ai-sdk/google",
+      name: "Gemini Provider",
+      options: { baseURL: "https://generativelanguage.googleapis.com/v1beta" },
+      models: {
+        "gemini-2.5-pro": {
+          name: "Gemini 2.5 Pro",
+          modalities: { input: ["text", "image"], output: ["text"] },
+          limit: { context: 1_048_576, output: 65_536 },
+        },
+      },
+    })
+
+    expect(result).toEqual({
+      value: {
+        npm: "@ai-sdk/google",
+        name: "Gemini Provider",
+        options: { baseURL: "https://generativelanguage.googleapis.com/v1beta" },
+        models: {
+          "gemini-2.5-pro": {
+            name: "Gemini 2.5 Pro",
+            modalities: { input: ["text", "image"], output: ["text"] },
+            limit: { context: 1_048_576, output: 65_536 },
+          },
+        },
+      },
+    })
+  })
+
+  it("preserves model costs", () => {
+    const result = sanitizeCustomProviderConfig({
+      npm: "@ai-sdk/openai-compatible",
+      name: "Priced Provider",
+      options: { baseURL: "https://example.com/v1" },
+      models: {
+        "model-1": {
+          name: "Model One",
+          cost: { input: 3, output: 15, cache_read: 0.3, cache_write: 3.75 },
+        },
+      },
+    })
+
+    expect(result).toEqual({
+      value: {
+        npm: "@ai-sdk/openai-compatible",
+        name: "Priced Provider",
+        options: { baseURL: "https://example.com/v1" },
+        models: {
+          "model-1": {
+            name: "Model One",
+            cost: { input: 3, output: 15, cache_read: 0.3, cache_write: 3.75 },
+          },
         },
       },
     })
@@ -254,5 +313,29 @@ describe("withCustomProviderDeletions", () => {
     const result = withCustomProviderDeletions(existing, baseNext)
     const models = result.models as Record<string, unknown>
     expect(models.gone).toBeNull()
+  })
+
+  it("emits null for removed limit fields on a surviving model", () => {
+    const existing = { models: { keep: { name: "Keep", limit: { context: 128000, input: 128000, output: 8192 } } } }
+    const next = {
+      ...baseNext,
+      models: {
+        keep: { name: "Keep", limit: { context: 128000, output: 8192 } },
+      },
+    }
+    const result = withCustomProviderDeletions(existing, next)
+    expect(result.models.keep).toEqual({ name: "Keep", limit: { context: 128000, output: 8192, input: null } })
+  })
+
+  it("emits null for removed cost fields on a surviving model", () => {
+    const existing = { models: { keep: { name: "Keep", cost: { input: 3, output: 15, cache_read: 0.3 } } } }
+    const next = {
+      ...baseNext,
+      models: {
+        keep: { name: "Keep", cost: { input: 3, output: 15 } },
+      },
+    }
+    const result = withCustomProviderDeletions(existing, next)
+    expect(result.models.keep).toEqual({ name: "Keep", cost: { input: 3, output: 15, cache_read: null } })
   })
 })

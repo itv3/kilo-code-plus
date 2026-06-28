@@ -1,6 +1,11 @@
 export const KILO_PROVIDER_ID = "kilo"
 export const KILO_AUTO = { providerID: KILO_PROVIDER_ID, modelID: "kilo-auto/free" } as const
-export const CUSTOM_PROVIDER_PACKAGES = ["@ai-sdk/openai-compatible", "@ai-sdk/openai", "@ai-sdk/anthropic"] as const
+export const CUSTOM_PROVIDER_PACKAGES = [
+  "@ai-sdk/openai-compatible",
+  "@ai-sdk/openai",
+  "@ai-sdk/anthropic",
+  "@ai-sdk/google",
+] as const
 export type CustomProviderPackage = (typeof CUSTOM_PROVIDER_PACKAGES)[number]
 export const CUSTOM_PROVIDER_PACKAGE: CustomProviderPackage = "@ai-sdk/openai-compatible"
 export const PROVIDER_ID_PATTERN = /^[a-z0-9][a-z0-9-_]*$/
@@ -18,6 +23,13 @@ export const PROVIDER_PRIORITY = [
 
 export function isCustomProviderPackage(value: unknown): value is CustomProviderPackage {
   return CUSTOM_PROVIDER_PACKAGES.includes(value as CustomProviderPackage)
+}
+
+export function normalizeCustomProviderBaseURL(npm: CustomProviderPackage, value: string) {
+  const url = value.trim().replace(/\/+$/, "")
+  if (npm === "@ai-sdk/anthropic" && !/\/v1$/i.test(url)) return `${url}/v1`
+  if (npm !== "@ai-sdk/google" || /\/v1(?:beta)?$/i.test(url)) return url
+  return `${url}/v1beta`
 }
 
 export function parseModelString(raw: string | undefined | null) {

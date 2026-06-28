@@ -1,4 +1,4 @@
-import type { CustomProviderPackage } from "../../../../src/shared/provider-model"
+import { normalizeCustomProviderBaseURL, type CustomProviderPackage } from "../../../../src/shared/provider-model"
 import type { ModelEntry, VariantEntry } from "./CustomProviderModelCard"
 
 type Translator = (key: string, params?: Record<string, string>) => string
@@ -23,7 +23,17 @@ export type FormErrors = {
   providerID: string | undefined
   name: string | undefined
   baseURL: string | undefined
-  models: Array<{ id?: string; name?: string; variants?: Array<{ name?: string }> }>
+  models: Array<{
+    id?: string
+    name?: string
+    contextLimit?: string
+    outputLimit?: string
+    inputCost?: string
+    outputCost?: string
+    cacheReadCost?: string
+    cacheWriteCost?: string
+    variants?: Array<{ name?: string }>
+  }>
   headers: Array<{ key?: string; value?: string }>
 }
 
@@ -63,6 +73,22 @@ function checkVariant(v: VariantEntry, seen: Set<string>, t: Translator) {
   return { name: undefined }
 }
 
+function checkLimit(value: string, t: Translator) {
+  const raw = value.trim()
+  if (!raw) return undefined
+  const num = Number(raw)
+  if (Number.isInteger(num) && num >= 0) return undefined
+  return t("provider.custom.error.tokenLimit")
+}
+
+function checkCost(value: string, t: Translator) {
+  const raw = value.trim()
+  if (!raw) return undefined
+  const num = Number(raw)
+  if (Number.isFinite(num) && num >= 0) return undefined
+  return t("provider.custom.error.cost")
+}
+
 function checkModel(m: ModelEntry, seenModels: Set<string>, t: Translator) {
   const id = m.id.trim()
   let idErr: string | undefined
@@ -71,9 +97,25 @@ function checkModel(m: ModelEntry, seenModels: Set<string>, t: Translator) {
   else seenModels.add(id)
 
   const nameErr = !m.name.trim() ? t("provider.custom.error.required") : undefined
+  const contextLimitErr = checkLimit(m.contextLimit, t)
+  const outputLimitErr = checkLimit(m.outputLimit, t)
+  const inputCostErr = m.costEnabled ? checkCost(m.inputCost, t) : undefined
+  const outputCostErr = m.costEnabled ? checkCost(m.outputCost, t) : undefined
+  const cacheReadCostErr = m.costEnabled ? checkCost(m.cacheReadCost, t) : undefined
+  const cacheWriteCostErr = m.costEnabled ? checkCost(m.cacheWriteCost, t) : undefined
   const seen = new Set<string>()
   const variants = m.reasoning ? m.variants.map((v) => checkVariant(v, seen, t)) : []
-  return { id: idErr, name: nameErr, variants }
+  return {
+    id: idErr,
+    name: nameErr,
+    contextLimit: contextLimitErr,
+    outputLimit: outputLimitErr,
+    inputCost: inputCostErr,
+    outputCost: outputCostErr,
+    cacheReadCost: cacheReadCostErr,
+    cacheWriteCost: cacheWriteCostErr,
+    variants,
+  }
 }
 
 function checkHeader(h: HeaderRow, seenKeys: Set<string>, t: Translator) {
@@ -116,8 +158,28 @@ function serializeVariant(v: VariantEntry): [string, Record<string, unknown>] {
 
 function serializeModel(m: ModelEntry): [string, Record<string, unknown>] {
   const ventries = m.reasoning ? m.variants.filter((v) => v.name.trim()).map(serializeVariant) : []
+  const context = m.contextLimit.trim() ? Number(m.contextLimit.trim()) : undefined
+  const output = m.outputLimit.trim() ? Number(m.outputLimit.trim()) : undefined
+  const limit =
+    context !== undefined || output !== undefined ? { context: context ?? 0, output: output ?? 0 } : undefined
+  const inputCost = m.costEnabled && m.inputCost.trim() ? Number(m.inputCost.trim()) : undefined
+  const outputCost = m.costEnabled && m.outputCost.trim() ? Number(m.outputCost.trim()) : undefined
+  const cacheReadCost = m.costEnabled && m.cacheReadCost.trim() ? Number(m.cacheReadCost.trim()) : undefined
+  const cacheWriteCost = m.costEnabled && m.cacheWriteCost.trim() ? Number(m.cacheWriteCost.trim()) : undefined
+  const cost =
+    inputCost !== undefined || outputCost !== undefined || cacheReadCost !== undefined || cacheWriteCost !== undefined
+      ? {
+          input: inputCost ?? 0,
+          output: outputCost ?? 0,
+          ...(cacheReadCost !== undefined ? { cache_read: cacheReadCost } : {}),
+          ...(cacheWriteCost !== undefined ? { cache_write: cacheWriteCost } : {}),
+        }
+      : undefined
   const entry: Record<string, unknown> = { name: m.name.trim() }
   if (m.reasoning) entry.reasoning = true
+  entry.modalities = { input: m.image ? ["text", "image"] : ["text"], output: ["text"] }
+  if (limit) entry.limit = limit
+  if (cost) entry.cost = cost
   if (ventries.length > 0) entry.variants = Object.fromEntries(ventries)
   return [m.id.trim(), entry]
 }
@@ -131,7 +193,7 @@ function resolveEnv(rawEnv: string | undefined, savedEnv: string[] | undefined) 
 export function validateCustomProvider(input: ValidateArgs): ValidateResult {
   const providerID = input.form.providerID.trim()
   const name = input.form.name.trim()
-  const baseURL = input.form.baseURL.trim()
+  const baseURL = normalizeCustomProviderBaseURL(input.form.npm, input.form.baseURL)
   const apiKey = input.form.apiKey.trim()
 
   const rawEnv = apiKey.match(/^\{env:([^}]+)\}$/)?.[1]?.trim()
@@ -156,7 +218,18 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
 
   const seenModels = new Set<string>()
   const modelErrors = input.form.models.map((m) => checkModel(m, seenModels, input.t))
-  const modelsValid = modelErrors.every((m) => !m.id && !m.name && m.variants.every((v) => !v.name))
+  const modelsValid = modelErrors.every(
+    (m) =>
+      !m.id &&
+      !m.name &&
+      !m.contextLimit &&
+      !m.outputLimit &&
+      !m.inputCost &&
+      !m.outputCost &&
+      !m.cacheReadCost &&
+      !m.cacheWriteCost &&
+      m.variants.every((v) => !v.name),
+  )
 
   const seenHeaders = new Set<string>()
   const headerErrors = input.form.headers.map((h) => checkHeader(h, seenHeaders, input.t))

@@ -13,18 +13,18 @@ import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import { useProvider } from "../../context/provider"
 import { useVSCode } from "../../context/vscode"
-import type { ExtensionMessage, ProviderAuthState, ProviderConfig } from "../../types/messages"
+import type { ExtensionMessage, ProviderAuthState, ProviderConfig, ProviderModel } from "../../types/messages"
 import { createProviderAction } from "../../utils/provider-action"
 import { MASKED_CUSTOM_PROVIDER_KEY, resolveCustomProviderKey } from "../../../../src/shared/custom-provider"
 import {
   CUSTOM_PROVIDER_PACKAGE,
   isCustomProviderPackage,
+  normalizeCustomProviderBaseURL,
   type CustomProviderPackage,
 } from "../../../../src/shared/provider-model"
 import { ModelCard } from "./CustomProviderModelCard"
 import type {
   ChatTemplateArgsValue,
-  EnableThinkingValue,
   ModelEntry,
   OutputEffortValue,
   ReasoningEffortValue,
@@ -40,6 +40,7 @@ const PACKAGE_OPTIONS: Array<{ value: CustomProviderPackage; label: string }> = 
   { value: "@ai-sdk/openai-compatible", label: "OpenAI Compatible" },
   { value: "@ai-sdk/openai", label: "OpenAI Responses" },
   { value: "@ai-sdk/anthropic", label: "Anthropic Messages" },
+  { value: "@ai-sdk/google", label: "Gemini Native" },
 ]
 
 /** Subsequence fuzzy match — "gpt4o" matches "gpt-4o-mini". */
@@ -53,8 +54,52 @@ function fuzzy(query: string, target: string) {
   return qi === q.length
 }
 
-type FetchedModel = { id: string; name: string }
-type RawModel = { name?: string; reasoning?: boolean; variants?: Record<string, Record<string, unknown>> }
+type FetchedModel = {
+  id: string
+  name: string
+  image?: boolean
+  reasoning?: boolean
+  contextLimit?: number
+  outputLimit?: number
+  inputCost?: number
+  outputCost?: number
+  cacheReadCost?: number
+  cacheWriteCost?: number
+}
+type RawModel = {
+  name?: string
+  reasoning?: boolean
+  modalities?: { input?: string[] }
+  limit?: { context?: number; output?: number }
+  cost?: { input?: number; output?: number; cache_read?: number; cache_write?: number }
+  variants?: Record<string, Record<string, unknown>>
+}
+
+type Defaults = Partial<
+  Pick<
+    FetchedModel,
+    | "image"
+    | "reasoning"
+    | "contextLimit"
+    | "outputLimit"
+    | "inputCost"
+    | "outputCost"
+    | "cacheReadCost"
+    | "cacheWriteCost"
+  >
+>
+
+function protocol(npm: CustomProviderPackage): "openai" | "anthropic" | "gemini" {
+  if (npm === "@ai-sdk/anthropic") return "anthropic"
+  if (npm === "@ai-sdk/google") return "gemini"
+  return "openai"
+}
+
+function catalogProvider(npm: CustomProviderPackage) {
+  if (npm === "@ai-sdk/anthropic") return "anthropic"
+  if (npm === "@ai-sdk/google") return "google"
+  return "openai"
+}
 
 function parseVariant([name, cfg]: [string, Record<string, unknown>]): VariantEntry {
   return {
@@ -75,15 +120,50 @@ function parseVariant([name, cfg]: [string, Record<string, unknown>]): VariantEn
   }
 }
 
+function text(value: number | undefined) {
+  return value === undefined ? "" : String(value)
+}
+
+function modelCost(raw: RawModel | undefined) {
+  return (
+    raw?.cost?.input !== undefined ||
+    raw?.cost?.output !== undefined ||
+    raw?.cost?.cache_read !== undefined ||
+    raw?.cost?.cache_write !== undefined
+  )
+}
+
 function initModels(cfg: ProviderConfig | undefined): ModelEntry[] {
-  if (!cfg?.models || typeof cfg.models !== "object") return [{ id: "", name: "", reasoning: false, variants: [] }]
+  const blank: ModelEntry = {
+    id: "",
+    name: "",
+    image: false,
+    contextLimit: "",
+    outputLimit: "",
+    costEnabled: false,
+    inputCost: "",
+    outputCost: "",
+    cacheReadCost: "",
+    cacheWriteCost: "",
+    reasoning: false,
+    variants: [],
+  }
+  if (!cfg?.models || typeof cfg.models !== "object") return [blank]
   const entries = Object.entries(cfg.models)
-  if (entries.length === 0) return [{ id: "", name: "", reasoning: false, variants: [] }]
+  if (entries.length === 0) return [blank]
   return entries.map(([id, model]) => {
     const raw = model as RawModel
     return {
       id,
       name: raw.name ?? id,
+      image: raw.modalities?.input?.includes("image") ?? false,
+      contextLimit: text(raw.limit?.context),
+      outputLimit: text(raw.limit?.output),
+      costEnabled: modelCost(raw),
+      inputCost: text(raw.cost?.input),
+      outputCost: text(raw.cost?.output),
+      cacheReadCost: text(raw.cost?.cache_read),
+      cacheWriteCost: text(raw.cost?.cache_write),
       reasoning: raw.reasoning ?? false,
       variants: Object.entries(raw.variants ?? {}).map(parseVariant),
     }
@@ -121,6 +201,20 @@ function initForm(existing: ExistingProvider | undefined, auth: ProviderAuthStat
     models: initModels(existing?.config),
     headers: initHeaders(existing?.config),
     saving: false,
+  }
+}
+
+function catalogDefaults(model: ProviderModel | undefined): Defaults {
+  if (!model) return {}
+  return {
+    image: model.capabilities?.input?.image,
+    reasoning: model.capabilities?.reasoning,
+    contextLimit: model.limit?.context,
+    outputLimit: model.limit?.output,
+    inputCost: model.cost?.input,
+    outputCost: model.cost?.output,
+    cacheReadCost: model.cost?.cache?.read,
+    cacheWriteCost: model.cost?.cache?.write,
   }
 }
 
@@ -192,7 +286,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
   let fetchVersion = 0
 
   createEffect(() => {
-    const npm = fetchPackage()
+    void fetchPackage()
     const url = fetchURL()
     const key = fetchKey()
     void key // subscribe to key changes without using the value here
@@ -203,7 +297,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     setFetchStatus(undefined)
     setSearch("")
 
-    if (npm === "@ai-sdk/anthropic" || !/^https?:\/\//.test(url.trim())) return
+    if (!/^https?:\/\//.test(url.trim())) return
 
     fetchVersion++
     const version = fetchVersion
@@ -219,7 +313,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     // Snapshot all values from signals/store before entering async.
     // This avoids reading the store proxy inside callbacks, which could
     // subscribe to unrelated store properties and cause re-render loops.
-    const url = fetchURL().trim()
+    const url = normalizeCustomProviderBaseURL(fetchPackage(), fetchURL())
     const raw = fetchKey().trim()
     const env = raw.match(/^\{env:([^}]+)\}$/)?.[1]?.trim()
     const apiKey = raw && !env ? raw : undefined
@@ -270,7 +364,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
       }
 
       // Filter using the snapshot taken at fetch time
-      const fresh = models.filter((m) => !existing.has(m.id))
+      const fresh = models.filter((m) => !existing.has(m.id)).map(withDefaults)
 
       if (fresh.length === 0) {
         setFetchStatus(language.t("provider.custom.models.fetch.allExist"))
@@ -286,10 +380,40 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
       type: "fetchCustomProviderModels",
       requestId: rid,
       baseURL: url,
+      protocol: protocol(fetchPackage()),
       apiKey,
       providerID,
       headers,
     })
+  }
+
+  function defaultsFor(id: string): Defaults {
+    const models = provider.providers()[catalogProvider(fetchPackage())]?.models ?? {}
+    const bare = id.split("/").at(-1) ?? id
+    const ids = [id, bare]
+    if (catalogProvider(fetchPackage()) === "anthropic" && (id === "claude-opus-4-8" || bare === "claude-opus-4-8")) {
+      ids.push("claude-opus-4-7")
+    }
+    for (const key of ids) {
+      const model = models[key]
+      if (model) return catalogDefaults(model)
+    }
+    return {}
+  }
+
+  function withDefaults(model: FetchedModel): FetchedModel {
+    const defaults = defaultsFor(model.id)
+    return {
+      ...model,
+      image: model.image ?? defaults.image,
+      reasoning: model.reasoning ?? defaults.reasoning,
+      contextLimit: model.contextLimit ?? defaults.contextLimit,
+      outputLimit: model.outputLimit ?? defaults.outputLimit,
+      inputCost: model.inputCost ?? defaults.inputCost,
+      outputCost: model.outputCost ?? defaults.outputCost,
+      cacheReadCost: model.cacheReadCost ?? defaults.cacheReadCost,
+      cacheWriteCost: model.cacheWriteCost ?? defaults.cacheWriteCost,
+    }
   }
 
   // ── Model picker actions ────────────────────────────────────────────
@@ -327,7 +451,24 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     // Replace the single empty row or append
     const row = form.models[0]
     const empty = form.models.length === 1 && !!row && !row.id.trim() && !row.name.trim()
-    const defaults = (m: FetchedModel): ModelEntry => ({ ...m, reasoning: false, variants: [] })
+    const defaults = (m: FetchedModel): ModelEntry => ({
+      id: m.id,
+      name: m.name,
+      image: m.image ?? false,
+      contextLimit: text(m.contextLimit),
+      outputLimit: text(m.outputLimit),
+      costEnabled:
+        m.inputCost !== undefined ||
+        m.outputCost !== undefined ||
+        m.cacheReadCost !== undefined ||
+        m.cacheWriteCost !== undefined,
+      inputCost: text(m.inputCost),
+      outputCost: text(m.outputCost),
+      cacheReadCost: text(m.cacheReadCost),
+      cacheWriteCost: text(m.cacheWriteCost),
+      reasoning: m.reasoning ?? false,
+      variants: [],
+    })
     const merged = empty ? picked.map(defaults) : [...form.models, ...picked.map(defaults)]
 
     setForm("models", merged)
@@ -366,7 +507,23 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
   }
 
   function addModel() {
-    setForm("models", (v) => [...v, { id: "", name: "", reasoning: false, variants: [] }])
+    setForm("models", (v) => [
+      ...v,
+      {
+        id: "",
+        name: "",
+        image: false,
+        contextLimit: "",
+        outputLimit: "",
+        costEnabled: false,
+        inputCost: "",
+        outputCost: "",
+        cacheReadCost: "",
+        cacheWriteCost: "",
+        reasoning: false,
+        variants: [],
+      },
+    ])
     setErrors("models", (v) => [...v, { variants: [] }])
   }
 
@@ -606,6 +763,14 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
                   canRemove={form.models.length > 1}
                   onChangeId={(v) => setForm("models", i(), "id", v)}
                   onChangeName={(v) => setForm("models", i(), "name", v)}
+                  onChangeImage={(v) => setForm("models", i(), "image", v)}
+                  onChangeContextLimit={(v) => setForm("models", i(), "contextLimit", v)}
+                  onChangeOutputLimit={(v) => setForm("models", i(), "outputLimit", v)}
+                  onChangeCostEnabled={(v) => setForm("models", i(), "costEnabled", v)}
+                  onChangeInputCost={(v) => setForm("models", i(), "inputCost", v)}
+                  onChangeOutputCost={(v) => setForm("models", i(), "outputCost", v)}
+                  onChangeCacheReadCost={(v) => setForm("models", i(), "cacheReadCost", v)}
+                  onChangeCacheWriteCost={(v) => setForm("models", i(), "cacheWriteCost", v)}
                   onChangeReasoning={(v) => setForm("models", i(), "reasoning", v)}
                   onRemove={() => removeModel(i())}
                   onAddVariant={() => addVariant(i())}
