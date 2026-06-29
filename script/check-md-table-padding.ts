@@ -35,12 +35,12 @@ const ROOT = path.resolve(import.meta.dir, "..")
 const ok = new Set(["---", ":---", "---:", ":---:"])
 
 function tracked() {
-  const r = spawnSync("git", ["ls-files", "*.md"], { cwd: ROOT, encoding: "utf8" })
+  const r = spawnSync("git", ["ls-files", "-z", "*.md"], { cwd: ROOT, encoding: "utf8" })
   if (r.status !== 0) {
     console.error(r.stderr?.trim() || "git ls-files failed")
     process.exit(1)
   }
-  return r.stdout.split("\n").filter(Boolean)
+  return r.stdout.split("\0").filter(Boolean)
 }
 
 function skip(file: string) {

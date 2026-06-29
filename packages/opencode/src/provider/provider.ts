@@ -1447,15 +1447,14 @@ export const layer = Layer.effect(
             continue
           }
           const apiKey = provider.env.map((item) => envs[item]).find(Boolean)
-          const match = provider.env
-            .map((name) => ({ name, value: envs[name] }))
-            .find((item) => item.value && /(?:^|_)API_KEY$/.test(item.name)) // kilocode_change
           // kilocode_change end
+          // kilocode_change start - 恢复多 env 提供商不自动写入 key，避免覆盖显式认证配置
           if (!apiKey) continue
           mergeProvider(providerID, {
             source: "env",
-            key: provider.env.length === 1 ? apiKey : match?.value, // kilocode_change
+            key: provider.env.length === 1 ? apiKey : undefined,
           })
+          // kilocode_change end
         }
 
         // load apikeys

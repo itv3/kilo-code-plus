@@ -17,6 +17,7 @@ import {
 import type { InstallMarketplaceItemOptions, MarketplaceItem } from "./services/marketplace/types"
 import { TelemetryProxy } from "./services/telemetry"
 import { TelemetryEventName } from "./services/telemetry/types"
+import { version as extensionVersion } from "./extension-info"
 
 interface MarketplaceMessage {
   type?: string
@@ -47,11 +48,7 @@ export class MarketplacePanelProvider implements vscode.Disposable {
     private readonly connection: KiloConnectionService,
     private readonly context: vscode.ExtensionContext,
   ) {
-    this.extensionVersion =
-      this.context.extension.packageJSON?.version ??
-      vscode.extensions.getExtension("itv3.kilo-code-plus")?.packageJSON?.version ??
-      vscode.extensions.getExtension("kilocode.kilo-code")?.packageJSON?.version ??
-      "unknown"
+    this.extensionVersion = extensionVersion(this.context)
   }
 
   private get marketplaceCtx(): MarketplaceActionContext {

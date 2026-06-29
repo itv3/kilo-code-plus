@@ -80,7 +80,7 @@ export const Model = Schema.Struct({
 export const Info = Schema.Struct({
   api: Schema.optional(Schema.String),
   name: Schema.optional(Schema.String),
-  env: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
+  env: Schema.optional(Schema.NullOr(Schema.mutable(Schema.Array(Schema.String)))), // kilocode_change - allow null so env can be removed via stripNulls on save
   id: Schema.optional(Schema.String),
   npm: Schema.optional(Schema.String),
   whitelist: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),

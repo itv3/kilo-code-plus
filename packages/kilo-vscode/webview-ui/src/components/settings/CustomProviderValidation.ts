@@ -64,6 +64,7 @@ type ValidateResult = {
 }
 
 const PROVIDER_ID = /^[a-z0-9][a-z0-9-_]*$/
+const COST_VALUE = /^(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/
 
 function checkVariant(v: VariantEntry, seen: Set<string>, t: Translator) {
   const n = v.name.trim()
@@ -77,7 +78,7 @@ function checkLimit(value: string, t: Translator) {
   const raw = value.trim()
   if (!raw) return undefined
   const num = Number(raw)
-  if (Number.isInteger(num) && num >= 0) return undefined
+  if (/^\d+$/.test(raw) && Number.isSafeInteger(num) && num > 0) return undefined
   return t("provider.custom.error.tokenLimit")
 }
 
@@ -85,7 +86,7 @@ function checkCost(value: string, t: Translator) {
   const raw = value.trim()
   if (!raw) return undefined
   const num = Number(raw)
-  if (Number.isFinite(num) && num >= 0) return undefined
+  if (COST_VALUE.test(raw) && Number.isFinite(num) && num >= 0) return undefined
   return t("provider.custom.error.cost")
 }
 
@@ -97,10 +98,18 @@ function checkModel(m: ModelEntry, seenModels: Set<string>, t: Translator) {
   else seenModels.add(id)
 
   const nameErr = !m.name.trim() ? t("provider.custom.error.required") : undefined
-  const contextLimitErr = checkLimit(m.contextLimit, t)
-  const outputLimitErr = checkLimit(m.outputLimit, t)
-  const inputCostErr = m.costEnabled ? checkCost(m.inputCost, t) : undefined
-  const outputCostErr = m.costEnabled ? checkCost(m.outputCost, t) : undefined
+  const context = m.contextLimit.trim()
+  const output = m.outputLimit.trim()
+  const contextLimitErr = checkLimit(m.contextLimit, t) ?? (!context && output ? t("provider.custom.error.required") : undefined)
+  const outputLimitErr = checkLimit(m.outputLimit, t) ?? (context && !output ? t("provider.custom.error.required") : undefined)
+  const input = m.inputCost.trim()
+  const costOutput = m.outputCost.trim()
+  const inputCostErr = m.costEnabled
+    ? checkCost(m.inputCost, t) ?? (!input ? t("provider.custom.error.required") : undefined)
+    : undefined
+  const outputCostErr = m.costEnabled
+    ? checkCost(m.outputCost, t) ?? (!costOutput ? t("provider.custom.error.required") : undefined)
+    : undefined
   const cacheReadCostErr = m.costEnabled ? checkCost(m.cacheReadCost, t) : undefined
   const cacheWriteCostErr = m.costEnabled ? checkCost(m.cacheWriteCost, t) : undefined
   const seen = new Set<string>()
@@ -157,25 +166,35 @@ function serializeVariant(v: VariantEntry): [string, Record<string, unknown>] {
 }
 
 function extractModelLimits(m: ModelEntry) {
+  const input = m.inputLimit.trim() ? Number(m.inputLimit.trim()) : undefined
   const context = m.contextLimit.trim() ? Number(m.contextLimit.trim()) : undefined
   const output = m.outputLimit.trim() ? Number(m.outputLimit.trim()) : undefined
-  if (context !== undefined || output !== undefined) {
-    return { context: context ?? 0, output: output ?? 0 }
+  if (context !== undefined && output !== undefined) {
+    return {
+      context,
+      ...(input !== undefined ? { input } : {}),
+      output,
+    }
   }
   return undefined
 }
 
 function extractModelCosts(m: ModelEntry) {
   if (!m.costEnabled) return undefined
-  const inputCost = m.inputCost.trim() ? Number(m.inputCost.trim()) : undefined
-  const outputCost = m.outputCost.trim() ? Number(m.outputCost.trim()) : undefined
-  const cacheReadCost = m.cacheReadCost.trim() ? Number(m.cacheReadCost.trim()) : undefined
-  const cacheWriteCost = m.cacheWriteCost.trim() ? Number(m.cacheWriteCost.trim()) : undefined
-  
-  if (inputCost !== undefined || outputCost !== undefined || cacheReadCost !== undefined || cacheWriteCost !== undefined) {
+  const parse = (value: string) => {
+    const raw = value.trim()
+    if (!raw) return undefined
+    return Number(Number(raw).toFixed(2))
+  }
+  const inputCost = parse(m.inputCost)
+  const outputCost = parse(m.outputCost)
+  const cacheReadCost = parse(m.cacheReadCost)
+  const cacheWriteCost = parse(m.cacheWriteCost)
+
+  if (inputCost !== undefined && outputCost !== undefined) {
     return {
-      input: inputCost ?? 0,
-      output: outputCost ?? 0,
+      input: inputCost,
+      output: outputCost,
       ...(cacheReadCost !== undefined ? { cache_read: cacheReadCost } : {}),
       ...(cacheWriteCost !== undefined ? { cache_write: cacheWriteCost } : {}),
     }
@@ -189,7 +208,7 @@ function serializeModel(m: ModelEntry): [string, Record<string, unknown>] {
   const cost = extractModelCosts(m)
   const entry: Record<string, unknown> = { name: m.name.trim() }
   if (m.reasoning) entry.reasoning = true
-  entry.modalities = { input: m.image ? ["text", "image"] : ["text"], output: ["text"] }
+  entry.modalities = { input: m.image ? ["text", "image"] : ["text"], output: [...m.outputModalities] }
   if (limit) entry.limit = limit
   if (cost) entry.cost = cost
   if (ventries.length > 0) entry.variants = Object.fromEntries(ventries)

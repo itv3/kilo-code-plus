@@ -1,4 +1,6 @@
 import type { Provider, ProviderModel, ModelSelection } from "../types/messages"
+import { KILO_AUTO_SMALL_IDS } from "../components/shared/model-selector-utils"
+import { KILO_PROVIDER_ID } from "../../../src/shared/provider-model"
 
 export type EnrichedModel = ProviderModel & { providerID: string; providerName: string }
 
@@ -29,9 +31,19 @@ export function findModel(models: EnrichedModel[], selection: ModelSelection | n
   return models.find((m) => m.providerID === selection.providerID && m.id === selection.modelID)
 }
 
+export function isVisibleModel(
+  model: Pick<EnrichedModel, "providerID" | "id" | "isFree">,
+  connected: readonly string[],
+  includeSmall = false,
+): boolean {
+  if (!includeSmall && model.providerID === KILO_PROVIDER_ID && KILO_AUTO_SMALL_IDS.has(model.id)) return false
+  if (model.providerID === KILO_PROVIDER_ID) return model.isFree === true
+  return connected.includes(model.providerID)
+}
+
 /**
  * True when the selection points to an existing model in a connected provider.
- * Kilo gateway models remain usable whenever the provider catalog exposes them.
+ * Kilo gateway models remain usable only when they are visible free models.
  */
 export function isModelValid(
   providers: Record<string, Provider>,
@@ -41,6 +53,7 @@ export function isModelValid(
   if (!selection) return false
   const provider = providers[selection.providerID]
   if (!provider) return false
-  if (selection.providerID !== "kilo" && !connected.includes(selection.providerID)) return false
-  return !!provider.models[selection.modelID]
+  const model = provider.models[selection.modelID]
+  if (!model) return false
+  return isVisibleModel({ ...model, providerID: selection.providerID }, connected)
 }

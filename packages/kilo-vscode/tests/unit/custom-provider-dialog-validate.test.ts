@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { createStore } from "solid-js/store"
 import { validateCustomProvider } from "../../webview-ui/src/components/settings/CustomProviderValidation"
 import type { FormState } from "../../webview-ui/src/components/settings/CustomProviderValidation"
 
@@ -17,6 +18,8 @@ function base(): FormState {
         id: "model-1",
         name: "Model One",
         image: false,
+        outputModalities: ["text"],
+        inputLimit: "",
         contextLimit: "",
         outputLimit: "",
         costEnabled: false,
@@ -211,25 +214,74 @@ describe("validateCustomProvider – variant name validation", () => {
   it("persists image and token limits in the saved config", () => {
     const form = base()
     form.models[0].image = true
+    form.models[0].inputLimit = "64000"
     form.models[0].contextLimit = "128000"
     form.models[0].outputLimit = "8192"
     const out = validateCustomProvider(args(form))
     expect(out.result).toBeDefined()
     const saved = out.result!.config.models["model-1"] as Record<string, unknown>
     expect(saved.modalities).toEqual({ input: ["text", "image"], output: ["text"] })
-    expect(saved.limit).toEqual({ context: 128000, output: 8192 })
+    expect(saved.limit).toEqual({ context: 128000, input: 64000, output: 8192 })
+  })
+
+  it("preserves output modalities while saving model capabilities", () => {
+    const form = base()
+    form.models[0].outputModalities = ["text", "image"]
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeDefined()
+    const saved = out.result!.config.models["model-1"] as Record<string, unknown>
+    expect(saved.modalities).toEqual({ input: ["text"], output: ["text", "image"] })
+  })
+
+  it("returns a structured-cloneable save payload", () => {
+    const src = base()
+    src.models[0].outputModalities = ["text", "image"]
+    const [form] = createStore(src)
+    const out = validateCustomProvider(args(form))
+
+    expect(() => structuredClone(out.result?.config)).not.toThrow()
+  })
+
+  it("requires token limits to be filled as a pair", () => {
+    const form = base()
+    form.models[0].outputLimit = "8192"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeUndefined()
+    expect(out.errors.models[0].contextLimit).toBe("provider.custom.error.required")
   })
 
   it("persists model costs in the saved config", () => {
     const form = base()
     form.models[0].costEnabled = true
-    form.models[0].inputCost = "3"
-    form.models[0].outputCost = "15"
-    form.models[0].cacheReadCost = "0.3"
+    form.models[0].inputCost = "3.00"
+    form.models[0].outputCost = "15.25"
+    form.models[0].cacheReadCost = "0.30"
+    form.models[0].cacheWriteCost = "6.25"
     const out = validateCustomProvider(args(form))
     expect(out.result).toBeDefined()
     const saved = out.result!.config.models["model-1"] as Record<string, unknown>
-    expect(saved.cost).toEqual({ input: 3, output: 15, cache_read: 0.3 })
+    expect(saved.cost).toEqual({ input: 3, output: 15.25, cache_read: 0.3, cache_write: 6.25 })
+  })
+
+  it("accepts leading decimal model costs", () => {
+    const form = base()
+    form.models[0].costEnabled = true
+    form.models[0].inputCost = ".50"
+    form.models[0].outputCost = "5."
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeDefined()
+    const saved = out.result!.config.models["model-1"] as Record<string, unknown>
+    expect(saved.cost).toEqual({ input: 0.5, output: 5 })
+  })
+
+  it("requires input and output cost when cost options are enabled", () => {
+    const form = base()
+    form.models[0].costEnabled = true
+    form.models[0].cacheReadCost = "0.3"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeUndefined()
+    expect(out.errors.models[0].inputCost).toBe("provider.custom.error.required")
+    expect(out.errors.models[0].outputCost).toBe("provider.custom.error.required")
   })
 
   it("does not persist model costs when cost options are disabled", () => {
@@ -251,6 +303,16 @@ describe("validateCustomProvider – variant name validation", () => {
     expect(out.errors.models[0].inputCost).toBe("provider.custom.error.cost")
   })
 
+  it("rejects model costs with more than two decimal places", () => {
+    const form = base()
+    form.models[0].costEnabled = true
+    form.models[0].inputCost = "1.234"
+    form.models[0].outputCost = "5.00"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeUndefined()
+    expect(out.errors.models[0].inputCost).toBe("provider.custom.error.cost")
+  })
+
   it("normalizes Gemini native base URLs to v1beta", () => {
     const form = base()
     form.npm = "@ai-sdk/google"
@@ -267,9 +329,61 @@ describe("validateCustomProvider – variant name validation", () => {
     expect(out.result?.config.options.baseURL).toBe("https://api.3a.bin/v1")
   })
 
+  it("accepts the sg_anthropic Anthropic provider with a manually added Opus 4.8 model", () => {
+    const form = base()
+    form.providerID = "sg_anthropic"
+    form.name = "sg_anthropic"
+    form.npm = "@ai-sdk/anthropic"
+    form.baseURL = "https://sg.3ab.in"
+    form.apiKey = "sk-test"
+    form.models = [
+      {
+        id: "claude-opus-4-8",
+        name: "claude-opus-4-8",
+        image: false,
+        outputModalities: ["text"],
+        inputLimit: "",
+        contextLimit: "",
+        outputLimit: "",
+        costEnabled: false,
+        inputCost: "",
+        outputCost: "",
+        cacheReadCost: "",
+        cacheWriteCost: "",
+        reasoning: false,
+        variants: [],
+      },
+    ]
+
+    const out = validateCustomProvider(args(form))
+
+    expect(out.result?.providerID).toBe("sg_anthropic")
+    expect(out.result?.key).toBe("sk-test")
+    expect(out.result?.config).toMatchObject({
+      npm: "@ai-sdk/anthropic",
+      name: "sg_anthropic",
+      options: { baseURL: "https://sg.3ab.in/v1" },
+      models: {
+        "claude-opus-4-8": {
+          name: "claude-opus-4-8",
+          modalities: { input: ["text"], output: ["text"] },
+        },
+      },
+    })
+  })
+
   it("rejects invalid token limits", () => {
     const form = base()
     form.models[0].contextLimit = "1.5"
+    const out = validateCustomProvider(args(form))
+    expect(out.result).toBeUndefined()
+    expect(out.errors.models[0].contextLimit).toBe("provider.custom.error.tokenLimit")
+  })
+
+  it("rejects zero token limits", () => {
+    const form = base()
+    form.models[0].contextLimit = "0"
+    form.models[0].outputLimit = "8192"
     const out = validateCustomProvider(args(form))
     expect(out.result).toBeUndefined()
     expect(out.errors.models[0].contextLimit).toBe("provider.custom.error.tokenLimit")

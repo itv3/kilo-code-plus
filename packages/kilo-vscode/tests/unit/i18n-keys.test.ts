@@ -217,6 +217,28 @@ const cliLocales: Record<string, Record<string, string>> = {
 const webviewKeys = new Set(Object.keys({ ...appEn, ...uiEn, ...kiloEn, ...amEn }))
 const cliKeys = new Set(Object.keys(cliEn))
 const acKeys = new Set(Object.keys(acEn))
+const APP_PLUS_KEYS = new Set([
+  "provider.custom.models.image.label",
+  "provider.custom.models.contextLimit.label",
+  "provider.custom.models.contextLimit.placeholder",
+  "provider.custom.models.outputLimit.label",
+  "provider.custom.models.outputLimit.placeholder",
+  "provider.custom.models.cost.label",
+  "provider.custom.models.inputCost.label",
+  "provider.custom.models.outputCost.label",
+  "provider.custom.models.cacheReadCost.label",
+  "provider.custom.models.cacheWriteCost.label",
+  "provider.custom.models.cost.placeholder",
+  "provider.custom.models.fetch.privateHost",
+  "provider.custom.error.tokenLimit",
+  "provider.custom.error.cost",
+  "agent.description.ask",
+  "agent.description.code",
+  "agent.description.debug",
+  "agent.description.explore",
+  "agent.description.general",
+  "agent.description.plan",
+])
 
 // ── File scanning ───────────────────────────────────────────────────────────
 
@@ -334,16 +356,15 @@ async function findAutocompleteMissing(): Promise<Missing[]> {
 
 function findMissingLocaleKeys(
   englishObj: Record<string, string>,
-  locales: Array<{ id: string; dict: Record<string, string> }> | Record<string, any>,
+  locales: Record<string, Record<string, string>>,
+  optional = new Set<string>(),
 ) {
-  const localesArray = Array.isArray(locales) ? locales : Object.values(locales)
   const missing: Array<{ key: string; locale: string }> = []
-  for (const locale of localesArray) {
-    if (locale.id !== "zh" && locale.id !== "zht") continue
+  for (const [id, dict] of Object.entries(locales)) {
+    if (id === "en") continue
     for (const key of Object.keys(englishObj)) {
-      if (!(key in locale.dict)) {
-        missing.push({ key, locale: locale.id })
-      }
+      if (optional.has(key) && id !== "zh" && id !== "zht") continue
+      if (!(key in dict)) missing.push({ key, locale: id })
     }
   }
   return missing
@@ -407,7 +428,7 @@ describe("i18n locale completeness — every English key exists in all locales",
   })
 
   it("sidebar app: every English key has a translation in all locales", () => {
-    const missing = findMissingLocaleKeys(appEn, appLocales)
+    const missing = findMissingLocaleKeys(appEn, appLocales, APP_PLUS_KEYS)
     if (missing.length > 0) {
       expect(
         missing,

@@ -99,6 +99,8 @@ jobs:
       - name: 构建扩展
         working-directory: packages/kilo-vscode
         run: |
+          export KILO_VERSION="${{ steps.meta.outputs.version }}"
+          export KILO_CLI_RELEASE_BINARY=true
           bun run prepare:cli-binary -- --force
           bun run rebuild-sdk
           bun run typecheck
@@ -110,6 +112,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out
+          rm -rf bin/console
+          rm -f bin/.cli-version
+          rm -f dist/*.map
           if [[ "${{ steps.meta.outputs.pre }}" == "true" ]]; then
             ./node_modules/.bin/vsce package \
               --pre-release \

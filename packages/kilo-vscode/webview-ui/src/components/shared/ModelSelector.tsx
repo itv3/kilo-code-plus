@@ -33,18 +33,18 @@ import { useLanguage } from "../../context/language"
 import type { ModelSelection } from "../../types/messages"
 import { isEnterKeyCommitNotIme } from "../../utils/ime-enter"
 import {
-  KILO_GATEWAY_ID,
-  isSmall,
   providerSortKey,
   isFree,
   isDataCollectedModel,
   hasByok,
   isAuto,
+  KILO_GATEWAY_ID,
   freeDataLabel,
   autoSummary,
   buildTriggerLabel,
   sanitizeName,
 } from "./model-selector-utils"
+import { isVisibleModel } from "../../context/provider-utils"
 import { ModelPreview } from "./ModelPreview"
 import { searchMatch } from "../../utils/search-match"
 
@@ -210,10 +210,7 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
   const visibleModels = createMemo(() => {
     if (props.models) return props.models
     const c = connected()
-    return models().filter((m) => {
-      if (!props.includeAutoSmall && isSmall(m)) return false
-      return m.providerID === KILO_GATEWAY_ID || c.includes(m.providerID)
-    })
+    return models().filter((m) => isVisibleModel(m, c, props.includeAutoSmall))
   })
 
   const hasProviders = () => visibleModels().length > 0
@@ -302,30 +299,6 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
       })
     }
 
-    if (autos.length > 0) {
-      result.push({
-        key: AUTO_KEY,
-        label: language.t("model.group.auto"),
-        rows: autos.map((m) => ({
-          key: rowKey("model", m.providerID, m.id),
-          kind: "model",
-          model: m,
-        })),
-      })
-    }
-
-    if (recommended.length > 0) {
-      result.push({
-        key: RECOMMENDED_KEY,
-        label: language.t("model.group.recommended"),
-        rows: recommended.map((m) => ({
-          key: rowKey("model", m.providerID, m.id),
-          kind: "model",
-          model: m,
-        })),
-      })
-    }
-
     const rest: ModelGroup[] = [...map.entries()]
       .sort(([a], [b]) => providerSortKey(a) - providerSortKey(b))
       .map(([id, list]) => {
@@ -341,7 +314,42 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
         }
       })
 
-    return [...result, ...rest]
+    const owned = rest.filter((group) => group.key !== KILO_GATEWAY_ID)
+    const kilo = rest.filter((group) => group.key === KILO_GATEWAY_ID)
+
+    const autoGroup: ModelGroup | undefined =
+      autos.length > 0
+        ? {
+            key: AUTO_KEY,
+            label: language.t("model.group.auto"),
+            rows: autos.map((m) => ({
+              key: rowKey("model", m.providerID, m.id),
+              kind: "model",
+              model: m,
+            })),
+          }
+        : undefined
+
+    const recommendedGroup: ModelGroup | undefined =
+      recommended.length > 0
+        ? {
+            key: RECOMMENDED_KEY,
+            label: language.t("model.group.recommended"),
+            rows: recommended.map((m) => ({
+              key: rowKey("model", m.providerID, m.id),
+              kind: "model",
+              model: m,
+            })),
+          }
+        : undefined
+
+    return [
+      ...result,
+      ...owned,
+      ...(autoGroup ? [autoGroup] : []),
+      ...(recommendedGroup ? [recommendedGroup] : []),
+      ...kilo,
+    ]
   })
 
   // Collapse state is honored even during search so users can skip past

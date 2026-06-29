@@ -15,7 +15,7 @@ import { prettifyError } from "zod/v4"
 import type { CloudSessionMessage, IndexingStatus } from "./services/cli-backend/types"
 import type { PartBatch, PartUpdate } from "./kilo-provider/session-stream-scheduler"
 import type { PartRemove } from "./shared/stream-messages"
-import { KILO_PROVIDER_ID } from "./shared/provider-model"
+import { HIDDEN_AGENT_NAMES } from "./shared/agents"
 import * as path from "path"
 
 export { SessionStreamScheduler } from "./kilo-provider/session-stream-scheduler"
@@ -288,25 +288,8 @@ export function indexProvidersById(all: ProviderInfo[]): Record<string, Provider
   return normalized
 }
 
-export function filterProviders(all: ProviderInfo[], connected: string[]): ProviderInfo[] {
-  const ids = new Set(connected)
-  return all
-    .map((provider) => {
-      const models =
-        provider.id === KILO_PROVIDER_ID
-          ? Object.fromEntries(Object.entries(provider.models).filter(([, model]) => model.isFree === true))
-          : ids.has(provider.id)
-            ? provider.models
-            : {}
-      return { ...provider, models }
-    })
-    .filter((provider) => Object.keys(provider.models).length > 0)
-}
-
-const hiddenAgents = new Set(["orchestrator"])
-
 export function filterAgents(agents: Agent[]): Agent[] {
-  return agents.filter((agent) => !hiddenAgents.has(agent.name))
+  return agents.filter((agent) => agent.native === false || !HIDDEN_AGENT_NAMES.has(agent.name))
 }
 
 export function filterVisibleAgents(agents: Agent[]): { visible: Agent[]; defaultAgent: string } {

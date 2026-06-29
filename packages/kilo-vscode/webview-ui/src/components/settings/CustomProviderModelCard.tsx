@@ -29,6 +29,8 @@ export type ModelEntry = {
   id: string
   name: string
   image: boolean
+  outputModalities: string[]
+  inputLimit: string
   contextLimit: string
   outputLimit: string
   costEnabled: boolean
@@ -85,6 +87,20 @@ const OUTPUT_EFFORT_OPTIONS: SelectOption<OutputEffortValue>[] = [
   { value: "xhigh", labelKey: "provider.custom.models.variants.outputEffort.xhigh" },
   { value: "max", labelKey: "provider.custom.models.variants.outputEffort.max" },
 ]
+
+const COST_INPUT = /^(?:\d+(?:\.\d{0,2})?|\.\d{0,2})?$/
+
+function cost(value: string, save: (val: string) => void) {
+  if (COST_INPUT.test(value)) save(value)
+}
+
+function fixed(value: string) {
+  const raw = value.trim()
+  if (!raw || raw === ".") return value
+  const num = Number(raw)
+  if (!Number.isFinite(num)) return value
+  return num.toFixed(2)
+}
 
 type VariantRowProps = {
   v: VariantEntry
@@ -440,24 +456,28 @@ export function ModelCard(props: ModelCardProps) {
         <div style={{ display: "flex", gap: "8px", "align-items": "flex-start" }}>
           <div style={{ flex: 1 }}>
             <TextField
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.]?[0-9]{0,2}"
               label={props.t("provider.custom.models.inputCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.inputCost}
-              onChange={props.onChangeInputCost}
+              onChange={(v) => cost(v, props.onChangeInputCost)}
+              onBlur={() => props.onChangeInputCost(fixed(props.m.inputCost))}
               validationState={props.errors.inputCost ? "invalid" : undefined}
               error={props.errors.inputCost}
             />
           </div>
           <div style={{ flex: 1 }}>
             <TextField
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.]?[0-9]{0,2}"
               label={props.t("provider.custom.models.outputCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.outputCost}
-              onChange={props.onChangeOutputCost}
+              onChange={(v) => cost(v, props.onChangeOutputCost)}
+              onBlur={() => props.onChangeOutputCost(fixed(props.m.outputCost))}
               validationState={props.errors.outputCost ? "invalid" : undefined}
               error={props.errors.outputCost}
             />
@@ -467,24 +487,28 @@ export function ModelCard(props: ModelCardProps) {
         <div style={{ display: "flex", gap: "8px", "align-items": "flex-start" }}>
           <div style={{ flex: 1 }}>
             <TextField
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.]?[0-9]{0,2}"
               label={props.t("provider.custom.models.cacheReadCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.cacheReadCost}
-              onChange={props.onChangeCacheReadCost}
+              onChange={(v) => cost(v, props.onChangeCacheReadCost)}
+              onBlur={() => props.onChangeCacheReadCost(fixed(props.m.cacheReadCost))}
               validationState={props.errors.cacheReadCost ? "invalid" : undefined}
               error={props.errors.cacheReadCost}
             />
           </div>
           <div style={{ flex: 1 }}>
             <TextField
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.]?[0-9]{0,2}"
               label={props.t("provider.custom.models.cacheWriteCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.cacheWriteCost}
-              onChange={props.onChangeCacheWriteCost}
+              onChange={(v) => cost(v, props.onChangeCacheWriteCost)}
+              onBlur={() => props.onChangeCacheWriteCost(fixed(props.m.cacheWriteCost))}
               validationState={props.errors.cacheWriteCost ? "invalid" : undefined}
               error={props.errors.cacheWriteCost}
             />

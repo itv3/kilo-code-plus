@@ -14,5 +14,4 @@ export const invalidateAfterProviderAuthChange = Effect.fn("KiloServer.invalidat
 ) {
   const cache = yield* ModelCache.Service
   yield* cache.clear(providerID)
-  yield* disposeAllInstancesAfterProviderAuthCallback()
 })

@@ -289,6 +289,53 @@ const ProvidersTab: Component = () => {
         {language.t("settings.providers.section.popular")}
       </h4>
       <Card>
+        {/* Custom provider entry */}
+        <div
+          style={{
+            display: "flex",
+            "flex-wrap": "wrap",
+            "align-items": "center",
+            "justify-content": "space-between",
+            gap: "16px",
+            "min-height": "56px",
+            padding: "12px 0",
+            "border-bottom": "1px solid var(--border-weak-base)",
+          }}
+        >
+          <div style={{ display: "flex", "flex-direction": "column", "min-width": 0 }}>
+            <div style={{ display: "flex", "flex-wrap": "wrap", "align-items": "center", gap: "12px" }}>
+              <ProviderIcon id="synthetic" width={20} height={20} />
+              <span
+                style={{
+                  "font-size": "var(--kilo-font-size-14)",
+                  "font-weight": "500",
+                  color: "var(--vscode-foreground)",
+                }}
+              >
+                {language.t("provider.custom.title")}
+              </span>
+              <Tag>{language.t("settings.providers.tag.custom")}</Tag>
+            </div>
+            <span
+              style={{
+                "font-size": "var(--kilo-font-size-12)",
+                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                "padding-left": "32px",
+              }}
+            >
+              {language.t("settings.providers.custom.description")}
+            </span>
+          </div>
+          <Button
+            size="large"
+            variant="secondary"
+            icon="plus-small"
+            onClick={() => dialog.show(() => <CustomProviderDialog />)}
+          >
+            {language.t("common.connect")}
+          </Button>
+        </div>
+
         <For each={popularProviders()}>
           {(item) => {
             const noteKey = providerNoteKey(item)
@@ -339,52 +386,6 @@ const ProvidersTab: Component = () => {
             )
           }}
         </For>
-
-        {/* Custom provider entry */}
-        <div
-          style={{
-            display: "flex",
-            "flex-wrap": "wrap",
-            "align-items": "center",
-            "justify-content": "space-between",
-            gap: "16px",
-            "min-height": "56px",
-            padding: "12px 0",
-          }}
-        >
-          <div style={{ display: "flex", "flex-direction": "column", "min-width": 0 }}>
-            <div style={{ display: "flex", "flex-wrap": "wrap", "align-items": "center", gap: "12px" }}>
-              <ProviderIcon id="synthetic" width={20} height={20} />
-              <span
-                style={{
-                  "font-size": "var(--kilo-font-size-14)",
-                  "font-weight": "500",
-                  color: "var(--vscode-foreground)",
-                }}
-              >
-                {language.t("provider.custom.title")}
-              </span>
-              <Tag>{language.t("settings.providers.tag.custom")}</Tag>
-            </div>
-            <span
-              style={{
-                "font-size": "var(--kilo-font-size-12)",
-                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                "padding-left": "32px",
-              }}
-            >
-              {language.t("settings.providers.custom.description")}
-            </span>
-          </div>
-          <Button
-            size="large"
-            variant="secondary"
-            icon="plus-small"
-            onClick={() => dialog.show(() => <CustomProviderDialog />)}
-          >
-            {language.t("common.connect")}
-          </Button>
-        </div>
       </Card>
 
       {/* View all providers link */}

@@ -1,4 +1,5 @@
 import type { AgentInfo } from "../types/messages"
+import { HIDDEN_AGENT_NAMES } from "../../../src/shared/agents"
 
 const descriptions: Record<string, string> = {
   ask: "agent.description.ask",
@@ -9,10 +10,10 @@ const descriptions: Record<string, string> = {
   plan: "agent.description.plan",
 }
 
-const hidden = new Set(["orchestrator"])
-
-export function isHiddenAgent(name: string): boolean {
-  return hidden.has(name)
+export function isHiddenAgent(agent: Pick<AgentInfo, "name" | "native"> | string): boolean {
+  const name = typeof agent === "string" ? agent : agent.name
+  const native = typeof agent === "string" ? true : agent.native !== false
+  return native && HIDDEN_AGENT_NAMES.has(name)
 }
 
 export function agentLabel(agent: AgentInfo): string {
@@ -24,6 +25,6 @@ export function agentLabel(agent: AgentInfo): string {
 }
 
 export function agentDescription(agent: AgentInfo, t: (key: string) => string): string | undefined {
-  const key = descriptions[agent.name]
+  const key = agent.native === true ? descriptions[agent.name] : undefined
   return key ? t(key) : agent.description
 }

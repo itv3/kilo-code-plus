@@ -26,9 +26,9 @@ export type VariantConfig = z.infer<typeof VariantConfigSchema>
 const ModalitySchema = z.enum(["text", "image", "audio", "video", "pdf"])
 const ModelLimitSchema = z
   .object({
-    context: z.number().int().nonnegative(),
-    input: z.number().int().nonnegative().optional(),
-    output: z.number().int().nonnegative(),
+    context: z.number().int().positive(),
+    input: z.number().int().positive().optional(),
+    output: z.number().int().positive(),
   })
   .strict()
 const ModelCostSchema = z
@@ -194,7 +194,12 @@ type AnyRecord = Record<string, unknown>
 type VariantPatch = Partial<{ [Key in keyof VariantConfig]: VariantConfig[Key] | null }>
 type LimitPatch = { context?: number | null; input?: number | null; output?: number | null }
 type CostPatch = { input?: number | null; output?: number | null; cache_read?: number | null; cache_write?: number | null }
-type ProviderPatch = Omit<SanitizedProviderConfig, "models"> & {
+type ProviderPatch = Omit<SanitizedProviderConfig, "env" | "models" | "options"> & {
+  env?: string[] | null
+  options: {
+    baseURL: string
+    headers?: Record<string, string> | null
+  }
   models: Record<
     string,
     null | {
@@ -254,6 +259,19 @@ function costPatch(oldModel: AnyRecord, newModel: AnyRecord) {
   return { ...next, ...Object.fromEntries(removed.map((key) => [key, null])) } as CostPatch
 }
 
+function envPatch(existing: AnyRecord, next: SanitizedProviderConfig) {
+  if (Array.isArray(existing.env) && next.env === undefined) return null
+  return next.env
+}
+
+function optionsPatch(existing: AnyRecord, next: SanitizedProviderConfig): ProviderPatch["options"] {
+  const oldOptions = isRecord(existing.options) ? existing.options : {}
+  return {
+    ...next.options,
+    ...("headers" in oldOptions && next.options.headers === undefined ? { headers: null } : {}),
+  }
+}
+
 /**
  * Build a provider patch that includes null sentinels for model properties,
  * variants, and variant options that existed in the previous config but are
@@ -261,9 +279,10 @@ function costPatch(oldModel: AnyRecord, newModel: AnyRecord) {
  * payload with the existing config; without explicit nulls, removed entries
  * would persist on disk.
  */
-export function withCustomProviderDeletions(existing: unknown, next: SanitizedProviderConfig): SanitizedProviderConfig {
+export function withCustomProviderDeletions(existing: unknown, next: SanitizedProviderConfig): ProviderPatch {
   if (!isRecord(existing)) return next
   const oldModels = isRecord(existing.models) ? existing.models : {}
+  const env = envPatch(existing, next)
   const patched: ProviderPatch["models"] = { ...next.models }
 
   for (const id of Object.keys(oldModels)) {
@@ -289,5 +308,10 @@ export function withCustomProviderDeletions(existing: unknown, next: SanitizedPr
     }
   }
 
-  return { ...next, models: patched } as SanitizedProviderConfig
+  return {
+    ...next,
+    ...(env === undefined ? {} : { env }),
+    options: optionsPatch(existing, next),
+    models: patched,
+  }
 }

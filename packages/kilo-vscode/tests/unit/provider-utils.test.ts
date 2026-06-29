@@ -1,11 +1,11 @@
 import { describe, it, expect } from "bun:test"
-import { flattenModels, findModel, isModelValid } from "../../webview-ui/src/context/provider-utils"
+import { flattenModels, findModel, isModelValid, isVisibleModel } from "../../webview-ui/src/context/provider-utils"
 import type { Provider } from "../../webview-ui/src/types/messages"
 
-function makeProvider(id: string, name: string, modelIds: string[]): Provider {
+function makeProvider(id: string, name: string, modelIds: string[], free: string[] = []): Provider {
   const models: Provider["models"] = {}
   for (const mid of modelIds) {
-    models[mid] = { id: mid, name: mid.toUpperCase() }
+    models[mid] = { id: mid, name: mid.toUpperCase(), ...(free.includes(mid) ? { isFree: true } : {}) }
   }
   return { id, name, models }
 }
@@ -81,7 +81,7 @@ describe("findModel", () => {
 
 describe("isModelValid", () => {
   const providers = {
-    kilo: makeProvider("kilo", "Kilo Gateway", ["kilo-auto/free"]),
+    kilo: makeProvider("kilo", "Kilo Gateway", ["kilo-auto/free", "anthropic/paid"], ["kilo-auto/free"]),
     openai: makeProvider("openai", "OpenAI", ["gpt-4o"]),
   }
 
@@ -97,7 +97,30 @@ describe("isModelValid", () => {
     expect(isModelValid(providers, [], { providerID: "kilo", modelID: "kilo-auto/free" })).toBe(true)
   })
 
+  it("rejects paid Kilo catalog models", () => {
+    expect(isModelValid(providers, [], { providerID: "kilo", modelID: "anthropic/paid" })).toBe(false)
+  })
+
   it("rejects unknown models", () => {
     expect(isModelValid(providers, ["openai"], { providerID: "openai", modelID: "missing" })).toBe(false)
+  })
+})
+
+describe("isVisibleModel", () => {
+  it("shows only explicit free Kilo models", () => {
+    expect(isVisibleModel({ providerID: "kilo", id: "free", isFree: true }, [])).toBe(true)
+    expect(isVisibleModel({ providerID: "kilo", id: "paid", isFree: false }, [])).toBe(false)
+    expect(isVisibleModel({ providerID: "kilo", id: "unknown" }, [])).toBe(false)
+  })
+
+  it("shows non-Kilo models only after the provider is connected", () => {
+    expect(isVisibleModel({ providerID: "openai", id: "gpt-4o" }, [])).toBe(false)
+    expect(isVisibleModel({ providerID: "openai", id: "gpt-4o" }, ["openai"])).toBe(true)
+  })
+
+  it("keeps Kilo small models hidden unless explicitly included", () => {
+    const model = { providerID: "kilo", id: "kilo-auto/small", isFree: true }
+    expect(isVisibleModel(model, [])).toBe(false)
+    expect(isVisibleModel(model, [], true)).toBe(true)
   })
 })

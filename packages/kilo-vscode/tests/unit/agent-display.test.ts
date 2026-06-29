@@ -12,13 +12,18 @@ function agent(input: Partial<AgentInfo>): AgentInfo {
 
 describe("agent display", () => {
   it("uses localized descriptions for native agents", () => {
-    const item = agent({ name: "code", description: "The default agent." })
+    const item = agent({ name: "code", native: true, description: "The default agent." })
     expect(agentDescription(item, (key) => `zh:${key}`)).toBe("zh:agent.description.code")
   })
 
   it("keeps custom agent descriptions", () => {
     const item = agent({ name: "reviewer", description: "Reviews code" })
     expect(agentDescription(item, (key) => key)).toBe("Reviews code")
+  })
+
+  it("keeps descriptions for custom agents that reuse native names", () => {
+    const item = agent({ name: "code", native: false, description: "Custom code mode" })
+    expect(agentDescription(item, (key) => key)).toBe("Custom code mode")
   })
 
   it("uses displayName before formatting a slug", () => {
@@ -32,5 +37,9 @@ describe("agent display", () => {
   it("marks orchestrator as hidden from visible lists", () => {
     expect(isHiddenAgent("orchestrator")).toBe(true)
     expect(isHiddenAgent("code")).toBe(false)
+  })
+
+  it("keeps custom orchestrator agents visible", () => {
+    expect(isHiddenAgent(agent({ name: "orchestrator", native: false }))).toBe(false)
   })
 })

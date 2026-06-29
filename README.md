@@ -5,22 +5,32 @@
 ## 版本说明
 
 - 上游版本：`7.3.54`
-- Plus 自定义版本：`v0.01`
-- 发布批次：`7.3.54-v0.01`
-- 市场版本：`7.3.5401`
+- Plus 自定义版本：`v0.03`
+- 发布批次：`7.3.54-v0.03`
+- 市场版本：`7.3.5403`
 
-说明：VS Marketplace 不支持 `7.3.54-v0.01` 这种带后缀的扩展版本号，所以市场页面显示的版本使用纯数字 `7.3.5401`。GitHub tag、GitHub Release、VSIX 文件名使用发布批次 `7.3.54-v0.01`。
+说明：VS Marketplace 不支持 `7.3.54-v0.03` 这种带后缀的扩展版本号，所以市场页面显示的版本使用纯数字 `7.3.5403`。GitHub tag、GitHub Release、VSIX 文件名使用发布批次 `7.3.54-v0.03`。
 
 ## 主要改进
 
 ### UI 页面自定义提供商增强
 
-1. API 类型：自定义提供商支持 OpenAI / Anthropic / Gemini 三种 API 类型。
-2. 模型自动发现：支持 OpenAI、Anthropic、Gemini，并自动处理 endpoint 和认证头。
-3. 模型能力配置：支持手动勾选图像输入能力、推理能力。
-4. 高级模型参数：支持 context token limit、output token limit。
-5. 成本选项：默认隐藏，勾选后显示和保存输入、输出、缓存读取、缓存写入成本。
-6. 默认值补全：添加模型时用模型 ID 匹配内置默认模型，匹配上后自动带出高级模型参数、图像输入能力、推理能力、成本。
+| 功能 | 说明 |
+|---|---|
+| API 格式 | 自定义提供商支持 OpenAI / Anthropic / Gemini 三种原生格式 API。 |
+| 模型自动发现 | 支持 OpenAI、Anthropic、Gemini，并自动处理 endpoint 和认证头。 |
+| 模型能力配置 | 支持添加图像输入能力、推理能力。 |
+| 高级模型参数 | 支持 `context token limit`、`output token limit`。 |
+| 成本选项 | 支持输入、输出、缓存读取、缓存写入成本。 |
+| 默认值补全 | 添加模型时用模型 ID 匹配内置默认模型，匹配上后自动带出高级模型参数、图像输入能力、推理能力、成本。 |
+
+### 模型列表过滤与排序
+
+默认仅显示 Kilo Gateway 免费模型以及用户已添加或已连接提供商的模型，减少无关付费模型干扰。聊天窗口中，用户添加或连接的提供商模型会排在免费模型前面，便于优先选择自己的模型。
+
+### 智能体中文化与隐藏 orchestrator
+
+补齐设置页面和聊天窗口中内置智能体的中文显示说明，并从可见列表隐藏已弃用的 `orchestrator` 智能体，保留用户自定义智能体的显示行为。
 
 ## 发布
 
@@ -37,8 +47,8 @@
 
 ```bash
 git push custom main
-git tag kilo-code-plus-v7.3.54-v0.01
-git push custom kilo-code-plus-v7.3.54-v0.01
+git tag kilo-code-plus-v7.3.54-v0.03
+git push custom kilo-code-plus-v7.3.54-v0.03
 ```
 
 ## 反馈

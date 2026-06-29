@@ -141,6 +141,22 @@ describe("sanitizeCustomProviderConfig", () => {
     })
   })
 
+  it("rejects zero token limits", () => {
+    const result = sanitizeCustomProviderConfig({
+      npm: "@ai-sdk/openai-compatible",
+      name: "Zero Limit Provider",
+      options: { baseURL: "https://example.com/v1" },
+      models: {
+        "model-1": {
+          name: "Model One",
+          limit: { context: 0, output: 0 },
+        },
+      },
+    })
+
+    expect("error" in result).toBe(true)
+  })
+
   it("preserves model costs", () => {
     const result = sanitizeCustomProviderConfig({
       npm: "@ai-sdk/openai-compatible",
@@ -337,5 +353,20 @@ describe("withCustomProviderDeletions", () => {
     }
     const result = withCustomProviderDeletions(existing, next)
     expect(result.models.keep).toEqual({ name: "Keep", cost: { input: 3, output: 15, cache_read: null } })
+  })
+
+  it("emits null for provider env removed from the next config", () => {
+    const existing = { env: ["OLD_API_KEY"], models: { keep: { name: "Keep" } } }
+    const result = withCustomProviderDeletions(existing, baseNext)
+    expect(result.env).toBeNull()
+  })
+
+  it("emits null for provider headers removed from the next config", () => {
+    const existing = {
+      options: { baseURL: "https://example.com/v1", headers: { Authorization: "Bearer old" } },
+      models: { keep: { name: "Keep" } },
+    }
+    const result = withCustomProviderDeletions(existing, baseNext)
+    expect(result.options).toEqual({ baseURL: "https://example.com/v1", headers: null })
   })
 })

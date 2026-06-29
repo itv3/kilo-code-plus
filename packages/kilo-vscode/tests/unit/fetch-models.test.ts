@@ -79,12 +79,29 @@ describe("fetchModels", () => {
       "anthropic",
       { data: [{ id: "claude-sonnet-4-5", display_name: "Claude Sonnet 4.5" }] },
       (req) => {
+        expect(new URL(req.url).pathname).toBe("/v1/models")
         expect(req.headers.get("x-api-key")).toBe("key")
         expect(req.headers.get("anthropic-version")).toBe("2023-06-01")
       },
     )
 
     expect(out).toEqual([{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }])
+  })
+
+  it("does not duplicate v1 when fetching Anthropic model lists", async () => {
+    const server = serve({ data: [{ id: "claude-opus-4-8" }] }, (req) => {
+      expect(new URL(req.url).pathname).toBe("/v1/models")
+    })
+    try {
+      const out = await fetchModels({
+        baseURL: server.url.toString().replace(/\/$/, "") + "/v1",
+        apiKey: "key",
+        protocol: "anthropic",
+      })
+      expect(out).toEqual([{ id: "claude-opus-4-8", name: "claude-opus-4-8" }])
+    } finally {
+      server.stop(true)
+    }
   })
 
   it("parses Gemini model lists and strips the models prefix", async () => {
@@ -104,5 +121,66 @@ describe("fetchModels", () => {
     )
 
     expect(out).toEqual([{ id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", contextLimit: 1048576, outputLimit: 65536 }])
+  })
+
+  it("does not expose error response bodies", async () => {
+    const server = Bun.serve({
+      port: 0,
+      fetch() {
+        return new Response("secret-token-from-upstream", { status: 500 })
+      },
+    })
+    try {
+      const message = await fetchModels({
+        baseURL: server.url.toString().replace(/\/$/, ""),
+        apiKey: "key",
+        protocol: "openai",
+      })
+        .then(() => "")
+        .catch((err) => (err instanceof Error ? err.message : String(err)))
+      expect(message).toContain("HTTP 500")
+      expect(message).not.toContain("secret-token-from-upstream")
+    } finally {
+      server.stop(true)
+    }
+  })
+
+  it("does not follow redirects while sending API keys", async () => {
+    const target = Bun.serve({
+      port: 0,
+      fetch() {
+        return Response.json({ data: [] })
+      },
+    })
+    const server = Bun.serve({
+      port: 0,
+      fetch() {
+        return Response.redirect(target.url.toString(), 302)
+      },
+    })
+    try {
+      await expect(
+        fetchModels({ baseURL: server.url.toString().replace(/\/$/, ""), apiKey: "key", protocol: "anthropic" }),
+      ).rejects.toThrow("HTTP 302")
+    } finally {
+      server.stop(true)
+      target.stop(true)
+    }
+  })
+
+  it("rejects oversized model responses", async () => {
+    const server = Bun.serve({
+      port: 0,
+      fetch() {
+        return new Response("x".repeat(2_000_001), { headers: { "content-type": "application/json" } })
+      },
+    })
+    try {
+      await expect(
+        fetchModels({ baseURL: server.url.toString().replace(/\/$/, ""), apiKey: "key", protocol: "openai" }),
+      ).rejects.toThrow("Model response is too large")
+    } finally {
+      server.stop(true)
+    }
   })
 })

@@ -5,12 +5,12 @@ import { useProvider } from "../src/context/provider"
 import type { EnrichedModel } from "../src/context/provider"
 import { useLanguage } from "../src/context/language"
 import {
-  KILO_GATEWAY_ID,
   freeDataLabel,
   hasByok,
   isDataCollectedModel,
   providerSortKey,
 } from "../src/components/shared/model-selector-utils"
+import { isVisibleModel } from "../src/context/provider-utils"
 import {
   type ModelAllocations,
   MAX_MULTI_VERSIONS,
@@ -44,7 +44,7 @@ export const MultiModelSelector: Component<{
 
   const visibleModels = createMemo(() => {
     const c = connected()
-    return models().filter((m) => m.providerID === KILO_GATEWAY_ID || c.includes(m.providerID))
+    return models().filter((m) => isVisibleModel(m, c))
   })
 
   const filtered = createMemo(() => {

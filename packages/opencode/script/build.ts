@@ -60,6 +60,9 @@ const baselineFlag = process.argv.includes("--baseline")
 const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
 const plugin = createSolidTransformPlugin()
+// kilocode_change start - allow extension packaging to build release-shaped CLI without uploading archives
+const release = Script.release || process.env.KILO_CLI_RELEASE_BINARY === "true"
+// kilocode_change end
 
 // kilocode_change start - codebase indexing
 async function copyTreeSitterWasms(outputDir: string) {
@@ -296,7 +299,7 @@ for (const item of targets) {
     tsconfig: "./tsconfig.json",
     plugins: [plugin],
     // kilocode_change start - skip sourcemaps for release builds (each .js.map adds ~50 MB per target → ~600 MB total)
-    sourcemap: Script.release ? "none" : "external",
+    sourcemap: release ? "none" : "external",
     external: ["node-gyp", ...LanceDBRuntime.external],
     // kilocode_change end
     format: "esm",
@@ -341,7 +344,7 @@ for (const item of targets) {
       KILO_LIBC: item.os === "linux" ? `'${item.abi ?? "glibc"}'` : "",
       // kilocode_change start
       KILO_BWRAP_SHA256: bwrap ? `'${bwrap}'` : "undefined",
-      KILO_BUILD_KIND: Script.release ? `'release'` : `'source'`,
+      KILO_BUILD_KIND: release ? `'release'` : `'source'`,
       // kilocode_change end
     },
   })

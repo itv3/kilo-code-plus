@@ -137,25 +137,16 @@ entry.modalities = {
 | 添加 OpenAI 订阅 | Kilo 自带免费模型 + OpenAI 订阅模型 |
 | 再添加中转站 | Kilo 自带免费模型 + OpenAI 订阅模型 + 中转站模型 |
 
-过滤发生在 VS Code 扩展端,不改 CLI provider 发现逻辑。扩展从后端拿到 `response.all` 和 `response.connected` 后,先通过 `filterProviders(response.all, response.connected)` 过滤,再 `indexProvidersById(providers)` 发给 webview。
+过滤发生在 webview 可见性入口,不改 CLI provider 发现逻辑。扩展端有意把 `response.all` 的完整 catalog 下发给 webview,因为自定义 provider 默认值匹配需要读取 OpenAI / Anthropic / Gemini 的完整内置模型目录。UI 展示、历史选择校验和多模型选择统一通过 `isVisibleModel(model, connected)` 判断可见性。
 
 ### 2.2 过滤规则
 
 ```ts
-const connected = new Set(response.connected)
-
-const providers = response.all
-  .map((provider) => {
-    const models =
-      provider.id === "kilo"
-        ? pickBy(provider.models, (model) => model.isFree === true)
-        : connected.has(provider.id)
-          ? provider.models
-          : {}
-
-    return { ...provider, models }
-  })
-  .filter((provider) => Object.keys(provider.models).length > 0)
+function isVisibleModel(model, connected, includeSmall = false) {
+  if (!includeSmall && model.providerID === "kilo" && KILO_AUTO_SMALL_IDS.has(model.id)) return false
+  if (model.providerID === "kilo") return model.isFree === true
+  return connected.includes(model.providerID)
+}
 ```
 
 实际代码使用 `KILO_PROVIDER_ID` 判断 Kilo 官方 provider:
@@ -164,17 +155,21 @@ const providers = response.all
 |---|---|
 | `kilo` | 只保留 `model.isFree === true` 的免费模型 |
 | 已连接 provider | 保留该 provider 的全部模型 |
-| 未连接 provider | 清空模型;清空后如果没有可见模型,整个 provider 不下发给 webview |
+| 未连接 provider | 不在可选模型列表显示 |
 
 注意:不要用 `provider.source === "custom"` 判断用户自定义添加。models.dev 目录导入的普通 provider 也可能带 `source: "custom"`,会误放出未添加模型。
+
+注意:完整 catalog 会留在 webview 状态中。任何新入口如果直接渲染 `provider.models` 或只判断模型存在,都会绕过过滤;新增模型展示、默认选择、历史选择、通知推荐、多模型选择等路径必须复用 `isVisibleModel` 或基于它的 `isModelValid`。
 
 ### 2.3 涉及文件
 
 | 文件 | 用途 |
 |---|---|
-| `packages/kilo-vscode/src/KiloProvider.ts` | 在 `providersLoaded` 前调用 `filterProviders`,过滤后再下发 provider 列表 |
-| `packages/kilo-vscode/src/kilo-provider-utils.ts` | 新增 `filterProviders`,封装 Kilo 免费模型和 connected provider 过滤逻辑 |
-| `packages/kilo-vscode/tests/unit/kilo-provider-utils.test.ts` | 覆盖 Kilo 免费模型、已连接 provider、未连接 custom provider、空模型 provider |
+| `packages/kilo-vscode/src/KiloProvider.ts` | 下发完整 provider catalog 和 connected provider 列表 |
+| `packages/kilo-vscode/webview-ui/src/context/provider-utils.ts` | `isVisibleModel` / `isModelValid` 单一可见性入口 |
+| `packages/kilo-vscode/webview-ui/src/components/shared/ModelSelector.tsx` | 主模型选择器按可见性过滤 |
+| `packages/kilo-vscode/webview-ui/agent-manager/MultiModelSelector.tsx` | Agent Manager 多模型选择器按可见性过滤 |
+| `packages/kilo-vscode/tests/unit/provider-utils.test.ts` | 覆盖 Kilo 免费模型、已连接 provider、未连接 provider 和历史付费模型回退 |
 | `.changeset/filter-visible-models.md` | 需求二发布说明 |
 
 本需求没有修改 `packages/opencode`。`response.connected` 仍由后端现有 provider 接口生成,扩展层只消费该结果。
@@ -202,8 +197,8 @@ const providers = response.all
 | 位置 | 处理 |
 |---|---|
 | `KiloProvider.fetchAndSendAgents()` | 后端返回 agents 后先调用 `filterAgents`,再生成 `agentsLoaded` |
-| `filterVisibleAgents()` | 继续过滤 `subagent` 和 `hidden`,并额外排除 `orchestrator` |
-| `AgentBehaviourTab` | 从配置对象补充 agent 名称时,过滤 `orchestrator` |
+| `filterVisibleAgents()` | 继续过滤 `subagent` 和 `hidden`,并防御性排除内置 `orchestrator` |
+| `AgentBehaviourTab` | 从配置对象补充 agent 名称时,只过滤内置 `orchestrator`;同名自定义 agent 保留 |
 | `ModeSwitcher` | agent picker 使用 `agentDescription()` 获取本地化描述 |
 
 ### 3.3 涉及文件

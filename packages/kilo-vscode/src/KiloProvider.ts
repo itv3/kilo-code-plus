@@ -31,7 +31,6 @@ import {
   applySessionPatch,
   sessionPatchToWebview,
   indexProvidersById,
-  filterProviders,
   filterAgents,
   filterVisibleAgents,
   mapSSEEventToWebviewMessage,
@@ -155,6 +154,7 @@ import {
 import type { StoredProviderKey } from "./provider-actions"
 import { AnacondaDesktopBridge } from "./anaconda-desktop/bridge"
 import { fetchModels, FetchModelsError } from "./shared/fetch-models"
+import { self as extensionSelf, version as extensionVersion } from "./extension-info"
 import type { FetchModelsProtocol } from "./shared/fetch-models"
 import type { Agent } from "@kilocode/sdk/v2/client"
 import { configFeatures } from "./features"
@@ -432,11 +432,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     private readonly extensionContext?: vscode.ExtensionContext,
     private readonly opts: KiloProviderOptions = {},
   ) {
-    this.extensionVersion =
-      this.extensionContext?.extension.packageJSON?.version ??
-      vscode.extensions.getExtension("itv3.kilo-code-plus")?.packageJSON?.version ??
-      vscode.extensions.getExtension("kilocode.kilo-code")?.packageJSON?.version ??
-      "unknown"
+    this.extensionVersion = extensionVersion(this.extensionContext)
     this.projectDirectory = opts.projectDirectory
     this.slimEditMetadata = opts.slimEditMetadata ?? true
     this.unsubscribeSandboxPreference = this.connectionService.sandboxPreference?.onChange(() => {
@@ -1988,10 +1984,9 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           }
           this.storedProviderKeys = storedKeys
           const settings = vscode.workspace.getConfiguration("kilo-code.new.model")
-          const providers = filterProviders(response.all, response.connected)
           const message = {
             type: "providersLoaded",
-            providers: indexProvidersById(providers),
+            providers: indexProvidersById(response.all),
             connected: response.connected,
             defaults: response.default,
             defaultSelection: computeDefaultSelection(
@@ -2074,9 +2069,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     const rid = typeof msg.requestId === "string" ? msg.requestId : ""
     const url = typeof msg.baseURL === "string" ? msg.baseURL : ""
     if (!rid || !url) return
-    const protocol = typeof msg.protocol === "string" ? (msg.protocol as FetchModelsProtocol) : "openai"
+    const raw = typeof msg.protocol === "string" ? msg.protocol : "openai"
+    const protocol: FetchModelsProtocol = raw === "anthropic" || raw === "gemini" ? raw : "openai"
     const key =
-      typeof msg.apiKey === "string" ? msg.apiKey : resolveStoredKey(this.storedProviderKeys, msg.providerID, url)
+      typeof msg.apiKey === "string"
+        ? msg.apiKey
+        : typeof msg.env === "string"
+          ? process.env[msg.env]
+          : resolveStoredKey(this.storedProviderKeys, msg.providerID, url)
     const headers = msg.headers && typeof msg.headers === "object" ? (msg.headers as Record<string, string>) : undefined
     try {
       const models = await fetchModels({ baseURL: url, apiKey: key, headers, protocol })
@@ -3298,10 +3298,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     if (confirmed !== "Reset") return
 
     const prefix = "kilo-code.new."
-    const ext =
-      this.extensionContext?.extension ??
-      vscode.extensions.getExtension("itv3.kilo-code-plus") ??
-      vscode.extensions.getExtension("kilocode.kilo-code")
+    const ext = extensionSelf(this.extensionContext)
     const properties = ext?.packageJSON?.contributes?.configuration?.properties as Record<string, unknown> | undefined
     if (!properties) return
 

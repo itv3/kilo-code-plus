@@ -3,16 +3,16 @@ import { resolveModelSelection } from "../../webview-ui/src/context/model-select
 import { KILO_AUTO, parseModelString } from "../../src/shared/provider-model"
 import type { Provider } from "../../webview-ui/src/types/messages"
 
-function makeProvider(id: string, name: string, modelIds: string[]): Provider {
+function makeProvider(id: string, name: string, modelIds: string[], free: string[] = []): Provider {
   const models: Provider["models"] = {}
   for (const modelID of modelIds) {
-    models[modelID] = { id: modelID, name: modelID }
+    models[modelID] = { id: modelID, name: modelID, ...(free.includes(modelID) ? { isFree: true } : {}) }
   }
   return { id, name, models }
 }
 
 const providers = {
-  kilo: makeProvider("kilo", "Kilo Gateway", ["kilo-auto/free"]),
+  kilo: makeProvider("kilo", "Kilo Gateway", ["kilo-auto/free", "anthropic/paid"], ["kilo-auto/free"]),
   anthropic: makeProvider("anthropic", "Anthropic", ["claude-sonnet-4"]),
   openai: makeProvider("openai", "OpenAI", ["gpt-4.1"]),
 }
@@ -79,6 +79,16 @@ describe("resolveModelSelection", () => {
     const result = resolveModelSelection({
       providers,
       connected: [],
+      fallback: KILO_AUTO,
+    })
+    expect(result).toEqual(KILO_AUTO)
+  })
+
+  it("falls back from a paid Kilo history model to the free fallback", () => {
+    const result = resolveModelSelection({
+      providers,
+      connected: [],
+      recent: [{ providerID: "kilo", modelID: "anthropic/paid" }],
       fallback: KILO_AUTO,
     })
     expect(result).toEqual(KILO_AUTO)

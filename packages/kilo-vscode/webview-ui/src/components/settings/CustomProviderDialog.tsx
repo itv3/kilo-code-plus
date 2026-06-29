@@ -35,6 +35,9 @@ import { validateCustomProvider } from "./CustomProviderValidation"
 import type { FormErrors, FormState, HeaderRow } from "./CustomProviderValidation"
 const DEBOUNCE_MS = 500
 const SEARCH_DEBOUNCE_MS = 150
+const DEFAULT_FALLBACKS: Record<string, string> = {
+  "claude-opus-4-8": "claude-opus-4-7",
+}
 
 const PACKAGE_OPTIONS: Array<{ value: CustomProviderPackage; label: string }> = [
   { value: "@ai-sdk/openai-compatible", label: "OpenAI Compatible" },
@@ -54,6 +57,25 @@ function fuzzy(query: string, target: string) {
   return qi === q.length
 }
 
+function isPrivateHost(raw: string) {
+  try {
+    const host = new URL(raw).hostname.toLowerCase().replace(/^\[(.*)]$/, "$1")
+    if (host === "localhost" || host.endsWith(".local") || host === "::1") return true
+    const parts = host.split(".").map((part) => Number(part))
+    if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part))) return false
+    const [a, b] = parts
+    return (
+      a === 10 ||
+      a === 127 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168)
+    )
+  } catch {
+    return false
+  }
+}
+
 type FetchedModel = {
   id: string
   name: string
@@ -69,8 +91,8 @@ type FetchedModel = {
 type RawModel = {
   name?: string
   reasoning?: boolean
-  modalities?: { input?: string[] }
-  limit?: { context?: number; output?: number }
+  modalities?: { input?: string[]; output?: string[] }
+  limit?: { context?: number; input?: number; output?: number }
   cost?: { input?: number; output?: number; cache_read?: number; cache_write?: number }
   variants?: Record<string, Record<string, unknown>>
 }
@@ -124,6 +146,10 @@ function text(value: number | undefined) {
   return value === undefined ? "" : String(value)
 }
 
+function money(value: number | undefined) {
+  return value === undefined ? "" : value.toFixed(2)
+}
+
 function modelCost(raw: RawModel | undefined) {
   return (
     raw?.cost?.input !== undefined ||
@@ -138,6 +164,8 @@ function initModels(cfg: ProviderConfig | undefined): ModelEntry[] {
     id: "",
     name: "",
     image: false,
+    outputModalities: ["text"],
+    inputLimit: "",
     contextLimit: "",
     outputLimit: "",
     costEnabled: false,
@@ -157,13 +185,15 @@ function initModels(cfg: ProviderConfig | undefined): ModelEntry[] {
       id,
       name: raw.name ?? id,
       image: raw.modalities?.input?.includes("image") ?? false,
+      outputModalities: raw.modalities?.output ?? ["text"],
+      inputLimit: text(raw.limit?.input),
       contextLimit: text(raw.limit?.context),
       outputLimit: text(raw.limit?.output),
       costEnabled: modelCost(raw),
-      inputCost: text(raw.cost?.input),
-      outputCost: text(raw.cost?.output),
-      cacheReadCost: text(raw.cost?.cache_read),
-      cacheWriteCost: text(raw.cost?.cache_write),
+      inputCost: money(raw.cost?.input),
+      outputCost: money(raw.cost?.output),
+      cacheReadCost: money(raw.cost?.cache_read),
+      cacheWriteCost: money(raw.cost?.cache_write),
       reasoning: raw.reasoning ?? false,
       variants: Object.entries(raw.variants ?? {}).map(parseVariant),
     }
@@ -297,10 +327,10 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     setFetchStatus(undefined)
     setSearch("")
 
-    if (!/^https?:\/\//.test(url.trim())) return
-
     fetchVersion++
     const version = fetchVersion
+    if (!/^https?:\/\//.test(url.trim())) return
+
     const timer = setTimeout(() => {
       if (version === fetchVersion) doFetch()
     }, DEBOUNCE_MS)
@@ -337,7 +367,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     setFetching(true)
     setFetchError(undefined)
     setFetchedModels(undefined)
-    setFetchStatus(undefined)
+    setFetchStatus(isPrivateHost(url) ? language.t("provider.custom.models.fetch.privateHost") : undefined)
     setSearch("")
 
     const rid = crypto.randomUUID()
@@ -382,6 +412,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
       baseURL: url,
       protocol: protocol(fetchPackage()),
       apiKey,
+      env,
       providerID,
       headers,
     })
@@ -391,9 +422,8 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     const models = provider.providers()[catalogProvider(fetchPackage())]?.models ?? {}
     const bare = id.split("/").at(-1) ?? id
     const ids = [id, bare]
-    if (catalogProvider(fetchPackage()) === "anthropic" && (id === "claude-opus-4-8" || bare === "claude-opus-4-8")) {
-      ids.push("claude-opus-4-7")
-    }
+    const fallback = DEFAULT_FALLBACKS[id] ?? DEFAULT_FALLBACKS[bare]
+    if (fallback) ids.push(fallback)
     for (const key of ids) {
       const model = models[key]
       if (model) return catalogDefaults(model)
@@ -455,6 +485,8 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
       id: m.id,
       name: m.name,
       image: m.image ?? false,
+      outputModalities: ["text"],
+      inputLimit: "",
       contextLimit: text(m.contextLimit),
       outputLimit: text(m.outputLimit),
       costEnabled:
@@ -462,10 +494,10 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
         m.outputCost !== undefined ||
         m.cacheReadCost !== undefined ||
         m.cacheWriteCost !== undefined,
-      inputCost: text(m.inputCost),
-      outputCost: text(m.outputCost),
-      cacheReadCost: text(m.cacheReadCost),
-      cacheWriteCost: text(m.cacheWriteCost),
+      inputCost: money(m.inputCost),
+      outputCost: money(m.outputCost),
+      cacheReadCost: money(m.cacheReadCost),
+      cacheWriteCost: money(m.cacheWriteCost),
       reasoning: m.reasoning ?? false,
       variants: [],
     })
@@ -513,6 +545,8 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
         id: "",
         name: "",
         image: false,
+        outputModalities: ["text"],
+        inputLimit: "",
         contextLimit: "",
         outputLimit: "",
         costEnabled: false,

@@ -4,7 +4,6 @@ import {
   applySessionPatch,
   sessionPatchToWebview,
   indexProvidersById,
-  filterProviders,
   filterAgents,
   filterVisibleAgents,
   buildSettingPath,
@@ -306,61 +305,15 @@ describe("indexProvidersById", () => {
   })
 })
 
-describe("filterProviders", () => {
-  it("keeps only free Kilo models", () => {
-    const result = filterProviders(
-      [
-        makeProvider("kilo", {
-          free: makeModel({ id: "free", isFree: true }),
-          paid: makeModel({ id: "paid", isFree: false }),
-          unknown: makeModel({ id: "unknown" }),
-        }),
-      ],
-      [],
-    )
-
-    expect(Object.keys(result[0]!.models)).toEqual(["free"])
-  })
-
-  it("keeps connected provider models", () => {
-    const result = filterProviders(
-      [
-        makeProvider("kilo", { free: makeModel({ id: "free", isFree: true }) }),
-        makeProvider("openai", { gpt: makeModel({ id: "gpt" }) }),
-      ],
-      ["openai"],
-    )
-
-    expect(result.map((provider) => provider.id)).toEqual(["kilo", "openai"])
-    expect(result[1]!.models).toHaveProperty("gpt")
-  })
-
-  it("drops disconnected providers even when source is custom", () => {
-    const result = filterProviders(
-      [
-        makeProvider("kilo", { free: makeModel({ id: "free", isFree: true }) }),
-        makeProvider("relay", { claude: makeModel({ id: "claude" }) }),
-      ],
-      [],
-    )
-
-    expect(result.map((provider) => provider.id)).toEqual(["kilo"])
-  })
-
-  it("drops providers with no visible models", () => {
-    const result = filterProviders(
-      [makeProvider("kilo", { paid: makeModel({ id: "paid", isFree: false }) }), makeProvider("openai")],
-      ["openai"],
-    )
-
-    expect(result).toEqual([])
-  })
-})
-
 describe("filterAgents", () => {
   it("drops orchestrator from webview agent lists", () => {
     const agents = [makeAgent({ name: "code" }), makeAgent({ name: "orchestrator" })]
     expect(filterAgents(agents).map((agent) => agent.name)).toEqual(["code"])
+  })
+
+  it("keeps custom orchestrator agents", () => {
+    const agents = [makeAgent({ name: "orchestrator", native: false }), makeAgent({ name: "code" })]
+    expect(filterAgents(agents).map((agent) => agent.name)).toEqual(["orchestrator", "code"])
   })
 })
 
@@ -379,7 +332,7 @@ describe("filterVisibleAgents", () => {
     expect(visible[0]!.name).toBe("code")
   })
 
-  it("filters out orchestrator", () => {
+  it("defensively filters orchestrator", () => {
     const agents = [makeAgent({ name: "orchestrator" }), makeAgent({ name: "ask" })]
     const { visible } = filterVisibleAgents(agents)
     expect(visible.map((agent) => agent.name)).toEqual(["ask"])

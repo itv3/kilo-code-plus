@@ -1,9 +1,6 @@
-/**
- * 从提供商原生模型发现接口读取可用模型。
- * 运行在扩展宿主中，不依赖 CLI backend。
- */
-
 export type FetchModelsProtocol = "openai" | "anthropic" | "gemini"
+
+const MAX_RESPONSE_BYTES = 2_000_000
 
 type Options = {
   baseURL: string
@@ -48,6 +45,7 @@ function num(value: unknown) {
 
 function perMillion(value: unknown) {
   const n = num(value)
+  // Some OpenAI-compatible catalogs expose per-token prices; Kilo stores per-million-token prices.
   return n === undefined ? undefined : n * 1_000_000
 }
 
@@ -87,19 +85,54 @@ function cost(item: Record<string, unknown>): Partial<ModelEntry> {
   }
 }
 
+async function body(response: Response) {
+  const len = Number(response.headers.get("content-length") ?? "")
+  if (Number.isFinite(len) && len > MAX_RESPONSE_BYTES) {
+    throw new FetchModelsError("Model response is too large", response.status)
+  }
+
+  if (!response.body) return response.text()
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let size = 0
+  while (true) {
+    const item = await reader.read()
+    if (item.done) break
+    size += item.value.byteLength
+    if (size > MAX_RESPONSE_BYTES) {
+      await reader.cancel().catch((err) => console.warn("Failed to cancel oversized model response", err))
+      throw new FetchModelsError("Model response is too large", response.status)
+    }
+    chunks.push(item.value)
+  }
+
+  const bytes = new Uint8Array(size)
+  let offset = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return new TextDecoder().decode(bytes)
+}
+
 async function request(url: string, headers: Record<string, string>) {
   const response = await fetch(url, {
     method: "GET",
     headers,
+    redirect: "manual",
     signal: AbortSignal.timeout(15_000),
   })
 
   if (!response.ok) {
-    const text = await response.text().catch(() => "")
-    throw new FetchModelsError(`HTTP ${response.status}: ${text.slice(0, 200)}`, response.status)
+    throw new FetchModelsError(`HTTP ${response.status}`, response.status)
   }
 
-  return response.json()
+  try {
+    return JSON.parse(await body(response))
+  } catch (err) {
+    if (err instanceof FetchModelsError) throw err
+    throw new FetchModelsError("Invalid model response", response.status)
+  }
 }
 
 function sort(models: ModelEntry[]) {
@@ -117,6 +150,12 @@ function unique(models: ModelEntry[]) {
   return sort(result)
 }
 
+function anthropicModelsURL(baseURL: string) {
+  const url = baseURL.replace(/\/+$/, "")
+  if (/\/v1$/i.test(url)) return `${url}/models`
+  return `${url}/v1/models`
+}
+
 async function fetchOpenAIModels(opts: Options): Promise<ModelEntry[]> {
   const url = opts.baseURL.replace(/\/+$/, "") + "/models"
   const headers: Record<string, string> = {
@@ -127,8 +166,8 @@ async function fetchOpenAIModels(opts: Options): Promise<ModelEntry[]> {
     headers["Authorization"] = `Bearer ${opts.apiKey}`
   }
 
-  const body = (await request(url, headers)) as { data?: Array<Record<string, unknown>> }
-  const items = body?.data
+  const data = (await request(url, headers)) as { data?: Array<Record<string, unknown>> }
+  const items = data?.data
   if (!Array.isArray(items)) return []
 
   return unique(
@@ -147,7 +186,7 @@ async function fetchOpenAIModels(opts: Options): Promise<ModelEntry[]> {
 }
 
 async function fetchAnthropicModels(opts: Options): Promise<ModelEntry[]> {
-  const url = opts.baseURL.replace(/\/+$/, "") + "/models"
+  const url = anthropicModelsURL(opts.baseURL)
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "anthropic-version": "2023-06-01",
@@ -157,8 +196,8 @@ async function fetchAnthropicModels(opts: Options): Promise<ModelEntry[]> {
     headers["x-api-key"] = opts.apiKey
   }
 
-  const body = (await request(url, headers)) as { data?: Array<Record<string, unknown>> }
-  const items = body?.data
+  const data = (await request(url, headers)) as { data?: Array<Record<string, unknown>> }
+  const items = data?.data
   if (!Array.isArray(items)) return []
 
   return unique(
@@ -186,8 +225,8 @@ async function fetchGeminiModels(opts: Options): Promise<ModelEntry[]> {
     headers["x-goog-api-key"] = opts.apiKey
   }
 
-  const body = (await request(url, headers)) as { models?: Array<Record<string, unknown>> }
-  const items = body?.models
+  const data = (await request(url, headers)) as { models?: Array<Record<string, unknown>> }
+  const items = data?.models
   if (!Array.isArray(items)) return []
 
   return unique(
