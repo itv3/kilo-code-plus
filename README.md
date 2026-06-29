@@ -32,6 +32,34 @@
 
 补齐设置页面和聊天窗口中内置智能体的中文显示说明，并从可见列表隐藏已弃用的 `orchestrator` 智能体，保留用户自定义智能体的显示行为。
 
+## 手动安装
+
+如果暂时不通过扩展市场安装,可以直接下载 GitHub Release 中的 `.vsix` 文件后手动安装。
+
+下载地址: `https://github.com/itv3/kilo-code-plus/releases`
+
+### Cursor
+
+方式一:在 Cursor 中打开命令面板,执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件。
+
+方式二:使用命令行安装:
+
+```bash
+/Applications/Cursor.app/Contents/Resources/app/bin/cursor --install-extension /path/to/kilo-code-plus-7.3.54-v0.03-darwin-arm64.vsix --force
+```
+
+### VS Code
+
+方式一:在 VS Code 中打开命令面板,执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件。
+
+方式二:使用命令行安装:
+
+```bash
+code --install-extension /path/to/kilo-code-plus-7.3.54-v0.03-darwin-arm64.vsix --force
+```
+
+安装完成后执行 `Developer: Reload Window`,或重启编辑器。
+
 ## 发布
 
 自动发布 workflow：`.github/workflows/publish-kilo-code-plus.yml`
