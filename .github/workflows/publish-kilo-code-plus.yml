@@ -16,6 +16,11 @@ on:
         required: false
         type: boolean
         default: false
+      skip_vs_marketplace:
+        description: "跳过 VS Marketplace，仅发布 Open VSX 和 GitHub Release"
+        required: false
+        type: boolean
+        default: false
 
 concurrency: publish-kilo-code-plus-${{ github.ref_name }}-${{ inputs.version || '' }}
 
@@ -137,6 +142,7 @@ jobs:
           path: ${{ steps.meta.outputs.vsix }}
 
       - name: 发布到 VS Marketplace
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_vs_marketplace != true }}
         working-directory: packages/kilo-vscode
         shell: bash
         run: |
@@ -169,6 +175,10 @@ jobs:
           done
         env:
           VERSION: ${{ steps.meta.outputs.version }}
+
+      - name: 跳过 VS Marketplace
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_vs_marketplace == true }}
+        run: echo "已按手动参数跳过 VS Marketplace。"
 
       - name: 发布到 Open VSX
         working-directory: packages/kilo-vscode

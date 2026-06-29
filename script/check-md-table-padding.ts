@@ -35,12 +35,14 @@ const ROOT = path.resolve(import.meta.dir, "..")
 const ok = new Set(["---", ":---", "---:", ":---:"])
 
 function tracked() {
+  // kilocode_change start - support non-ASCII paths emitted by git without C-style quoting
   const r = spawnSync("git", ["ls-files", "-z", "*.md"], { cwd: ROOT, encoding: "utf8" })
   if (r.status !== 0) {
     console.error(r.stderr?.trim() || "git ls-files failed")
     process.exit(1)
   }
   return r.stdout.split("\0").filter(Boolean)
+  // kilocode_change end
 }
 
 function skip(file: string) {
