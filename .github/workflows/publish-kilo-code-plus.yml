@@ -262,10 +262,37 @@ jobs:
         run: |
           set -euo pipefail
           tag="${{ needs.build-cli.outputs.tag }}"
+          label="${{ needs.build-cli.outputs.label }}"
+          version="${{ needs.build-cli.outputs.version }}"
+          src=".github/release-notes/$tag.md"
+          notes="/tmp/kilo-code-plus-release-notes.md"
+          if [[ -f "$src" ]]; then
+            cp "$src" "$notes"
+          else
+            prev="$(git tag --merged "$tag" --list 'kilo-code-plus-v*' --sort=-creatordate | grep -vx "$tag" | head -n 1 || true)"
+            {
+              echo "# Kilo Code Plus $label"
+              echo
+              echo "市场内部版本: \`$version\`"
+              echo
+              echo "## 主要变更"
+              echo
+              if [[ -n "$prev" ]]; then
+                git log --pretty=format:'- %s (`%h`)' "$prev..$tag"
+              else
+                git log --pretty=format:'- %s (`%h`)' -20 "$tag"
+              fi
+              echo
+              echo
+              echo "## 安装包说明"
+              echo
+              echo "本次发布目标平台: \`$PLUS_TARGETS\`。"
+            } > "$notes"
+          fi
           if ! gh release view "$tag" >/dev/null 2>&1; then
             gh release create "$tag" \
               --title "$tag" \
-              --notes "自动发布 Kilo Code Plus ${{ needs.build-cli.outputs.label }}，市场内部版本 ${{ needs.build-cli.outputs.version }}。"
+              --notes-file "$notes"
           fi
           for target in $PLUS_TARGETS; do
             gh release upload "$tag" "packages/kilo-vscode/out/kilo-code-plus-${{ needs.build-cli.outputs.label }}-$target.vsix" --clobber

@@ -73,6 +73,8 @@
 标准发布流程：
 
 ```bash
+mkdir -p .github/release-notes
+$EDITOR .github/release-notes/kilo-code-plus-v7.3.54-v0.04.md
 cd packages/kilo-vscode
 bun test ./tests/unit/custom-provider-defaults.test.ts ./tests/unit/custom-provider-dialog-validate.test.ts
 bun run typecheck
@@ -82,7 +84,7 @@ git tag kilo-code-plus-v7.3.54-v0.04
 git push custom kilo-code-plus-v7.3.54-v0.04
 ```
 
-发布后先看 GitHub Actions 中 `publish-kilo-code-plus` workflow 是否成功,再核对 GitHub Release 是否有 6 个平台 `.vsix`。Open VSX 发布成功后通常需要几分钟后台传播,不要立刻按旧版本查询结果判断失败;等待后用 `targetPlatform` 查询下载映射,确认 6 个平台都指向新市场版本。
+发布前必须为本次 tag 准备 `.github/release-notes/<tag>.md`,逐条写清具体变更。发布后先看 GitHub Actions 中 `publish-kilo-code-plus` workflow 是否成功,再核对 GitHub Release 是否有 6 个平台 `.vsix`。Open VSX 发布成功后通常需要几分钟后台传播,不要立刻按旧版本查询结果判断失败;等待后用 `targetPlatform` 查询下载映射,确认 6 个平台都指向新市场版本。
 
 ## 反馈
 
