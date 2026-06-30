@@ -64,8 +64,6 @@ type ValidateResult = {
 }
 
 const PROVIDER_ID = /^[a-z0-9][a-z0-9-_]*$/
-const COST_VALUE = /^(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/
-
 function checkVariant(v: VariantEntry, seen: Set<string>, t: Translator) {
   const n = v.name.trim()
   if (!n) return { name: t("provider.custom.error.required") }
@@ -86,7 +84,7 @@ function checkCost(value: string, t: Translator) {
   const raw = value.trim()
   if (!raw) return undefined
   const num = Number(raw)
-  if (COST_VALUE.test(raw) && Number.isFinite(num) && num >= 0) return undefined
+  if (Number.isFinite(num) && num >= 0) return undefined
   return t("provider.custom.error.cost")
 }
 
@@ -166,13 +164,11 @@ function serializeVariant(v: VariantEntry): [string, Record<string, unknown>] {
 }
 
 function extractModelLimits(m: ModelEntry) {
-  const input = m.inputLimit.trim() ? Number(m.inputLimit.trim()) : undefined
   const context = m.contextLimit.trim() ? Number(m.contextLimit.trim()) : undefined
   const output = m.outputLimit.trim() ? Number(m.outputLimit.trim()) : undefined
   if (context !== undefined && output !== undefined) {
     return {
       context,
-      ...(input !== undefined ? { input } : {}),
       output,
     }
   }
@@ -184,7 +180,7 @@ function extractModelCosts(m: ModelEntry) {
   const parse = (value: string) => {
     const raw = value.trim()
     if (!raw) return undefined
-    return Number(Number(raw).toFixed(2))
+    return Number(raw)
   }
   const inputCost = parse(m.inputCost)
   const outputCost = parse(m.outputCost)

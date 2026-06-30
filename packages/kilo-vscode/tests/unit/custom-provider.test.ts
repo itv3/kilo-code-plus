@@ -185,6 +185,22 @@ describe("sanitizeCustomProviderConfig", () => {
     })
   })
 
+  it("rejects non-finite model costs", () => {
+    const result = sanitizeCustomProviderConfig({
+      npm: "@ai-sdk/openai-compatible",
+      name: "Priced Provider",
+      options: { baseURL: "https://example.com/v1" },
+      models: {
+        "model-1": {
+          name: "Model One",
+          cost: { input: Infinity, output: 15 },
+        },
+      },
+    })
+
+    expect("error" in result).toBe(true)
+  })
+
   it("rejects unapproved packages", () => {
     const result = sanitizeCustomProviderConfig({
       npm: "malicious-package",
@@ -368,5 +384,25 @@ describe("withCustomProviderDeletions", () => {
     }
     const result = withCustomProviderDeletions(existing, baseNext)
     expect(result.options).toEqual({ baseURL: "https://example.com/v1", headers: null })
+  })
+
+  it("emits null for individual provider headers removed from the next config", () => {
+    const existing = {
+      options: {
+        baseURL: "https://example.com/v1",
+        headers: { Authorization: "Bearer old", "X-Keep": "yes" },
+      },
+      models: { keep: { name: "Keep" } },
+    }
+    const next = {
+      ...baseNext,
+      options: { baseURL: "https://example.com/v1", headers: { "X-Keep": "yes" } },
+    }
+
+    const result = withCustomProviderDeletions(existing, next)
+    expect(result.options).toEqual({
+      baseURL: "https://example.com/v1",
+      headers: { "X-Keep": "yes", Authorization: null },
+    })
   })
 })

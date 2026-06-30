@@ -19,7 +19,6 @@ function base(): FormState {
         name: "Model One",
         image: false,
         outputModalities: ["text"],
-        inputLimit: "",
         contextLimit: "",
         outputLimit: "",
         costEnabled: false,
@@ -214,14 +213,13 @@ describe("validateCustomProvider – variant name validation", () => {
   it("persists image and token limits in the saved config", () => {
     const form = base()
     form.models[0].image = true
-    form.models[0].inputLimit = "64000"
     form.models[0].contextLimit = "128000"
     form.models[0].outputLimit = "8192"
     const out = validateCustomProvider(args(form))
     expect(out.result).toBeDefined()
     const saved = out.result!.config.models["model-1"] as Record<string, unknown>
     expect(saved.modalities).toEqual({ input: ["text", "image"], output: ["text"] })
-    expect(saved.limit).toEqual({ context: 128000, input: 64000, output: 8192 })
+    expect(saved.limit).toEqual({ context: 128000, output: 8192 })
   })
 
   it("preserves output modalities while saving model capabilities", () => {
@@ -303,14 +301,15 @@ describe("validateCustomProvider – variant name validation", () => {
     expect(out.errors.models[0].inputCost).toBe("provider.custom.error.cost")
   })
 
-  it("rejects model costs with more than two decimal places", () => {
+  it("preserves model costs with more than two decimal places", () => {
     const form = base()
     form.models[0].costEnabled = true
     form.models[0].inputCost = "1.234"
-    form.models[0].outputCost = "5.00"
+    form.models[0].outputCost = "0.075"
     const out = validateCustomProvider(args(form))
-    expect(out.result).toBeUndefined()
-    expect(out.errors.models[0].inputCost).toBe("provider.custom.error.cost")
+    expect(out.result).toBeDefined()
+    const saved = out.result!.config.models["model-1"] as Record<string, unknown>
+    expect(saved.cost).toEqual({ input: 1.234, output: 0.075 })
   })
 
   it("normalizes Gemini native base URLs to v1beta", () => {
@@ -342,7 +341,6 @@ describe("validateCustomProvider – variant name validation", () => {
         name: "claude-opus-4-8",
         image: false,
         outputModalities: ["text"],
-        inputLimit: "",
         contextLimit: "",
         outputLimit: "",
         costEnabled: false,

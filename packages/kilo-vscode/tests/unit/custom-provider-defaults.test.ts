@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test"
 import { defaultKeys, defaultsForModel } from "../../webview-ui/src/components/settings/CustomProviderDefaults"
+import {
+  customProviderCatalog,
+  customProviderProtocol,
+  normalizeCustomProviderBaseURL,
+} from "../../src/shared/provider-model"
 import type { Provider } from "../../webview-ui/src/types/messages"
 
 function providers(): Record<string, Provider> {
@@ -34,6 +39,21 @@ function providers(): Record<string, Provider> {
 }
 
 describe("custom provider default matching", () => {
+  it("keeps package protocol, catalog, and base URL metadata in one mapping", () => {
+    expect(customProviderProtocol("@ai-sdk/openai-compatible")).toBe("openai")
+    expect(customProviderCatalog("@ai-sdk/openai-compatible")).toBe("openai")
+    expect(customProviderProtocol("@ai-sdk/anthropic")).toBe("anthropic")
+    expect(customProviderCatalog("@ai-sdk/anthropic")).toBe("anthropic")
+    expect(normalizeCustomProviderBaseURL("@ai-sdk/anthropic", "https://api.anthropic.com")).toBe(
+      "https://api.anthropic.com/v1",
+    )
+    expect(customProviderProtocol("@ai-sdk/google")).toBe("gemini")
+    expect(customProviderCatalog("@ai-sdk/google")).toBe("google")
+    expect(normalizeCustomProviderBaseURL("@ai-sdk/google", "https://generativelanguage.googleapis.com")).toBe(
+      "https://generativelanguage.googleapis.com/v1beta",
+    )
+  })
+
   it("matches thinking suffix models against the base catalog model", () => {
     const out = defaultsForModel(providers(), "@ai-sdk/anthropic", "claude-opus-4-6-thinking")
 

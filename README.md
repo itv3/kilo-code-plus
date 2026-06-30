@@ -5,11 +5,11 @@
 ## 版本说明
 
 - 上游版本：`7.3.54`
-- Plus 自定义版本：`v0.04`
-- 发布批次：`7.3.54-v0.04`
-- 市场版本：`7.3.5404`
+- Plus 自定义版本：`v0.05`
+- 发布批次：`7.3.54-v0.05`
+- 市场版本：`7.3.5405`
 
-说明：VS Marketplace 不支持 `7.3.54-v0.04` 这种带后缀的扩展版本号，所以市场页面显示的版本使用纯数字 `7.3.5404`。GitHub tag、GitHub Release、VSIX 文件名使用发布批次 `7.3.54-v0.04`。
+说明：VS Marketplace 不支持 `7.3.54-v0.05` 这种带后缀的扩展版本号，所以市场页面显示的版本使用纯数字 `7.3.5405`。GitHub tag、GitHub Release、VSIX 文件名使用发布批次 `7.3.54-v0.05`。
 
 ## 主要改进
 
@@ -24,9 +24,9 @@
 | 成本选项 | 支持输入、输出、缓存读取、缓存写入成本。 |
 | 默认值补全 | 添加模型时用模型 ID 匹配内置默认模型，匹配上后自动带出高级模型参数、图像输入能力、推理能力、成本。 |
 
-### 模型列表过滤与排序
+### 模型列表过滤、排序与选择体验
 
-默认仅显示 Kilo Gateway 免费模型以及用户已添加或已连接提供商的模型，减少无关付费模型干扰。聊天窗口中，用户添加或连接的提供商模型会排在免费模型前面，便于优先选择自己的模型。
+默认仅显示 Kilo Gateway 免费模型以及用户已添加或已连接提供商的模型，减少无关付费模型干扰。聊天窗口中，用户添加或连接的提供商模型会排在免费模型前面；模型选择器默认折叠详情页，单击模型即可直接切换。首次没有收藏记录时，默认收藏 StepFun Step 3.7 Flash 免费模型，用户取消后不会自动恢复。
 
 ### 智能体中文化与隐藏 orchestrator
 
@@ -74,14 +74,14 @@
 
 ```bash
 mkdir -p .github/release-notes
-$EDITOR .github/release-notes/kilo-code-plus-v7.3.54-v0.04.md
+$EDITOR .github/release-notes/kilo-code-plus-v7.3.54-v0.05.md
 cd packages/kilo-vscode
 bun test ./tests/unit/custom-provider-defaults.test.ts ./tests/unit/custom-provider-dialog-validate.test.ts
 bun run typecheck
 cd ../..
 git push custom main
-git tag kilo-code-plus-v7.3.54-v0.04
-git push custom kilo-code-plus-v7.3.54-v0.04
+git tag kilo-code-plus-v7.3.54-v0.05
+git push custom kilo-code-plus-v7.3.54-v0.05
 ```
 
 发布前必须为本次 tag 准备 `.github/release-notes/<tag>.md`,逐条写清具体变更。发布后先看 GitHub Actions 中 `publish-kilo-code-plus` workflow 是否成功,再核对 GitHub Release 是否有 6 个平台 `.vsix`。Open VSX 发布成功后通常需要几分钟后台传播,不要立刻按旧版本查询结果判断失败;等待后用 `targetPlatform` 查询下载映射,确认 6 个平台都指向新市场版本。

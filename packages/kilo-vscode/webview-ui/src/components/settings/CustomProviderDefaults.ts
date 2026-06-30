@@ -1,5 +1,5 @@
 import type { Provider, ProviderModel } from "../../types/messages"
-import type { CustomProviderPackage } from "../../../../src/shared/provider-model"
+import { customProviderCatalog, type CustomProviderPackage } from "../../../../src/shared/provider-model"
 
 export type CustomProviderDefaults = {
   image?: boolean
@@ -17,12 +17,6 @@ const FALLBACKS: Record<string, string> = {
 }
 
 const SUFFIXES = ["-thinking", "-reasoning"]
-
-export function catalogProvider(npm: CustomProviderPackage) {
-  if (npm === "@ai-sdk/anthropic") return "anthropic"
-  if (npm === "@ai-sdk/google") return "google"
-  return "openai"
-}
 
 export function catalogDefaults(model: ProviderModel | undefined): CustomProviderDefaults {
   if (!model) return {}
@@ -61,7 +55,7 @@ export function defaultKeys(id: string) {
 }
 
 export function defaultsForModel(providers: Record<string, Provider>, npm: CustomProviderPackage, id: string) {
-  const models = providers[catalogProvider(npm)]?.models ?? {}
+  const models = providers[customProviderCatalog(npm)]?.models ?? {}
   for (const key of defaultKeys(id)) {
     const model = models[key]
     if (model) return catalogDefaults(model)

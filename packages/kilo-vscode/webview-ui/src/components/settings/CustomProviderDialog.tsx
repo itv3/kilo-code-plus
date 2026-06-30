@@ -18,6 +18,7 @@ import { createProviderAction } from "../../utils/provider-action"
 import { MASKED_CUSTOM_PROVIDER_KEY, resolveCustomProviderKey } from "../../../../src/shared/custom-provider"
 import {
   CUSTOM_PROVIDER_PACKAGE,
+  customProviderProtocol,
   isCustomProviderPackage,
   normalizeCustomProviderBaseURL,
   type CustomProviderPackage,
@@ -95,12 +96,6 @@ type RawModel = {
   variants?: Record<string, Record<string, unknown>>
 }
 
-function protocol(npm: CustomProviderPackage): "openai" | "anthropic" | "gemini" {
-  if (npm === "@ai-sdk/anthropic") return "anthropic"
-  if (npm === "@ai-sdk/google") return "gemini"
-  return "openai"
-}
-
 function parseVariant([name, cfg]: [string, Record<string, unknown>]): VariantEntry {
   return {
     name,
@@ -125,7 +120,7 @@ function text(value: number | undefined) {
 }
 
 function money(value: number | undefined) {
-  return value === undefined ? "" : value.toFixed(2)
+  return text(value)
 }
 
 function modelCost(raw: RawModel | undefined) {
@@ -143,7 +138,6 @@ function initModels(cfg: ProviderConfig | undefined): ModelEntry[] {
     name: "",
     image: false,
     outputModalities: ["text"],
-    inputLimit: "",
     contextLimit: "",
     outputLimit: "",
     costEnabled: false,
@@ -164,7 +158,6 @@ function initModels(cfg: ProviderConfig | undefined): ModelEntry[] {
       name: raw.name ?? id,
       image: raw.modalities?.input?.includes("image") ?? false,
       outputModalities: raw.modalities?.output ?? ["text"],
-      inputLimit: text(raw.limit?.input),
       contextLimit: text(raw.limit?.context),
       outputLimit: text(raw.limit?.output),
       costEnabled: modelCost(raw),
@@ -374,9 +367,8 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
       type: "fetchCustomProviderModels",
       requestId: rid,
       baseURL: url,
-      protocol: protocol(fetchPackage()),
+      protocol: customProviderProtocol(fetchPackage()),
       apiKey,
-      env,
       providerID,
       headers,
     })
@@ -437,7 +429,6 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
       name: m.name,
       image: m.image ?? false,
       outputModalities: ["text"],
-      inputLimit: "",
       contextLimit: text(m.contextLimit),
       outputLimit: text(m.outputLimit),
       costEnabled:
@@ -497,7 +488,6 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
         name: "",
         image: false,
         outputModalities: ["text"],
-        inputLimit: "",
         contextLimit: "",
         outputLimit: "",
         costEnabled: false,

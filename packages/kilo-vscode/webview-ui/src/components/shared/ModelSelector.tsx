@@ -131,6 +131,8 @@ export interface ModelSelectorBaseProps {
   label?: string
   /** Additional accessible context for this model setting. */
   description?: string
+  /** 选择器首次打开时是否显示模型详情预览。 */
+  initialExpanded?: boolean
 }
 
 export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
@@ -151,7 +153,7 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
   }
 
   const [open, setOpen] = createSignal(false)
-  const [expanded, setExpanded] = createSignal(true)
+  const [expanded, setExpanded] = createSignal(props.initialExpanded ?? true)
   const [search, setSearch] = createSignal("")
   const [debouncedSearch, setDebouncedSearch] = createSignal("")
   const [selectedKey, setSelectedKey] = createSignal(CLEAR_KEY)
@@ -499,6 +501,7 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
     setNavigating(false)
     setSearch("")
     setDebouncedSearch("")
+    if (props.initialExpanded !== undefined) setExpanded(props.initialExpanded)
     clearTimeout(previewTimer)
   })
 
@@ -1084,6 +1087,7 @@ export const ModelSelector: Component<ModelSelectorProps> = (props) => {
       onCancel={() => {
         requestAnimationFrame(() => window.dispatchEvent(new CustomEvent("focusPrompt", { detail: { restore: true } })))
       }}
+      initialExpanded={false}
     />
   )
 }

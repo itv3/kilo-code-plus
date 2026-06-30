@@ -33,10 +33,10 @@ const ModelLimitSchema = z
   .strict()
 const ModelCostSchema = z
   .object({
-    input: z.number().nonnegative(),
-    output: z.number().nonnegative(),
-    cache_read: z.number().nonnegative().optional(),
-    cache_write: z.number().nonnegative().optional(),
+    input: z.number().finite().nonnegative(),
+    output: z.number().finite().nonnegative(),
+    cache_read: z.number().finite().nonnegative().optional(),
+    cache_write: z.number().finite().nonnegative().optional(),
   })
   .strict()
 
@@ -194,11 +194,12 @@ type AnyRecord = Record<string, unknown>
 type VariantPatch = Partial<{ [Key in keyof VariantConfig]: VariantConfig[Key] | null }>
 type LimitPatch = { context?: number | null; input?: number | null; output?: number | null }
 type CostPatch = { input?: number | null; output?: number | null; cache_read?: number | null; cache_write?: number | null }
+type HeaderPatch = Record<string, string | null>
 type ProviderPatch = Omit<SanitizedProviderConfig, "env" | "models" | "options"> & {
   env?: string[] | null
   options: {
     baseURL: string
-    headers?: Record<string, string> | null
+    headers?: HeaderPatch | null
   }
   models: Record<
     string,
@@ -215,6 +216,14 @@ type ProviderPatch = Omit<SanitizedProviderConfig, "env" | "models" | "options">
 
 function isRecord(v: unknown): v is AnyRecord {
   return !!v && typeof v === "object" && !Array.isArray(v)
+}
+
+function recordPatch<T extends AnyRecord>(old: unknown, next: unknown): T | undefined {
+  if (!isRecord(old)) return isRecord(next) ? (next as T) : undefined
+  const patch = isRecord(next) ? (next as T) : undefined
+  const removed = Object.keys(old).filter((key) => !(key in (patch ?? {})))
+  if (removed.length === 0) return patch
+  return { ...patch, ...Object.fromEntries(removed.map((key) => [key, null])) } as T
 }
 
 function variantPatch(
@@ -244,19 +253,11 @@ function variantPatch(
 }
 
 function limitPatch(oldModel: AnyRecord, newModel: AnyRecord) {
-  if (!isRecord(oldModel.limit)) return isRecord(newModel.limit) ? (newModel.limit as LimitPatch) : undefined
-  const next = isRecord(newModel.limit) ? (newModel.limit as LimitPatch) : undefined
-  const removed = Object.keys(oldModel.limit).filter((key) => !(key in (next ?? {})))
-  if (removed.length === 0) return next
-  return { ...next, ...Object.fromEntries(removed.map((key) => [key, null])) } as LimitPatch
+  return recordPatch<LimitPatch>(oldModel.limit, newModel.limit)
 }
 
 function costPatch(oldModel: AnyRecord, newModel: AnyRecord) {
-  if (!isRecord(oldModel.cost)) return isRecord(newModel.cost) ? (newModel.cost as CostPatch) : undefined
-  const next = isRecord(newModel.cost) ? (newModel.cost as CostPatch) : undefined
-  const removed = Object.keys(oldModel.cost).filter((key) => !(key in (next ?? {})))
-  if (removed.length === 0) return next
-  return { ...next, ...Object.fromEntries(removed.map((key) => [key, null])) } as CostPatch
+  return recordPatch<CostPatch>(oldModel.cost, newModel.cost)
 }
 
 function envPatch(existing: AnyRecord, next: SanitizedProviderConfig) {
@@ -266,8 +267,10 @@ function envPatch(existing: AnyRecord, next: SanitizedProviderConfig) {
 
 function optionsPatch(existing: AnyRecord, next: SanitizedProviderConfig): ProviderPatch["options"] {
   const oldOptions = isRecord(existing.options) ? existing.options : {}
+  const headers = recordPatch<HeaderPatch>(oldOptions.headers, next.options.headers)
   return {
     ...next.options,
+    ...(headers ? { headers } : {}),
     ...("headers" in oldOptions && next.options.headers === undefined ? { headers: null } : {}),
   }
 }

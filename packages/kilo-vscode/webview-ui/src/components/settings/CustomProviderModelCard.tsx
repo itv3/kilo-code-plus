@@ -30,7 +30,6 @@ export type ModelEntry = {
   name: string
   image: boolean
   outputModalities: string[]
-  inputLimit: string
   contextLimit: string
   outputLimit: string
   costEnabled: boolean
@@ -88,18 +87,10 @@ const OUTPUT_EFFORT_OPTIONS: SelectOption<OutputEffortValue>[] = [
   { value: "max", labelKey: "provider.custom.models.variants.outputEffort.max" },
 ]
 
-const COST_INPUT = /^(?:\d+(?:\.\d{0,2})?|\.\d{0,2})?$/
+const COST_INPUT = /^(?:\d+(?:\.\d*)?|\.\d*)?$/
 
 function cost(value: string, save: (val: string) => void) {
   if (COST_INPUT.test(value)) save(value)
-}
-
-function fixed(value: string) {
-  const raw = value.trim()
-  if (!raw || raw === ".") return value
-  const num = Number(raw)
-  if (!Number.isFinite(num)) return value
-  return num.toFixed(2)
 }
 
 type VariantRowProps = {
@@ -458,12 +449,11 @@ export function ModelCard(props: ModelCardProps) {
             <TextField
               type="text"
               inputMode="decimal"
-              pattern="[0-9]*[.]?[0-9]{0,2}"
+              pattern="[0-9]*[.]?[0-9]*"
               label={props.t("provider.custom.models.inputCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.inputCost}
               onChange={(v) => cost(v, props.onChangeInputCost)}
-              onBlur={() => props.onChangeInputCost(fixed(props.m.inputCost))}
               validationState={props.errors.inputCost ? "invalid" : undefined}
               error={props.errors.inputCost}
             />
@@ -472,12 +462,11 @@ export function ModelCard(props: ModelCardProps) {
             <TextField
               type="text"
               inputMode="decimal"
-              pattern="[0-9]*[.]?[0-9]{0,2}"
+              pattern="[0-9]*[.]?[0-9]*"
               label={props.t("provider.custom.models.outputCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.outputCost}
               onChange={(v) => cost(v, props.onChangeOutputCost)}
-              onBlur={() => props.onChangeOutputCost(fixed(props.m.outputCost))}
               validationState={props.errors.outputCost ? "invalid" : undefined}
               error={props.errors.outputCost}
             />
@@ -489,12 +478,11 @@ export function ModelCard(props: ModelCardProps) {
             <TextField
               type="text"
               inputMode="decimal"
-              pattern="[0-9]*[.]?[0-9]{0,2}"
+              pattern="[0-9]*[.]?[0-9]*"
               label={props.t("provider.custom.models.cacheReadCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.cacheReadCost}
               onChange={(v) => cost(v, props.onChangeCacheReadCost)}
-              onBlur={() => props.onChangeCacheReadCost(fixed(props.m.cacheReadCost))}
               validationState={props.errors.cacheReadCost ? "invalid" : undefined}
               error={props.errors.cacheReadCost}
             />
@@ -503,12 +491,11 @@ export function ModelCard(props: ModelCardProps) {
             <TextField
               type="text"
               inputMode="decimal"
-              pattern="[0-9]*[.]?[0-9]{0,2}"
+              pattern="[0-9]*[.]?[0-9]*"
               label={props.t("provider.custom.models.cacheWriteCost.label")}
               placeholder={props.t("provider.custom.models.cost.placeholder")}
               value={props.m.cacheWriteCost}
               onChange={(v) => cost(v, props.onChangeCacheWriteCost)}
-              onBlur={() => props.onChangeCacheWriteCost(fixed(props.m.cacheWriteCost))}
               validationState={props.errors.cacheWriteCost ? "invalid" : undefined}
               error={props.errors.cacheWriteCost}
             />

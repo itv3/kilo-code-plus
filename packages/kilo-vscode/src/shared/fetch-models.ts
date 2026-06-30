@@ -1,4 +1,6 @@
-export type FetchModelsProtocol = "openai" | "anthropic" | "gemini"
+import type { CustomProviderProtocol } from "./provider-model"
+
+export type FetchModelsProtocol = CustomProviderProtocol
 
 const MAX_RESPONSE_BYTES = 2_000_000
 

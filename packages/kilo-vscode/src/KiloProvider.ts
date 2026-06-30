@@ -2074,9 +2074,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     const key =
       typeof msg.apiKey === "string"
         ? msg.apiKey
-        : typeof msg.env === "string"
-          ? process.env[msg.env]
-          : resolveStoredKey(this.storedProviderKeys, msg.providerID, url)
+        : resolveStoredKey(this.storedProviderKeys, msg.providerID, url)
     const headers = msg.headers && typeof msg.headers === "object" ? (msg.headers as Record<string, string>) : undefined
     try {
       const models = await fetchModels({ baseURL: url, apiKey: key, headers, protocol })

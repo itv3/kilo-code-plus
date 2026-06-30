@@ -17,6 +17,8 @@ import { configFeatures } from "./features"
  * Pure function — takes cachedConfig and vscode settings as parameters.
  */
 type AuthState = "api" | "oauth" | "wellknown"
+type ProviderUpdatePatch = NonNullable<Config["provider"]> & Record<string, unknown>
+export const DEFAULT_FAVORITES = [{ providerID: KILO_PROVIDER_ID, modelID: "stepfun/step-3.7-flash:free" }]
 
 /** API key retained extension-side for authenticated model fetches (#10139). */
 export interface StoredProviderKey {
@@ -34,20 +36,6 @@ function record(value: unknown): value is Record<string, unknown> {
 
 function customProvider(config: unknown) {
   return record(config) && isCustomProviderPackage(config.npm)
-}
-
-function same(a: unknown, b: unknown): boolean {
-  if (a === b) return true
-  if (Array.isArray(a) || Array.isArray(b)) {
-    if (!Array.isArray(a) || !Array.isArray(b)) return false
-    if (a.length !== b.length) return false
-    return a.every((value, index) => same(value, b[index]))
-  }
-  if (!record(a) || !record(b)) return false
-  const akeys = Object.keys(a).sort()
-  const bkeys = Object.keys(b).sort()
-  if (akeys.length !== bkeys.length) return false
-  return akeys.every((key, index) => key === bkeys[index] && same(a[key], b[key]))
 }
 
 /** Fetch provider availability and authentication state without exposing stored credentials. */
@@ -155,6 +143,7 @@ export function validateRecents(raw: unknown): Array<{ providerID: string; model
 
 /** Validate and sanitize favorite model selections from untrusted sources. */
 export function validateFavorites(raw: unknown): Array<{ providerID: string; modelID: string }> {
+  if (raw === undefined) return DEFAULT_FAVORITES.map((item) => ({ providerID: item.providerID, modelID: item.modelID }))
   if (!Array.isArray(raw)) return []
   return raw.filter(isModelSelection).map((r) => ({ providerID: r.providerID, modelID: r.modelID }))
 }
@@ -455,7 +444,7 @@ export async function saveCustomProvider(
     const { data: updated } = await ctx.client.global.config.update(
       {
         config: {
-          provider: { [id]: patch } as unknown as NonNullable<Config["provider"]>,
+          provider: { [id]: patch } as ProviderUpdatePatch,
           disabled_providers: nextDisabled,
         },
       },

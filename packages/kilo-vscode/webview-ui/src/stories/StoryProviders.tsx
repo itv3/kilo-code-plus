@@ -76,6 +76,7 @@ const MOCK_PROVIDERS = {
       "anthropic/claude-sonnet-4-6": {
         id: "anthropic/claude-sonnet-4-6",
         name: "Anthropic: Claude Sonnet 4.6",
+        isFree: true,
         inputPrice: 0.003,
         outputPrice: 0.015,
         limit: { context: 200000, output: 8192 },

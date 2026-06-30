@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { validateModelSelections, validateRecents, validateFavorites } from "../../src/provider-actions"
+import { DEFAULT_FAVORITES, validateModelSelections, validateRecents, validateFavorites } from "../../src/provider-actions"
 
 describe("validateModelSelections", () => {
   it("returns empty object for null", () => {
@@ -71,5 +71,29 @@ describe("validateModelSelections", () => {
 
   it("returns empty object for empty input object", () => {
     expect(validateModelSelections({})).toEqual({})
+  })
+})
+
+describe("validateFavorites", () => {
+  it("returns the default favorite models before favorites are initialized", () => {
+    expect(validateFavorites(undefined)).toEqual(DEFAULT_FAVORITES)
+  })
+
+  it("does not restore defaults after favorites are explicitly cleared", () => {
+    expect(validateFavorites([])).toEqual([])
+  })
+
+  it("returns an empty list for invalid persisted data", () => {
+    expect(validateFavorites(null)).toEqual([])
+    expect(validateFavorites("invalid")).toEqual([])
+  })
+
+  it("filters and sanitizes persisted favorites", () => {
+    const input = [
+      { providerID: "kilo", modelID: "stepfun/step-3.7-flash:free", extra: true },
+      { providerID: 42, modelID: "broken" },
+      { providerID: "openai", modelID: null },
+    ]
+    expect(validateFavorites(input)).toEqual([{ providerID: "kilo", modelID: "stepfun/step-3.7-flash:free" }])
   })
 })

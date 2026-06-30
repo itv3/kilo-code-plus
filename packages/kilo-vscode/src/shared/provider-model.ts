@@ -9,6 +9,18 @@ export const CUSTOM_PROVIDER_PACKAGES = [
 export type CustomProviderPackage = (typeof CUSTOM_PROVIDER_PACKAGES)[number]
 export const CUSTOM_PROVIDER_PACKAGE: CustomProviderPackage = "@ai-sdk/openai-compatible"
 export const PROVIDER_ID_PATTERN = /^[a-z0-9][a-z0-9-_]*$/
+export type CustomProviderProtocol = "openai" | "anthropic" | "gemini"
+export type CustomProviderCatalog = "openai" | "anthropic" | "google"
+
+const CUSTOM_PROVIDER_META: Record<
+  CustomProviderPackage,
+  { protocol: CustomProviderProtocol; catalog: CustomProviderCatalog; suffix?: string; suffixPattern?: RegExp }
+> = {
+  "@ai-sdk/openai-compatible": { protocol: "openai", catalog: "openai" },
+  "@ai-sdk/openai": { protocol: "openai", catalog: "openai" },
+  "@ai-sdk/anthropic": { protocol: "anthropic", catalog: "anthropic", suffix: "/v1", suffixPattern: /\/v1$/i },
+  "@ai-sdk/google": { protocol: "gemini", catalog: "google", suffix: "/v1beta", suffixPattern: /\/v1(?:beta)?$/i },
+}
 
 // Legacy/static fallback for provider objects created before backend metadata is available.
 export const PROVIDER_PRIORITY = [
@@ -25,11 +37,19 @@ export function isCustomProviderPackage(value: unknown): value is CustomProvider
   return CUSTOM_PROVIDER_PACKAGES.includes(value as CustomProviderPackage)
 }
 
+export function customProviderProtocol(npm: CustomProviderPackage): CustomProviderProtocol {
+  return CUSTOM_PROVIDER_META[npm].protocol
+}
+
+export function customProviderCatalog(npm: CustomProviderPackage): CustomProviderCatalog {
+  return CUSTOM_PROVIDER_META[npm].catalog
+}
+
 export function normalizeCustomProviderBaseURL(npm: CustomProviderPackage, value: string) {
   const url = value.trim().replace(/\/+$/, "")
-  if (npm === "@ai-sdk/anthropic" && !/\/v1$/i.test(url)) return `${url}/v1`
-  if (npm !== "@ai-sdk/google" || /\/v1(?:beta)?$/i.test(url)) return url
-  return `${url}/v1beta`
+  const meta = CUSTOM_PROVIDER_META[npm]
+  if (meta.suffix && meta.suffixPattern && !meta.suffixPattern.test(url)) return `${url}${meta.suffix}`
+  return url
 }
 
 export function parseModelString(raw: string | undefined | null) {
