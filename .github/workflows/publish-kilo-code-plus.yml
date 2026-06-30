@@ -186,7 +186,7 @@ jobs:
           path: packages/kilo-vscode/out/kilo-code-plus-${{ needs.build-cli.outputs.label }}-*.vsix
 
       - name: 发布到 VS Marketplace
-        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.skip_vs_marketplace != true) && env.VSCE_PAT != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_vs_marketplace != true && env.VSCE_PAT != '' }}
         working-directory: packages/kilo-vscode
         shell: bash
         run: |
@@ -223,7 +223,7 @@ jobs:
           VERSION: ${{ needs.build-cli.outputs.version }}
 
       - name: 跳过 VS Marketplace
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_vs_marketplace == true || env.VSCE_PAT == '' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_vs_marketplace == true || env.VSCE_PAT == '' }}
         run: echo "已跳过 VS Marketplace，仅发布 Open VSX 和 GitHub Release。"
 
       - name: 发布到 Open VSX
