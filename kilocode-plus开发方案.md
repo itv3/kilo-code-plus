@@ -319,7 +319,18 @@ https://github.com/itv3/kilo-code-plus/releases
 4. 输入并执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件。
 5. 安装完成后执行 `Developer: Reload Window`,或重启编辑器。
 
-说明:`.vsix` 文件区分系统和 CPU 架构。macOS Apple Silicon 选择 `darwin-arm64`,Windows 常见选择 `win32-x64`,Linux 常见选择 `linux-x64`。
+`.vsix` 文件区分系统和 CPU 架构,请按下面的包名选择:
+
+| 包名 | 对应环境 | 常见用户 |
+|---|---|---|
+| `darwin-arm64` | macOS + Apple Silicon | M1 / M2 / M3 / M4 Mac |
+| `darwin-x64` | macOS + Intel | 老款 Intel Mac |
+| `win32-x64` | Windows + x86_64 | 绝大多数 Windows 电脑 |
+| `win32-arm64` | Windows + ARM64 | Surface Pro ARM、骁龙 X Elite Windows 电脑 |
+| `linux-x64` | Linux + x86_64 | 绝大多数 Linux 桌面 / 服务器 |
+| `linux-arm64` | Linux + ARM64 | ARM 服务器、树莓派、部分 ARM Linux 设备 |
+
+包名使用 VS Code 官方 `targetPlatform` 标识,所以 macOS 对应的是 `darwin`,不能改成 `mac`。通过 Open VSX 安装时,市场会在已发布的平台包中按当前环境选择匹配包;手动安装时需要自己下载对应系统的 `.vsix`。
 
 ### 4.6 安装验证
 
