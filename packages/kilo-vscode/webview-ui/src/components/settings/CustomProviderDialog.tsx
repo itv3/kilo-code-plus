@@ -13,7 +13,7 @@ import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import { useProvider } from "../../context/provider"
 import { useVSCode } from "../../context/vscode"
-import type { ExtensionMessage, ProviderAuthState, ProviderConfig, ProviderModel } from "../../types/messages"
+import type { ExtensionMessage, ProviderAuthState, ProviderConfig } from "../../types/messages"
 import { createProviderAction } from "../../utils/provider-action"
 import { MASKED_CUSTOM_PROVIDER_KEY, resolveCustomProviderKey } from "../../../../src/shared/custom-provider"
 import {
@@ -33,11 +33,9 @@ import type {
 } from "./CustomProviderModelCard"
 import { validateCustomProvider } from "./CustomProviderValidation"
 import type { FormErrors, FormState, HeaderRow } from "./CustomProviderValidation"
+import { defaultsForModel } from "./CustomProviderDefaults"
 const DEBOUNCE_MS = 500
 const SEARCH_DEBOUNCE_MS = 150
-const DEFAULT_FALLBACKS: Record<string, string> = {
-  "claude-opus-4-8": "claude-opus-4-7",
-}
 
 const PACKAGE_OPTIONS: Array<{ value: CustomProviderPackage; label: string }> = [
   { value: "@ai-sdk/openai-compatible", label: "OpenAI Compatible" },
@@ -97,29 +95,9 @@ type RawModel = {
   variants?: Record<string, Record<string, unknown>>
 }
 
-type Defaults = Partial<
-  Pick<
-    FetchedModel,
-    | "image"
-    | "reasoning"
-    | "contextLimit"
-    | "outputLimit"
-    | "inputCost"
-    | "outputCost"
-    | "cacheReadCost"
-    | "cacheWriteCost"
-  >
->
-
 function protocol(npm: CustomProviderPackage): "openai" | "anthropic" | "gemini" {
   if (npm === "@ai-sdk/anthropic") return "anthropic"
   if (npm === "@ai-sdk/google") return "gemini"
-  return "openai"
-}
-
-function catalogProvider(npm: CustomProviderPackage) {
-  if (npm === "@ai-sdk/anthropic") return "anthropic"
-  if (npm === "@ai-sdk/google") return "google"
   return "openai"
 }
 
@@ -231,20 +209,6 @@ function initForm(existing: ExistingProvider | undefined, auth: ProviderAuthStat
     models: initModels(existing?.config),
     headers: initHeaders(existing?.config),
     saving: false,
-  }
-}
-
-function catalogDefaults(model: ProviderModel | undefined): Defaults {
-  if (!model) return {}
-  return {
-    image: model.capabilities?.input?.image,
-    reasoning: model.capabilities?.reasoning,
-    contextLimit: model.limit?.context,
-    outputLimit: model.limit?.output,
-    inputCost: model.cost?.input,
-    outputCost: model.cost?.output,
-    cacheReadCost: model.cost?.cache?.read,
-    cacheWriteCost: model.cost?.cache?.write,
   }
 }
 
@@ -418,21 +382,8 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     })
   }
 
-  function defaultsFor(id: string): Defaults {
-    const models = provider.providers()[catalogProvider(fetchPackage())]?.models ?? {}
-    const bare = id.split("/").at(-1) ?? id
-    const ids = [id, bare]
-    const fallback = DEFAULT_FALLBACKS[id] ?? DEFAULT_FALLBACKS[bare]
-    if (fallback) ids.push(fallback)
-    for (const key of ids) {
-      const model = models[key]
-      if (model) return catalogDefaults(model)
-    }
-    return {}
-  }
-
   function withDefaults(model: FetchedModel): FetchedModel {
-    const defaults = defaultsFor(model.id)
+    const defaults = defaultsForModel(provider.providers(), fetchPackage(), model.id)
     return {
       ...model,
       image: model.image ?? defaults.image,

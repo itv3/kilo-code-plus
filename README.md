@@ -5,11 +5,11 @@
 ## 版本说明
 
 - 上游版本：`7.3.54`
-- Plus 自定义版本：`v0.03`
-- 发布批次：`7.3.54-v0.03`
-- 市场版本：`7.3.5403`
+- Plus 自定义版本：`v0.04`
+- 发布批次：`7.3.54-v0.04`
+- 市场版本：`7.3.5404`
 
-说明：VS Marketplace 不支持 `7.3.54-v0.03` 这种带后缀的扩展版本号，所以市场页面显示的版本使用纯数字 `7.3.5403`。GitHub tag、GitHub Release、VSIX 文件名使用发布批次 `7.3.54-v0.03`。
+说明：VS Marketplace 不支持 `7.3.54-v0.04` 这种带后缀的扩展版本号，所以市场页面显示的版本使用纯数字 `7.3.5404`。GitHub tag、GitHub Release、VSIX 文件名使用发布批次 `7.3.54-v0.04`。
 
 ## 主要改进
 
@@ -66,16 +66,16 @@
 推送 tag 后自动发布到：
 
 - Open VSX：`https://open-vsx.org/extension/itv3/kilo-code-plus`
-- VS Marketplace：`https://marketplace.visualstudio.com/items?itemName=itv3.kilo-code-plus`
+- GitHub Release：`https://github.com/itv3/kilo-code-plus/releases`
 
-当前发布目标平台：`darwin-arm64`
+当前发布目标平台：`darwin-arm64`、`darwin-x64`、`win32-x64`、`win32-arm64`、`linux-x64`、`linux-arm64`。每次正式发布都应同时上传这 6 个 `.vsix` 文件,确保 macOS、Windows、Linux 用户都能安装。
 
 常用发布命令：
 
 ```bash
 git push custom main
-git tag kilo-code-plus-v7.3.54-v0.03
-git push custom kilo-code-plus-v7.3.54-v0.03
+git tag kilo-code-plus-v7.3.54-v0.04
+git push custom kilo-code-plus-v7.3.54-v0.04
 ```
 
 ## 反馈

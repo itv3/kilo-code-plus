@@ -318,7 +318,7 @@
     },
     "packages/kilo-vscode": {
       "name": "kilo-code-plus",
-      "version": "7.3.5403",
+      "version": "7.3.5404",
       "dependencies": {
         "@anthropic-ai/sdk": "^0.39.0",
         "@kilocode/kilo-gateway": "workspace:*",
