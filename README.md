@@ -34,31 +34,19 @@
 
 ## 手动安装
 
-如果暂时不通过扩展市场安装,可以直接下载 GitHub Release 中的 `.vsix` 文件后手动安装。
+如果暂时不通过扩展市场安装,可以直接下载 GitHub Release 中的 `.vsix` 文件后手动安装。Cursor 和 VS Code 的安装流程一样。
 
 下载地址: `https://github.com/itv3/kilo-code-plus/releases`
 
-### Cursor
+安装步骤:
 
-方式一:在 Cursor 中打开命令面板,执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件。
+1. 从 GitHub Release 下载与你系统匹配的 `.vsix` 文件。
+2. 打开 Cursor 或 VS Code。
+3. 打开命令面板:Windows / Linux 按 `Ctrl+Shift+P`,macOS 按 `Cmd+Shift+P`。
+4. 输入并执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件。
+5. 安装完成后执行 `Developer: Reload Window`,或重启编辑器。
 
-方式二:使用命令行安装:
-
-```bash
-/Applications/Cursor.app/Contents/Resources/app/bin/cursor --install-extension /path/to/kilo-code-plus-7.3.54-v0.03-darwin-arm64.vsix --force
-```
-
-### VS Code
-
-方式一:在 VS Code 中打开命令面板,执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件。
-
-方式二:使用命令行安装:
-
-```bash
-code --install-extension /path/to/kilo-code-plus-7.3.54-v0.03-darwin-arm64.vsix --force
-```
-
-安装完成后执行 `Developer: Reload Window`,或重启编辑器。
+说明:`.vsix` 文件区分系统和 CPU 架构。macOS Apple Silicon 选择 `darwin-arm64`,Windows 常见选择 `win32-x64`,Linux 常见选择 `linux-x64`。
 
 ## 发布
 

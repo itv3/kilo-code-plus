@@ -303,25 +303,23 @@ node esbuild.js --production
 
 ### 4.5 手动安装
 
+Cursor 和 VS Code 的手动安装流程一样。
+
 从 GitHub Release 下载 `.vsix` 文件:
 
 ```text
 https://github.com/itv3/kilo-code-plus/releases
 ```
 
-Cursor 可通过命令面板执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件;也可用命令行安装:
+安装步骤:
 
-```sh
-/Applications/Cursor.app/Contents/Resources/app/bin/cursor --install-extension /path/to/kilo-code-plus-7.3.54-v0.03-darwin-arm64.vsix --force
-```
+1. 从 GitHub Release 下载与你系统匹配的 `.vsix` 文件。
+2. 打开 Cursor 或 VS Code。
+3. 打开命令面板:Windows / Linux 按 `Ctrl+Shift+P`,macOS 按 `Cmd+Shift+P`。
+4. 输入并执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件。
+5. 安装完成后执行 `Developer: Reload Window`,或重启编辑器。
 
-VS Code 可通过命令面板执行 `Extensions: Install from VSIX...`,选择下载好的 `.vsix` 文件;也可用命令行安装:
-
-```sh
-code --install-extension /path/to/kilo-code-plus-7.3.54-v0.03-darwin-arm64.vsix --force
-```
-
-安装后在编辑器执行 `Developer: Reload Window`,或直接重启编辑器。
+说明:`.vsix` 文件区分系统和 CPU 架构。macOS Apple Silicon 选择 `darwin-arm64`,Windows 常见选择 `win32-x64`,Linux 常见选择 `linux-x64`。
 
 ### 4.6 安装验证
 
