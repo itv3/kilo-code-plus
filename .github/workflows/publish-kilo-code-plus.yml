@@ -86,7 +86,7 @@ jobs:
           fi
 
       - name: 构建全平台 CLI binary
-        run: ./packages/opencode/script/build.ts
+        run: bun packages/opencode/script/build.ts
         env:
           KILO_VERSION: ${{ steps.meta.outputs.version }}
           KILO_RELEASE: ${{ steps.meta.outputs.label }}
